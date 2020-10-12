@@ -27,7 +27,8 @@ import random
 
 
 
-def create_record_files(label_path, record_dir, tfExample_generator, annotation_type):
+def create_record_files(dict_annotations, train_list, train_list_id, eval_list, 
+                        eval_list_id, label_path, record_dir, tfExample_generator, annotation_type):
     '''
         Function used to create the TFRecord files used for the training and evaluation.
         
@@ -48,7 +49,8 @@ def create_record_files(label_path, record_dir, tfExample_generator, annotation_
         output_path = os.path.join(record_dir, dataset+".record")
         writer = tf.python_io.TFRecordWriter(output_path)
         print(f"Creating record file at {output_path}")
-        for variables in tfExample_generator(label_map, ensemble=dataset, annotation_type=annotation_type):
+        for variables in tfExample_generator(dict_annotations, train_list, train_list_id, eval_list, 
+                            eval_list_id, label_map, ensemble=dataset, annotation_type=annotation_type):
             if isinstance(variables, ValueError):
                 print("Error", variables)
             elif annotation_type=="polygon":
