@@ -8,66 +8,32 @@ import picsellia_training.pxl_tf as pxl_tf
 import picsell_utils
 import tensorflow as tf
 
-# options_list = ["api_token=", "project_token=", "model_name=", "annotation_type=", "batch_size=",
-#                  "nb_steps=", "learning_rate=", "min_score_thresh=", "num_infer=", 
-#                 "incremental_or_transfer="]
-
-
-# opts, args = getopt.getopt(sys.argv[1:], "", options_list)
-
-# for opt, arg in opts:
-#     if opt == "--api_token":
-#         api_token = arg
-#     elif opt == "--project_token":
-#         project_token = arg
-#     elif opt == "--model_name":
-#         model_name = arg
-#     elif opt == "--annotation_type":
-#         annotation_type = arg
-#     elif opt == "--batch_size":
-#         batch_size = int(arg)
-#     elif opt == "--nb_steps":
-#         nb_steps = int(arg)
-#     elif opt == "--learning_rate":
-#         if arg == "None":
-#             learning_rate = None
-#     elif opt == "--min_score_thresh":
-#         min_score_thresh = float(arg)
-#     elif opt == "--num_infer":
-#         num_infer = int(arg)
-#     elif opt == "--incremental_or_transfer":
-#         incremental_or_transfer = arg
-
 api_token = os.environ['api_token']
-project_token = os.environ['project_token']
-model_name = os.environ['model_name']
-annotation_type = os.environ['annotation_type']
-batch_size = int(os.environ['batch_size'])
-learning_rate = os.environ['learning_rate']
+experiment_id = os.environ['experiment_id']
+
+
+# api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
+# experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
+min_score_thresh = 0.5
+num_infer = 4
+incremental_or_transfer = 'incremental'
+
+clt = Client(api_token=api_token, host='https://demo.picsellia.com/sdk/')
+project_token, parameters = clt.fetch_experiment_parameters(experiment_id)
+print(parameters)
+model_name = clt.exp_name
+annotation_type = parameters['annotation_type']
+batch_size = int(parameters['batch_size'])
+learning_rate = parameters['learning_rate']
 if learning_rate == "None":
     learning_rate = None
 else:
     learning_rate = float(learning_rate)
-min_score_thresh = float(os.environ['min_score_thresh'])
-num_infer = int(os.environ['num_infer'])
-incremental_or_transfer = os.environ['incremental_or_transfer']
-nb_steps = int(os.environ['nb_steps'])
+# min_score_thresh = float(os.environ['min_score_thresh'])
+# num_infer = int(os.environ['num_infer'])
+# incremental_or_transfer = os.environ['incremental_or_transfer']
+nb_steps = int(parameters['epochs'])
 
-
-# api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
-# project_token = 'ebf2090f-d86a-464c-b6b0-918a5389e6d5'
-# model_name = 'SSD'
-# annotation_type = 'rectangle'
-# batch_size = 4
-# learning_rate = "None"
-# if learning_rate == "None":
-#     learning_rate = None
-# min_score_thresh = 0.5
-# num_infer = 4
-# incremental_or_transfer = 'incremental'
-# nb_steps=200
-
-clt = Client(api_token=api_token, host='https://demo.picsellia.com/sdk/')
 clt.checkout_project(project_token=project_token)
 clt.checkout_network(model_name)
 
