@@ -8,19 +8,26 @@ import picsellia_training.pxl_tf as pxl_tf
 import picsell_utils
 import tensorflow as tf
 
-api_token = os.environ['api_token']
-experiment_id = os.environ['experiment_id']
+### Docker
+# api_token = os.environ['api_token']
+# experiment_id = os.environ['experiment_id']
 
+### Local 
+api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
+experiment_id = 'a31a61c4-cde9-4a20-b030-3f257a2de36d'
 
+### Local but server is demo
 # api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
 # experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
+print("--#--Set up training")
+
 min_score_thresh = 0.5
 num_infer = 4
 incremental_or_transfer = 'incremental'
 
-clt = Client(api_token=api_token, host='https://demo.picsellia.com/sdk/')
+clt = Client(api_token=api_token, host='http://localhost:8000/sdk/', interactive=False)
 project_token, parameters = clt.fetch_experiment_parameters(experiment_id)
-print(parameters)
+
 model_name = clt.exp_name
 annotation_type = parameters['annotation_type']
 batch_size = int(parameters['batch_size'])
@@ -40,7 +47,7 @@ clt.checkout_network(model_name)
 clt.dl_pictures()
 clt.generate_labelmap()
 clt.train_test_split() 
-
+print("--#--Create record files")
 picsell_utils.create_record_files(dict_annotations=clt.dict_annotations, train_list=clt.train_list, 
         train_list_id=clt.train_list_id, eval_list=clt.eval_list, 
         eval_list_id=clt.eval_list_id,label_path=clt.label_path, 
@@ -59,9 +66,11 @@ picsell_utils.edit_config(model_selected=clt.model_selected,
             eval_number = len(clt.eval_list),
             incremental_or_transfer=incremental_or_transfer)
 
-
+print("--#--Start training")
 picsell_utils.train(ckpt_dir=clt.checkpoint_dir, 
                      conf_dir=clt.config_dir)
+
+print("--#--Start export")
 
 metrics = picsell_utils.evaluate(clt.metrics_dir, clt.config_dir, clt.checkpoint_dir)
 
@@ -71,10 +80,12 @@ picsell_utils.export_infer_graph(ckpt_dir=clt.checkpoint_dir,
                        exported_model_dir=clt.exported_model_dir, 
                        pipeline_config_path=clt.config_dir)
 
+print("--#--Start evaluation")
 
 picsell_utils.infer(clt.record_dir, exported_model_dir=clt.exported_model_dir, 
       label_map_path=clt.label_path, results_dir=clt.results_dir, min_score_thresh=min_score_thresh, num_infer=num_infer, from_tfrecords=True, disp=False)
 
+print("--#--Sending to Picsell.ia")
 
 clt.send_results()
 clt.send_model()
