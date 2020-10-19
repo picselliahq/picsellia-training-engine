@@ -7,5 +7,5 @@ ln -s /usr/local/cuda/lib64/libcurand.so.10 /usr/local/cuda/lib64/libcurand.so.1
 ln -s /usr/local/cuda/lib64/libcusolver.so.10 /usr/local/cuda/lib64/libcusolver.so.10.0
 ln -s /usr/local/cuda/lib64/libcusparse.so.10 /usr/local/cuda/lib64/libcusparse.so.10.0
 
-python3 tf_training_od.py 
+python3 launch_sub.py 
 

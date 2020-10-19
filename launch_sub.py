@@ -4,11 +4,18 @@ from picsellia_training.client import Client
 import os
 import re 
 os.environ["PYTHONUNBUFFERED"] = "1"
-api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
-experiment_id = 'a31a61c4-cde9-4a20-b030-3f257a2de36d'
-clt = Client(api_token)
+
+### Docker
+api_token = os.environ['api_token']
+experiment_id = os.environ['experiment_id']
+command = "python3 tf_training_od.py"
+### Local 
+# api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
+# experiment_id = 'a31a61c4-cde9-4a20-b030-3f257a2de36d'
+# command = "python tf_training_od.py"
+clt = Client(api_token=api_token, host='https://demo.picsellia.com/sdk/')
 clt.exp_id = experiment_id
-command = "python tf_training_od.py"
+
 process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 part = "--#--Set up training"
 replace_log = False
@@ -57,6 +64,5 @@ while True:
         
 if buffer != []:
     clt.send_experiment_logging(buffer, part, special='buffer')
-print(process.returncode)
 clt.send_experiment_logging(str(process.returncode), part, special='exit_code')
 rc = process.poll()
