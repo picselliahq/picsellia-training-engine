@@ -23,9 +23,7 @@ while True:
         break
     if output:
         if output.decode("utf-8").startswith('--#--'):
-            
             part = output.decode("utf-8")
-            print("coucou", part)
 
         if output.decode("utf-8").startswith('-----'):
             progress_line_nb = clt.line_nb
@@ -60,4 +58,5 @@ while True:
 if buffer != []:
     clt.send_experiment_logging(buffer, part, special='buffer')
 print(process.returncode)
+clt.send_experiment_logging(str(process.returncode), part, special='exit_code')
 rc = process.poll()
