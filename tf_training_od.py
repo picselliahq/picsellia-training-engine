@@ -11,10 +11,10 @@ import picsell_utils
 import tensorflow as tf
 
 ### Docker
-# api_token = os.environ['api_token']
-# experiment_id = os.environ['experiment_id']
-# command = "python3 tf_training_od.py"
-# host = 'https://demo.picsellia.com/sdk/'
+api_token = os.environ['api_token']
+experiment_id = os.environ['experiment_id']
+command = "python3 tf_training_od.py"
+host = 'https://demo.picsellia.com/sdk/'
 
 ### Local 
 # api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
@@ -23,10 +23,10 @@ import tensorflow as tf
 # host = 'http://127.0.0.1:8000/sdk/'
 
 ## Local but server is demo
-api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
-experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
-command = "python tf_training_od.py"
-host = 'https://demo.picsellia.com/sdk/'
+# api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
+# experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
+# command = "python tf_training_od.py"
+# host = 'https://demo.picsellia.com/sdk/'
 
 min_score_thresh = 0.5
 num_infer = 4

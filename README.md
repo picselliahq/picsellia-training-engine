@@ -17,4 +17,4 @@ Use the 3 Notebooks in Colab or locally to freely:
   - Send results and checkpoints to our back to version everything
 
 To launch training within a container, run the following command : 
-  docker --rm -d -e <api_token> -e <experiment_id> --gpus all --name training training:1.1
+  docker run --rm -d -e <api_token> -e <experiment_id> --gpus all --name training training:1.1
