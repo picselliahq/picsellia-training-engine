@@ -11,16 +11,16 @@ os.environ["PYTHONUNBUFFERED"] = "1"
 # command = "python3 tf_training_od.py"
 # host = 'https://demo.picsellia.com/sdk/'
 ### Local 
-# api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
-# experiment_id = 'a31a61c4-cde9-4a20-b030-3f257a2de36d'
-# command = "python tf_training_od.py"
-# host = 'http://127.0.0.1:8000/sdk/'
+api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
+experiment_id = '221586b8-4e04-47f7-bded-1cb502d31c01'
+command = "python tf_training_od.py"
+host = 'http://127.0.0.1:8000/sdk/'
 
 ## Local but server is demo
-api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
-experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
-command = "python tf_training_od.py"
-host = 'https://demo.picsellia.com/sdk/'
+# api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
+# experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
+# command = "python tf_training_od.py"
+# host = 'https://demo.picsellia.com/sdk/'
 
 clt = Client(api_token=api_token, host=host)
 clt.exp_id = experiment_id
@@ -74,4 +74,8 @@ while True:
 if buffer != []:
     clt.send_experiment_logging(buffer, part, special='buffer')
 clt.send_experiment_logging(str(process.returncode), part, special='exit_code')
+if process.returncode == 0 or process.returncode == "0":
+    clt.update_experiment_status('succeeded')
+else:
+    clt.update_experiment_status('failed')
 rc = process.poll()
