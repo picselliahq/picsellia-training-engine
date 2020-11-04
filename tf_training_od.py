@@ -11,10 +11,10 @@ import picsell_utils
 import tensorflow as tf
 
 ### Docker
-api_token = os.environ['api_token']
-experiment_id = os.environ['experiment_id']
-command = "python3 tf_training_od.py"
-host = 'https://demo.picsellia.com/sdk/'
+# api_token = os.environ['api_token']
+# experiment_id = os.environ['experiment_id']
+# command = "python3 tf_training_od.py"
+# host = 'https://demo.picsellia.com/sdk/'
 
 ### Local 
 api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"

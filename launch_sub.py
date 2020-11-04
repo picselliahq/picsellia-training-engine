@@ -6,10 +6,10 @@ import re
 os.environ["PYTHONUNBUFFERED"] = "1"
 
 ### Docker
-api_token = os.environ['api_token']
-experiment_id = os.environ['experiment_id']
-command = "python3 tf_training_od.py"
-host = 'https://demo.picsellia.com/sdk/'
+# api_token = os.environ['api_token']
+# experiment_id = os.environ['experiment_id']
+# command = "python3 tf_training_od.py"
+# host = 'https://demo.picsellia.com/sdk/'
 ### Local 
 api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
 experiment_id = '221586b8-4e04-47f7-bded-1cb502d31c01'
