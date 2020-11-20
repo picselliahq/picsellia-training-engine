@@ -17,16 +17,21 @@ import tensorflow as tf
 # host = 'https://demo.picsellia.com/sdk/'
 
 ### Local 
-api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
-experiment_id = '221586b8-4e04-47f7-bded-1cb502d31c01'
-command = "python tf_training_od.py"
-host = 'http://127.0.0.1:8000/sdk/'
+# api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
+# experiment_id = '221586b8-4e04-47f7-bded-1cb502d31c01'
+# command = "python tf_training_od.py"
+# host = 'http://127.0.0.1:8000/sdk/'
 
 ## Local but server is demo
 # api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
 # experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
 # command = "python tf_training_od.py"
 # host = 'https://demo.picsellia.com/sdk/'
+
+api_token =  sys.argv[1] # prints var1
+experiment_id = sys.argv[2] # prints var2
+host = 'https://demo.picsellia.com/sdk/'
+
 
 min_score_thresh = 0.5
 num_infer = 4
@@ -73,34 +78,34 @@ picsell_utils.edit_config(model_selected=clt.model_selected,
             eval_number = len(clt.eval_list),
             incremental_or_transfer=incremental_or_transfer)
 
-# print("--#--Start training")
-# print("--5--")
+print("--#--Start training")
+print("--5--")
 
-# picsell_utils.train(ckpt_dir=clt.checkpoint_dir, 
-#                      conf_dir=clt.config_dir)
-# print("---5---")
+picsell_utils.train(ckpt_dir=clt.checkpoint_dir, 
+                     conf_dir=clt.config_dir)
+print("---5---")
 
-# print("--#--Start export")
-# print("--9--")
+print("--#--Start export")
+print("--9--")
 
-# metrics = picsell_utils.evaluate(clt.metrics_dir, clt.config_dir, clt.checkpoint_dir)
+metrics = picsell_utils.evaluate(clt.metrics_dir, clt.config_dir, clt.checkpoint_dir)
 
-# dict_log = picsell_utils.tfevents_to_dict(path=clt.checkpoint_dir)              
+dict_log = picsell_utils.tfevents_to_dict(path=clt.checkpoint_dir)              
 
-# picsell_utils.export_infer_graph(ckpt_dir=clt.checkpoint_dir, 
-#                        exported_model_dir=clt.exported_model_dir, 
-#                        pipeline_config_path=clt.config_dir)
-# print("---9---")
+picsell_utils.export_infer_graph(ckpt_dir=clt.checkpoint_dir, 
+                       exported_model_dir=clt.exported_model_dir, 
+                       pipeline_config_path=clt.config_dir)
+print("---9---")
 
-# print("--#--Start evaluation")
+print("--#--Start evaluation")
 
-# picsell_utils.infer(clt.record_dir, exported_model_dir=clt.exported_model_dir, 
-#       label_map_path=clt.label_path, results_dir=clt.results_dir, min_score_thresh=min_score_thresh, num_infer=num_infer, from_tfrecords=True, disp=False)
+picsell_utils.infer(clt.record_dir, exported_model_dir=clt.exported_model_dir, 
+      label_map_path=clt.label_path, results_dir=clt.results_dir, min_score_thresh=min_score_thresh, num_infer=num_infer, from_tfrecords=True, disp=False)
 
-# print("--#--Sending to Picsell.ia")
+print("--#--Sending to Picsell.ia")
 
-# clt.send_results()
-# clt.send_model()
-# clt.send_logs(dict_log)
-# clt.send_metrics(metrics)
-# clt.send_labelmap()
+clt.send_results()
+clt.send_model()
+clt.send_logs(dict_log)
+clt.send_metrics(metrics)
+clt.send_labelmap()
