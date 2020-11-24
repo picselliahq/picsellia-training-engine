@@ -21,12 +21,6 @@ from IPython.display import display
 import random
 
 
-
-
-        
-
-
-
 def create_record_files(dict_annotations, train_list, train_list_id, eval_list, 
                         eval_list_id, label_path, record_dir, tfExample_generator, annotation_type):
     '''

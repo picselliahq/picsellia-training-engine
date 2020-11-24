@@ -2,12 +2,10 @@ print("--#--Set up training")
 
 import os
 import sys, getopt
-sys.path.append("slim")
-sys.path.append(os.getcwd())
 from picsellia_training.client import Client
-import picsellia_training.pxl_tf as pxl_tf
-
-import picsell_utils
+import picsellia_tf1
+import picsellia_tf1.pxl_tf as pxl_tf
+import picsellia_tf1.pxl_utils as picsell_utils
 import tensorflow as tf
 
 ### Docker
@@ -73,34 +71,34 @@ picsell_utils.edit_config(model_selected=clt.model_selected,
             eval_number = len(clt.eval_list),
             incremental_or_transfer=incremental_or_transfer)
 
-# print("--#--Start training")
-# print("--5--")
+print("--#--Start training")
+print("--5--")
 
-# picsell_utils.train(ckpt_dir=clt.checkpoint_dir, 
-#                      conf_dir=clt.config_dir)
-# print("---5---")
+picsell_utils.train(ckpt_dir=clt.checkpoint_dir, 
+                     conf_dir=clt.config_dir)
+print("---5---")
 
-# print("--#--Start export")
-# print("--9--")
+print("--#--Start export")
+print("--9--")
 
-# metrics = picsell_utils.evaluate(clt.metrics_dir, clt.config_dir, clt.checkpoint_dir)
+metrics = picsell_utils.evaluate(clt.metrics_dir, clt.config_dir, clt.checkpoint_dir)
 
-# dict_log = picsell_utils.tfevents_to_dict(path=clt.checkpoint_dir)              
+dict_log = picsell_utils.tfevents_to_dict(path=clt.checkpoint_dir)              
 
-# picsell_utils.export_infer_graph(ckpt_dir=clt.checkpoint_dir, 
-#                        exported_model_dir=clt.exported_model_dir, 
-#                        pipeline_config_path=clt.config_dir)
-# print("---9---")
+picsell_utils.export_infer_graph(ckpt_dir=clt.checkpoint_dir, 
+                       exported_model_dir=clt.exported_model_dir, 
+                       pipeline_config_path=clt.config_dir)
+print("---9---")
 
-# print("--#--Start evaluation")
+print("--#--Start evaluation")
 
-# picsell_utils.infer(clt.record_dir, exported_model_dir=clt.exported_model_dir, 
-#       label_map_path=clt.label_path, results_dir=clt.results_dir, min_score_thresh=min_score_thresh, num_infer=num_infer, from_tfrecords=True, disp=False)
+picsell_utils.infer(clt.record_dir, exported_model_dir=clt.exported_model_dir, 
+      label_map_path=clt.label_path, results_dir=clt.results_dir, min_score_thresh=min_score_thresh, num_infer=num_infer, from_tfrecords=True, disp=False)
 
-# print("--#--Sending to Picsell.ia")
+print("--#--Sending to Picsell.ia")
 
-# clt.send_results()
-# clt.send_model()
-# clt.send_logs(dict_log)
-# clt.send_metrics(metrics)
-# clt.send_labelmap()
+clt.send_results()
+clt.send_model()
+clt.send_logs(dict_log)
+clt.send_metrics(metrics)
+clt.send_labelmap()
