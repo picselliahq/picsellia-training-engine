@@ -7,5 +7,6 @@ ln -s /usr/local/cuda/lib64/libcurand.so.10 /usr/local/cuda/lib64/libcurand.so.1
 ln -s /usr/local/cuda/lib64/libcusolver.so.10 /usr/local/cuda/lib64/libcusolver.so.10.0
 ln -s /usr/local/cuda/lib64/libcusparse.so.10 /usr/local/cuda/lib64/libcusparse.so.10.0
 
-python3 launch_sub.py 
+# gunicorn --bind 0.0.0.0:5000 -w 4 -t 360 wsgi:app
+# python3 launch_sub.py 
 
