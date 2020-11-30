@@ -14,10 +14,16 @@ import tensorflow as tf
 # command = "python3 tf_training_od.py"
 # host = 'https://demo.picsellia.com/sdk/'
 
-### Local 
+### Local tf1
 # api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
 # experiment_id = '221586b8-4e04-47f7-bded-1cb502d31c01'
-# command = "python tf_training_od.py"
+# command = "python tf_training_od.py {} {}".format(api_token, experiment_id)
+# host = 'http://127.0.0.1:8000/sdk/'
+
+### Local tf2
+# api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
+# experiment_id = 'cc81a068-a24e-4a59-ba6b-045cfaa02f7d'
+# command = "python tf_training_od.py {} {}".format(api_token, experiment_id)
 # host = 'http://127.0.0.1:8000/sdk/'
 
 ## Local but server is demo
@@ -78,9 +84,10 @@ picsell_utils.edit_config(model_selected=clt.model_selected,
 
 print("--#--Start training")
 print("--5--")
-
+print(clt.checkpoint_dir)
+print(clt.config_dir)
 picsell_utils.train(ckpt_dir=clt.checkpoint_dir, 
-                     conf_dir=clt.config_dir)
+                    config_path=os.path.join(clt.config_dir,'pipeline.config'))
 print("---5---")
 
 print("--#--Start export")

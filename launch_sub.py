@@ -6,28 +6,32 @@ import re
 os.environ["PYTHONUNBUFFERED"] = "1"
 import sys
 
-
-
-
-api_token =  sys.argv[1] # prints var1
-experiment_id = sys.argv[2] # prints var2
-
 ### Docker
 # api_token = os.environ['api_token']
 # experiment_id = os.environ['experiment_id']
 # command = "python3 tf_training_od.py"
 # host = 'https://demo.picsellia.com/sdk/'
 
-### Local 
+### Local tf1
 # api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
 # experiment_id = '221586b8-4e04-47f7-bded-1cb502d31c01'
 # command = "python tf_training_od.py {} {}".format(api_token, experiment_id)
 # host = 'http://127.0.0.1:8000/sdk/'
 
+### Local tf2
+# api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
+# experiment_id = '9bfbfa3c-eeaf-4268-ace5-360aabd861e6'
+# command = "python tf_training_od.py {} {}".format(api_token, experiment_id)
+# host = 'http://127.0.0.1:8000/sdk/'
+
 ## Local but server is demo
-# api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
-# experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
-command = "python tf_training_od.py {} {}".format(api_token, experiment_id)
+api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
+experiment_id = '17af67f2-f7b1-4d51-98d2-88d462f91e5f'
+
+
+# api_token =  sys.argv[1] # prints var1
+# experiment_id = sys.argv[2] # prints var2
+command = "python3 tf1_training_od.py {} {}".format(api_token, experiment_id)
 host = 'https://demo.picsellia.com/sdk/'
 
 clt = Client(api_token=api_token, host=host)
