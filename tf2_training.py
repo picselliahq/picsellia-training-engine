@@ -8,29 +8,10 @@ import picsellia_tf2.pxl_tf as pxl_tf
 import picsellia_tf2.pxl_utils as picsell_utils
 import tensorflow as tf
 
-### Docker
-# api_token = os.environ['api_token']
-# experiment_id = os.environ['experiment_id']
-# host = 'https://demo.picsellia.com/sdk/'
-
-### Local tf1
-# api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
-# experiment_id = '221586b8-4e04-47f7-bded-1cb502d31c01'
-# host = 'http://127.0.0.1:8000/sdk/'
-
 ### Local tf2
 api_token = "4d388e237d10b8a19a93517ffbe7ea32ee7f4787"
 experiment_id = '9bfbfa3c-eeaf-4268-ace5-360aabd861e6'
 host = 'http://127.0.0.1:8000/sdk/'
-
-## Local but server is demo
-# api_token = 'aa558b1b31012ee10e5b377ca0b1c41600ba7006'
-# experiment_id = '5d2c6b2b-fc83-473d-a835-101eface24a2'
-# host = 'https://demo.picsellia.com/sdk/'
-
-# api_token =  sys.argv[1] # prints var1
-# experiment_id = sys.argv[2] # prints var2
-# host = 'https://demo.picsellia.com/sdk/'
 
 
 min_score_thresh = 0.5
