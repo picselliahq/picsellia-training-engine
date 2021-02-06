@@ -84,7 +84,7 @@ print("--5--")
 print(clt.checkpoint_dir)
 print(clt.config_dir)
 picsell_utils.train(ckpt_dir=clt.checkpoint_dir, 
-                    config=clt.config_dir)
+                    config_dir=clt.config_dir)
 print("---5---")
 
 print("--#--Start export")
@@ -96,7 +96,7 @@ dict_log = picsell_utils.tf_events_to_dict(clt.checkpoint_dir, 'train')
 
 picsell_utils.export_graph(ckpt_dir=clt.checkpoint_dir, 
                        exported_model_dir=clt.exported_model_dir, 
-                       pipeline_config_dir=clt.config_dir)
+                       config_dir=clt.config_dir)
 print("---9---")
 
 print("--#--Start evaluation")
