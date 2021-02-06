@@ -96,8 +96,8 @@ pxl_utils.infer(
 
 metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(exp.experiment_name), 'eval')
 logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(exp.experiment_name), 'train')
-experiment.store('model-latest', '{}/exported_model.zip'.format(exp.experiment_name))
-experiment.store('config', '{}/config/pipeline.config'.format(exp.experiment_name))
+experiment.store('model-latest')
+experiment.store('config')
 experiment.store('checkpoint-data-latest')
 experiment.store('checkpoint-index-latest')
 for variable in logs.keys():
