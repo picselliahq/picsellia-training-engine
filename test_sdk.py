@@ -11,7 +11,7 @@ project_token = 'b27381b0-0c29-49f7-842a-f5116e61653b'
 
 experiment = Client.Experiment(api_token=api_token, project_token=project_token, host='https://beta.picsellia.com/sdk/v2/')
 
-exp = experiment.checkout('detection-v1', tree=True)
+exp = experiment.checkout('detection-v2', tree=True)
 
 experiment.dl_annotations()
 experiment.dl_pictures()
@@ -22,14 +22,14 @@ train_split = {
     'y': experiment.train_repartition,
     'image_list': experiment.train_list_id
 }
-experiment.log('train-split', train_split, 'bar')
+experiment.log('train-split', train_split, 'bar', replace=True)
 
 train_split = {
     'x': experiment.categories,
     'y': experiment.test_repartition,
     'image_list': experiment.eval_list_id
 }
-experiment.log('test-split', train_split, 'bar')
+experiment.log('test-split', train_split, 'bar', replace=True)
 # parameters = experiment.get_data(name='parameters')[0]["data"]
 # experiment.log('parameters', parameters)
 # pxl_utils.create_record_files(

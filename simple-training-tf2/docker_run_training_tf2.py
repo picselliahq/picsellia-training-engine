@@ -35,14 +35,14 @@ train_split = {
     'y': experiment.train_repartition,
     'image_list': experiment.train_list_id
 }
-experiment.log('train-split', train_split, 'bar')
+experiment.log('train-split', train_split, 'bar', replace=True)
 
 train_split = {
     'x': experiment.categories,
-    'y': experiment.eval_repartition,
+    'y': experiment.test_repartition,
     'image_list': experiment.eval_list_id
 }
-experiment.log('test-split', train_split, 'bar')
+experiment.log('test-split', train_split, 'bar', replace=True)
 parameters = experiment.get_data(name='parameters')
 
 pxl_utils.create_record_files(
