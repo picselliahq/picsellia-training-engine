@@ -68,7 +68,8 @@ picsell_utils.create_record_files(dict_annotations=clt.dict_annotations, train_l
         )
 
 picsell_utils.edit_config(model_selected=clt.model_selected, 
-            config_dir=clt.config_dir,
+            input_config_dir=clt.model_selected,
+            output_config_dir=clt.config_dir,
             record_dir=clt.record_dir, 
             label_map_path=clt.label_path, 
             num_steps=nb_steps,
