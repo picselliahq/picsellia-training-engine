@@ -37,12 +37,12 @@ train_split = {
 }
 experiment.log('train-split', train_split, 'bar', replace=True)
 
-train_split = {
+test_split = {
     'x': experiment.categories,
     'y': experiment.test_repartition,
     'image_list': experiment.eval_list_id
 }
-experiment.log('test-split', train_split, 'bar', replace=True)
+experiment.log('test-split', test_split, 'bar', replace=True)
 parameters = experiment.get_data(name='parameters')
 
 pxl_utils.create_record_files(
@@ -72,7 +72,8 @@ pxl_utils.edit_config(
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
-        config_dir=experiment.config_dir
+        config_dir=experiment.config_dir,
+        steps=None
     )
 
 pxl_utils.evaluate(
@@ -96,14 +97,16 @@ pxl_utils.infer(
 
 metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(exp.experiment_name), 'eval')
 logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(exp.experiment_name), 'train')
-experiment.store('model-latest')
-experiment.store('config')
-experiment.store('checkpoint-data-latest')
-experiment.store('checkpoint-index-latest')
+
 for variable in logs.keys():
     data = {
         'steps': logs[variable]["steps"],
         'values': logs[variable]["values"]
     }
     experiment.log('-'.join(variable.split('/')), data, 'line', replace=True)
+    
 experiment.log('metrics', metrics, 'table', replace=True)
+experiment.store('model-latest')
+experiment.store('config')
+experiment.store('checkpoint-data-latest')
+experiment.store('checkpoint-index-latest')
