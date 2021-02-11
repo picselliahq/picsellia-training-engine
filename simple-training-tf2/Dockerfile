@@ -10,7 +10,7 @@ RUN pip3 install -U setuptools
 
 COPY ./requirements.txt .
 RUN pip3 install -r requirements.txt
-RUN pip3 install --no-cache-dir picsellia_training
+RUN pip3 install --no-cache-dir picsellia
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 ADD start.sh /
 

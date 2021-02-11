@@ -1,10 +1,8 @@
 import os
-from picsellia_training.clientv2 import Client
-from picsellia_training.pxl_exceptions import AuthenticationError
+from picsellia.client import Client
+from picsellia.pxl_exceptions import AuthenticationError
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
-
-host = 'https://beta.picsellia.com/sdk/v2/'
 
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
@@ -14,13 +12,13 @@ api_token = os.environ['api_token']
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
 
-    experiment = Client.Experiment(api_token=api_token, host=host)
+    experiment = Client.Experiment(api_token=api_token)
     exp = experiment.checkout(experiment_id, tree=True, with_file=True)
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
         project_token = os.environ['project_token']
         experiment_name = os.environ['experiment_name']
-        experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
+        experiment = Client.Experiment(api_token=api_token, project_token=project_token)
         exp = experiment.checkout(experiment_name, tree=True, with_file=True)
     else:
         raise AuthenticationError("You must either set the experiment id or the project token + experiment_name")
