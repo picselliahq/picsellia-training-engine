@@ -26,6 +26,7 @@ else:
 experiment.dl_annotations()
 experiment.dl_pictures()
 experiment.generate_labelmap()
+experiment.log('labelmap', experiment.label_map, 'labelmap', replace=True)
 experiment.train_test_split()
 
 train_split = {
