@@ -67,12 +67,12 @@ pxl_utils.edit_config(
         learning_rate=parameters['learning_rate'],
         annotation_type=parameters['annotation_type'],
         eval_number = 5,
+        parameters=parameters,
         )
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
-        config_dir=experiment.config_dir,
-        steps=None
+        config_dir=experiment.config_dir
     )
 
 pxl_utils.evaluate(
