@@ -1,3 +1,5 @@
+
+print('--#--Set up training')
 import os
 from picsellia.client import Client
 from picsellia.pxl_exceptions import AuthenticationError
@@ -43,6 +45,7 @@ test_split = {
 }
 experiment.log('test-split', test_split, 'bar', replace=True)
 parameters = experiment.get_data(name='parameters')
+print('--#--Create records')
 
 pxl_utils.create_record_files(
         dict_annotations=experiment.dict_annotations, 
@@ -69,11 +72,13 @@ pxl_utils.edit_config(
         eval_number = 5,
         parameters=parameters,
         )
+print('--#--Start training')
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
         config_dir=experiment.config_dir
     )
+print('--#--Start eval')
 
 pxl_utils.evaluate(
     experiment.metrics_dir, 
@@ -85,6 +90,8 @@ pxl_utils.export_graph(
     exported_model_dir=experiment.exported_model_dir, 
     config_dir=experiment.config_dir
     )
+print('--#--Start inference')
+
 pxl_utils.infer(
     experiment.record_dir, 
     exported_model_dir=experiment.exported_model_dir, 
@@ -93,6 +100,7 @@ pxl_utils.infer(
     from_tfrecords=True, 
     disp=False
     )
+print('--#--Send to picsellia')
 
 metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(exp.experiment_name), 'eval')
 logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(exp.experiment_name), 'train')

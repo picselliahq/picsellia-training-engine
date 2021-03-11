@@ -17,4 +17,4 @@ Use the 3 Notebooks in Colab or locally to freely:
   - Send results and checkpoints to our back to version everything
 
 To launch training within a container, run the following command : 
-  docker run --rm -d -e api_token=<api_token> -e experiment_id=<experiment_id> -e project_token=<project_token> --gpus all --name training picsellpn/trainingtf2:1.0
+  docker run --rm -d -e api_token=<api_token> -e experiment_id=<experiment_id> -e project_token=<project_token> --gpus all --name training picsellpn/trainingtf2:capture

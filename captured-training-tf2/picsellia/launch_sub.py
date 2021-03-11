@@ -5,11 +5,10 @@ import os
 import re 
 os.environ["PYTHONUNBUFFERED"] = "1"
 import sys
+from picsellia.pxl_exceptions import AuthenticationError
 
-
-command = "python3 docker_run_training_tf2.py"
+command = "python3 picsellia/docker_run_training_tf2.py"
 host = 'https://beta.picsellia.com/sdk/v2/'
-
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
 
@@ -36,18 +35,17 @@ replace_log = False
 buffer = []
 start_buffer = False
 buffer_length = 0
-
 while True:
     output = process.stdout.readline()
-    print(output.decode("utf-8"))
     if output.decode("utf-8")  == '' and process.poll() is not None:
         break
+    print(output.decode("utf-8")) 
     if output:
         if output.decode("utf-8").startswith('--#--'):
             part = output.decode("utf-8")
 
         if output.decode("utf-8").startswith('-----'):
-            progress_line_nb = clt.line_nb
+            progress_line_nb = exp.line_nb
             replace_log = True
 
         if output.decode("utf-8").startswith('--*--'):
