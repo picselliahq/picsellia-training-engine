@@ -3,7 +3,7 @@ from picsellia.client import Client
 from picsellia.pxl_exceptions import AuthenticationError
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
-
+os.chdir('picsellia')
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
 
