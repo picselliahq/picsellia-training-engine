@@ -14,13 +14,13 @@ api_token = os.environ['api_token']
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
 
-    experiment = Client.Experiment(api_token=api_token)
+    experiment = Client.Experiment(api_token=api_token, interactive=False)
     exp = experiment.checkout(experiment_id, tree=True, with_file=True)
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
         project_token = os.environ['project_token']
         experiment_name = os.environ['experiment_name']
-        experiment = Client.Experiment(api_token=api_token, project_token=project_token)
+        experiment = Client.Experiment(api_token=api_token, project_token=project_token, interactive=False)
         exp = experiment.checkout(experiment_name, tree=True, with_file=True)
     else:
         raise AuthenticationError("You must either set the experiment id or the project token + experiment_name")
@@ -73,12 +73,17 @@ pxl_utils.edit_config(
         parameters=parameters,
         )
 print('--#--Start training')
+print("--5--")
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
         config_dir=experiment.config_dir
     )
+
+print("---5---")
+
 print('--#--Start eval')
+print("--9--")
 
 pxl_utils.evaluate(
     experiment.metrics_dir, 
@@ -90,6 +95,8 @@ pxl_utils.export_graph(
     exported_model_dir=experiment.exported_model_dir, 
     config_dir=experiment.config_dir
     )
+print("--9--")
+
 print('--#--Start inference')
 
 pxl_utils.infer(
