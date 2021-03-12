@@ -15,7 +15,7 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
 # RUN useradd appuser && chown -R appuser /picsellia
 # USER appuser
-RUN chown -R 42420 /picsellia
+RUN chown -R 42420:42420 /picsellia
 
 CMD ["/picsellia/docker_run_training_tf2.py"]
 ENTRYPOINT ["python3"]
