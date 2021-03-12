@@ -13,8 +13,8 @@ RUN pip3 install -r requirements.txt --no-cache-dir
 RUN pip3 install --no-cache-dir picsellia
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
-RUN chown -R 42420 /picsellia
 
 CMD ["/picsellia/launch_sub.py"]
 ENTRYPOINT ["python3"]
 COPY . .
+RUN chown -R 42420 /picsellia
