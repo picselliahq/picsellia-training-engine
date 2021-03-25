@@ -1,0 +1,3 @@
+picsellia_yolv5
+pycocotools
+Ipython
