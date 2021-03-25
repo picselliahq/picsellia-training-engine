@@ -1,5 +1,4 @@
 
-print('--#--Set up training')
 import os
 from picsellia.client import Client
 from picsellia.pxl_exceptions import AuthenticationError
@@ -10,8 +9,7 @@ os.chdir('picsellia')
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
 
-api_token = os.environ['api_token']
-
+api_token = os.environ["api_token"]
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
 
@@ -46,8 +44,7 @@ test_split = {
 }
 experiment.log('test-split', test_split, 'bar', replace=True)
 parameters = experiment.get_data(name='parameters')
-print('--#--Create records')
-
+experiment.start_logging_chapter('Create records')
 pxl_utils.create_record_files(
         dict_annotations=experiment.dict_annotations, 
         train_list=experiment.train_list, 
@@ -73,18 +70,19 @@ pxl_utils.edit_config(
         eval_number = 5,
         parameters=parameters,
         )
-print('--#--Start training')
-print("--5--")
+
+experiment.start_logging_chapter('Start training')
+experiment.start_logging_buffer(5)
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
         config_dir=experiment.config_dir
     )
 
-print("---5---")
+experiment.end_logging_buffer()
+experiment.start_logging_chapter('Start eval')
+experiment.start_logging_buffer(9)
 
-print('--#--Start eval')
-print("--9--")
 
 pxl_utils.evaluate(
     experiment.metrics_dir, 
@@ -96,9 +94,9 @@ pxl_utils.export_graph(
     exported_model_dir=experiment.exported_model_dir, 
     config_dir=experiment.config_dir
     )
-print("--9--")
+experiment.end_logging_buffer()
+experiment.start_logging_chapter('Start inference')
 
-print('--#--Start inference')
 
 pxl_utils.infer(
     experiment.record_dir, 
@@ -108,7 +106,7 @@ pxl_utils.infer(
     from_tfrecords=True, 
     disp=False
     )
-print('--#--Send to picsellia')
+experiment.start_logging_chapter('Send to picsellia')
 
 metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(exp.experiment_name), 'eval')
 logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(exp.experiment_name), 'train')

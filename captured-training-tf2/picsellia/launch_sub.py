@@ -11,13 +11,12 @@ command = "python3 picsellia/docker_run_training_tf2.py"
 host = 'https://beta.picsellia.com/sdk/v2/'
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
-
-api_token = os.environ['api_token']
+api_token = os.environ["api_token"]
 
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
 
-    experiment = Client.Experiment(api_token=api_token)
+    experiment = Client.Experiment(api_token=api_token, )
     exp = experiment.checkout(experiment_id)
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
@@ -35,6 +34,7 @@ replace_log = False
 buffer = []
 start_buffer = False
 buffer_length = 0
+exp.send_experiment_logging(part, part)
 while True:
     output = process.stdout.readline()
     if output.decode("utf-8")  == '' and process.poll() is not None:
@@ -77,8 +77,8 @@ while True:
 if buffer != []:
     exp.send_experiment_logging(buffer, part, special='buffer')
 exp.send_experiment_logging(str(process.returncode), part, special='exit_code')
-# if process.returncode == 0 or process.returncode == "0":
-#     exp.update_experiment_status('succeeded')
-# else:
-#     clt.update_experiment_status('failed')
+if process.returncode == 0 or process.returncode == "0":
+    exp.update(status='success')
+else:
+    clt.update_experiment_status(status='failed')
 rc = process.poll()
