@@ -80,5 +80,5 @@ exp.send_experiment_logging(str(process.returncode), part, special='exit_code')
 if process.returncode == 0 or process.returncode == "0":
     exp.update(status='success')
 else:
-    clt.update_experiment_status(status='failed')
+    exp.update(status='failed')
 rc = process.poll()

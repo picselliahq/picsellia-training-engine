@@ -94,6 +94,22 @@ pxl_utils.export_graph(
     exported_model_dir=experiment.exported_model_dir, 
     config_dir=experiment.config_dir
     )
+
+conf, eval = pxl_utils.get_confusion_matrix(
+    input_tfrecord_path=os.path.join(experiment.record_dir, 'eval.record'),
+    model=os.path.join(experiment.exported_model_dir, 'saved_model'),
+    labelmap=experiment.label_map
+    )
+
+
+confusion = {
+    'categories': experiment.label_map.values(),
+    'values': conf
+}
+
+exp.log('confusion-matrix', confusion, 'heatmap', replace=True)
+exp.log('evaluation', eval, 'evaluation', replace=True)
+
 experiment.end_logging_buffer()
 experiment.start_logging_chapter('Start inference')
 
@@ -106,6 +122,7 @@ pxl_utils.infer(
     from_tfrecords=True, 
     disp=False
     )
+
 experiment.start_logging_chapter('Send to picsellia')
 
 metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(exp.experiment_name), 'eval')
