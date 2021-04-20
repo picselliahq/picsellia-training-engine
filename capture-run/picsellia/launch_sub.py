@@ -1,0 +1,87 @@
+import subprocess
+import shlex
+from picsellia.client import Client
+import os
+import re 
+os.environ["PYTHONUNBUFFERED"] = "1"
+import sys
+from picsellia.pxl_exceptions import AuthenticationError
+
+host = 'https://beta.picsellia.com/sdk/v2/'
+if 'api_token' not in os.environ:
+    raise AuthenticationError("You must set an api_token to run this image")
+api_token = os.environ["api_token"]
+
+if "project_token" not in os.environ:
+    raise AuthenticationError("You must set a valid project token to launch runs")
+project_token = os.environ["project_token"]
+
+if "sweep" not in os.environ:
+    raise AuthenticationError("You must set a valid sweep name to launch runs")
+sweep = os.environ["sweep"]
+
+experiment = Client.Experiment(api_token=api_token, project_token=project_token)
+experiment.get_next_run(sweep)
+exp = experiment.checkout(experiment.run["experiment"]["id"])
+os.environ["experiment_id"] = exp.id
+
+filename = exp.download_script()
+
+
+command = "python3 picsellia/{}".format(filename)
+process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+part = "--#--Set up training"
+replace_log = False
+buffer = []
+start_buffer = False
+buffer_length = 0
+exp.send_experiment_logging(part, part)
+while True:
+    output = process.stdout.readline()
+    if output.decode("utf-8")  == '' and process.poll() is not None:
+        break
+    print(output.decode("utf-8")) 
+    if output:
+        if output.decode("utf-8").startswith('--#--'):
+            part = output.decode("utf-8")
+
+        if output.decode("utf-8").startswith('-----'):
+            progress_line_nb = exp.line_nb
+            replace_log = True
+
+        if output.decode("utf-8").startswith('--*--'):
+            replace_log = False
+
+        if re.match("--[0-9]--", output.decode("utf-8")[:6]):
+            start_buffer = True
+            buffer_length = int(output.decode("utf-8")[2])
+
+        if re.match("---[0-9]---", output.decode("utf-8")[:8]):
+            start_buffer = False
+            exp.send_experiment_logging(buffer, part, special='buffer')
+            exp.line_nb += (len(buffer)-1)
+            buffer = []
+
+        if start_buffer:
+            buffer.append(output.decode("utf-8"))
+            if len(buffer)==buffer_length:
+                exp.send_experiment_logging(buffer, part, special='buffer')
+                exp.line_nb += (buffer_length-1)
+                buffer = []
+        else:
+            if not replace_log:
+                exp.send_experiment_logging(output.decode("utf-8"), part)
+            else:
+                exp.line_nb = progress_line_nb
+                exp.send_experiment_logging(output.decode("utf-8"), part)
+        
+if buffer != []:
+    exp.send_experiment_logging(buffer, part, special='buffer')
+exp.send_experiment_logging(str(process.returncode), part, special='exit_code')
+if process.returncode == 0 or process.returncode == "0":
+    exp.update(status='success')
+    exp.update_run(status='success')
+else:
+    exp.update(status='failed')
+    exp.update_run(status='failed')
+rc = process.poll()
