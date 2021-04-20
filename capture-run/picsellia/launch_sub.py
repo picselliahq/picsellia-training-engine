@@ -4,33 +4,40 @@ from picsellia.client import Client
 import os
 import re 
 os.environ["PYTHONUNBUFFERED"] = "1"
+print(os.getcwd())
+os.chdir(os.path.join(os.getcwd(),'capture-run','picsellia'))
 import sys
 from picsellia.pxl_exceptions import AuthenticationError
 
-host = 'https://beta.picsellia.com/sdk/v2/'
-if 'api_token' not in os.environ:
-    raise AuthenticationError("You must set an api_token to run this image")
-api_token = os.environ["api_token"]
+host = 'http://127.0.0.1:8000/sdk/v2/'
+# if 'api_token' not in os.environ:
+#     raise AuthenticationError("You must set an api_token to run this image")
+# api_token = os.environ["api_token"]
 
-if "project_token" not in os.environ:
-    raise AuthenticationError("You must set a valid project token to launch runs")
-project_token = os.environ["project_token"]
+# if "project_token" not in os.environ:
+#     raise AuthenticationError("You must set a valid project token to launch runs")
+# project_token = os.environ["project_token"]
 
-if "sweep" not in os.environ:
-    raise AuthenticationError("You must set a valid sweep name to launch runs")
-sweep = os.environ["sweep"]
+# if "sweep" not in os.environ:
+#     raise AuthenticationError("You must set a valid sweep name to launch runs")
+# sweep = os.environ["sweep"]
 
-experiment = Client.Experiment(api_token=api_token, project_token=project_token)
+api_token = 'ac7a44b7be181774bd088c0099afd449b26bbeb7'
+project_token = 'a0b90c90-3a7e-4dda-b6d0-59d6c4c19804'
+sweep = 'test-sweep'
+
+experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
 experiment.get_next_run(sweep)
+print(experiment.run)
 exp = experiment.checkout(experiment.run["experiment"]["id"])
 os.environ["experiment_id"] = exp.id
 
 filename = exp.download_script()
 
 
-command = "python3 picsellia/{}".format(filename)
+command = "python3 {}/{}".format(os.getcwd(), filename)
 process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-part = "--#--Set up training"
+part = "--#--Start Run"
 replace_log = False
 buffer = []
 start_buffer = False
