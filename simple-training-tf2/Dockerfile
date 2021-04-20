@@ -12,6 +12,7 @@ COPY ./requirements.txt .
 ARG REBUILD=unknown
 RUN pip3 install -r requirements.txt --no-cache-dir
 RUN pip3 install --no-cache-dir picsellia
+ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
 

@@ -103,8 +103,8 @@ conf, eval = pxl_utils.get_confusion_matrix(
 
 
 confusion = {
-    'categories': experiment.label_map.values(),
-    'values': conf
+    'categories': list(experiment.label_map.values()),
+    'values': conf.tolist()
 }
 
 exp.log('confusion-matrix', confusion, 'heatmap', replace=True)
