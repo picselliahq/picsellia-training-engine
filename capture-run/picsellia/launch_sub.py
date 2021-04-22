@@ -5,29 +5,30 @@ import os
 import re 
 os.environ["PYTHONUNBUFFERED"] = "1"
 print(os.getcwd())
-os.chdir(os.path.join(os.getcwd(),'capture-run','picsellia'))
+# os.chdir(os.path.join(os.getcwd(),'capture-run','picsellia'))
+os.chdir('picsellia')
 import sys
 from picsellia.pxl_exceptions import AuthenticationError
 
-host = 'http://127.0.0.1:8000/sdk/v2/'
-# if 'api_token' not in os.environ:
-#     raise AuthenticationError("You must set an api_token to run this image")
-# api_token = os.environ["api_token"]
+# host = 'http://127.0.0.1:8000/sdk/v2/'
+if 'api_token' not in os.environ:
+    raise AuthenticationError("You must set an api_token to run this image")
+api_token = os.environ["api_token"]
 
-# if "project_token" not in os.environ:
-#     raise AuthenticationError("You must set a valid project token to launch runs")
-# project_token = os.environ["project_token"]
+if "project_token" not in os.environ:
+    raise AuthenticationError("You must set a valid project token to launch runs")
+project_token = os.environ["project_token"]
 
-# if "sweep" not in os.environ:
-#     raise AuthenticationError("You must set a valid sweep name to launch runs")
-# sweep = os.environ["sweep"]
+if "run_id" not in os.environ:
+    raise AuthenticationError("You must set a valid run id to launch run")
+run_id = os.environ["run_id"]
 
-api_token = 'ac7a44b7be181774bd088c0099afd449b26bbeb7'
-project_token = 'a0b90c90-3a7e-4dda-b6d0-59d6c4c19804'
-sweep = 'test-sweep'
-
-experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
-experiment.get_next_run(sweep)
+# api_token = 'ac7a44b7be181774bd088c0099afd449b26bbeb7'
+# project_token = 'a0b90c90-3a7e-4dda-b6d0-59d6c4c19804'
+# sweep = 'test-sweep'
+# run_id = ""
+experiment = Client.Experiment(api_token=api_token, project_token=project_token)
+experiment.get_run(run_id)
 print(experiment.run)
 exp = experiment.checkout(experiment.run["experiment"]["id"])
 os.environ["experiment_id"] = exp.id
@@ -91,4 +92,5 @@ if process.returncode == 0 or process.returncode == "0":
 else:
     exp.update(status='failed')
     exp.update_run(status='failed')
+exp.end_run()
 rc = process.poll()
