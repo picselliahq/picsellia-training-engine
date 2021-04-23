@@ -12,9 +12,10 @@ if 'api_token' not in os.environ:
 api_token = os.environ["api_token"]
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
-
-    experiment = Client.Experiment(api_token=api_token, interactive=False)
-    exp = experiment.checkout(experiment_id, tree=True, with_file=True)
+    project_token = os.environ['project_token']
+    experiment = Client.Experiment(api_token=api_token, project_token=project_token, interactive=False)
+    experiment.id = experiment_id
+    exp = experiment.checkout(id=experiment_id, tree=True, with_file=True)
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
         project_token = os.environ['project_token']

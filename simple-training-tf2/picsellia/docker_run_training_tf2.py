@@ -13,7 +13,7 @@ if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
 
     experiment = Client.Experiment(api_token=api_token)
-    exp = experiment.checkout(experiment_id, tree=True, with_file=True)
+    exp = experiment.checkout(id=experiment_id, tree=True, with_file=True)
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
         project_token = os.environ['project_token']
