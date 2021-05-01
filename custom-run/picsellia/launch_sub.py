@@ -3,9 +3,8 @@ import shlex
 from picsellia.client import Client
 import os
 import re 
+
 os.environ["PYTHONUNBUFFERED"] = "1"
-print(os.getcwd())
-# os.chdir(os.path.join(os.getcwd(),'capture-run','picsellia'))
 os.chdir('picsellia')
 import sys
 from picsellia.pxl_exceptions import AuthenticationError
@@ -29,8 +28,9 @@ run_id = os.environ["run_id"]
 # run_id = ""
 experiment = Client.Experiment(api_token=api_token, project_token=project_token)
 experiment.get_run(run_id)
-print(experiment.run)
 
+experiment.install_run_requirements()
+experiment.download_run_data()
 exp = experiment.checkout(experiment.run["experiment"]["id"])
 os.environ["experiment_id"] = exp.id
 
