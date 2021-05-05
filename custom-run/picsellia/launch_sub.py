@@ -47,8 +47,8 @@ buffer_length = 0
 exp.send_experiment_logging(part, part)
 
 last_line = ""
-while True:
-    with open('{}-logs.txt'.format(experiment.run["experiment"]["id"]), 'w') as f:
+with open('{}-logs.txt'.format(experiment.run["experiment"]["id"]), 'w') as f:
+    while True:
         output = process.stdout.readline()
         if output.decode("utf-8")  == '' and process.poll() is not None:
             break
@@ -93,7 +93,7 @@ while True:
 
             if not replace_log:
                 f.write(output.decode("utf-8") + os.linesep)
-        
+            
 if buffer != []:
     exp.send_experiment_logging(buffer, part, special='buffer')
 exp.send_experiment_logging(str(process.returncode), part, special='exit_code')
