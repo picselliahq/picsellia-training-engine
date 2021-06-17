@@ -37,7 +37,7 @@ buffer_length = 0
 exp.send_experiment_logging(part, part)
 last_line = ""
 while True:
-    with open('{}-logs.txt'.format(exp.id), 'w') as f:
+    with open('picsellia/{}-logs.txt'.format(exp.id), 'w') as f:
         output = process.stdout.readline()
         if output.decode("utf-8")  == '' and process.poll() is not None:
             break
@@ -86,6 +86,7 @@ while True:
 if buffer != []:
     exp.send_experiment_logging(buffer, part, special='buffer')
 exp.send_experiment_logging(str(process.returncode), part, special='exit_code')
+exp.store('logs','picsellia/{}-logs.txt'.format(exp.id))
 if process.returncode == 0 or process.returncode == "0":
     exp.update(status='success')
 else:
