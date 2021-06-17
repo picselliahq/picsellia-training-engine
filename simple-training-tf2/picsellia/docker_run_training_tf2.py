@@ -72,7 +72,8 @@ pxl_utils.edit_config(
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
-        config_dir=experiment.config_dir
+        config_dir=experiment.config_dir,
+        log_real_time=experiment,
     )
 
 pxl_utils.evaluate(

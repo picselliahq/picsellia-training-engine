@@ -4,7 +4,6 @@ from picsellia.client import Client
 from picsellia.pxl_exceptions import AuthenticationError
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
-os.chdir('picsellia')
 
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
@@ -73,14 +72,13 @@ pxl_utils.edit_config(
         )
 
 experiment.start_logging_chapter('Start training')
-experiment.start_logging_buffer(5)
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
-        config_dir=experiment.config_dir
+        config_dir=experiment.config_dir,
+        log_real_time=experiment,
     )
 
-experiment.end_logging_buffer()
 experiment.start_logging_chapter('Start eval')
 experiment.start_logging_buffer(9)
 
