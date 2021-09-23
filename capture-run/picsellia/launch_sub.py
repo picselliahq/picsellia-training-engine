@@ -4,13 +4,10 @@ from picsellia.client import Client
 import os
 import re 
 os.environ["PYTHONUNBUFFERED"] = "1"
-print(os.getcwd())
-# os.chdir(os.path.join(os.getcwd(),'capture-run','picsellia'))
 os.chdir('picsellia')
 import sys
 from picsellia.pxl_exceptions import AuthenticationError
 
-# host = 'http://127.0.0.1:8000/sdk/v2/'
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
 api_token = os.environ["api_token"]
@@ -23,13 +20,13 @@ if "run_id" not in os.environ:
     raise AuthenticationError("You must set a valid run id to launch run")
 run_id = os.environ["run_id"]
 
-# api_token = 'ac7a44b7be181774bd088c0099afd449b26bbeb7'
-# project_token = 'a0b90c90-3a7e-4dda-b6d0-59d6c4c19804'
-# sweep = 'test-sweep'
-# run_id = ""
-experiment = Client.Experiment(api_token=api_token, project_token=project_token)
+if "host" not in os.environ:
+    host = "https://app.picsellia.com/sdk/v2/"
+else:
+    host = os.environ["host"]
+
+experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
 experiment.get_run(run_id)
-print(experiment.run)
 
 exp = experiment.checkout(experiment.run["experiment"]["id"])
 os.environ["experiment_id"] = exp.id

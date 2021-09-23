@@ -9,9 +9,10 @@ RUN python3.6 -m pip install --upgrade pip
 RUN pip3 install -U setuptools
 
 COPY ./requirements.txt .
+ARG REBUILD_ALL
 RUN pip3 install -r requirements.txt --no-cache-dir
-# ARG REBUILD=unknown
-RUN pip3 install --no-cache-dir --index-url https://test.pypi.org/simple/ picsellia==5.0
+ARG REBUILD_PICSELLIA
+RUN pip3 install --no-cache-dir picsellia
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
 

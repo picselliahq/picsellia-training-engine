@@ -8,6 +8,7 @@ import os
 import subprocess 
 import yaml 
 import torch
+from picsellia.pxl_exceptions import AuthenticationError
 
 os.chdir('picsellia')
 if 'api_token' not in os.environ:
@@ -15,16 +16,21 @@ if 'api_token' not in os.environ:
 
 api_token = os.environ['api_token']
 
+if "host" not in os.environ:
+    host = "https://app.picsellia.com/sdk/v2/"
+else:
+    host = os.environ["host"]
+
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
 
-    experiment = Client.Experiment(api_token=api_token)
+    experiment = Client.Experiment(api_token=api_token, host=host)
     exp = experiment.checkout(experiment_id, tree=True, with_file=True)
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
         project_token = os.environ['project_token']
         experiment_name = os.environ['experiment_name']
-        experiment = Client.Experiment(api_token=api_token, project_token=project_token)
+        experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
         exp = experiment.checkout(experiment_name, tree=True, with_file=True)
     else:
         raise AuthenticationError("You must either set the experiment id or the project token + experiment_name")
