@@ -1,6 +1,9 @@
 docker build --build-arg REBUILD_ALL="$(date +%Y%m%d)" captured-training-tf2/. -t picsellpn/trainingtf2:capture
 docker push picsellpn/trainingtf2:capture
 
+docker build --build-arg REBUILD_ALL="$(date +%Y%m%d)" captured-training-classif/. -t picsellpn/training-classif:capture
+docker push picsellpn/training-classif:capture
+
 docker build --build-arg REBUILD_ALL="$(date +%Y%m%d)" simple-training-tf2/. -t picsellpn/trainingtf2:1.0
 docker push picsellpn/trainingtf2:1.0
 
