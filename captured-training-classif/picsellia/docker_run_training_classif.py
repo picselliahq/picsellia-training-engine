@@ -66,15 +66,14 @@ for split in splits:
 train_dir = "images/train"
 validation_dir = "images/validation"
 
-for train_img in exp.train_list:
-    filename = train_img.split("/")[-1]
-    label = filename.split("_")[0]
-    os.rename(train_img, f"{train_dir}/{label}/{filename}")
-
-for eval_img in exp.eval_list:
-    filename = eval_img.split("/")[-1]
-    label = filename.split("_")[0]
-    os.rename(eval_img, f"{validation_dir}/{label}/{filename}")
+for image in exp.dict_annotations["annotations"]:
+    label = image["annotations"][0]["label"]
+    image_id = image["internal_picture_id"]
+    filename = image["external_picture_url"]
+    if image_id in exp.train_list_id:
+        os.rename(f'images/{filename}', f"{train_dir}/{label}/{filename}")
+    elif image_id in exp.eval_list_id:
+        os.rename(f'images/{filename}', f"{validation_dir}/{label}/{filename}") 
 
 parameters = exp.get_data("parameters")
 
