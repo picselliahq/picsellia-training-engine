@@ -100,6 +100,11 @@ pxl_utils.export_graph(
     config_dir=experiment.config_dir
     )
 
+experiment.store('model-latest')
+experiment.store('config')
+experiment.store('checkpoint-data-latest')
+experiment.store('checkpoint-index-latest')
+
 conf, eval = pxl_utils.get_confusion_matrix(
     input_tfrecord_path=os.path.join(experiment.record_dir, 'eval.record'),
     model=os.path.join(experiment.exported_model_dir, 'saved_model'),
@@ -141,7 +146,4 @@ for variable in logs.keys():
     experiment.log('-'.join(variable.split('/')), data, 'line', replace=True)
     
 experiment.log('metrics', metrics, 'table', replace=True)
-experiment.store('model-latest')
-experiment.store('config')
-experiment.store('checkpoint-data-latest')
-experiment.store('checkpoint-index-latest')
+

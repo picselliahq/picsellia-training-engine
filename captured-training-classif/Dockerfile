@@ -13,6 +13,7 @@ ARG REBUILD_ALL
 RUN pip3 install -r requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
 RUN pip3 install --no-cache-dir picsellia
+RUN pip3 install keras==2.6.0
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
 
