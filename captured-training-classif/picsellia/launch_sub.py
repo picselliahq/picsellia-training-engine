@@ -108,6 +108,8 @@ exp.store('logs','{}-logs.json'.format(exp.id))
 
 if process.returncode == 0 or process.returncode == "0":
     exp.update(status='success')
+    exp.update_job_status(status='success')
 else:
     exp.update(status='failed')
+    exp.update_job_status(status='failed')
 rc = process.poll()
