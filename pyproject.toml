@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "picsellia-training-engine"
+version = "0.1.0"
+description = ""
+authors = ["ThibautLucas <thibautlucas13@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.7 < 3.9"
+picsellia = {path = "../picsellia-sdk-python", develop = true}
+picsellia-tf2 = {path = "../picsellia-tf2", develop = true}
+
+[tool.poetry.dev-dependencies]
+jupyter = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
