@@ -1,0 +1,3 @@
+picsellia_yolov5==0.1.11
+pycocotools
+Ipython

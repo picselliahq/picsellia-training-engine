@@ -1,12 +1,12 @@
 import subprocess
 import shlex
-from picsellia.client import Client
+from picsellia import Client
 import os
 import re 
 os.environ["PYTHONUNBUFFERED"] = "1"
 os.chdir('picsellia')
 import sys
-from picsellia.pxl_exceptions import AuthenticationError
+from picsellia.exceptions import AuthenticationError
 
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
@@ -25,14 +25,13 @@ if "host" not in os.environ:
 else:
     host = os.environ["host"]
 
-experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
-experiment.get_run(run_id)
-
-exp = experiment.checkout(experiment.run["experiment"]["id"])
+client = Client(api_token=api_token, host=host)
+run = client.get_run_by_id(run_id)
+exp = run.get_experiment()
 os.environ["experiment_id"] = exp.id
 
-filename = exp.download_script()
 
+filename = exp.download_script()
 
 command = "python3 {}/{}".format(os.getcwd(), filename)
 process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -45,7 +44,7 @@ exp.send_experiment_logging(part, part)
 
 last_line = ""
 while True:
-    with open('{}-logs.txt'.format(experiment.run["experiment"]["id"]), 'w') as f:
+    with open('{}-logs.txt'.format(exp.id), 'w') as f:
         output = process.stdout.readline()
         if output.decode("utf-8")  == '' and process.poll() is not None:
             break

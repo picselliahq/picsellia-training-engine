@@ -1,12 +1,12 @@
 import subprocess
 import shlex
-from picsellia.client import Client
+from picsellia import Client
 import os
 import re 
 os.environ["PYTHONUNBUFFERED"] = "1"
 os.chdir('picsellia')
 import sys
-from picsellia.pxl_exceptions import AuthenticationError
+from picsellia.exceptions import AuthenticationError
 
 # host = 'http://127.0.0.1:8000/sdk/v2/'
 if 'api_token' not in os.environ:
@@ -27,15 +27,15 @@ if "host" not in os.environ:
 else:
     host = os.environ["host"]
 
-experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
-experiment.get_run(run_id)
+client = Client(api_token=api_token, host=host)
+run = client.get_run_by_id(run_id)
+experiment = run.get_experiment()
 
 experiment.install_run_requirements()
 experiment.download_run_data()
-exp = experiment.checkout(experiment.run["experiment"]["id"])
-os.environ["experiment_id"] = exp.id
+os.environ["experiment_id"] = experiment.id
 
-filename = exp.download_script()
+filename = experiment.download_script()
 
 
 command = "python3 {}/{}".format(os.getcwd(), filename)
@@ -45,16 +45,16 @@ replace_log = False
 buffer = []
 start_buffer = False
 buffer_length = 0
-exp.send_experiment_logging(part, part)
+experiment.send_experiment_logging(part, part)
 
 last_line = ""
-f = open('{}-logs.txt'.format(experiment.run["experiment"]["id"]), 'w')
+f = open('{}-logs.txt'.format(experiment.id), 'w')
 while True:
     output = process.stdout.readline()
     if output.decode("utf-8")  == '' and process.poll() is not None:
         f.write(last_line)
         f.close()
-        exp.store('logs','{}-logs.txt'.format(exp.id))
+        experiment.store('logs','{}-logs.txt'.format(experiment.id))
         break
     print(output.decode("utf-8")) 
     if output:
@@ -62,7 +62,7 @@ while True:
             part = output.decode("utf-8")
 
         if output.decode("utf-8").startswith('-----'):
-            progress_line_nb = exp.line_nb
+            progress_line_nb = experiment.line_nb
             replace_log = True
 
         if output.decode("utf-8").startswith('--*--'):
@@ -76,22 +76,22 @@ while True:
 
         if re.match("---[0-9]---", output.decode("utf-8")[:8]):
             start_buffer = False
-            exp.send_experiment_logging(buffer, part, special='buffer')
-            exp.line_nb += (len(buffer)-1)
+            experiment.send_experiment_logging(buffer, part, special='buffer')
+            experiment.line_nb += (len(buffer)-1)
             buffer = []
 
         if start_buffer:
             buffer.append(output.decode("utf-8"))
             if len(buffer)==buffer_length:
-                exp.send_experiment_logging(buffer, part, special='buffer')
-                exp.line_nb += (buffer_length-1)
+                experiment.send_experiment_logging(buffer, part, special='buffer')
+                experiment.line_nb += (buffer_length-1)
                 buffer = []
         else:
             if not replace_log:
-                exp.send_experiment_logging(output.decode("utf-8"), part)
+                experiment.send_experiment_logging(output.decode("utf-8"), part)
             else:
-                exp.line_nb = progress_line_nb
-                exp.send_experiment_logging(output.decode("utf-8"), part)
+                experiment.line_nb = progress_line_nb
+                experiment.send_experiment_logging(output.decode("utf-8"), part)
         
         last_line = output.decode("utf-8")
 
@@ -99,13 +99,13 @@ while True:
             a = f.write(output.decode("utf-8") + os.linesep)
         
 if buffer != []:
-    exp.send_experiment_logging(buffer, part, special='buffer')
-exp.send_experiment_logging(str(process.returncode), part, special='exit_code')
+    experiment.send_experiment_logging(buffer, part, special='buffer')
+experiment.send_experiment_logging(str(process.returncode), part, special='exit_code')
 if process.returncode == 0 or process.returncode == "0":
-    exp.update(status='success')
-    exp.update_run(status='success')
+    experiment.update(status='success')
+    experiment.update_run(status='success')
 else:
-    exp.update(status='failed')
-    exp.update_run(status='failed')
-exp.end_run()
+    experiment.update(status='failed')
+    experiment.update_run(status='failed')
+experiment.end_run()
 rc = process.poll()

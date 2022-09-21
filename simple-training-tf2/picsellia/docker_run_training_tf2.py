@@ -1,60 +1,67 @@
 import os
-from picsellia.client import Client
-from picsellia.pxl_exceptions import AuthenticationError
+from picsellia import Client
+from picsellia.exceptions import AuthenticationError
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
 os.chdir('picsellia')
+
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
 
 api_token = os.environ['api_token']
 
+
 if "host" not in os.environ:
-    host = "https://app.picsellia.com/sdk/v2/"
+    host = "https://app.picsellia.com/sdk/v1"
 else:
     host = os.environ["host"]
 
-if "experiment_id" in os.environ:
-    experiment_id = os.environ['experiment_id']
+client = Client(
+    api_token=api_token,
+    host=host
+)
 
-    experiment = Client.Experiment(api_token=api_token, host=host)
-    exp = experiment.checkout(id=experiment_id, tree=True, with_file=True)
+if "experiment_name" in os.environ:
+    experiment_name = os.environ["experiment_name"]
+    if "project_token" in os.environ:
+        project_token = os.environ["project_token"]
+        project = client.get_project_by_id(project_token)
+    elif "project_name" in os.environ:
+        project_name = os.environ["project_name"]
+        project = client.get_project(project_name)
+    experiment = project.get_experiment(experiment_name, tree=True, with_artifacts=True)
 else:
-    if "experiment_name" in os.environ and "project_token" in os.environ:
-        project_token = os.environ['project_token']
-        experiment_name = os.environ['experiment_name']
-        experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host)
-        exp = experiment.checkout(experiment_name, tree=True, with_file=True)
-    else:
-        raise AuthenticationError("You must either set the experiment id or the project token + experiment_name")
+    raise AuthenticationError("You must set the project_token or project_name and experiment_name")
 
-experiment.dl_annotations()
-experiment.dl_pictures()
+
+experiment.download_annotations()
+experiment.download_pictures()
 experiment.generate_labelmap()
+
 experiment.log('labelmap', experiment.label_map, 'labelmap', replace=True)
-experiment.train_test_split()
+train_list, eval_list, train_list_id, eval_list_id, label_train, label_eval, categories = experiment.train_test_split()
 
 train_split = {
-    'x': experiment.categories,
-    'y': experiment.train_repartition,
-    'image_list': experiment.train_list_id
+    'x': categories,
+    'y': label_train,
+    'image_list': train_list_id
 }
 experiment.log('train-split', train_split, 'bar', replace=True)
 
 test_split = {
-    'x': experiment.categories,
-    'y': experiment.test_repartition,
-    'image_list': experiment.eval_list_id
+    'x': categories,
+    'y': label_eval,
+    'image_list': eval_list_id
 }
 experiment.log('test-split', test_split, 'bar', replace=True)
-parameters = experiment.get_data(name='parameters')
+parameters = experiment.get_log(name='parameters')
 
 pxl_utils.create_record_files(
         dict_annotations=experiment.dict_annotations, 
-        train_list=experiment.train_list, 
-        train_list_id=experiment.train_list_id, 
-        eval_list=experiment.eval_list, 
-        eval_list_id=experiment.eval_list_id,
+        train_list=train_list, 
+        train_list_id=train_list_id, 
+        eval_list=eval_list, 
+        eval_list_id=eval_list_id,
         label_path=experiment.label_path, 
         record_dir=experiment.record_dir, 
         tfExample_generator=pxl_tf.tf_vars_generator, 
@@ -104,8 +111,8 @@ confusion = {
     'values': conf.tolist()
 }
 
-exp.log('confusion-matrix', confusion, 'heatmap', replace=True)
-exp.log('evaluation', eval, 'evaluation', replace=True)
+experiment.log('confusion-matrix', confusion, 'heatmap', replace=True)
+experiment.log('evaluation', eval, 'evaluation', replace=True)
 
 pxl_utils.infer(
     experiment.record_dir, 
@@ -116,8 +123,8 @@ pxl_utils.infer(
     disp=False
     )
 
-metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(exp.experiment_name), 'eval')
-logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(exp.experiment_name), 'train')
+metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(experiment.name), 'eval')
+logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(experiment.name), 'train')
 
 for variable in logs.keys():
     data = {
@@ -131,3 +138,4 @@ experiment.store('model-latest')
 experiment.store('config')
 experiment.store('checkpoint-data-latest')
 experiment.store('checkpoint-index-latest')
+experiment.update(status="success")

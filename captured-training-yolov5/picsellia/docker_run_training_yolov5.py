@@ -9,7 +9,6 @@ os.environ["PYTHONUNBUFFERED"] = "1"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 
-os.chdir('picsellia')
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
 
@@ -62,7 +61,6 @@ experiment.log('test-split', test_split, 'bar', replace=True)
 generate_yaml(yamlname=experiment_name, targetdir=YOLODIR, labelmap=experiment.label_map)
 cfg = edit_model_yaml(label_map=experiment.label_map, experiment_name=experiment_name, config_path=experiment.config_dir)
 hyp, opt, device = setup_hyp(experiment_name, cfg, experiment.checkpoint_dir, experiment.get_log('parameters'), experiment.label_map)
-
 train(hyp, opt, opt.device, pxl=experiment)
-
 send_run_to_picsellia(experiment, YOLODIR)
+experiment.update(statut="success")

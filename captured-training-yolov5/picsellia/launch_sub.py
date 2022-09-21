@@ -16,7 +16,7 @@ import logging
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
-command = "python3 docker_run_training_tf2.py"
+command = "python3 docker_run_training_yolov5.py"
 
 if "host" not in os.environ:
     host = "https://app.picsellia.com/sdk/v1"
