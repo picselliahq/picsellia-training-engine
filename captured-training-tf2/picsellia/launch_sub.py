@@ -22,13 +22,21 @@ if "host" not in os.environ:
     host = "https://app.picsellia.com/sdk/v1"
 else:
     host = os.environ["host"]
+    
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")
+
 api_token = os.environ["api_token"]
+
+if "organization_id" not in os.environ:
+    organization_id = None
+else:
+    organization_id = os.environ["organization_id"]
 
 client = Client(
     api_token=api_token,
-    host=host
+    host=host,
+    organization_id=organization_id
 )
 
 if "experiment_name" in os.environ:
@@ -50,7 +58,7 @@ replace_log = False
 buffer = []
 start_buffer = False
 buffer_length = 0
-experiment.send_experiment_logging(part, part)
+experiment.send_logging(part, part)
 logs = {}
 logs[part] = {
     'datetime': str(datetime.now().isoformat()),
@@ -82,7 +90,7 @@ while True:
 
         if re.match("---[0-9]---", text[:8]):
             start_buffer = False
-            experiment.send_experiment_logging(buffer, part, special='buffer')
+            experiment.send_logging(buffer, part, special='buffer')
             experiment.line_nb += (len(buffer)-1)
             buffer = []
 
@@ -90,16 +98,16 @@ while True:
             buffer.append(text)
             logs[part]['logs'][str(experiment.line_nb+len(buffer))] = text
             if len(buffer)==buffer_length:
-                experiment.send_experiment_logging(buffer, part, special='buffer')
+                experiment.send_logging(buffer, part, special='buffer')
                 experiment.line_nb += (buffer_length-1)
                 buffer = []
         else:
             if not replace_log:
-                experiment.send_experiment_logging(text, part)
+                experiment.send_logging(text, part)
                 logs[part]['logs'][str(experiment.line_nb)] = text
             else:
                 experiment.line_nb = progress_line_nb
-                experiment.send_experiment_logging(text, part)
+                experiment.send_logging(text, part)
         
         last_line = text
 
@@ -108,13 +116,13 @@ with open('{}-logs.json'.format(experiment.id), 'w') as f:
     if buffer != []:
         for i, line in enumerate(buffer):
             logs[part]['logs'][str(experiment.line_nb+i)] = line
-        experiment.send_experiment_logging(buffer, part, special='buffer')
+        experiment.send_logging(buffer, part, special='buffer')
     logs["exit_code"] = {
         'exit_code': str(process.returncode),
         'datetime': str(datetime.now().isoformat())
     }
     json.dump(logs, f) 
-experiment.send_experiment_logging(str(process.returncode), part, special='exit_code')
+experiment.send_logging(str(process.returncode), part, special='exit_code')
 experiment.store('logs','{}-logs.json'.format(experiment.id))
 
 if process.returncode == 0 or process.returncode == "0":
