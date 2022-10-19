@@ -11,7 +11,7 @@ os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
 os.chdir('picsellia')
 from datetime import datetime
 from picsellia.exceptions import AuthenticationError
-
+from picsellia.types.enums import ExperimentStatus, JobStatus
 import logging
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
@@ -123,12 +123,12 @@ with open('{}-logs.json'.format(experiment.id), 'w') as f:
     }
     json.dump(logs, f) 
 experiment.send_logging(str(process.returncode), part, special='exit_code')
-experiment.store('logs','{}-logs.json'.format(experiment.id))
+experiment.store_logging_file('logs','{}-logs.json'.format(experiment.id))
 
 if process.returncode == 0 or process.returncode == "0":
-    experiment.update(status='success')
-    experiment.update_job_status(status='success')
+    experiment.update(status=ExperimentStatus.SUCCESS)
+    experiment.update_job_status(status=JobStatus.SUCCESS)
 else:
-    experiment.update(status='failed')
-    experiment.update_job_status(status='failed')
+    experiment.update(status=ExperimentStatus.FAILED)
+    experiment.update_job_status(status=JobStatus.FAILED)
 rc = process.poll()
