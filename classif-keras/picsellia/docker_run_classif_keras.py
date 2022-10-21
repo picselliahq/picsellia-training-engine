@@ -6,6 +6,24 @@ from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
 import logging
 import json
+
+from classification_models.keras import Classifiers
+import json
+from picsellia.client import Client
+from picsellia.types.enums import InferenceType
+import os
+from picsellia.types.enums import Framework
+from picsellia.types.enums import AnnotationFileType
+from picsellia.sdk.asset import Asset, MultiAsset
+import numpy as np
+from PIL import Image
+import tensorflow as tf
+from tensorflow.keras.utils import to_categorical
+import matplotlib.pyplot as plt
+from picsellia.types.enums import LogType
+import keras
+from sklearn.metrics import confusion_matrix
+
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 logging.getLogger('picsellia').setLevel(logging.INFO)
@@ -55,18 +73,17 @@ label_path = pxl_utils.generate_label_map(
     output_path=experiment.base_dir,
 )
 
-train_assets, eval_assets, train_split, test_split, categories = dataset.train_test_split()
+train_assets, eval_assets, count_train, count_eval, labels = dataset.train_test_split()
 
 labelmap = {}
 for x in annotations_dict['categories']:
     labelmap[x['id']] = x['name']
 
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)
-experiment.log('train-split', train_split, 'bar', replace=True)
+experiment.log('train-split', count_train, 'bar', replace=True)
 
-experiment.log('test-split', test_split, 'bar', replace=True)
+experiment.log('test-split', count_eval, 'bar', replace=True)
 parameters = experiment.get_log(name='parameters').data
-
 
 experiment.start_logging_chapter('Create records')
 x = lambda x : os.path.join(experiment.png_dir, x)
@@ -96,78 +113,85 @@ pxl_utils.edit_config(
         eval_number = 5,
         parameters=parameters,
         )
+
 experiment.start_logging_chapter('Start training')
 
-pxl_utils.train(
-        ckpt_dir=experiment.checkpoint_dir, 
-        config_dir=experiment.config_dir,
-        log_real_time=experiment,
-    )
+count_train['y'].insert(0, 0)
+count_eval['y'].insert(0, 0)
+train_assets = MultiAsset(dataset.connexion, dataset.id, train_assets)
+eval_assets = MultiAsset(dataset.connexion, dataset.id, eval_assets)
 
-experiment.start_logging_chapter('Start evaluation')
+image_path = './MAT_images/'
 
-experiment.start_logging_buffer(9)
+train_assets.download(target_path=os.path.join(experiment.img_dir, 'train'))
+eval_assets.download(target_path=os.path.join(experiment.img_dir, 'eval'))
+
+n_classes = len(labelmap)
+
+def dataset(assets, count, dataset_type, new_size):
+
+    X = []
+    for i in range(len(assets)):
+        path = image_path + dataset_type + '/' + assets[i].filename
+        x = Image.open(path).convert('RGB')
+        x = x.resize(new_size)
+        x = np.array(x)
+        X.append(x)
+
+    y = np.zeros(len(assets))
+    indices = np.cumsum(count['y'])
+    for i in range(len(indices)-1):
+        y[indices[i]:indices[i+1]] = np.ones(len(y[indices[i]:indices[i+1]]))*(i)
+    y = to_categorical(y, n_classes)
+
+    return np.asarray(X), y
+
+X_train, y_train = dataset(train_assets, count_train, 'train', (parameters['image_size'], parameters['image_size']))
+X_eval, y_eval = dataset(eval_assets, count_eval, 'eval', (parameters['image_size'], parameters['image_size']))
+
+experiment.log(name='parameters', data=parameters, type=LogType.TABLE)
+
+ResNet18, preprocess_input = Classifiers.get('resnet18')
+
+X_train = preprocess_input(X_train)
+
+# build model
+
+# base_model = create_model()
+
+# base_model.load_weights(checkpoint_path)
 
 
-pxl_utils.evaluate(
-    experiment.metrics_dir, 
-    experiment.config_dir, 
-    experiment.checkpoint_dir
-    )        
-pxl_utils.export_graph(
-    ckpt_dir=experiment.checkpoint_dir, 
-    exported_model_dir=experiment.exported_model_dir, 
-    config_dir=experiment.config_dir
-    )
-experiment.end_logging_buffer()
-experiment.start_logging_chapter('Store artifacts')
+base_model = ResNet18(input_shape=(parameters['image_size'],parameters['image_size'],3), weights='imagenet', include_top=False)
+x = keras.layers.GlobalAveragePooling2D()(base_model.output)
+output = keras.layers.Dense(n_classes, activation='softmax')(x)
+model = keras.models.Model(inputs=[base_model.input], outputs=[output])
 
-experiment.store('model-latest')
-experiment.store('config')
-experiment.store('checkpoint-data-latest')
-experiment.store('checkpoint-index-latest')
+# train
+model.compile(optimizer='SGD', loss='categorical_crossentropy', metrics=['accuracy'])
 
+checkpoint_path = "training_1/cp.ckpt"
+checkpoint_dir = os.path.dirname(checkpoint_path)
 
-experiment.start_logging_chapter('Send logs')
+cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+                                                 save_weights_only=True,
+                                                 verbose=1)
 
-metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(experiment.name), 'eval')
-logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(experiment.name), 'train')
+history = model.fit(X_train, y_train, epochs = parameters['epochs'], callbacks=[cp_callback])
 
-for variable in logs.keys():
-    data = {
-        'steps': logs[variable]["steps"],
-        'values': logs[variable]["values"]
-    }
-    experiment.log('-'.join(variable.split('/')), data, 'line', replace=True)
-    
-experiment.log('metrics', metrics, 'table', replace=True)
+experiment.store(name = 'checkpoint', path = checkpoint_path + '/' + 'checkpoint')
+experiment.store(name = 'cp.ckpt.index', path = checkpoint_path + '/' + 'cp.ckpt.index')
+experiment.store(name = 'cp.ckpt.data-00000-of-00001', path = checkpoint_path + '/' + 'cp.ckpt.data-00000-of-00001')
 
-experiment.start_logging_chapter('Compute Confusion matrix')
+predictions = model.evaluate(X_eval)
 
-conf, eval = pxl_utils.get_confusion_matrix(
-    input_tfrecord_path=os.path.join(experiment.record_dir, 'eval.record'),
-    model=os.path.join(experiment.exported_model_dir, 'saved_model'),
-    labelmap=labelmap
-)
-
+cm=confusion_matrix(y_eval.argmax(axis = 1), predictions.argmax(axis = 1))
 
 confusion = {
-    'categories': list(labelmap.values()),
-    'values': conf.tolist()
+    'categories': count_train['x'],
+    'values': cm.tolist()
 }
+experiment.log(name='confusion', data=confusion, type=LogType.HEATMAP)
 
-experiment.log('confusion-matrix', confusion, 'heatmap', replace=True)
-experiment.log('evaluation', eval, 'evaluation', replace=True)
-
-
-experiment.start_logging_chapter('Start inference')
-
-
-pxl_utils.infer(
-    experiment.record_dir, 
-    exported_model_dir=experiment.exported_model_dir, 
-    label_map_path=label_path, 
-    results_dir=experiment.results_dir, 
-    from_tfrecords=True, 
-    disp=False
-)
+for k, v in history.history.items():
+    experiment.log(k, v, LogType.LINE)
