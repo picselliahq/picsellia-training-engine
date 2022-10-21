@@ -123,7 +123,7 @@ with open('{}-logs.json'.format(experiment.id), 'w') as f:
     }
     json.dump(logs, f) 
 experiment.send_logging(str(process.returncode), part, special='exit_code')
-experiment.store_logging_file('logs','{}-logs.json'.format(experiment.id))
+experiment.store_logging_file('{}-logs.json'.format(experiment.id))
 
 if process.returncode == 0 or process.returncode == "0":
     experiment.update(status=ExperimentStatus.SUCCESS)
