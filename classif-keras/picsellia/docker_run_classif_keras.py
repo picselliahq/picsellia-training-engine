@@ -2,24 +2,18 @@ import os
 from picsellia import Client
 from picsellia.types.enums import AnnotationFileType
 from picsellia.exceptions import AuthenticationError
-from picsellia_tf2 import pxl_utils
-from picsellia_tf2 import pxl_tf
 import logging
 import json
 
 from classification_models.keras import Classifiers
 import json
 from picsellia.client import Client
-from picsellia.types.enums import InferenceType
 import os
-from picsellia.types.enums import Framework
 from picsellia.types.enums import AnnotationFileType
-from picsellia.sdk.asset import Asset, MultiAsset
 import numpy as np
 from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
-import matplotlib.pyplot as plt
 from picsellia.types.enums import LogType
 import keras
 from sklearn.metrics import confusion_matrix
@@ -64,14 +58,10 @@ else:
 experiment.download_artifacts(with_tree=True)
 
 dataset = experiment.list_attached_dataset_versions()[0]
-dataset.download(experiment.png_dir)
+
 annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, experiment.base_dir)
 f = open(annotation_path)
 annotations_dict = json.load(f)
-label_path = pxl_utils.generate_label_map(
-    classes=[x['name'] for x in annotations_dict['categories']],
-    output_path=experiment.base_dir,
-)
 
 train_assets, eval_assets, count_train, count_eval, labels = dataset.train_test_split()
 
@@ -85,41 +75,10 @@ experiment.log('train-split', count_train, 'bar', replace=True)
 experiment.log('test-split', count_eval, 'bar', replace=True)
 parameters = experiment.get_log(name='parameters').data
 
-experiment.start_logging_chapter('Create records')
-x = lambda x : os.path.join(experiment.png_dir, x)
-
-pxl_utils.create_record_files(
-        annotation_path=annotation_path,
-        train_list=[x(e.filename) for e in train_assets],
-        train_list_id=[e.id for e in train_assets],
-        eval_list=[x(e.filename) for e in eval_assets],
-        eval_list_id=[e.id for e in eval_assets],
-        label_path=label_path,
-        record_dir=experiment.record_dir,
-        tfExample_generator=pxl_tf.tf_vars_generator,
-        annotation_type=parameters['annotation_type']
-        )
-
-pxl_utils.edit_config(
-        model_selected=experiment.checkpoint_dir, 
-        input_config_dir=experiment.config_dir,
-        output_config_dir=experiment.config_dir,
-        record_dir=experiment.record_dir, 
-        label_map_path=label_path, 
-        num_steps=parameters["steps"],
-        batch_size=parameters['batch_size'],
-        learning_rate=parameters['learning_rate'],
-        annotation_type=parameters['annotation_type'],
-        eval_number = 5,
-        parameters=parameters,
-        )
-
 experiment.start_logging_chapter('Start training')
 
 count_train['y'].insert(0, 0)
 count_eval['y'].insert(0, 0)
-train_assets = MultiAsset(dataset.connexion, dataset.id, train_assets)
-eval_assets = MultiAsset(dataset.connexion, dataset.id, eval_assets)
 
 image_path = './MAT_images/'
 
@@ -149,7 +108,6 @@ def dataset(assets, count, dataset_type, new_size):
 X_train, y_train = dataset(train_assets, count_train, 'train', (parameters['image_size'], parameters['image_size']))
 X_eval, y_eval = dataset(eval_assets, count_eval, 'eval', (parameters['image_size'], parameters['image_size']))
 
-experiment.log(name='parameters', data=parameters, type=LogType.TABLE)
 
 ResNet18, preprocess_input = Classifiers.get('resnet18')
 
