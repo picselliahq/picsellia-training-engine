@@ -48,6 +48,8 @@ if "experiment_name" in os.environ:
 else:
     raise AuthenticationError("You must set the project_token or project_name and experiment_name")
 
+experiment.start_logging_chapter('Dowloading files')
+
 experiment.download_artifacts(with_tree=True)
 
 artifact = experiment.get_artifact('keras-model')
@@ -80,13 +82,16 @@ eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'))
 
 n_classes = len(labelmap)
 
+
 X_train, y_train = dataset_utils(experiment, train_assets, count_train, 'train', (parameters['image_size'], parameters['image_size']), n_classes)
 X_eval, y_eval = dataset_utils(experiment, eval_assets, count_eval, 'eval', (parameters['image_size'], parameters['image_size']), n_classes)
+
+experiment.start_logging_chapter('Init Model')
 
 Inceptionv3, preprocess_input = Classifiers.get('inceptionv3')
 X_train = preprocess_input(X_train)
 
-base_model = Inceptionv3(input_shape=(parameters['image_size'],parameters['image_size'],3), include_top=False)
+base_model = Inceptionv3(input_shape=(parameters['image_size'],parameters['image_size'],3), include_top=False, weights=None)
 
 try:
     base_model.load_weights(os.path.join(experiment.checkpoint_dir, model_name))
@@ -101,17 +106,23 @@ except ValueError:
 
 model.compile(optimizer='SGD', loss='categorical_crossentropy', metrics=['accuracy'])
 
-cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join(experiment.exported_model_dir, 'cp.ckpt'),
-                                                 save_weights_only=True,
-                                                 verbose=1)
+# cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join(experiment.exported_model_dir, 'cp.ckpt'),
+#                                                  save_weights_only=True,
+#                                                  verbose=1)
 
-history = model.fit(X_train, y_train, epochs = int(parameters["epochs"]), callbacks=[cp_callback])
+experiment.start_logging_chapter('Training')
+
+history = model.fit(X_train, y_train, epochs = int(parameters["epochs"]))
+
+experiment.start_logging_chapter('Store model')
 
 model.save(os.path.join(experiment.exported_model_dir, 'model.h5'))
-
+model.save_weights(os.path.join(experiment.exported_model_dir, 'cp.ckpt'))
 experiment.store(name = 'keras-model', path = os.path.join(experiment.exported_model_dir, 'model.h5'))
 experiment.store(name = 'checkpoint-index', path = os.path.join(experiment.exported_model_dir, 'cp.ckpt.index'))
 experiment.store(name = 'checkpoint-data', path = os.path.join(experiment.exported_model_dir, 'cp.ckpt.data-00000-of-00001'))
+
+experiment.start_logging_chapter('Evaluation')
 
 predictions = model.predict(X_eval)
 cm=confusion_matrix(y_eval.argmax(axis = 1), predictions.argmax(axis = 1))

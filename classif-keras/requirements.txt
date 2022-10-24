@@ -1,5 +1,3 @@
-tensorflow
-image-classifiers
-scikit-image
-scikit-learn
-Keras-Applications
+tensorflow==2.10.0
+scikit-learn==1.1.2
+Keras-Applications==1.0.8

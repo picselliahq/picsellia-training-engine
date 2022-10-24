@@ -13,13 +13,14 @@ RUN python3.8 -m pip install --upgrade pip
 RUN pip3 install -U setuptools
 
 ARG REBUILD_ALL
-RUN pip3 install --no-cache-dir picsellia_tf2
+COPY ./requirements.txt /requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 ARG REBUILD_PICSELLIA
 RUN pip3 install --no-cache-dir picsellia
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
 
-CMD ["/picsellia/docker_run_classif_keras.py"]
+CMD ["/picsellia/launch_sub.py"]
 ENTRYPOINT ["python3"]
 RUN chown -R 42420:42420 /picsellia
