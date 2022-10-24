@@ -156,7 +156,6 @@ confusion = {
 }
 
 experiment.log('confusion-matrix', confusion, 'heatmap', replace=True)
-experiment.log('evaluation', eval, 'evaluation', replace=True)
 
 
 experiment.start_logging_chapter('Start inference')
