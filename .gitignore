@@ -142,3 +142,9 @@ checkpoint
 *.json
 *.JPG
 /scripts
+
+/picsellia_yolov5
+
+*.jpeg
+*.png 
+*.pt

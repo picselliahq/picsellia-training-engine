@@ -118,6 +118,8 @@ experiment.start_logging_chapter('Store model')
 
 model.save(os.path.join(experiment.exported_model_dir, 'model.h5'))
 model.save_weights(os.path.join(experiment.exported_model_dir, 'cp.ckpt'))
+tf.saved_model.save(model, os.path.join(experiment.exported_model_dir, 'saved_model'))
+experiment.store("model-latest", os.path.join(experiment.exported_model_dir, 'saved_model'), do_zip=True)
 experiment.store(name = 'keras-model', path = os.path.join(experiment.exported_model_dir, 'model.h5'))
 experiment.store(name = 'checkpoint-index', path = os.path.join(experiment.exported_model_dir, 'cp.ckpt.index'))
 experiment.store(name = 'checkpoint-data', path = os.path.join(experiment.exported_model_dir, 'cp.ckpt.data-00000-of-00001'))

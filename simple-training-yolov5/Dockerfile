@@ -4,8 +4,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && apt install -y build-essential 
-RUN apt-get install --no-install-recommends -y python3.6 python3-pip libpq-dev python3-dev python3-wheel libgtk2.0-dev libgl1-mesa-dev && rm -rf /var/lib/apt/lists/*
-RUN python3.6 -m pip install --upgrade pip
+RUN apt-get install --no-install-recommends -y gcc python3.8 python3-pip libpq-dev python3-dev python3-wheel libgtk2.0-dev libgl1-mesa-dev && rm -rf /var/lib/apt/lists/*
+RUN python3.8 -m pip install --upgrade pip
 RUN pip3 install -U setuptools
 
 COPY ./requirements.txt .
@@ -21,3 +21,4 @@ CMD ["/picsellia/docker_run_training_yolov5.py"]
 ENTRYPOINT ["python3"]
 COPY . .
 RUN chown -R 42420:42420 /picsellia
+
