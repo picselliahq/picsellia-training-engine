@@ -1,5 +1,0 @@
-names:
-- object
-nc: 1
-train: training-yolo/YOLO_DATASET/images/train
-val: training-yolo/YOLO_DATASET/images/test

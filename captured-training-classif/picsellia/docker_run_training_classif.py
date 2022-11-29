@@ -8,6 +8,9 @@ from picsellia.client import Client
 from picsellia.pxl_exceptions import AuthenticationError
 from sklearn.metrics import classification_report, confusion_matrix
 
+os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
+os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")

@@ -11,6 +11,7 @@ import keras
 from picsellia.exceptions import AuthenticationError
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
 if 'api_token' not in os.environ:

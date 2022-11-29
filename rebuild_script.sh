@@ -4,6 +4,9 @@ docker push picsellpn/trainingtf2:capture
 docker build captured-training-classif/. -t picsellpn/training-classif:capture
 docker push picsellpn/training-classif:capture
 
+docker build captured-classification-keras/. -t picsellpn/classification-keras:capture
+docker push picsellpn/classification-keras:capture
+
 docker build simple-training-tf2/. -t picsellpn/trainingtf2:1.0
 docker push picsellpn/trainingtf2:1.0
 

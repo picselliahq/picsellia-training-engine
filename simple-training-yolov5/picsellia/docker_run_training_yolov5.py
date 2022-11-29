@@ -1,5 +1,6 @@
 from picsellia import Client
 from picsellia_yolov5.yolov5.train import train
+from picsellia_yolov5.yolov5.models.export import export
 from picsellia.exceptions import AuthenticationError
 from picsellia.types.enums import AnnotationFileType, LogType
 from picsellia_yolov5 import utils

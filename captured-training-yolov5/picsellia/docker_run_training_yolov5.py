@@ -6,8 +6,9 @@ import os
 from picsellia.exceptions import AuthenticationError
 
 os.environ["PYTHONUNBUFFERED"] = "1"
-os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
+os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 if 'api_token' not in os.environ:
     raise AuthenticationError("You must set an api_token to run this image")

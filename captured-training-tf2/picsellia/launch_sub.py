@@ -5,8 +5,9 @@ import os
 import re 
 import json
 os.environ["PYTHONUNBUFFERED"] = "1"
-os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
+os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 os.chdir('picsellia')
 from datetime import datetime

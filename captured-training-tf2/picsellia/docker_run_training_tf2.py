@@ -8,6 +8,7 @@ from picsellia_tf2 import pxl_tf
 import logging
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
 if 'api_token' not in os.environ:
@@ -72,14 +73,13 @@ x = lambda x : os.path.join(experiment.png_dir, x)
 
 pxl_utils.create_record_files(
         annotation_path=annotation_path,
-        train_list=[x(e.filename) for e in train_assets],
-        train_list_id=[e.id for e in train_assets],
-        eval_list=[x(e.filename) for e in eval_assets],
-        eval_list_id=[e.id for e in eval_assets],
+        train_list=train_assets,
+        eval_list=eval_assets,
         label_path=label_path,
         record_dir=experiment.record_dir,
         tfExample_generator=pxl_tf.tf_vars_generator,
-        annotation_type=parameters['annotation_type']
+        annotation_type=parameters['annotation_type'],
+        imgdir=experiment.png_dir
         )
 
 pxl_utils.edit_config(

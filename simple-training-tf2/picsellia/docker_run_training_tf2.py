@@ -72,14 +72,13 @@ x = lambda x : os.path.join(experiment.png_dir, x)
 
 pxl_utils.create_record_files(
         annotation_path=annotation_path,
-        train_list=[x(e.filename) for e in train_assets],
-        train_list_id=[e.id for e in train_assets],
-        eval_list=[x(e.filename) for e in eval_assets],
-        eval_list_id=[e.id for e in eval_assets],
+        train_list=train_assets,
+        eval_list=eval_assets,
         label_path=label_path,
         record_dir=experiment.record_dir,
         tfExample_generator=pxl_tf.tf_vars_generator,
-        annotation_type=parameters['annotation_type']
+        annotation_type=parameters["annotation_type"],
+        imgdir=experiment.png_dir
         )
 
 pxl_utils.edit_config(

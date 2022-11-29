@@ -148,3 +148,4 @@ checkpoint
 *.jpeg
 *.png 
 *.pt
+.env
