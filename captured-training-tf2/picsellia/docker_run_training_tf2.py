@@ -2,7 +2,6 @@
 import os
 from picsellia import Client
 from picsellia.types.enums import AnnotationFileType
-from picsellia.exceptions import AuthenticationError
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
 import logging
@@ -12,7 +11,7 @@ os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
 if 'api_token' not in os.environ:
-    raise AuthenticationError("You must set an api_token to run this image")
+    raise RuntimeError("You must set an api_token to run this image")
 
 api_token = os.environ["api_token"]
 
@@ -42,7 +41,7 @@ if "experiment_name" in os.environ:
         project = client.get_project(project_name)
     experiment = project.get_experiment(experiment_name)
 else:
-    raise AuthenticationError("You must set the project_token or project_name and experiment_name")
+    raise RuntimeError("You must set the project_token or project_name and experiment_name")
 
 experiment.download_artifacts(with_tree=True)
 

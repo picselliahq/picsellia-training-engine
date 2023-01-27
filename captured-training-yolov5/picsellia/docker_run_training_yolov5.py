@@ -1,17 +1,18 @@
 from picsellia import Client
-from picsellia_yolov5.utils import to_yolo, find_matching_annotations, edit_model_yaml, generate_yaml, Opt, setup_hyp
-from picsellia_yolov5.utils import send_run_to_picsellia
 from picsellia_yolov5.yolov5.train import train
+from picsellia_yolov5.yolov5.models.export import export
+from picsellia.types.enums import AnnotationFileType, LogType
+from picsellia_yolov5 import utils
+import json 
 import os 
-from picsellia.exceptions import AuthenticationError
+
 
 os.environ["PYTHONUNBUFFERED"] = "1"
-os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
+os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 
 if 'api_token' not in os.environ:
-    raise AuthenticationError("You must set an api_token to run this image")
+    raise RuntimeError("You must set an api_token to run this image")
 
 api_token = os.environ['api_token']
 
@@ -27,41 +28,77 @@ client = Client(
 
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
-    experiment = client.get_experiment_by_id(experiment_id, tree=True, with_artifacts=True)
+    experiment = client.get_experiment_by_id(experiment_id)
+    experiment.download_artifacts(with_tree=True)
+
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
         project_token = os.environ['project_token']
         experiment_name = os.environ['experiment_name']
         project = client.get_project_by_id(project_token)
-        experiment = project.get_experiment(experiment_name, tree=True, with_artifacts=True)
+        experiment = project.get_experiment(experiment_name)
+        experiment.download_artifacts(with_tree=True)
     else:
-        raise AuthenticationError("You must either set the experiment id or the project token + experiment_name")
+        raise RuntimeError("You must either set the experiment id or the project token + experiment_name")
 
-experiment.download_annotations()
-experiment.download_pictures()
-experiment.generate_labelmap()
-experiment.log('labelmap', experiment.label_map, 'labelmap', replace=True)
+dataset = experiment.list_attached_dataset_versions()[0]
+dataset.download(experiment.png_dir)
 
-YOLODIR = 'YOLO-{}'.format(experiment_name)
-train_set, test_set = to_yolo(pxl_annotations_dict=experiment.dict_annotations,labelmap=experiment.label_map, base_imgdir=experiment.png_dir, targetdir=YOLODIR, prop=0.7, copy_image=False) 
+annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, experiment.base_dir)
+labels = dataset.list_labels()
+labelmap = {}
+for i, label in enumerate(labels):
+    labelmap[str(i+1)] = label.name
+experiment.log('labelmap', labelmap, LogType.TABLE, replace=True)
 
-train_split = {
-    'x': train_set["categories"],
-    'y': train_set["train_repartition"],
-    'image_list': train_set["image_list"],
-}
+targetdir = 'YOLO-{}'.format(experiment_name)
+
+
+with open(annotation_path, "r") as f:
+    annotations = json.load(f)
+
+base_imgdir = experiment.png_dir
+prop = 0.7
+
+train_assets, test_assets, train_split, test_split, labels = dataset.train_test_split(prop=prop)
+utils.to_yolo(
+    assets=train_assets, 
+    annotations=annotations, 
+    base_imgdir=base_imgdir,
+    targetdir=targetdir, 
+    copy_image=True, 
+    split="train"
+)
+utils.to_yolo(
+    assets=test_assets, 
+    annotations=annotations, 
+    base_imgdir=base_imgdir,
+    targetdir=targetdir, 
+    copy_image=True, 
+    split="test"
+)
+
+
 experiment.log('train-split', train_split, 'bar', replace=True)
-
-test_split = {
-    'x': test_set["categories"],
-    'y': test_set["train_repartition"],
-    'image_list': test_set["image_list"],
-}
 experiment.log('test-split', test_split, 'bar', replace=True)
+parameters = experiment.get_log(name='parameters').data
 
-generate_yaml(yamlname=experiment_name, targetdir=YOLODIR, labelmap=experiment.label_map)
-cfg = edit_model_yaml(label_map=experiment.label_map, experiment_name=experiment_name, config_path=experiment.config_dir)
-hyp, opt, device = setup_hyp(experiment_name, cfg, experiment.checkpoint_dir, experiment.get_log('parameters'), experiment.label_map)
-train(hyp, opt, opt.device, pxl=experiment)
-send_run_to_picsellia(experiment, YOLODIR)
-experiment.update(statut="success")
+
+data_yaml_path = utils.generate_yaml(
+    yamlname=experiment.name,
+    datatargetdir=experiment.base_dir, 
+    imgdir=targetdir, 
+    labelmap=labelmap
+    )
+cfg = utils.edit_model_yaml(label_map=labelmap, experiment_name=experiment.name, config_path=experiment.config_dir)
+hyp, opt, device = utils.setup_hyp(
+    experiment = experiment,
+    data_yaml_path=data_yaml_path,
+    config_path=cfg,
+    params=parameters,
+    label_map=labelmap
+    )
+
+model = train(hyp, opt, opt.device, pxl=experiment)
+
+utils.send_run_to_picsellia(experiment, targetdir)

@@ -11,7 +11,6 @@ os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 os.chdir('picsellia')
 from datetime import datetime
-from picsellia.exceptions import AuthenticationError
 from picsellia.types.enums import ExperimentStatus, JobStatus
 import logging
 
@@ -25,7 +24,7 @@ else:
     host = os.environ["host"]
     
 if 'api_token' not in os.environ:
-    raise AuthenticationError("You must set an api_token to run this image")
+    raise RuntimeError("You must set an api_token to run this image")
 
 api_token = os.environ["api_token"]
 
@@ -50,7 +49,7 @@ if "experiment_name" in os.environ:
         project = client.get_project(project_name)
     experiment = project.get_experiment(experiment_name)
 else:
-    raise AuthenticationError("You must set the project_token or project_name and experiment_name")
+    raise RuntimeError("You must set the project_token or project_name and experiment_name")
 
 
 process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
