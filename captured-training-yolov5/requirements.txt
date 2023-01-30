@@ -1,3 +1,3 @@
-picsellia_yolov5==0.1.13
+picsellia_yolov5==0.1.14
 pycocotools
 Ipython
