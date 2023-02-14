@@ -4,7 +4,7 @@ from picsellia_yolov5.utils.torch_utils import select_device
 from picsellia_yolov5.utils.general import check_file, check_yaml, increment_path
 from picsellia_yolov5 import picsellia_utils
 
-from picsellia.types.enums import AnnotationFileType, LogType
+from picsellia.types.enums import AnnotationFileType
 from picsellia.sdk.asset import MultiAsset
 
 import random
