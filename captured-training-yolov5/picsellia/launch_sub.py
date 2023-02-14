@@ -11,7 +11,7 @@ os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 os.chdir('picsellia')
 from datetime import datetime
-from picsellia.types.enums import ExperimentStatus
+from picsellia.types.enums import ExperimentStatus, JobStatus
 import logging
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
@@ -41,8 +41,7 @@ if "experiment_name" in os.environ:
         project = client.get_project(project_name)
     experiment = project.get_experiment(experiment_name)
 else:
-    raise RuntimeError("You must set the project_token or project_name and experiment_name")
-
+    raise Exception("You must set the project_token or project_name and experiment_name")
 
 process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 part = "--#--Set up training"

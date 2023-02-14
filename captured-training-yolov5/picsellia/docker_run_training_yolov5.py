@@ -3,7 +3,7 @@ from picsellia_yolov5.yolov5.train import train
 from picsellia_yolov5.yolov5.models.export import export
 from picsellia.types.enums import AnnotationFileType, LogType
 from picsellia_yolov5 import utils
-import json 
+import json
 import os 
 
 
@@ -49,7 +49,7 @@ labels = dataset.list_labels()
 labelmap = {}
 for i, label in enumerate(labels):
     labelmap[str(i+1)] = label.name
-experiment.log('labelmap', labelmap, LogType.TABLE, replace=True)
+experiment.log('labelmap', labelmap, LogType.LABELMAP, replace=True)
 
 targetdir = 'YOLO-{}'.format(experiment_name)
 
@@ -97,8 +97,8 @@ hyp, opt, device = utils.setup_hyp(
     config_path=cfg,
     params=parameters,
     label_map=labelmap
-    )
+)
 
-model = train(hyp, opt, opt.device, pxl=experiment)
+model = train(hyp, opt, device, pxl=experiment)
 
-utils.send_run_to_picsellia(experiment, targetdir)
+utils.send_run_to_picsellia(experiment, experiment_name)
