@@ -8,34 +8,42 @@ from picsellia.client import Client
 from picsellia.pxl_exceptions import AuthenticationError
 from sklearn.metrics import classification_report, confusion_matrix
 
-os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
+os.environ["PYTHONUNBUFFERED"] = "1"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
+os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 
 if 'api_token' not in os.environ:
-    raise AuthenticationError("You must set an api_token to run this image")
+    raise RuntimeError("You must set an api_token to run this image")
 
-api_token = os.environ["api_token"]
+api_token = os.environ['api_token']
 
 if "host" not in os.environ:
-    host = "https://app.picsellia.com/sdk/v2/"
+    host = "https://app.picsellia.com/sdk/v1"
 else:
     host = os.environ["host"]
 
+client = Client(
+    api_token=api_token,
+    host=host
+)
+
 if "experiment_id" in os.environ:
     experiment_id = os.environ['experiment_id']
-    project_token = os.environ['project_token']
-    experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host, interactive=False)
-    experiment.id = experiment_id
-    exp = experiment.checkout(id=experiment_id, with_file=True)
+    experiment = client.get_experiment_by_id(experiment_id)
+    experiment.download_artifacts(with_tree=True)
+
 else:
     if "experiment_name" in os.environ and "project_token" in os.environ:
         project_token = os.environ['project_token']
         experiment_name = os.environ['experiment_name']
-        experiment = Client.Experiment(api_token=api_token, project_token=project_token, host=host, interactive=False)
-        exp = experiment.checkout(experiment_name, with_file=True)
+        project = client.get_project_by_id(project_token)
+        experiment = project.get_experiment(experiment_name)
+        experiment.download_artifacts(with_tree=True)
     else:
-        raise AuthenticationError("You must either set the experiment id or the project token + experiment_name")
+        raise RuntimeError("You must either set the experiment id or the project token + experiment_name")
+
+dataset = experiment.list_attached_dataset_versions()[0]
+dataset.download(experiment.png_dir)
 
 exp.dl_annotations()
 exp.dl_pictures()
