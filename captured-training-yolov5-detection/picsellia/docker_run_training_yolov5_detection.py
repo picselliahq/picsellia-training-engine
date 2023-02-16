@@ -1,15 +1,14 @@
-from picsellia_yolov5.train import train
-from picsellia_yolov5.utils.callbacks import Callbacks
-from picsellia_yolov5.utils.torch_utils import select_device
-from picsellia_yolov5.utils.general import check_file, check_yaml, increment_path
+from picsellia_yolov5.yolov5.train import train
+from picsellia_yolov5.yolov5.utils.callbacks import Callbacks
+from picsellia_yolov5.yolov5.utils.torch_utils import select_device
+from picsellia_yolov5.yolov5.utils.general import check_file, check_yaml, increment_path
 from picsellia_yolov5 import picsellia_utils
 
 from picsellia.types.enums import AnnotationFileType
 from picsellia.sdk.asset import MultiAsset
-
+import os
 import random
 import json 
-import os 
 import logging
 from pathlib import Path
 
@@ -29,8 +28,8 @@ experiment = picsellia_utils.get_experiment()
 experiment.download_artifacts(with_tree=True)
 
 dataset = experiment.list_attached_dataset_versions()[0]
-
-annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, experiment.base_dir)
+current_dir = os.path.join(os.getcwd(), experiment.base_dir)
+annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, current_dir)
 f = open(annotation_path)
 annotations_dict = json.load(f)
 annotations_coco=COCO(annotation_path)
@@ -62,12 +61,12 @@ val_assets.download(target_path=os.path.join(experiment.png_dir, 'val', 'images'
 test_assets.download(target_path=os.path.join(experiment.png_dir, 'test', 'images'), max_workers=8)
 
 picsellia_utils.create_yolo_detection_label(experiment, annotations_dict, annotations_coco)
-data_yaml_path = picsellia_utils.generate_data_yaml(experiment, labelmap, experiment.base_dir)
+data_yaml_path = picsellia_utils.generate_data_yaml(experiment, labelmap, current_dir)
 
 experiment.log('train-split', train_split, 'bar', replace=True)
 experiment.log('test-split', test_split, 'bar', replace=True)
 parameters = experiment.get_log(name='parameters').data
-
+# config_dir = os.path.join(os.getcwd(), experiment.config_dir)[1:]
 cfg = picsellia_utils.edit_model_yaml(label_map=labelmap, experiment_name=experiment.name, config_path=experiment.config_dir)
 opt = picsellia_utils.setup_hyp(
     experiment = experiment,

@@ -49,7 +49,10 @@ replace_log = False
 buffer = []
 start_buffer = False
 buffer_length = 0
-experiment.send_logging(part, part)
+try:
+    experiment.send_logging(part, part)
+except Exception:
+    pass
 logs = {}
 logs[part] = {
     'datetime': str(datetime.now().isoformat()),
@@ -81,24 +84,36 @@ while True:
 
         if re.match("---[0-9]---", text[:8]):
             start_buffer = False
-            experiment.send_logging(buffer, part, special='buffer')
-            experiment.line_nb += (len(buffer)-1)
+            try:
+                experiment.send_logging(buffer, part, special='buffer')
+                experiment.line_nb += (len(buffer)-1)
+            except Exception:
+                pass
             buffer = []
 
         if start_buffer:
             buffer.append(text)
             logs[part]['logs'][str(experiment.line_nb+len(buffer))] = text
             if len(buffer)==buffer_length:
-                experiment.send_logging(buffer, part, special='buffer')
-                experiment.line_nb += (buffer_length-1)
+                try:
+                    experiment.send_logging(buffer, part, special='buffer')
+                    experiment.line_nb += (buffer_length-1)
+                except Exception:
+                    pass
                 buffer = []
         else:
             if not replace_log:
-                experiment.send_logging(text, part)
-                logs[part]['logs'][str(experiment.line_nb)] = text
+                try:
+                    experiment.send_logging(text, part)
+                    logs[part]['logs'][str(experiment.line_nb)] = text
+                except Exception:
+                    pass
             else:
-                experiment.line_nb = progress_line_nb
-                experiment.send_logging(text, part)
+                try:
+                    experiment.line_nb = progress_line_nb
+                    experiment.send_logging(text, part)
+                except Exception:
+                    pass
         
         last_line = text
 
