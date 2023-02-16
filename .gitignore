@@ -149,3 +149,8 @@ checkpoint
 *.png 
 *.pt
 .env
+
+captured-training-yolov5-detection/picsellia/test_4
+captured-training-yolov5-detection/picsellia/runs
+captured-training-yolov5-detection/picsellia/picsellia_yolov5
+captured-training-yolov5-detection/picsellia/*.ipynb
