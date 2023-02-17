@@ -47,6 +47,7 @@ experiment.download_artifacts(with_tree=True)
 
 dataset = experiment.list_attached_dataset_versions()[0]
 dataset.download(experiment.png_dir)
+dataset.synchronize(experiment.png_dir, do_download=True)
 annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, experiment.base_dir)
 labels = dataset.list_labels()
 label_path = pxl_utils.generate_label_map(
