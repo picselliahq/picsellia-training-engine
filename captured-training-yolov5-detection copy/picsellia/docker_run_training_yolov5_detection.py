@@ -1,14 +1,12 @@
-from picsellia_yolov5.picsellia_yolov5.yolov5.segment.train import train
+from picsellia_yolov5.picsellia_yolov5.yolov5.train import train
 from picsellia_yolov5.picsellia_yolov5.yolov5.utils.callbacks import Callbacks
 from picsellia_yolov5.picsellia_yolov5.yolov5.utils.torch_utils import select_device
-from picsellia_yolov5.picsellia_yolov5 import picsellia_utils
-
+from picsellia_yolov5 import picsellia_utils
 from picsellia.types.enums import AnnotationFileType
-from picsellia.sdk.asset import MultiAsset
 
+import os
 import random
 import json 
-import os 
 import logging
 from pathlib import Path
 
@@ -16,7 +14,7 @@ from pycocotools.coco import COCO
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-# os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
@@ -24,6 +22,7 @@ LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable
 RANK = int(os.getenv('RANK', -1))
 
 experiment = picsellia_utils.get_experiment()
+
 experiment.download_artifacts(with_tree=True)
 current_dir = os.path.join(os.getcwd(), experiment.base_dir)
 base_imgdir = experiment.png_dir
@@ -45,7 +44,7 @@ if len(experiment.list_attached_dataset_versions())==3:
                 labelmap[str(x['id'])] = x['name']
         
         dataset.list_assets().download(target_path=os.path.join(base_imgdir, data_type, 'images'), max_workers=8)
-        picsellia_utils.create_yolo_segmentation_label(experiment, data_type, annotations_dict, annotations_coco)
+        picsellia_utils.create_yolo_detection_label(experiment, data_type, annotations_dict, annotations_coco)
     
 else: 
     dataset = experiment.list_attached_dataset_versions()[0]
@@ -64,8 +63,8 @@ else:
     
     for data_type, assets in {'train' : train_assets, 'val' : val_assets, 'test' : test_assets}.items():
         assets.download(target_path=os.path.join(base_imgdir, data_type, 'images'), max_workers=8)
-        picsellia_utils.create_yolo_segmentation_label(experiment, data_type, annotations_dict, annotations_coco)
-
+        picsellia_utils.create_yolo_detection_label(experiment, data_type, annotations_dict, annotations_coco)
+    
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)
 cwd = os.getcwd()
 data_yaml_path = picsellia_utils.generate_data_yaml(experiment, labelmap, current_dir)
@@ -86,4 +85,4 @@ device = select_device(opt.device, batch_size=opt.batch_size)
 
 train(opt.hyp, opt, device, callbacks, pxl=experiment)
 
-picsellia_utils.send_run_to_picsellia(experiment, cwd)
+picsellia_utils.send_run_to_picsellia(experiment)
