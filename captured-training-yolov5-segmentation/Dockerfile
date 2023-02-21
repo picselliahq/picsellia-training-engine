@@ -14,7 +14,7 @@ RUN pip3 install -r requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
 RUN pip3 install picsellia --upgrade
 # RUN python3 -m pip install picsellia-yolov5==0.2.6
-# RUN python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ picsellia-yolov5==0.2.5.10
+RUN python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ picsellia-yolov5==0.2.6.2
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
 

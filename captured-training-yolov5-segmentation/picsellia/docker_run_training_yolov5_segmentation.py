@@ -1,7 +1,7 @@
-from picsellia_yolov5.picsellia_yolov5.yolov5.segment.train import train
-from picsellia_yolov5.picsellia_yolov5.yolov5.utils.callbacks import Callbacks
-from picsellia_yolov5.picsellia_yolov5.yolov5.utils.torch_utils import select_device
-from picsellia_yolov5.picsellia_yolov5 import picsellia_utils
+from picsellia_yolov5.yolov5.segment.train import train
+from picsellia_yolov5.yolov5.utils.callbacks import Callbacks
+from picsellia_yolov5.yolov5.utils.torch_utils import select_device
+from picsellia_yolov5 import picsellia_utils
 
 from picsellia.types.enums import AnnotationFileType
 from picsellia.sdk.asset import MultiAsset
