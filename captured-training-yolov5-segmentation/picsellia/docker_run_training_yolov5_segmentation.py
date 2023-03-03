@@ -33,37 +33,57 @@ parameters = experiment.get_log(name='parameters').data
 if len(experiment.list_attached_dataset_versions())==3:
     train_ds, val_ds, test_ds = experiment.get_dataset(name='train'), experiment.get_dataset(name='val'), experiment.get_dataset(name='test')
     
-    for data_type, dataset in {'train' : train_ds, 'val' : val_ds, 'test' : test_ds}.items():
-        annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, current_dir)
-        f = open(annotation_path)
-        annotations_dict = json.load(f)
-        annotations_coco=COCO(annotation_path)
-        
-        if data_type=='train':
+    for data_type, dataset in {
+        "train": train_ds,
+        "val": val_ds,
+        "test": test_ds,
+    }.items():
+        coco_annotation = dataset.build_coco_file_locally()
+        annotations_dict = coco_annotation.dict()
+        annotations_path = "annotations.json"
+        with open(annotations_path, 'w') as f:
+            f.write(json.dumps(annotations_dict))
+        annotations_coco = COCO(annotations_path)
+        if data_type == "train":
             labelmap = {}
-            for x in annotations_dict['categories']:
-                labelmap[str(x['id'])] = x['name']
-        
-        dataset.list_assets().download(target_path=os.path.join(base_imgdir, data_type, 'images'), max_workers=8)
+            for x in annotations_dict["categories"]:
+                labelmap[str(x["id"])] = x["name"]
+
+        dataset.list_assets().download(
+            target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
+        )
         picsellia_utils.create_yolo_segmentation_label(experiment, data_type, annotations_dict, annotations_coco)
     
 else: 
     dataset = experiment.list_attached_dataset_versions()[0]
-    
-    annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, current_dir)
-    f = open(annotation_path)
-    annotations_dict = json.load(f)
-    annotations_coco=COCO(annotation_path)
+    coco_annotation = dataset.build_coco_file_locally()
+    annotations_dict = coco_annotation.dict()
+    annotations_path = "annotations.json"
+    with open(annotations_path, 'w') as f:
+        f.write(json.dumps(annotations_dict))
+    annotations_coco = COCO(annotations_path)
     labelmap = {}
-    for x in annotations_dict['categories']:
-        labelmap[str(x['id'])] = x['name']
-    
-    prop = 0.7 if not 'prop_train_split' in parameters.keys() else parameters["prop_train_split"]
+    for x in annotations_dict["categories"]:
+        labelmap[str(x["id"])] = x["name"]
 
-    train_assets, test_assets, val_assets = picsellia_utils.train_test_val_split(experiment, dataset, prop)
-    
-    for data_type, assets in {'train' : train_assets, 'val' : val_assets, 'test' : test_assets}.items():
-        assets.download(target_path=os.path.join(base_imgdir, data_type, 'images'), max_workers=8)
+    prop = (
+        0.7
+        if not "prop_train_split" in parameters.keys()
+        else parameters["prop_train_split"]
+    )
+
+    train_assets, test_assets, val_assets = picsellia_utils.train_test_val_split(
+        experiment, dataset, prop, len(annotations_dict["images"])
+    )
+
+    for data_type, assets in {
+        "train": train_assets,
+        "val": val_assets,
+        "test": test_assets,
+    }.items():
+        assets.download(
+            target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
+        )
         picsellia_utils.create_yolo_segmentation_label(experiment, data_type, annotations_dict, annotations_coco)
 
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)

@@ -1,27 +1,19 @@
-from picsellia_yolov5.yolov5.train import train
-from picsellia_yolov5.yolov5.utils.callbacks import Callbacks
-from picsellia_yolov5.yolov5.utils.torch_utils import select_device
-from picsellia_yolov5 import picsellia_utils
-from picsellia.types.enums import AnnotationFileType
-
-import os
-import random
 import json
 import logging
-from pathlib import Path
-import sys
+import os
+
+from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
 
-os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
+import yolo_utils
+import picsellia_utils
+from picsellia_segmentation_trainer import PicselliaSegmentationTrainer
+
+os.environ["PYTHONUNBUFFERED"] = "1"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
+os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
 
-logging.getLogger("picsellia").setLevel(logging.INFO)
-
-LOCAL_RANK = int(
-    os.getenv("LOCAL_RANK", -1)
-)  # https://pytorch.org/docs/stable/elastic/run.html
-RANK = int(os.getenv("RANK", -1))
+logging.getLogger('picsellia').setLevel(logging.INFO)
 
 experiment = picsellia_utils.get_experiment()
 
@@ -43,12 +35,13 @@ if len(experiment.list_attached_dataset_versions()) == 3:
         "val": val_ds,
         "test": test_ds,
     }.items():
-        coco_annotation = dataset.build_coco_file_locally()
-        annotations_dict = coco_annotation.dict()
-        annotations_path = "annotations.json"
-        with open(annotations_path, 'w') as f:
-            f.write(json.dumps(annotations_dict))
-        annotations_coco = COCO(annotations_path)
+        annotation_path = dataset.export_annotation_file(
+            AnnotationFileType.COCO, current_dir
+        )
+        f = open(annotation_path)
+        annotations_dict = json.load(f)
+        annotations_coco = COCO(annotation_path)
+
         if data_type == "train":
             labelmap = {}
             for x in annotations_dict["categories"]:
@@ -57,18 +50,19 @@ if len(experiment.list_attached_dataset_versions()) == 3:
         dataset.list_assets().download(
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
-        picsellia_utils.create_yolo_detection_label(
+        picsellia_utils.create_yolo_segmentation_label(
             experiment, data_type, annotations_dict, annotations_coco
         )
 
 else:
     dataset = experiment.list_attached_dataset_versions()[0]
-    coco_annotation = dataset.build_coco_file_locally()
-    annotations_dict = coco_annotation.dict()
-    annotations_path = "annotations.json"
-    with open(annotations_path, 'w') as f:
-        f.write(json.dumps(annotations_dict))
-    annotations_coco = COCO(annotations_path)
+
+    annotation_path = dataset.export_annotation_file(
+        AnnotationFileType.COCO, current_dir
+    )
+    f = open(annotation_path)
+    annotations_dict = json.load(f)
+    annotations_coco = COCO(annotation_path)
     labelmap = {}
     for x in annotations_dict["categories"]:
         labelmap[str(x["id"])] = x["name"]
@@ -91,32 +85,23 @@ else:
         assets.download(
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
-        picsellia_utils.create_yolo_detection_label(
+        picsellia_utils.create_yolo_segmentation_label(
             experiment, data_type, annotations_dict, annotations_coco
         )
 
 experiment.log("labelmap", labelmap, "labelmap", replace=True)
-cwd = os.getcwd()
 data_yaml_path = picsellia_utils.generate_data_yaml(experiment, labelmap, current_dir)
-cfg = picsellia_utils.edit_model_yaml(
-    label_map=labelmap,
-    experiment_name=experiment.name,
-    config_path=experiment.config_dir,
-)
-opt = picsellia_utils.setup_hyp(
+
+cfg = yolo_utils.setup_hyp(
     experiment=experiment,
     data_yaml_path=data_yaml_path,
-    config_path=cfg,
     params=parameters,
     label_map=labelmap,
-    cwd=cwd
+    cwd=current_dir,
+    task='segment'
 )
 
-picsellia_utils.check_files(opt)
+trainer = PicselliaSegmentationTrainer(experiment=experiment, cfg=cfg)
+trainer.train()
 
-callbacks = Callbacks()
-device = select_device(opt.device, batch_size=opt.batch_size)
-
-train(opt.hyp, opt, device, callbacks, pxl=experiment)
-
-picsellia_utils.send_run_to_picsellia(experiment, cwd)
+picsellia_utils.send_run_to_picsellia(experiment, current_dir, trainer.save_dir)

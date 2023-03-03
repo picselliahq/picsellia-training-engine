@@ -16,7 +16,7 @@ import logging
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
-command = "python3 docker_run_training_yolov5_segmentation.py"
+command = "python3.10 docker_run_training_yolov8_segmentation.py"
 
 if "host" not in os.environ:
     host = "https://app.picsellia.com"

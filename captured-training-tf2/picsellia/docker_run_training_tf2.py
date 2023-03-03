@@ -1,6 +1,7 @@
 
 import os
 from picsellia import Client
+from picsellia import utils
 from picsellia.types.enums import AnnotationFileType
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
@@ -69,6 +70,7 @@ experiment.log('test-split', test_split, 'bar', replace=True)
 parameters = experiment.get_log(name='parameters').data
 
 experiment.start_logging_chapter('Create records')
+
 x = lambda x : os.path.join(experiment.png_dir, x)
 
 pxl_utils.create_record_files(

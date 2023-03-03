@@ -19,24 +19,16 @@ logging.getLogger('picsellia').setLevel(logging.INFO)
 command = "python3 docker_run_training_tf2.py"
 
 if "host" not in os.environ:
-    host = "https://app.picsellia.com/sdk/v1"
+    host = "https://app.picsellia.com"
 else:
     host = os.environ["host"]
-    
 if 'api_token' not in os.environ:
     raise RuntimeError("You must set an api_token to run this image")
-
 api_token = os.environ["api_token"]
-
-if "organization_id" not in os.environ:
-    organization_id = None
-else:
-    organization_id = os.environ["organization_id"]
 
 client = Client(
     api_token=api_token,
-    host=host,
-    organization_id=organization_id
+    host=host
 )
 
 if "experiment_name" in os.environ:
@@ -49,8 +41,7 @@ if "experiment_name" in os.environ:
         project = client.get_project(project_name)
     experiment = project.get_experiment(experiment_name)
 else:
-    raise RuntimeError("You must set the project_token or project_name and experiment_name")
-
+    raise Exception("You must set the project_token or project_name and experiment_name")
 
 process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 part = "--#--Set up training"
@@ -58,7 +49,10 @@ replace_log = False
 buffer = []
 start_buffer = False
 buffer_length = 0
-experiment.send_logging(part, part)
+try:
+    experiment.send_logging(part, part)
+except Exception:
+    pass
 logs = {}
 logs[part] = {
     'datetime': str(datetime.now().isoformat()),
@@ -90,24 +84,36 @@ while True:
 
         if re.match("---[0-9]---", text[:8]):
             start_buffer = False
-            experiment.send_logging(buffer, part, special='buffer')
-            experiment.line_nb += (len(buffer)-1)
+            try:
+                experiment.send_logging(buffer, part, special='buffer')
+                experiment.line_nb += (len(buffer)-1)
+            except Exception:
+                pass
             buffer = []
 
         if start_buffer:
             buffer.append(text)
             logs[part]['logs'][str(experiment.line_nb+len(buffer))] = text
             if len(buffer)==buffer_length:
-                experiment.send_logging(buffer, part, special='buffer')
-                experiment.line_nb += (buffer_length-1)
+                try:
+                    experiment.send_logging(buffer, part, special='buffer')
+                    experiment.line_nb += (buffer_length-1)
+                except Exception:
+                    pass
                 buffer = []
         else:
             if not replace_log:
-                experiment.send_logging(text, part)
-                logs[part]['logs'][str(experiment.line_nb)] = text
+                try:
+                    experiment.send_logging(text, part)
+                    logs[part]['logs'][str(experiment.line_nb)] = text
+                except Exception:
+                    pass
             else:
-                experiment.line_nb = progress_line_nb
-                experiment.send_logging(text, part)
+                try:
+                    experiment.line_nb = progress_line_nb
+                    experiment.send_logging(text, part)
+                except Exception:
+                    pass
         
         last_line = text
 
