@@ -1,10 +1,9 @@
 import json
 import logging
 import os
-
+from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
-
 import picsellia_utils
 import yolo_utils
 from picsellia_detection_trainer import PicselliaDetectionTrainer
@@ -21,26 +20,42 @@ experiment.download_artifacts(with_tree=True)
 current_dir = os.path.join(os.getcwd(), experiment.base_dir)
 base_imgdir = experiment.png_dir
 parameters = experiment.get_log(name="parameters").data
+attached_datasets = experiment.list_attached_dataset_versions()
+if len(attached_datasets) == 3:
+    attached_names = [dataset.version for dataset in attached_datasets]
+    if "train" not in attached_names:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
+                                            expecting 'train', 'test', ('val' or 'eval')")
+    else:
+        train_ds = experiment.get_dataset(name="train")
 
-if len(experiment.list_attached_dataset_versions()) == 3:
-    train_ds, val_ds, test_ds = (
-        experiment.get_dataset(name="train"),
-        experiment.get_dataset(name="val"),
-        experiment.get_dataset(name="test"),
-    )
+    if "test" not in attached_names:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
+                                            expecting 'train', 'test', ('val' or 'eval')")
+    else:
+        test_ds = experiment.get_dataset(name="test")
+
+    if "val" not in attached_names:
+        if "eval" not in attached_names:
+            raise ResourceNotFoundError("Found 3 attached datasets, but can't find any ('val' or 'eval') dataset.\n \
+                                                expecting 'train', 'test', ('val' or 'eval')")
+        else:
+            val_ds = experiment.get_dataset(name="eval")
+    else:
+        val_ds = experiment.get_dataset(name="val")
+    label_names = [label.name for label in train_ds.list_labels()]
 
     for data_type, dataset in {
         "train": train_ds,
         "val": val_ds,
         "test": test_ds,
     }.items():
-        annotation_path = dataset.export_annotation_file(
-            AnnotationFileType.COCO, current_dir
-        )
-        f = open(annotation_path)
-        annotations_dict = json.load(f)
-        annotations_coco = COCO(annotation_path)
-
+        coco_annotation = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
+        annotations_dict = coco_annotation.dict()
+        annotations_path = "annotations.json"
+        with open(annotations_path, 'w') as f:
+            f.write(json.dumps(annotations_dict))
+        annotations_coco = COCO(annotations_path)
         if data_type == "train":
             labelmap = {}
             for x in annotations_dict["categories"]:

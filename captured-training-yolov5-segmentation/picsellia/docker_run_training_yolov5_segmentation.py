@@ -2,21 +2,15 @@ from picsellia_yolov5.yolov5.segment.train import train
 from picsellia_yolov5.yolov5.utils.callbacks import Callbacks
 from picsellia_yolov5.yolov5.utils.torch_utils import select_device
 from picsellia_yolov5 import picsellia_utils
-
-from picsellia.types.enums import AnnotationFileType
-from picsellia.sdk.asset import MultiAsset
-
-import random
-import json 
+from picsellia.exceptions import ResourceNotFoundError
+import json
 import os 
 import logging
-from pathlib import Path
-
 from pycocotools.coco import COCO
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-# os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
@@ -29,16 +23,38 @@ current_dir = os.path.join(os.getcwd(), experiment.base_dir)
 base_imgdir = experiment.png_dir
 
 parameters = experiment.get_log(name='parameters').data
+attached_datasets = experiment.list_attached_dataset_versions()
 
-if len(experiment.list_attached_dataset_versions())==3:
-    train_ds, val_ds, test_ds = experiment.get_dataset(name='train'), experiment.get_dataset(name='val'), experiment.get_dataset(name='test')
-    
+if len(attached_datasets)==3:
+    attached_names = [dataset.version for dataset in attached_datasets]
+    if "train" not in attached_names:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
+                                        expecting 'train', 'test', ('val' or 'eval')")
+    else:
+        train_ds = experiment.get_dataset(name="train")
+
+    if "test" not in attached_names:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
+                                        expecting 'train', 'test', ('val' or 'eval')")
+    else:
+        test_ds = experiment.get_dataset(name="test")
+
+    if "val" not in attached_names:
+        if "eval" not in attached_names:
+            raise ResourceNotFoundError("Found 3 attached datasets, but can't find any ('val' or 'eval') dataset.\n \
+                                            expecting 'train', 'test', ('val' or 'eval')")
+        else:
+            val_ds = experiment.get_dataset(name="eval")
+    else:
+        val_ds = experiment.get_dataset(name="val")
+    label_names = [label.name for label in train_ds.list_labels()]
+
     for data_type, dataset in {
         "train": train_ds,
         "val": val_ds,
         "test": test_ds,
     }.items():
-        coco_annotation = dataset.build_coco_file_locally()
+        coco_annotation = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
         annotations_dict = coco_annotation.dict()
         annotations_path = "annotations.json"
         with open(annotations_path, 'w') as f:
