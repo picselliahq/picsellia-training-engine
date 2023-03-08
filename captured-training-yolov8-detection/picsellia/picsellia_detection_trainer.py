@@ -20,8 +20,10 @@ class PicselliaDetectionTrainer(DetectionTrainer):
         batch = cfg.batch
         imgsz = cfg.imgsz
         save_period = cfg.save_period
-
-        args = dict(task=task, model=model, data=data, device=device, epochs=epochs, batch=batch, imgsz=imgsz, save_period=save_period)
+        save_dir = cfg.cwd
+        project = cfg.project
+        
+        args = dict(task=task, model=model, data=data, device=device, epochs=epochs, batch=batch, imgsz=imgsz, save_period=save_period, project=project)
         super().__init__(overrides=args)
         self.experiment = experiment
         self.cwd = cfg.cwd

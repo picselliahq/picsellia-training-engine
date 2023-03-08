@@ -22,7 +22,9 @@ class PicselliaSegmentationTrainer(SegmentationTrainer):
         save_period = cfg.save_period
         project = cfg.project
         name = cfg.name
-
+        save_dir = cfg.cwd
+        project = cfg.project
+        
         args = dict(task=task, model=model, data=data, device=device, epochs=epochs, batch=batch, imgsz=imgsz, save_period=save_period, project=project, name=name)
         super().__init__(overrides=args)
         self.experiment = experiment

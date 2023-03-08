@@ -71,12 +71,12 @@ if len(attached_datasets) == 3:
 else:
     dataset = experiment.list_attached_dataset_versions()[0]
 
-    annotation_path = dataset.export_annotation_file(
-        AnnotationFileType.COCO, current_dir
-    )
-    f = open(annotation_path)
-    annotations_dict = json.load(f)
-    annotations_coco = COCO(annotation_path)
+    coco_annotation = dataset.build_coco_file_locally()
+    annotations_dict = coco_annotation.dict()
+    annotations_path = "annotations.json"
+    with open(annotations_path, 'w') as f:
+        f.write(json.dumps(annotations_dict))
+    annotations_coco = COCO(annotations_path)
     labelmap = {}
     for x in annotations_dict["categories"]:
         labelmap[str(x["id"])] = x["name"]

@@ -21,3 +21,15 @@ docker push picsellpn/custom-run:1.0
 
 docker build capture-run/. -t picsellpn/capture-run:1.0
 docker push picsellpn/capture-run:1.0
+
+docker build captured-training-yolov5-detection/. -t picsellpn/yolov5-detection:capture
+docker push picsellpn/yolov5-detection:capture
+
+docker build captured-training-yolov5-segmentation/. -t picsellpn/yolov5-segmentation:capture
+docker push picsellpn/yolov5-segmentation:capture
+
+docker build captured-training-yolov8-detection/. -t picsellpn/yolov8-detection:capture
+docker push picsellpn/yolov8-detection:capture
+
+docker build captured-training-yolov8-segmentation/. -t picsellpn/yolov8-segmentation:capture
+docker push picsellpn/yolov8-segmentation:capture

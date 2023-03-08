@@ -178,7 +178,7 @@ def setup_hyp(experiment=None, data_yaml_path=None, config_path= None, params={}
     opt.cache = False
     opt.device = '0' if torch.cuda.is_available() else 'cpu'
     opt.workers = 8
-    opt.project = 'runs/train'
+    opt.project = cwd
     opt.name = 'exp'
     opt.exist_ok = False
     opt.pretrained = True
