@@ -12,8 +12,8 @@ COPY ./requirements.txt .
 ARG REBUILD_ALL
 RUN pip3 install -r requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
-RUN pip3 install picsellia==6.4.2
 RUN python3 -m pip install picsellia-yolov5==0.2.8
+RUN pip3 install picsellia --upgrade
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia
