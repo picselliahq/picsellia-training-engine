@@ -22,27 +22,25 @@ base_imgdir = experiment.png_dir
 parameters = experiment.get_log(name="parameters").data
 attached_datasets = experiment.list_attached_dataset_versions()
 if len(attached_datasets) == 3:
-    attached_names = [dataset.version for dataset in attached_datasets]
-    if "train" not in attached_names:
+    try:
+        train_ds = experiment.get_dataset(name="train")
+    except Exception:
         raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
                                             expecting 'train', 'test', ('val' or 'eval')")
-    else:
-        train_ds = experiment.get_dataset(name="train")
-
-    if "test" not in attached_names:
+    try:
+        test_ds = experiment.get_dataset(name="test")
+    except Exception:
         raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
                                             expecting 'train', 'test', ('val' or 'eval')")
-    else:
-        test_ds = experiment.get_dataset(name="test")
-
-    if "val" not in attached_names:
-        if "eval" not in attached_names:
-            raise ResourceNotFoundError("Found 3 attached datasets, but can't find any ('val' or 'eval') dataset.\n \
-                                                expecting 'train', 'test', ('val' or 'eval')")
-        else:
-            val_ds = experiment.get_dataset(name="eval")
-    else:
+    try:
         val_ds = experiment.get_dataset(name="val")
+    except Exception:
+        try:
+            val_ds = experiment.get_dataset(name="eval")
+        except Exception:
+            raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
+                                                expecting 'train', 'test', ('val' or 'eval')")
+
     label_names = [label.name for label in train_ds.list_labels()]
 
     for data_type, dataset in {

@@ -22,8 +22,9 @@ class PicselliaDetectionTrainer(DetectionTrainer):
         save_period = cfg.save_period
         save_dir = cfg.cwd
         project = cfg.project
+        patience = cfg.patience
         
-        args = dict(task=task, model=model, data=data, device=device, epochs=epochs, batch=batch, imgsz=imgsz, save_period=save_period, project=project)
+        args = dict(task=task, model=model, data=data, device=device, epochs=epochs, batch=batch, imgsz=imgsz, save_period=save_period, project=project, patience=patience)
         super().__init__(overrides=args)
         self.experiment = experiment
         self.cwd = cfg.cwd
