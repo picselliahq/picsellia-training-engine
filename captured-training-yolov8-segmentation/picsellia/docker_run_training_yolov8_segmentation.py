@@ -42,7 +42,9 @@ if len(attached_datasets) == 3:
         except Exception:
             raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
                                                 expecting 'train', 'test', ('val' or 'eval')")
-    label_names = [label.name for label in train_ds.list_labels()]
+    labels = train_ds.list_labels()
+    label_names = [label.name for label in labels]
+    labelmap = {str(i): label.name for i, label in enumerate(labels)}
 
     for data_type, dataset in {
         "train": train_ds,
@@ -55,10 +57,7 @@ if len(attached_datasets) == 3:
         with open(annotations_path, 'w') as f:
             f.write(json.dumps(annotations_dict))
         annotations_coco = COCO(annotations_path)
-        if data_type == "train":
-            labelmap = {}
-            for x in annotations_dict["categories"]:
-                labelmap[str(x["id"])] = x["name"]
+
         dataset.list_assets().download(
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
@@ -75,9 +74,10 @@ else:
     with open(annotations_path, 'w') as f:
         f.write(json.dumps(annotations_dict))
     annotations_coco = COCO(annotations_path)
-    labelmap = {}
-    for x in annotations_dict["categories"]:
-        labelmap[str(x["id"])] = x["name"]
+    
+    labels = dataset.list_labels()
+    labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    
     prop = (
         0.7
         if not "prop_train_split" in parameters.keys()
