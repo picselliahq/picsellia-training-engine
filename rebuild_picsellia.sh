@@ -31,3 +31,6 @@ docker push picsellpn/yolov8-detection:capture
 
 docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" captured-training-yolov8-segmentation/. -t picsellpn/yolov8-segmentation:capture
 docker push picsellpn/yolov8-segmentation:capture
+
+docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" captured-training-yolov8-classification/. -t picsellpn/yolov8-classification:capture
+docker push picsellpn/yolov8-classification:capture
