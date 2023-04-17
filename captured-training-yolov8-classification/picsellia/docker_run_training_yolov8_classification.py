@@ -49,7 +49,7 @@ def on_train_epoch_end(trainer):
 
 model.add_callback("on_train_epoch_end", on_train_epoch_end)
 parameters = experiment.get_log("parameters").data
-model.train(data=data_path, epochs=parameters["epochs"], imgsz=parameters["image_size"])
+model.train(data=data_path, epochs=parameters["epochs"], imgsz=parameters["image_size"], patience=parameters["patience"])
 
 weights_dir_path = os.path.join(working_dir, "runs", "classify", "train", "weights")
 weights_path = os.path.join(weights_dir_path, "last.pt")
