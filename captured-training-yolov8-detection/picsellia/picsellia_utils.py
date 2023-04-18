@@ -281,7 +281,7 @@ def create_img_label_detection(img, annotations_coco, labels_path):
     img_filename = img['file_name']
     w = img['width']
     h = img['height']
-    txt_name = img_filename[:-4] + '.txt'
+    txt_name = os.path.splitext(img_filename)[0] + '.txt'
     annotation_ids = annotations_coco.getAnnIds(imgIds=img_id)
     anns = annotations_coco.loadAnns(annotation_ids)
     for ann in anns:
@@ -317,7 +317,7 @@ def create_img_label_segmentation(img, annotations_coco, labels_path):
     img_filename = img['file_name']
     w = img['width']
     h = img['height']
-    txt_name = img_filename[:-4] + '.txt'
+    txt_name = os.path.splitext(img_filename)[0] + '.txt'
     annotation_ids = annotations_coco.getAnnIds(imgIds=img_id)
     anns = annotations_coco.loadAnns(annotation_ids)
     for ann in anns:

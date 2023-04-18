@@ -5,10 +5,14 @@ from picsellia import utils
 from picsellia.types.enums import AnnotationFileType
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
+from evaluator import Evaluator
+
 import logging
+
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
+
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
 if 'api_token' not in os.environ:
@@ -70,6 +74,7 @@ experiment.log('test-split', test_split, 'bar', replace=True)
 parameters = experiment.get_log(name='parameters').data
 
 experiment.start_logging_chapter('Create records')
+print("\n")
 
 x = lambda x : os.path.join(experiment.png_dir, x)
 
@@ -98,6 +103,7 @@ pxl_utils.edit_config(
         parameters=parameters,
         )
 experiment.start_logging_chapter('Start training')
+print("\n")
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
@@ -105,7 +111,6 @@ pxl_utils.train(
         log_real_time=experiment,
     )
 
-experiment.start_logging_chapter('Start evaluation')
 
 experiment.start_logging_buffer(9)
 
@@ -121,7 +126,9 @@ pxl_utils.export_graph(
     config_dir=experiment.config_dir
     )
 experiment.end_logging_buffer()
+print("\n")
 experiment.start_logging_chapter('Store artifacts')
+print("\n")
 
 experiment.store('model-latest')
 experiment.store('config')
@@ -129,7 +136,6 @@ experiment.store('checkpoint-data-latest')
 experiment.store('checkpoint-index-latest')
 
 
-experiment.start_logging_chapter('Send logs')
 
 metrics = pxl_utils.tf_events_to_dict('{}/metrics'.format(experiment.name), 'eval')
 logs = pxl_utils.tf_events_to_dict('{}/checkpoint'.format(experiment.name), 'train')
@@ -142,8 +148,6 @@ for variable in logs.keys():
     experiment.log('-'.join(variable.split('/')), data, 'line', replace=True)
     
 experiment.log('metrics', metrics, 'table', replace=True)
-
-experiment.start_logging_chapter('Compute Confusion matrix')
 
 conf, eval = pxl_utils.get_confusion_matrix(
     input_tfrecord_path=os.path.join(experiment.record_dir, 'eval.record'),
@@ -160,8 +164,6 @@ confusion = {
 experiment.log('confusion-matrix', confusion, 'heatmap', replace=True)
 
 
-experiment.start_logging_chapter('Start inference')
-
 
 pxl_utils.infer(
     experiment.record_dir, 
@@ -171,3 +173,19 @@ pxl_utils.infer(
     from_tfrecords=True, 
     disp=False
 )
+
+experiment.start_logging_chapter('Starting Evaluation')
+print("\n")
+
+try:
+    X = Evaluator(
+        client=client,
+        experiment=experiment, # same
+        dataset=experiment.list_attached_dataset_versions()[0], # same
+        asset_list=eval_assets
+    )
+
+    X.setup_preannotation_job()
+    X.preannotate()
+except Exception as e:
+    print(f"Error during evaluation: {e}")
