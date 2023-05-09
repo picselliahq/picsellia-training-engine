@@ -257,11 +257,26 @@ def setup_hyp(experiment=None, data_yaml_path=None, config_path= None, params={}
 class Opt():
     pass
 
-def train_test_val_split(experiment, dataset, prop, dataset_length):
+def sort_split(split_dict, labels_names):
+    label_num_list = [(split_dict['x'][i], split_dict['y'][i]) for i in range(len(split_dict['x']))]
+    for label in labels_names:
+        if label not in split_dict['x']:
+            label_num_list.append((label, 0))
+    label_num_dict = dict(label_num_list)
+    sorted_split_dict = {
+        'x' : labels_names,
+        'y' : [label_num_dict[label] for label in labels_names]
+    }
+    return sorted_split_dict
+
+def train_test_val_split(experiment, dataset, prop, dataset_length, label_names):
     train_assets, test_assets, train_split, test_split, labels = picsellia_train_test_split(dataset, prop=prop, random_seed=42, dataset_length=dataset_length)
     
-    experiment.log('train-split', train_split, 'bar', replace=True)
-    experiment.log('test-split', test_split, 'bar', replace=True)
+    sorted_train_split = sort_split(train_split, label_names)
+    sorted_test_split = sort_split(test_split, label_names)
+    
+    experiment.log('train-split', sorted_train_split, 'bar', replace=True)
+    experiment.log('test-split', sorted_test_split, 'bar', replace=True)
 
     test_list = test_assets.items.copy()
     random.seed(42)
@@ -382,7 +397,7 @@ def picsellia_train_test_split(
     )
     
 
-def create_yolo_detection_label(exp, data_type, annotations_dict, annotations_coco):
+def create_yolo_detection_label(exp, data_type, annotations_dict, annotations_coco, label_names):
     
     dataset_path = os.path.join(exp.png_dir, data_type)
     image_filenames = os.listdir(os.path.join(dataset_path, 'images'))
@@ -395,9 +410,9 @@ def create_yolo_detection_label(exp, data_type, annotations_dict, annotations_co
     for img in annotations_dict['images']:
         img_filename = img['file_name']
         if img_filename in image_filenames :
-            create_img_label_detection(img, annotations_coco, labels_path)
+            create_img_label_detection(img, annotations_coco, labels_path, label_names)
 
-def create_img_label_detection(img, annotations_coco, labels_path):
+def create_img_label_detection(img, annotations_coco, labels_path, label_names):
     result = []
     img_id = img['id']
     img_filename = img['file_name']
@@ -410,7 +425,8 @@ def create_img_label_detection(img, annotations_coco, labels_path):
         bbox = ann['bbox']
         yolo_bbox = coco_to_yolo_detection(bbox[0], bbox[1], bbox[2], bbox[3], w, h)
         seg_string = " ".join([str(x) for x in yolo_bbox])
-        result.append(f"{ann['category_id']} {seg_string}")
+        label = label_names.index(annotations_coco.loadCats(ann['category_id'])[0]['name'])
+        result.append(f"{label} {seg_string}")
     with open(os.path.join(labels_path, txt_name), 'w') as f:
         f.write("\n".join(result))
                     

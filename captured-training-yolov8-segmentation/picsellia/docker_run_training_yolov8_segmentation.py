@@ -53,6 +53,10 @@ if len(attached_datasets) == 3:
     }.items():
         coco_annotation = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
         annotations_dict = coco_annotation.dict()
+        categories_dict = [category['name'] for category in annotations_dict['categories']]
+        for label in label_names:
+            if label not in categories_dict:
+                annotations_dict['categories'].append({"id": len(annotations_dict['categories']), "name": label, "supercategory": ""})
         annotations_path = "annotations.json"
         with open(annotations_path, 'w') as f:
             f.write(json.dumps(annotations_dict))
@@ -62,21 +66,26 @@ if len(attached_datasets) == 3:
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
         picsellia_utils.create_yolo_segmentation_label(
-            experiment, data_type, annotations_dict, annotations_coco
+            experiment, data_type, annotations_dict, annotations_coco, label_names
         )
 
 else:
     dataset = experiment.list_attached_dataset_versions()[0]
 
-    coco_annotation = dataset.build_coco_file_locally()
+    labels = dataset.list_labels()
+    label_names = [label.name for label in labels]
+    labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    
+    coco_annotation = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
     annotations_dict = coco_annotation.dict()
+    categories_dict = [category['name'] for category in annotations_dict['categories']]
+    for label in label_names:
+        if label not in categories_dict:
+            annotations_dict['categories'].append({"id": len(annotations_dict['categories']), "name": label, "supercategory": ""})
     annotations_path = "annotations.json"
     with open(annotations_path, 'w') as f:
         f.write(json.dumps(annotations_dict))
     annotations_coco = COCO(annotations_path)
-    
-    labels = dataset.list_labels()
-    labelmap = {str(i): label.name for i, label in enumerate(labels)}
     
     prop = (
         0.7
@@ -85,7 +94,7 @@ else:
     )
 
     train_assets, test_assets, val_assets = picsellia_utils.train_test_val_split(
-        experiment, dataset, prop, len(annotations_dict["images"])
+        experiment, dataset, prop, len(annotations_dict["images"]), label_names
     )
 
     for data_type, assets in {
@@ -97,7 +106,7 @@ else:
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
         picsellia_utils.create_yolo_segmentation_label(
-            experiment, data_type, annotations_dict, annotations_coco
+            experiment, data_type, annotations_dict, annotations_coco, label_names
         )
 
 experiment.log("labelmap", labelmap, "labelmap", replace=True)

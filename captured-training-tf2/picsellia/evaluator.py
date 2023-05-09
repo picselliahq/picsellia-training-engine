@@ -291,9 +291,9 @@ class Evaluator:
             nb_box_limit = len(boxes)
         if len(boxes) == 0:
             return
-        print(scores, boxes, classes)
+        # print(scores, boxes, classes)
         for i in range(nb_box_limit):
-            if scores[i] >= self.parameters.get("confidence_threshold", 0.2):
+            if scores[i] >= self.parameters.get("confidence_threshold", 0.1):
                 if str(int(classes[i])) in self.labelmap.keys():
                     try:
                         label: Label = self.dataset_labels[

@@ -170,7 +170,7 @@ def setup_hyp(experiment=None, data_yaml_path=None, config_path= None, params={}
     opt.model = weight_path 
     opt.data = data_yaml_path
     opt.epochs = 100 if not 'epochs' in params.keys() else params["epochs"]
-    opt.patience = 100 if not 'epochs' in params.keys() else params["epochs"]
+    opt.patience = 500 if not 'epochs' in params.keys() else params["epochs"]
     opt.batch = 4 if not 'batch_size' in params.keys() else params["batch_size"]
     opt.imgsz = 640 if not 'input_shape' in params.keys() else params["input_shape"]
     opt.save = True

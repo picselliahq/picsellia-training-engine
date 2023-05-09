@@ -150,7 +150,7 @@ checkpoint
 *.pt
 .env
 
-captured-training-yolov5-detection/picsellia/test_4
-captured-training-yolov5-detection/picsellia/runs
-captured-training-yolov5-detection/picsellia/picsellia_yolov5
-captured-training-yolov5-detection/picsellia/*.ipynb
+captured-training-tf2/picsellia/picsellia_tf2
+captured-training-tf2/picsellia/saved_model
+captured-training-tf2/picsellia/tf2_python3_7
+captured-training-tf2/picsellia/test_sample_10

@@ -16,6 +16,7 @@ COPY ./requirements.txt .
 ARG REBUILD_ALL
 RUN python3.10 -m pip install -r requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
+RUN python3.10 -m pip install picsellia==6.6.0
 RUN python3.10 -m pip install picsellia --upgrade
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda-11.6/targets/x86_64-linux/lib:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/lib/x86_64-linux-gnu
 COPY ./picsellia /picsellia
