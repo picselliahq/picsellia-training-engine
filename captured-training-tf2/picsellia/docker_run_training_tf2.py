@@ -54,8 +54,8 @@ else:
 
 experiment.download_artifacts(with_tree=True)
 parameters = experiment.get_log(name='parameters').data
-
 attached_datasets = experiment.list_attached_dataset_versions()
+
 if len(attached_datasets) == 3:
     try:
         train_ds = experiment.get_dataset(name="train")
@@ -85,73 +85,49 @@ if len(attached_datasets) == 3:
         output_path=experiment.base_dir,
     )
     
-    train_ds.download(
-            target_path=os.path.join(experiment.png_dir, 'train'), max_workers=8
-        )
-    train_split = {'x': list(pxl_utils.retrieve_stats(train_ds)['label_repartition'].keys()), 'y': list(pxl_utils.retrieve_stats(train_ds)['label_repartition'].values())}
-    # train_annotation_path = train_ds.export_annotation_file(AnnotationFileType.COCO, experiment.base_dir)
-    # with open(train_annotation_path, "r") as f:
-    #     train_annotations = json.load(f)
-        
-    train_annotation_path = train_ds.build_coco_file_locally(enforced_ordered_categories=label_names)
-    train_annotations = train_annotation_path.dict()
-    categories_dict = [category['name'] for category in train_annotations['categories']]
-    for label in label_names:
-        if label not in categories_dict:
-            train_annotations['categories'].append({"id": len(train_annotations['categories']), "name": label, "supercategory": ""})
-            
-        
-    train_annotations, _, _ = pxl_utils.format_coco_file(
-        imgdir=experiment.png_dir,
-        annotations=train_annotations,
-        train_assets=train_ds.list_assets(),
-        eval_assets=[],
-        test_assets=[]
-    )
-    
-    eval_ds.download(
-            target_path=os.path.join(experiment.png_dir, 'eval'), max_workers=8
-        )
-    eval_assets = eval_ds.list_assets()
-    eval_split = {'x': list(pxl_utils.retrieve_stats(eval_ds)['label_repartition'].keys()), 'y': list(pxl_utils.retrieve_stats(eval_ds)['label_repartition'].values())}
+    for data_type, dataset in {'train': train_ds, 'test': test_ds, 'eval': eval_ds}.items():
+        dataset.download(
+                target_path=os.path.join(experiment.png_dir, data_type), max_workers=8
+            )
+        split = {'x': list(pxl_utils.retrieve_stats(dataset)['label_repartition'].keys()), 'y': list(pxl_utils.retrieve_stats(dataset)['label_repartition'].values())}
 
-    eval_annotation_path = eval_ds.build_coco_file_locally(enforced_ordered_categories=label_names)
-    eval_annotations = eval_annotation_path.dict()
-    categories_dict = [category['name'] for category in eval_annotations['categories']]
-    for label in label_names:
-        if label not in categories_dict:
-            eval_annotations['categories'].append({"id": len(eval_annotations['categories']), "name": label, "supercategory": ""})
+        annotation_path = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
+        annotations = annotation_path.dict()
+        categories_dict = [category['name'] for category in annotations['categories']]
+        for label in label_names:
+            if label not in categories_dict:
+                annotations['categories'].append({"id": len(annotations['categories']), "name": label, "supercategory": ""})
         
-    _, eval_annotations, _ = pxl_utils.format_coco_file(
-        imgdir=experiment.png_dir,
-        annotations=eval_annotations,
-        train_assets=[],
-        eval_assets=eval_ds.list_assets(),
-        test_assets=[]
-    )
-    
-    test_ds.download(
-            target_path=os.path.join(experiment.png_dir, 'test'), max_workers=8
-        )
-    test_split = {'x': list(pxl_utils.retrieve_stats(test_ds)['label_repartition'].keys()), 'y': list(pxl_utils.retrieve_stats(test_ds)['label_repartition'].values())}
-
-    test_annotation_path = test_ds.build_coco_file_locally(enforced_ordered_categories=label_names)
-    test_annotations = test_annotation_path.dict()
-    categories_dict = [category['name'] for category in test_annotations['categories']]
-    for label in label_names:
-        if label not in categories_dict:
-            test_annotations['categories'].append({"id": len(test_annotations['categories']), "name": label, "supercategory": ""})
-        
-    _, _, test_annotations = pxl_utils.format_coco_file(
-        imgdir=experiment.png_dir,
-        annotations=test_annotations,
-        train_assets=[],
-        eval_assets=[],
-        test_assets=test_ds.list_assets()
-    )
+        if data_type=='train':
+            train_split = split
+            train_annotations, _, _ = pxl_utils.format_coco_file(
+                imgdir=experiment.png_dir,
+                annotations=annotations,
+                train_assets=dataset.list_assets()
+            )
+        elif data_type=='test':
+            test_split = split
+            _, _, test_annotations = pxl_utils.format_coco_file(
+                imgdir=experiment.png_dir,
+                annotations=annotations,
+                train_assets=[],
+                eval_assets=[],
+                test_assets=dataset.list_assets()
+            )
+        else:
+            eval_split = split
+            _, eval_annotations, _ = pxl_utils.format_coco_file(
+                imgdir=experiment.png_dir,
+                annotations=annotations,
+                train_assets=[],
+                eval_assets=dataset.list_assets(),
+                test_assets=[]
+            )
     
 else:
     dataset = experiment.list_attached_dataset_versions()[0]
+    prop = parameters.get('prop_train_split', 0.7)
+    train_assets, test_assets, eval_assets, train_split, test_split, eval_split, _ = dataset.train_test_val_split(ratios=[prop, (1.-prop)/2, (1.-prop)/2], random_seed=42)
     
     labels = dataset.list_labels()
     label_names = [label.name for label in labels]
@@ -168,19 +144,9 @@ else:
         if label not in categories_dict:
             annotations['categories'].append({"id": len(annotations['categories']), "name": label, "supercategory": ""})
             
+    for data_type, assets in {'train': train_assets, 'test': test_assets, 'eval': eval_assets}.items():
+        assets.download(target_path=os.path.join(experiment.png_dir, data_type), max_workers=8)
     
-    train_assets, test_assets, eval_assets, train_split, test_split, eval_split = pxl_utils.train_test_val_split(dataset=dataset, prop=parameters.get('prop_train_split', 0.7), dataset_length=len(annotations["images"]))
-    
-    train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'), max_workers=8
-        )
-    
-    
-    test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'), max_workers=8
-        )
-    
-    
-    eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'), max_workers=8
-        )
     eval_ds = dataset
 
     train_annotations, eval_annotations, test_annotations = pxl_utils.format_coco_file(
@@ -258,8 +224,8 @@ pxl_utils.train(
         config_dir=experiment.config_dir,
         log_real_time=experiment,
         evaluate_fn=pxl_utils.evaluate,
-        read_logs_fn=pxl_utils.tf_events_to_dict,
-        checkpoint_every_n=parameters.get('checkpoint_every_n', 10)
+        log_metrics=pxl_utils.log_metrics,
+        checkpoint_every_n=parameters.get('checkpoint_every_n', 5)
     )
 
 print("\n")
