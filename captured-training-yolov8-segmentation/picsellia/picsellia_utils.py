@@ -434,7 +434,7 @@ def coco_to_yolo_detection(x1, y1, w, h, image_w, image_h):
     return [((2*x1 + w)/(2*image_w)) , ((2*y1 + h)/(2*image_h)), w/image_w, h/image_h]
 
 
-def create_yolo_segmentation_label(exp, data_type, annotations_dict, annotations_coco):
+def create_yolo_segmentation_label(exp, data_type, annotations_dict, annotations_coco, label_names):
     
     dataset_path = os.path.join(exp.png_dir, data_type)
     image_filenames = os.listdir(os.path.join(dataset_path, 'images'))
@@ -447,9 +447,9 @@ def create_yolo_segmentation_label(exp, data_type, annotations_dict, annotations
     for img in annotations_dict['images']:
         img_filename = img['file_name']
         if img_filename in image_filenames :
-            create_img_label_segmentation(img, annotations_coco, labels_path)
+            create_img_label_segmentation(img, annotations_coco, labels_path, label_names)
 
-def create_img_label_segmentation(img, annotations_coco, labels_path):
+def create_img_label_segmentation(img, annotations_coco, labels_path, label_names):
     result = []
     img_id = img['id']
     img_filename = img['file_name']
@@ -461,7 +461,8 @@ def create_img_label_segmentation(img, annotations_coco, labels_path):
     for ann in anns:
         seg = coco_to_yolo_segmentation(ann['segmentation'], w, h)
         seg_string = " ".join([str(x) for x in seg])
-        result.append(f"{ann['category_id']} {seg_string}")
+        label = label_names.index(annotations_coco.loadCats(ann['category_id'])[0]['name'])
+        result.append(f"{label} {seg_string}")
     with open(os.path.join(labels_path, txt_name), 'w') as f:
         f.write("\n".join(result))
         
