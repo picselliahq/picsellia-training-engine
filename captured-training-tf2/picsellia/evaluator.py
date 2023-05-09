@@ -59,6 +59,8 @@ class Evaluator:
             asset_list = self.asset_list
         else:
             asset_list = self.dataset_object.list_assets()
+            
+        confidence_threshold = self.parameters.get("confidence_threshold", confidence_threshold)
         batch_size = batch_size if len(asset_list) > batch_size else len(asset_list)
         self._evaluate_asset_list(asset_list, batch_size, confidence_threshold)
         self.experiment.compute_evaluations_metrics(
@@ -84,7 +86,7 @@ class Evaluator:
                 if len(predictions) > 0:
                     #  Format the raw output
                     if self.dataset_object.type == InferenceType.OBJECT_DETECTION:
-                        self._format_and_add_rectangles_evaluation(asset, predictions)
+                        self._format_and_add_rectangles_evaluation(asset, predictions, confidence_threshold)
                     elif self.dataset_object.type == InferenceType.SEGMENTATION:
                         self._format_and_add_polygons_evaluation(
                             asset, predictions, confidence_threshold
@@ -279,7 +281,7 @@ class Evaluator:
         return scores, masks, boxes, classes
 
     def _format_and_add_rectangles_evaluation(
-        self, asset: Asset, predictions: dict, confidence_threshold: float = 0.5
+        self, asset: Asset, predictions: dict, confidence_threshold: float = 0.1
     ) -> None:
         scores, boxes, classes = self._format_picsellia_rectangles(
             width=asset.width, height=asset.height, predictions=predictions
@@ -293,7 +295,7 @@ class Evaluator:
             return
         # print(scores, boxes, classes)
         for i in range(nb_box_limit):
-            if scores[i] >= self.parameters.get("confidence_threshold", 0.1):
+            if scores[i] >= confidence_threshold:
                 if str(int(classes[i])) in self.labelmap.keys():
                     try:
                         label: Label = self.dataset_labels[
@@ -327,7 +329,7 @@ class Evaluator:
         else:
             return
         for i in range(nb_box_limit):
-            if scores[i] >= self.parameters.get("confidence_threshold", 0.4):
+            if scores[i] >= confidence_threshold:
                 try:
                     if self._is_labelmap_starting_at_zero():
                         label: Label = self.dataset_object.get_label(
