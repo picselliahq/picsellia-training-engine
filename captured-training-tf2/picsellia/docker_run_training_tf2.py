@@ -101,16 +101,18 @@ if len(attached_datasets) == 3:
             train_annotations['categories'].append({"id": len(train_annotations['categories']), "name": label, "supercategory": ""})
             
         
-    train_annotations, _ = pxl_utils.format_coco_file(
+    train_annotations, _, _ = pxl_utils.format_coco_file(
         imgdir=experiment.png_dir,
         annotations=train_annotations,
         train_assets=train_ds.list_assets(),
+        eval_assets=[],
         test_assets=[]
     )
     
     eval_ds.download(
             target_path=os.path.join(experiment.png_dir, 'eval'), max_workers=8
         )
+    eval_assets = eval_ds.list_assets()
     eval_split = {'x': list(pxl_utils.retrieve_stats(eval_ds)['label_repartition'].keys()), 'y': list(pxl_utils.retrieve_stats(eval_ds)['label_repartition'].values())}
 
     eval_annotation_path = eval_ds.build_coco_file_locally(enforced_ordered_categories=label_names)
@@ -120,11 +122,12 @@ if len(attached_datasets) == 3:
         if label not in categories_dict:
             eval_annotations['categories'].append({"id": len(eval_annotations['categories']), "name": label, "supercategory": ""})
         
-    _, eval_annotations = pxl_utils.format_coco_file(
+    _, eval_annotations, _ = pxl_utils.format_coco_file(
         imgdir=experiment.png_dir,
         annotations=eval_annotations,
         train_assets=[],
-        test_assets=eval_ds.list_assets()
+        eval_assets=eval_ds.list_assets(),
+        test_assets=[]
     )
     
     test_ds.download(
@@ -139,10 +142,11 @@ if len(attached_datasets) == 3:
         if label not in categories_dict:
             test_annotations['categories'].append({"id": len(test_annotations['categories']), "name": label, "supercategory": ""})
         
-    _, test_annotations = pxl_utils.format_coco_file(
+    _, _, test_annotations = pxl_utils.format_coco_file(
         imgdir=experiment.png_dir,
         annotations=test_annotations,
         train_assets=[],
+        eval_assets=[],
         test_assets=test_ds.list_assets()
     )
     
@@ -157,12 +161,6 @@ else:
         output_path=experiment.base_dir,
     )
     
-    train_assets, test_assets, train_split, test_split, categories = dataset.train_test_split()
-    train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'), max_workers=8
-        )
-    test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'), max_workers=8
-        )
-        
     annotation_path = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
     annotations = annotation_path.dict()
     categories_dict = [category['name'] for category in annotations['categories']]
@@ -170,10 +168,26 @@ else:
         if label not in categories_dict:
             annotations['categories'].append({"id": len(annotations['categories']), "name": label, "supercategory": ""})
             
-    train_annotations, test_annotations = pxl_utils.format_coco_file(
+    
+    train_assets, test_assets, eval_assets, train_split, test_split, eval_split = pxl_utils.train_test_val_split(dataset=dataset, prop=parameters.get('prop_train_split', 0.7), dataset_length=len(annotations["images"]))
+    
+    train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'), max_workers=8
+        )
+    
+    
+    test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'), max_workers=8
+        )
+    
+    
+    eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'), max_workers=8
+        )
+    eval_ds = dataset
+
+    train_annotations, eval_annotations, test_annotations = pxl_utils.format_coco_file(
         imgdir=experiment.png_dir,
         annotations=annotations,
         train_assets=train_assets,
+        eval_assets=eval_assets,
         test_assets=test_assets
     )
 
@@ -197,19 +211,20 @@ pxl_utils.create_record_files(
         tfExample_generator=pxl_tf.tf_vars_generator,
         annotation_type=parameters['annotation_type']
         )
-
 # edit training config
 training_config_dir = experiment.config_dir
-test_config = os.path.join(experiment.base_dir, 'test_config')
+eval_config = os.path.join(experiment.base_dir, 'eval_config')
+if not os.path.exists(eval_config):
+    os.makedirs(eval_config)
 if os.path.isfile(os.path.join(training_config_dir, 'pipeline.config')):
-    shutil.copy(os.path.join(training_config_dir, 'pipeline.config'), test_config)
+    shutil.copy(os.path.join(training_config_dir, 'pipeline.config'), os.path.join(eval_config, 'pipeline.config'))
     
 pxl_utils.edit_config(
         model_selected=experiment.checkpoint_dir, 
         input_config_dir=training_config_dir,
         output_config_dir=training_config_dir,
         train_record_path=os.path.join(experiment.record_dir, 'train.record'),
-        eval_record_path=os.path.join(experiment.record_dir, 'eval.record'),
+        eval_record_path=os.path.join(experiment.record_dir, 'test.record'),
         label_map_path=label_path, 
         num_steps=parameters["steps"],
         batch_size=parameters['batch_size'],
@@ -222,10 +237,10 @@ pxl_utils.edit_config(
 
 pxl_utils.edit_config(
         model_selected=experiment.checkpoint_dir, 
-        input_config_dir=test_config,
-        output_config_dir=test_config,
+        input_config_dir=eval_config,
+        output_config_dir=eval_config,
         train_record_path=os.path.join(experiment.record_dir, 'train.record'),
-        eval_record_path=os.path.join(experiment.record_dir, 'test.record'),
+        eval_record_path=os.path.join(experiment.record_dir, 'eval.record'),
         label_map_path=label_path, 
         num_steps=parameters["steps"],
         batch_size=parameters['batch_size'],
@@ -240,11 +255,11 @@ print("\n")
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
-        config_dir=training_config_dir,
+        config_dir=experiment.config_dir,
         log_real_time=experiment,
         evaluate_fn=pxl_utils.evaluate,
         read_logs_fn=pxl_utils.tf_events_to_dict,
-        checkpoint_every_n=parameters.get('checkpoint_every_n', 5)
+        checkpoint_every_n=parameters.get('checkpoint_every_n', 10)
     )
 
 print("\n")
@@ -268,21 +283,21 @@ print("\n")
 
 experiment.start_logging_buffer(9)
 
-test_metrics_dir = os.path.join(experiment.base_dir, 'test_metrics')
-if not os.path.exists(test_metrics_dir):
-    os.makedirs(test_metrics_dir)
+eval_metrics_dir = os.path.join(experiment.base_dir, 'eval_metrics')
+if not os.path.exists(eval_metrics_dir):
+    os.makedirs(eval_metrics_dir)
     
 pxl_utils.evaluate(
-    test_metrics_dir, 
-    test_config, 
+    eval_metrics_dir, 
+    eval_config, 
     experiment.checkpoint_dir
-    )
+    )  
 
-metrics = pxl_utils.tf_events_to_dict('{}/test_metrics'.format(experiment.name), 'eval')
-experiment.log('metrics', metrics, 'table', replace=True)
+metrics = pxl_utils.tf_events_to_dict('{}/eval_metrics'.format(experiment.name), 'eval')
+experiment.log('Evaluation/Metrics', metrics, 'table', replace=True)
 
 conf, eval = pxl_utils.get_confusion_matrix(
-    input_tfrecord_path=os.path.join(experiment.record_dir, 'test.record'),
+    input_tfrecord_path=os.path.join(experiment.record_dir, 'eval.record'),
     model=os.path.join(experiment.exported_model_dir, 'saved_model'),
     labelmap=labelmap
 )
@@ -292,7 +307,7 @@ confusion = {
     'values': conf.tolist()
 }
 
-experiment.log('confusion-matrix', confusion, 'heatmap', replace=True)
+experiment.log('Evaluation/confusion-matrix', confusion, 'heatmap', replace=True)
 
 experiment.end_logging_buffer()
 
@@ -313,8 +328,8 @@ try:
     X = Evaluator(
         client=client,
         experiment=experiment, # same
-        dataset=test_ds,
-        asset_list=test_ds.list_assets()
+        dataset=eval_ds,
+        asset_list=eval_assets
     )
 
     X.setup_preannotation_job()
