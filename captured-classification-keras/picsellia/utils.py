@@ -5,7 +5,6 @@ from typing import Tuple, List
 import os
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.dataset_version import DatasetVersion
-from picsellia.exceptions import AuthenticationError
 from picsellia.types.enums import LogType
 import sys
 import picsellia
@@ -35,7 +34,7 @@ def dataset(experiment, assets, count, split_type, new_size, n_classes):
 
 def get_experiment() -> Experiment:
     if 'api_token' not in os.environ:
-        raise AuthenticationError("You must set an api_token to run this image")
+        raise Exception("You must set an api_token to run this image")
     api_token = os.environ["api_token"]
 
     if "host" not in os.environ:
@@ -64,7 +63,7 @@ def get_experiment() -> Experiment:
             project = client.get_project(project_name)
         experiment = project.get_experiment(experiment_name)
     else:
-        raise AuthenticationError("You must set the project_token or project_name and experiment_name")
+        Exception("You must set the project_token or project_name and experiment_name")
     return experiment
 
 def get_train_test_valid_datasets_from_experiment(experiment: Experiment) -> Tuple[DatasetVersion]:

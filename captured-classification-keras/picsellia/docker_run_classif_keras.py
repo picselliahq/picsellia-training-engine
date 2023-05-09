@@ -153,7 +153,7 @@ class_weights = class_weight.compute_class_weight(
 history = model.fit(train_generator, batch_size = batch_size, epochs = EPOCHS, validation_data=test_generator, callbacks=[utils.Metrics(val_data=test_generator, batch_size=batch_size, experiment=experiment)], verbose=1, class_weight=dict(enumerate(class_weights)))
 for k, v in history.history.items():
     try:
-        experiment.log(k, v, LogType.LINE)
+        experiment.log(k, list(map(float, v)), LogType.LINE)
     except Exception as e:
         print(f"can't send {v}")
 
