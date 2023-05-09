@@ -1,8 +1,5 @@
-
 import os
 from picsellia import Client
-from picsellia import utils
-from picsellia.types.enums import AnnotationFileType
 from evaluator import Evaluator
 from picsellia.exceptions import ResourceNotFoundError
 
@@ -10,7 +7,6 @@ from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
 
 import logging
-import json
 import shutil
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True" 
@@ -89,7 +85,8 @@ if len(attached_datasets) == 3:
         dataset.download(
                 target_path=os.path.join(experiment.png_dir, data_type), max_workers=8
             )
-        split = {'x': list(pxl_utils.retrieve_stats(dataset)['label_repartition'].keys()), 'y': list(pxl_utils.retrieve_stats(dataset)['label_repartition'].values())}
+        stats = dataset.retrieve_stats()
+        split = {'x': list(stats['label_repartition'].keys()), 'y': list(stats['label_repartition'].values())}
 
         annotation_path = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
         annotations = annotation_path.dict()
