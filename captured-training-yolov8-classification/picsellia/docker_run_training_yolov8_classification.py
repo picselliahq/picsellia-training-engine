@@ -6,35 +6,77 @@ from ultralytics import YOLO
 import os
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
-
+import shutil
 
 experiment = get_experiment()
 
-train_set = experiment.get_dataset("train")
-train_set.download("data/train")
-test_set = experiment.get_dataset("test")
-test_set.download("data/test")
-val_set = experiment.get_dataset("test")
-val_set.download("data/val")
+dataset_list = experiment.list_attached_dataset_versions()
+if len(dataset_list)==2:
+    train_set = experiment.get_dataset("train")
+    train_set.download("data/train")
+    test_set = experiment.get_dataset("test")
+    test_set.download("data/test")
+    val_set = experiment.get_dataset("test")
+    val_set.download("data/val")
 
-labels = train_set.list_labels()
-label_names = [label.name for label in labels]
-labelmap = {str(i): label.name for i, label in enumerate(labels)}
-experiment.log("labelmap", labelmap, "labelmap", replace=True)
+    labels = train_set.list_labels()
+    label_names = [label.name for label in labels]
+    labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    experiment.log("labelmap", labelmap, "labelmap", replace=True)
 
-train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
-coco_train = COCO(train_annotation_path)
+    train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
+    coco_train = COCO(train_annotation_path)
 
-test_annotation_path = test_set.export_annotation_file(AnnotationFileType.COCO)
-coco_test = COCO(test_annotation_path)
+    test_annotation_path = test_set.export_annotation_file(AnnotationFileType.COCO)
+    coco_test = COCO(test_annotation_path)
 
-val_annotation_path = val_set.export_annotation_file(AnnotationFileType.COCO)
-coco_val = COCO(val_annotation_path)
+    val_annotation_path = val_set.export_annotation_file(AnnotationFileType.COCO)
+    coco_val = COCO(val_annotation_path)
 
-_move_files_in_class_directories(coco_train, "data/train")
-_move_files_in_class_directories(coco_test, "data/test")
-_move_files_in_class_directories(coco_val, "data/val")
+    _move_files_in_class_directories(coco_train, "data/train")
+    _move_files_in_class_directories(coco_test, "data/test")
+    _move_files_in_class_directories(coco_val, "data/val")
+elif len(dataset_list)==1:
+    train_set = dataset_list[0]
+    train_set.download("images")
+    labels = train_set.list_labels()
+    label_names = [label.name for label in labels]
+    labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    experiment.log("labelmap", labelmap, "labelmap", replace=True)
+    parameters = experiment.get_log("parameters").data
+    prop = (
+            0.7
+            if not "prop_train_split" in parameters.keys()
+            else parameters["prop_train_split"]
+    )
+    train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
+    coco_train = COCO(train_annotation_path)
+    train_assets, test_assets, eval_assets, train_rep, test_rep, val_rep, labels = train_set.train_test_val_split([prop, (1-prop)/2, (1-prop)/2])
+    experiment.log('train-split', train_rep, 'bar', replace=True)
+    experiment.log('test-split', test_rep, 'bar', replace=True)
+    experiment.log('val-split', val_rep, 'bar', replace=True)
+    os.makedirs("data/train", exist_ok=True)
+    os.makedirs("data/test", exist_ok=True)
+    os.makedirs("data/val", exist_ok=True)
+    for asset in train_assets:
+        old_path = os.path.join("images", asset.filename)
+        new_path = os.path.join("data/train", asset.filename)
+        shutil.move(old_path, new_path)
 
+    for asset in test_assets:
+        old_path = os.path.join("images", asset.filename)
+        new_path = os.path.join("data/test", asset.filename)
+        shutil.move(old_path, new_path)
+
+    for asset in eval_assets:
+        old_path = os.path.join("images", asset.filename)
+        new_path = os.path.join("data/val", asset.filename)
+        shutil.move(old_path, new_path)
+    _move_files_in_class_directories(coco_train, "data/train")
+    _move_files_in_class_directories(coco_train, "data/test")
+    _move_files_in_class_directories(coco_train, "data/val")
+else:
+    raise Exception("You must either have only one Dataset or 2 (train, test)")
 weights_artifact = experiment.get_artifact("weights")
 weights_artifact.download()
 
