@@ -15,7 +15,7 @@ RUN pip3 install -U setuptools
 ARG REBUILD_ALL
 RUN pip3 install --no-cache-dir picsellia_tf2==0.11.6
 ARG REBUILD_PICSELLIA
-RUN pip3 install --no-cache-dir picsellia==6.6.0
+RUN pip3 install --no-cache-dir picsellia --upgrade
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./picsellia /picsellia

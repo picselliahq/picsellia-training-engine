@@ -26,9 +26,15 @@ if 'api_token' not in os.environ:
     raise RuntimeError("You must set an api_token to run this image")
 api_token = os.environ["api_token"]
 
+if "organization_id" not in os.environ:
+    organization_id = None
+else:
+    organization_id = os.environ["organization_id"]
+    
 client = Client(
     api_token=api_token,
-    host=host
+    host=host,
+    organization_id=organization_id
 )
 
 if "experiment_name" in os.environ:
