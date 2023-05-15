@@ -139,6 +139,7 @@ if len(attached_datasets) == 3:
                 eval_assets=dataset.list_assets(),
                 test_assets=[]
             )
+            eval_assets = dataset.list_assets()
     
 else:
     dataset = experiment.list_attached_dataset_versions()[0]
