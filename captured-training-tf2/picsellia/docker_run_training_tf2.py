@@ -180,9 +180,6 @@ experiment.log('test-split', pxl_utils.sort_split(test_split, label_names), 'bar
 
 print("\n")
 experiment.start_logging_chapter('Create records')
-print("\n")
-
-# x = lambda x : os.path.join(experiment.png_dir, x)
 
 pxl_utils.create_record_files(
         train_annotations=train_annotations,
@@ -234,7 +231,6 @@ pxl_utils.edit_config(
 
 print("\n")
 experiment.start_logging_chapter('Start training')
-print("\n")
 
 pxl_utils.train(
         ckpt_dir=experiment.checkpoint_dir, 
@@ -247,7 +243,6 @@ pxl_utils.train(
 
 print("\n")
 experiment.start_logging_chapter('Store artifacts')
-print("\n")
 
 pxl_utils.export_graph(
     ckpt_dir=experiment.checkpoint_dir, 
@@ -262,7 +257,6 @@ experiment.store('checkpoint-index-latest')
 
 print("\n")
 experiment.start_logging_chapter('Computing metrics on test dataset')
-print("\n")
 
 experiment.start_logging_buffer(9)
 
@@ -305,7 +299,6 @@ experiment.end_logging_buffer()
 
 print("\n")
 experiment.start_logging_chapter('Starting Evaluation')
-print("\n")
 
 try:
     X = Evaluator(
