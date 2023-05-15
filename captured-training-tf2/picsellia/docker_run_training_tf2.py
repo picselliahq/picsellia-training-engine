@@ -15,6 +15,25 @@ os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
+def log_metrics(experiment, tf_metrics_dir, global_step, metrics_type):
+    metrics = pxl_utils.tf_events_to_dict(dir_path=tf_metrics_dir, type=metrics_type)
+    if metrics_type=='train':
+        log_type='Train'
+        for metric_name, value in metrics.items():
+            data = {
+                'steps': [float(global_step)],
+                'values': [float(value['values'][-1])]
+            }
+            experiment.log(log_type+'/'+metric_name, data, 'line') 
+    elif metrics_type=='eval':
+        log_type='Validation'
+        for metric_name, value in metrics.items():
+            data = {
+                'steps': [float(global_step)],
+                'values': [float(value)]
+            }
+            experiment.log(log_type+'/'+metric_name, data, 'line') 
+
 if 'api_token' not in os.environ:
     raise RuntimeError("You must set an api_token to run this image")
 
@@ -86,7 +105,7 @@ if len(attached_datasets) == 3:
                 target_path=os.path.join(experiment.png_dir, data_type), max_workers=8
             )
         stats = dataset.retrieve_stats()
-        split = {'x': list(stats['label_repartition'].keys()), 'y': list(stats['label_repartition'].values())}
+        split = {'x': list(stats.label_repartition.keys()), 'y': list(stats.label_repartition.values())}
 
         annotation_path = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
         annotations = annotation_path.dict()
@@ -163,7 +182,7 @@ print("\n")
 experiment.start_logging_chapter('Create records')
 print("\n")
 
-x = lambda x : os.path.join(experiment.png_dir, x)
+# x = lambda x : os.path.join(experiment.png_dir, x)
 
 pxl_utils.create_record_files(
         train_annotations=train_annotations,
@@ -174,6 +193,7 @@ pxl_utils.create_record_files(
         tfExample_generator=pxl_tf.tf_vars_generator,
         annotation_type=parameters['annotation_type']
         )
+
 # edit training config
 training_config_dir = experiment.config_dir
 eval_config = os.path.join(experiment.base_dir, 'eval_config')
@@ -221,8 +241,8 @@ pxl_utils.train(
         config_dir=experiment.config_dir,
         log_real_time=experiment,
         evaluate_fn=pxl_utils.evaluate,
-        log_metrics=pxl_utils.log_metrics,
-        checkpoint_every_n=parameters.get('checkpoint_every_n', 5)
+        log_metrics=log_metrics,
+        checkpoint_every_n=parameters.get('checkpoint_every_n', 10)
     )
 
 print("\n")
