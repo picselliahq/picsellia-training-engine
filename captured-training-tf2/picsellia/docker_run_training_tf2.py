@@ -15,25 +15,6 @@ os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
-def log_metrics(experiment, tf_metrics_dir, global_step, metrics_type):
-    metrics = pxl_utils.tf_events_to_dict(dir_path=tf_metrics_dir, type=metrics_type)
-    if metrics_type=='train':
-        log_type='Train'
-        for metric_name, value in metrics.items():
-            data = {
-                'steps': [float(global_step)],
-                'values': [float(value['values'][-1])]
-            }
-            experiment.log(log_type+'/'+metric_name, data, 'line') 
-    elif metrics_type=='eval':
-        log_type='Validation'
-        for metric_name, value in metrics.items():
-            data = {
-                'steps': [float(global_step)],
-                'values': [float(value)]
-            }
-            experiment.log(log_type+'/'+metric_name, data, 'line') 
-
 if 'api_token' not in os.environ:
     raise RuntimeError("You must set an api_token to run this image")
 
@@ -238,7 +219,7 @@ pxl_utils.train(
         config_dir=experiment.config_dir,
         log_real_time=experiment,
         evaluate_fn=pxl_utils.evaluate,
-        log_metrics=log_metrics,
+        log_metrics=pxl_utils.log_metrics,
         checkpoint_every_n=parameters.get('checkpoint_every_n', 10)
     )
 
