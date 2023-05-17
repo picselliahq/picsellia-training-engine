@@ -19,10 +19,10 @@ if len(dataset_list)==2:
     val_set = experiment.get_dataset("test")
     val_set.download("data/val")
 
-    labels = train_set.list_labels()
-    label_names = [label.name for label in labels]
-    labelmap = {str(i): label.name for i, label in enumerate(labels)}
-    experiment.log("labelmap", labelmap, "labelmap", replace=True)
+    # labels = train_set.list_labels()
+    # label_names = [label.name for label in labels]
+    # labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    # experiment.log("labelmap", labelmap, "labelmap", replace=True)
 
     train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
     coco_train = COCO(train_annotation_path)
@@ -39,10 +39,10 @@ if len(dataset_list)==2:
 elif len(dataset_list)==1:
     train_set = dataset_list[0]
     train_set.download("images")
-    labels = train_set.list_labels()
-    label_names = [label.name for label in labels]
-    labelmap = {str(i): label.name for i, label in enumerate(labels)}
-    experiment.log("labelmap", labelmap, "labelmap", replace=True)
+    # labels = train_set.list_labels()
+    # label_names = [label.name for label in labels]
+    # labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    # experiment.log("labelmap", labelmap, "labelmap", replace=True)
     parameters = experiment.get_log("parameters").data
     prop = (
             0.7
@@ -77,6 +77,11 @@ elif len(dataset_list)==1:
     _move_files_in_class_directories(coco_train, "data/val")
 else:
     raise Exception("You must either have only one Dataset or 2 (train, test)")
+
+names = os.listdir("data/train") # class names list
+labelmap = {str(i): label for i, label in enumerate(sorted(names))}
+experiment.log("labelmap", labelmap, "labelmap", replace=True)
+
 weights_artifact = experiment.get_artifact("weights")
 weights_artifact.download()
 
@@ -106,21 +111,21 @@ accuracy = metrics.top1
 experiment.log("val/accuracy", float(accuracy), "value")
 
 val_folder_path = os.path.join(data_path, "val")
-class_list = os.listdir(val_folder_path)
 gt_class = []
 pred_class = []
-for class_id, label in enumerate(class_list):
+for class_id, label in labelmap.items():
     label_path = os.path.join(val_folder_path, label)
-    file_list = [os.path.join(label_path, filepath) for filepath in os.listdir(label_path)]
-    for image in file_list:
-        pred = model.predict(source=image)
-        pred_label = np.argmax([float(score) for score in list(pred[0].probs)])
-        gt_class.append(int(label))
-        pred_class.append(pred_label)
+    if os.path.exists(label_path):
+        file_list = [os.path.join(label_path, filepath) for filepath in os.listdir(label_path)]
+        for image in file_list:
+            pred = model.predict(source=image)
+            pred_label = np.argmax([float(score) for score in list(pred[0].probs)])
+            gt_class.append(int(class_id))
+            pred_class.append(pred_label)
 
-classification_report(gt_class, pred_class, target_names=class_list)
+classification_report(gt_class, pred_class, target_names=labelmap.values())
 matrix = confusion_matrix(gt_class, pred_class)
 
-confusion = {"categories": class_list, "values": matrix.tolist()}
+confusion = {"categories": list(labelmap.values()), "values": matrix.tolist()}
 
 experiment.log(name='confusion', data=confusion, type="heatmap")
