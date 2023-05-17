@@ -115,7 +115,7 @@ for class_id, label in enumerate(class_list):
     for image in file_list:
         pred = model.predict(source=image)
         pred_label = np.argmax([float(score) for score in list(pred[0].probs)])
-        gt_class.append(class_id)
+        gt_class.append(int(label))
         pred_class.append(pred_label)
 
 classification_report(gt_class, pred_class, target_names=class_list)
