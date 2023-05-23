@@ -1,0 +1,3 @@
+pycocotools==2.0.4
+super-gradients==3.1.1
+onnx==1.13.0
