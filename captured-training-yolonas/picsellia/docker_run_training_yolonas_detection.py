@@ -85,27 +85,20 @@ path_dict = yolonas_utils.create_yolo_dataset(experiment, cwd)  # get the data
 labelmap, label_names = yolonas_utils.get_labelmap(experiment=experiment)
 # trainer params
 EXPERIMENT_NAME = experiment.name
-# path to save the checkpoints to
 CHECKPOINT_DIR = os.path.join(cwd, experiment.name, "checkpoints")
 
 # dataset params
 DATA_DIR = os.path.join(cwd, experiment.base_dir)
-# child dir of DATA_DIR where train images are
+
 TRAIN_IMAGES_DIR = path_dict["train"]["dataset_dir"]
-# child dir of DATA_DIR where validation images are
+
 VAL_IMAGES_DIR = path_dict["val"]["dataset_dir"]
-# child dir of DATA_DIR where test images are
+
 TEST_IMAGES_DIR = path_dict["test"]["dataset_dir"]
 
-TRAIN_LABELS_DIR = os.path.join(
-    cwd, path_dict["train"]["yolo_annotation_path"]
-)  # child dir of DATA_DIR where train labels are
-VAL_LABELS_DIR = os.path.join(
-    cwd, path_dict["val"]["yolo_annotation_path"]
-)  # child dir of DATA_DIR where validation labels are
-TEST_LABELS_DIR = os.path.join(
-    cwd, path_dict["test"]["yolo_annotation_path"]
-)  # child dir of DATA_DIR where test labels are
+TRAIN_LABELS_DIR = os.path.join(cwd, path_dict["train"]["yolo_annotation_path"])
+VAL_LABELS_DIR = os.path.join(cwd, path_dict["val"]["yolo_annotation_path"])
+TEST_LABELS_DIR = os.path.join(cwd, path_dict["test"]["yolo_annotation_path"])
 
 CLASSES = label_names
 NUM_CLASSES = len(CLASSES)
@@ -260,9 +253,7 @@ test_image_list = experiment.get_dataset("test").list_assets()
 for asset in tqdm(test_image_list, desc="Logging evaluations into Evaluations tab"):
     image_path = os.path.join(experiment.base_dir, "test", "images", asset.filename)
     asset_predictions = best_model.predict(image_path, conf=0.3)
-    bbox_list = yolonas_utils.format_asset_predictions_for_eval(
-        asset_predictions, labels
-    )
+    bbox_list = yolonas_utils.format_predictions_for_eval(asset_predictions, labels)[0]
 
     if len(bbox_list) > 0:
         experiment.add_evaluation(asset, "replace", rectangles=bbox_list)

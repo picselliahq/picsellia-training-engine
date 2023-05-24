@@ -1,4 +1,5 @@
 import os
+from typing import List
 from tqdm import tqdm
 import shutil
 import json
@@ -6,6 +7,14 @@ from picsellia import Client
 from picsellia.types.enums import AnnotationFileType
 from picsellia.sdk.experiment import Experiment, Asset
 import torch
+from dataclasses import dataclass
+
+
+@dataclass
+class YoloPredictionBox:
+    label: int
+    confidence: float
+    box: List[float]
 
 
 def get_experiment():
@@ -135,30 +144,33 @@ def convert_bbox_coco2yolo(img_width, img_height, bbox):
     return [x, y, w, h]
 
 
-def format_asset_predictions_for_eval(predictions, experiment_labels):
-    bbox_list = []
-    for image_prediction in predictions:
-        for i, (label, conf, bbox) in enumerate(
-            zip(
-                image_prediction.prediction.labels,
-                image_prediction.prediction.confidence,
-                image_prediction.prediction.bboxes_xyxy,
-            )
+def format_predictions_for_eval(predictions, experiment_labels):
+    formatted_predictions = []
+    for predicted_boxes in predictions:
+        bbox_list = []
+        for label, conf, bbox in zip(
+            predicted_boxes.prediction.labels,
+            predicted_boxes.prediction.confidence,
+            predicted_boxes.prediction.bboxes_xyxy,
         ):
-            for i, coord in enumerate(bbox):
-                if coord < 0:
-                    bbox[i] = 0
-            width = bbox[2] - bbox[0]
-            height = bbox[3] - bbox[1]
-            bbox_list.append(
-                (
-                    int(bbox[0]),
-                    int(bbox[1]),
-                    int(width),
-                    int(height),
-                    experiment_labels[int(label)],
-                    float(conf),
-                )
-            )
+            predicted_box = YoloPredictionBox(label=label, confidence=conf, box=bbox)
+            bbox_list.append(format_box(predicted_box, experiment_labels))
 
-    return bbox_list
+        formatted_predictions.append(bbox_list)
+    return formatted_predictions
+
+
+def format_box(box: YoloPredictionBox, experiment_labels):
+    for i, coord in enumerate(box.box):
+        if coord < 0:
+            box.box[i] = 0
+    width = box.box[2] - box.box[0]
+    height = box.box[3] - box.box[1]
+    return (
+        int(box.box[0]),
+        int(box.box[1]),
+        int(width),
+        int(height),
+        experiment_labels[int(box.label)],
+        float(box.confidence),
+    )
