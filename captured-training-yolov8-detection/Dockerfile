@@ -12,15 +12,15 @@ RUN apt-get update && apt upgrade -y && \
 RUN python3.10 -m ensurepip --upgrade
 RUN python3.10 -m pip install -U setuptools
 
-COPY ./requirements.txt .
+COPY ./captured-training-yolov8-detection/requirements.txt .
 ARG REBUILD_ALL
 RUN python3.10 -m pip install -r requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
 RUN python3.10 -m pip install picsellia --upgrade
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda-11.6/targets/x86_64-linux/lib:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/lib/x86_64-linux-gnu
-COPY ./picsellia /picsellia
+COPY ./captured-training-yolov8-detection/picsellia /picsellia
+COPY ./evaluator /picsellia/evaluator
 
 CMD ["/picsellia/launch_sub.py"]
 ENTRYPOINT ["python3.10"]
-COPY . .
 RUN chown -R 42420:42420 /picsellia
