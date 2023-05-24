@@ -257,9 +257,12 @@ experiment.log(name="test metrics", type=LogType.TABLE, data=test_results)
 
 # log evaluations
 test_image_list = experiment.get_dataset("test").list_assets()
-for asset in test_image_list:
-    bbox_list = yolonas_utils.get_asset_predictions(
-        experiment, best_model, asset, conf=0.1, dataset_type="test"
+for asset in tqdm(test_image_list, desc="Logging evaluations into Evaluations tab"):
+    asset_predictions = yolonas_utils.get_asset_predictions(
+        experiment, best_model, asset, conf_threshold=0.3, dataset_type="test"
+    )
+    bbox_list = yolonas_utils.format_asset_predictions_for_eval(
+        asset_predictions, labels
     )
 
     if len(bbox_list) > 0:
