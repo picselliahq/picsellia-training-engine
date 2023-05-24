@@ -13,7 +13,7 @@ RUN python3.8 -m pip install --upgrade pip
 RUN pip3 install -U setuptools
 
 ARG REBUILD_ALL
-RUN pip3 install --no-cache-dir picsellia_tf2==0.11.9
+RUN pip3 install --no-cache-dir picsellia_tf2==0.11.10
 ARG REBUILD_PICSELLIA
 RUN pip3 install --no-cache-dir picsellia --upgrade
 ENV PATH=$PATH:/usr/local/cuda/bin
