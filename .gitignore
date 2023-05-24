@@ -154,3 +154,6 @@ captured-training-tf2/picsellia/picsellia_tf2
 captured-training-tf2/picsellia/saved_model
 captured-training-tf2/picsellia/tf2_python3_7
 captured-training-tf2/picsellia/test_sample_10
+captured-training-yolov8-detection/picsellia/tensorflow_evaluator.py
+evaluator/tensorflow_evaluator.py
+captured-training-yolov8-segmentation/picsellia/evaluator.py
