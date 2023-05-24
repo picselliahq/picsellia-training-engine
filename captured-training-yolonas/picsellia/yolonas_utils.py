@@ -135,15 +135,6 @@ def convert_bbox_coco2yolo(img_width, img_height, bbox):
     return [x, y, w, h]
 
 
-def get_asset_predictions(
-    experiment: Experiment, model, asset, conf_threshold, dataset_type: str
-):
-    image_path = os.path.join(
-        experiment.base_dir, dataset_type, "images", asset.filename
-    )
-    return model.predict(image_path, conf=conf_threshold)
-
-
 def format_asset_predictions_for_eval(predictions, experiment_labels):
     bbox_list = []
     for image_prediction in predictions:

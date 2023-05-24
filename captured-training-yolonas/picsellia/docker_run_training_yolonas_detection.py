@@ -255,12 +255,11 @@ test_results = trainer.test(
 test_results = yolonas_utils.format_test_results(test_results)
 experiment.log(name="test metrics", type=LogType.TABLE, data=test_results)
 
-# log evaluations
+# log evaluations (for images in the test set)
 test_image_list = experiment.get_dataset("test").list_assets()
 for asset in tqdm(test_image_list, desc="Logging evaluations into Evaluations tab"):
-    asset_predictions = yolonas_utils.get_asset_predictions(
-        experiment, best_model, asset, conf_threshold=0.3, dataset_type="test"
-    )
+    image_path = os.path.join(experiment.base_dir, "test", "images", asset.filename)
+    asset_predictions = best_model.predict(image_path, conf=0.3)
     bbox_list = yolonas_utils.format_asset_predictions_for_eval(
         asset_predictions, labels
     )
