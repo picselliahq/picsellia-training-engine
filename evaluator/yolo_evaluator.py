@@ -4,16 +4,13 @@ from typing import List
 
 import numpy as np
 from evaluator.abstract_evaluator import AbstractEvaluator
-from evaluator.utils import open_asset_as_array
 from evaluator.framework_formatter import YoloFormatter
+from evaluator.type_formatter import (ClassificationFormatter,
+                                      DetectionFormatter,
+                                      SegmentationFormatter, TypeFormatter)
+from evaluator.utils import open_asset_as_array
 from picsellia.exceptions import PicselliaError
 from picsellia.sdk.asset import Asset
-from evaluator.type_formatter import (
-    ClassificationFormatter,
-    DetectionFormatter,
-    SegmentationFormatter,
-    TypeFormatter,
-)
 from ultralytics import YOLO
 
 
@@ -31,7 +28,7 @@ class YOLOEvaluator(AbstractEvaluator):
             logging.info("Model loaded in memory.")
         except Exception as e:
             raise PicselliaError(
-                f"Impossible to load saved model located at: {self.model_weights_path}"
+                f"Impossible to load saved model located at: {self._model_weights_path}"
             ) from e
 
     @abstractmethod
