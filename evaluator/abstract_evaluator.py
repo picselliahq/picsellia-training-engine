@@ -2,22 +2,23 @@ import logging
 import math
 import os
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Type
 
+import numpy as np
 import tqdm
 from evaluator.framework_formatter import FrameworkFormatter
+from evaluator.type_formatter import TypeFormatter
 from picsellia.exceptions import (InsufficientResourcesError,
                                   ResourceNotFoundError)
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.label import Label
-from evaluator.type_formatter import TypeFormatter
 
 
 class AbstractEvaluator(ABC):
-    type_formatter: TypeFormatter
-    framework_formatter: FrameworkFormatter
+    type_formatter: Type[TypeFormatter]
+    framework_formatter: Type[FrameworkFormatter]
 
     def __init__(
         self,
@@ -37,17 +38,23 @@ class AbstractEvaluator(ABC):
             if len(asset_list) > self._parameters.get("batch_size", 8)
             else len(asset_list)
         )
-        self._default_confidence_thresdhold = self._parameters.get(
+        self._default_confidence_threshold = self._parameters.get(
             "confidence_threshold", 0.1
         )
 
+        self._model_weights = self._experiment.get_artifact(
+            self._get_model_artifact_filename()
+        )
+        self._model_weights_path = os.path.join(
+            os.path.join(os.getcwd(), "saved_model"), self._model_weights.filename
+        )
         self._loaded_model = None
         self._nb_object_limit = 100
 
-        self._labelmap = self._setup_label_map()
-        self._formatter = self.type_formatter(
-            framework_formatter=self.framework_formatter,
-            labelmap=self._labelmap,
+        self.labelmap = self._setup_label_map()
+        self._framework_formatter = self.framework_formatter(labelmap=self.labelmap)
+        self._type_formatter = self.type_formatter(
+            framework_formatter=self._framework_formatter
         )
         self._setup_evaluation_job()
 
@@ -113,14 +120,8 @@ class AbstractEvaluator(ABC):
         )
 
     def _download_model_weights(self) -> None:
-        cwd = os.getcwd()
-        model_weights_dir = os.path.join(cwd, "saved_model")
-        model_weights = self._experiment.get_artifact(
-            self._get_model_artifact_filename()
-        )
-        model_weights.download(target_path=model_weights_dir)
-        self._model_weights_path = os.path.join(
-            model_weights_dir, model_weights.filename
+        self._model_weights.download(
+            target_path=os.path.split(self._model_weights_path)[0]
         )
         logging.info(f"experiment weights downloaded.")
 
@@ -136,7 +137,7 @@ class AbstractEvaluator(ABC):
         if confidence_threshold is not None:
             self._confidence_threshold = confidence_threshold
         else:
-            self._confidence_threshold = self._default_confidence_thresdhold
+            self._confidence_threshold = self._default_confidence_threshold
 
         total_batch_number = math.ceil(len(self._asset_list) / self._batch_size)
 
@@ -157,14 +158,12 @@ class AbstractEvaluator(ABC):
             self._send_evaluations_to_platform(asset=asset, evaluations=evaluations)
 
     @abstractmethod
-    def _preprocess_images(self):
+    def _preprocess_images(self, assets: List[Asset]) -> List[np.ndarray]:
         pass
 
     def _format_prediction_to_evaluations(self, asset: Asset, prediction: List) -> List:
-        picsellia_predictions = (
-            self._formatter._format_predictions(
-                asset=asset, prediction=prediction
-            )
+        picsellia_predictions = self._type_formatter.format_predictions(
+            asset=asset, prediction=prediction
         )
 
         evaluations = []
@@ -176,7 +175,7 @@ class AbstractEvaluator(ABC):
                     prediction_key: prediction[i]
                     for prediction_key, prediction in picsellia_predictions.items()
                 }
-                evaluation = self._formatter._format_evaluation(
+                evaluation = self._type_formatter.format_evaluation(
                     picsellia_prediction=picsellia_prediction
                 )
                 evaluations.append(evaluation)
@@ -184,7 +183,7 @@ class AbstractEvaluator(ABC):
 
     def _send_evaluations_to_platform(self, asset: Asset, evaluations: List) -> None:
         if len(evaluations) > 0:
-            shapes = {self._formatter._get_shape_type(): evaluations}
+            shapes = {self._type_formatter.get_shape_type(): evaluations}
             self._experiment.add_evaluation(asset=asset, **shapes)
             logging.info(f"Asset: {asset.filename} evaluated.")
         else:
