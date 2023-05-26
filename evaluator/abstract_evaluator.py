@@ -6,14 +6,28 @@ from typing import List, Type
 
 import numpy as np
 import tqdm
-from evaluator.framework_formatter import FrameworkFormatter
-from evaluator.type_formatter import TypeFormatter
 from picsellia.exceptions import (InsufficientResourcesError,
                                   ResourceNotFoundError)
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.label import Label
+
+from evaluator.framework_formatter import FrameworkFormatter
+from evaluator.type_formatter import TypeFormatter
+
+
+def _labels_coherence_check(experiment_labelmap, dataset_labels) -> bool:
+    """
+    Assert that at least one label from the model labelmap is contained in the dataset version.
+    """
+    model_labels_name = list(experiment_labelmap.values())
+    dataset_labels_name = list(dataset_labels.keys())
+    intersecting_labels = set(model_labels_name).intersection(dataset_labels_name)
+    logging.info(
+        f"Pre-annotation Job will only run on classes: {list(intersecting_labels)}"
+    )
+    return len(intersecting_labels) > 0
 
 
 class AbstractEvaluator(ABC):
@@ -25,6 +39,7 @@ class AbstractEvaluator(ABC):
         experiment: Experiment,
         dataset: DatasetVersion,
         asset_list: List[Asset] = None,
+        confidence_threshold: float = 0.1
     ) -> None:
         self._experiment = experiment
         self._dataset = dataset
@@ -34,13 +49,12 @@ class AbstractEvaluator(ABC):
             asset_list if asset_list is not None else self._dataset.list_assets()
         )
         self._batch_size = (
-            self._parameters.get("batch_size", 8)
-            if len(asset_list) > self._parameters.get("batch_size", 8)
+            self._parameters.get("evaluation_batch_size", 8)
+            if len(asset_list) > self._parameters.get("evaluation_batch_size", 8)
             else len(asset_list)
         )
-        self._default_confidence_threshold = self._parameters.get(
-            "confidence_threshold", 0.1
-        )
+
+        self._confidence_threshold = confidence_threshold
 
         self._model_weights = self._experiment.get_artifact(
             self._get_model_artifact_filename()
@@ -61,7 +75,7 @@ class AbstractEvaluator(ABC):
     def _setup_label_map(self) -> dict[int, Label]:
         experiment_labelmap = self._get_experiment_labelmap()
         dataset_labels = {label.name: label for label in self._dataset.list_labels()}
-        self._labels_coherence_check(experiment_labelmap, dataset_labels)
+        _labels_coherence_check(experiment_labelmap, dataset_labels)
 
         return {
             int(category_id): dataset_labels[label_name]
@@ -74,18 +88,6 @@ class AbstractEvaluator(ABC):
         except Exception:
             raise InsufficientResourcesError(f"Can't find labelmap for this experiment")
 
-    def _labels_coherence_check(self, experiment_labelmap, dataset_labels) -> bool:
-        """
-        Assert that at least one label from the model labelmap is contained in the dataset version.
-        """
-        model_labels_name = list(experiment_labelmap.values())
-        dataset_labels_name = list(dataset_labels.keys())
-        intersecting_labels = set(model_labels_name).intersection(dataset_labels_name)
-        logging.info(
-            f"Pre-annotation Job will only run on classes: {list(intersecting_labels)}"
-        )
-        return len(intersecting_labels) > 0
-
     def _setup_evaluation_job(self):
         logging.info(f"Setting up the evaluation for this experiment")
         self._model_sanity_check()
@@ -95,7 +97,7 @@ class AbstractEvaluator(ABC):
 
     def _model_sanity_check(self) -> None:
         try:
-            self._experiment.get_artifact("checkpoint-index-latest")
+            self._experiment.get_artifact(self._get_model_artifact_filename())
             logging.info(f"Experiment {self._experiment.name} is sane.")
         except ResourceNotFoundError as e:
             raise ResourceNotFoundError(
@@ -133,12 +135,7 @@ class AbstractEvaluator(ABC):
     def _load_saved_model(self):
         pass
 
-    def evaluate(self, confidence_threshold: float = None) -> None:
-        if confidence_threshold is not None:
-            self._confidence_threshold = confidence_threshold
-        else:
-            self._confidence_threshold = self._default_confidence_threshold
-
+    def evaluate(self) -> None:
         total_batch_number = math.ceil(len(self._asset_list) / self._batch_size)
 
         for i in tqdm.tqdm(range(total_batch_number)):
@@ -162,7 +159,7 @@ class AbstractEvaluator(ABC):
         pass
 
     def _format_prediction_to_evaluations(self, asset: Asset, prediction: List) -> List:
-        picsellia_predictions = self._type_formatter.format_predictions(
+        picsellia_predictions = self._type_formatter.format_prediction(
             asset=asset, prediction=prediction
         )
 
@@ -184,7 +181,9 @@ class AbstractEvaluator(ABC):
     def _send_evaluations_to_platform(self, asset: Asset, evaluations: List) -> None:
         if len(evaluations) > 0:
             shapes = {self._type_formatter.get_shape_type(): evaluations}
+
             self._experiment.add_evaluation(asset=asset, **shapes)
+            print(f"Asset: {asset.filename} evaluated.")
             logging.info(f"Asset: {asset.filename} evaluated.")
         else:
             logging.info(
