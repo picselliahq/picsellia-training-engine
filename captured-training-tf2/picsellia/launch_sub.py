@@ -11,13 +11,13 @@ os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 os.chdir('picsellia')
 from datetime import datetime
-from picsellia.types.enums import ExperimentStatus, JobStatus
+from picsellia.types.enums import ExperimentStatus, JobRunStatus
 import logging
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
 command = "python3 docker_run_training_tf2.py"
-
+    
 if "host" not in os.environ:
     host = "https://app.picsellia.com"
 else:
@@ -32,11 +32,20 @@ else:
 
 api_token = os.environ["api_token"]
 
+
 client = Client(
     api_token=api_token,
     host=host,
     organization_id=organization_id
 )
+if "job_id" not in os.environ:
+    job = None
+else:
+    job_id = os.environ["job_id"]
+    job = client.get_job_by_id(job_id)
+
+if job:
+    job.update_job_run_with_status(JobRunStatus.RUNNING)
 
 if "experiment_name" in os.environ:
     experiment_name = os.environ["experiment_name"]
@@ -140,8 +149,10 @@ experiment.store_logging_file('{}-logs.json'.format(experiment.id))
 
 if process.returncode == 0 or process.returncode == "0":
     experiment.update(status=ExperimentStatus.SUCCESS)
-    experiment.update_job_status(status=JobStatus.SUCCESS)
+    if job:
+        job.update_job_run_with_status(JobRunStatus.SUCCEEDED)
 else:
     experiment.update(status=ExperimentStatus.FAILED)
-    experiment.update_job_status(status=JobStatus.FAILED)
+    if job:
+        job.update_job_run_with_status(JobRunStatus.FAILED)
 rc = process.poll()
