@@ -145,7 +145,10 @@ trainer.train()
 picsellia_utils.send_run_to_picsellia(experiment, current_dir, trainer.save_dir)
 
 X = DetectionYOLOEvaluator(
-    experiment=experiment, dataset=evaluation_ds, asset_list=evaluation_assets
+    experiment=experiment,
+    dataset=evaluation_ds,
+    asset_list=evaluation_assets,
+    confidence_threshold=parameters.get("confidence_threshold", 0.1)
 )
 
 X.evaluate()

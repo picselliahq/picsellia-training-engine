@@ -7,6 +7,7 @@ from pycocotools.coco import COCO
 import yolo_utils
 import picsellia_utils
 from picsellia_segmentation_trainer import PicselliaSegmentationTrainer
+from evaluator.yolo_evaluator import SegmentationYOLOEvaluator
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
@@ -69,6 +70,9 @@ if len(attached_datasets) == 3:
             experiment, data_type, annotations_dict, annotations_coco, label_names
         )
 
+    evaluation_ds = test_ds
+    evaluation_assets = evaluation_ds.list_assets()
+
 else:
     dataset = experiment.list_attached_dataset_versions()[0]
 
@@ -109,6 +113,9 @@ else:
             experiment, data_type, annotations_dict, annotations_coco, label_names
         )
 
+    evaluation_ds = dataset
+    evaluation_assets = test_assets
+
 experiment.log("labelmap", labelmap, "labelmap", replace=True)
 data_yaml_path = picsellia_utils.generate_data_yaml(experiment, labelmap, current_dir)
 
@@ -125,3 +132,12 @@ trainer = PicselliaSegmentationTrainer(experiment=experiment, cfg=cfg)
 trainer.train()
 
 picsellia_utils.send_run_to_picsellia(experiment, current_dir, trainer.save_dir)
+
+X = SegmentationYOLOEvaluator(
+    experiment=experiment,
+    dataset=evaluation_ds,
+    asset_list=evaluation_assets,
+    confidence_threshold=parameters.get("confidence_threshold", 0.1)
+)
+
+X.evaluate()
