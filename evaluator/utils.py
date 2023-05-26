@@ -2,8 +2,8 @@ from typing import List
 
 import numpy as np
 import requests
-from picsellia.sdk.asset import Asset
 from PIL import Image
+from picsellia.sdk.asset import Asset
 from torch import Tensor
 
 
@@ -37,13 +37,6 @@ def get_image_shape_with_exif_transpose(image: Image):
 
 def is_labelmap_starting_at_zero(labelmap: dict) -> bool:
     return "0" in labelmap.keys()
-
-
-def load_image_from_asset(asset: Asset) -> np.array:
-    image = Image.open(
-        requests.get(asset.sync()["data"]["presigned_url"], stream=True).raw
-    )
-    return np.array(image)
 
 
 def cast_type_list_to_int(_list: List) -> List:

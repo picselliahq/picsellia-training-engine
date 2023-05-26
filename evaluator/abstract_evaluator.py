@@ -128,10 +128,6 @@ class AbstractEvaluator(ABC):
         logging.info(f"experiment weights downloaded.")
 
     @abstractmethod
-    def _get_model_artifact_filename(self) -> str:
-        pass
-
-    @abstractmethod
     def _load_saved_model(self):
         pass
 
@@ -190,3 +186,6 @@ class AbstractEvaluator(ABC):
                 f"Asset: {asset.filename} non evaluated, either because the model made no predictions \
                          or because the confidence of the predictions was too low."
             )
+            
+    def _get_model_artifact_filename(self) -> str:
+        pass

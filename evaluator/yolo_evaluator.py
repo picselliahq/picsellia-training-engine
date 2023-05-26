@@ -17,8 +17,9 @@ from ultralytics import YOLO
 class YOLOEvaluator(AbstractEvaluator):
     framework_formatter = YoloFormatter
 
+    @abstractmethod
     def _get_model_artifact_filename(self):
-        return "checkpoint-index-latest"
+        pass
 
     def _load_saved_model(self):
         try:
@@ -43,6 +44,9 @@ class YOLOEvaluator(AbstractEvaluator):
 class ClassificationYOLOEvaluator(YOLOEvaluator):
     type_formatter: TypeFormatter = ClassificationFormatter
 
+    def _get_model_artifact_filename(self):
+        return "weights"
+
     def _get_model_task(self):
         return "classify"
 
@@ -50,12 +54,18 @@ class ClassificationYOLOEvaluator(YOLOEvaluator):
 class DetectionYOLOEvaluator(YOLOEvaluator):
     type_formatter: TypeFormatter = DetectionFormatter
 
+    def _get_model_artifact_filename(self):
+        return "checkpoint-index-latest"
+
     def _get_model_task(self):
         return "detect"
 
 
 class SegmentationYOLOEvaluator(YOLOEvaluator):
     type_formatter: TypeFormatter = SegmentationFormatter
+
+    def _get_model_artifact_filename(self):
+        return "checkpoint-index-latest"
 
     def _get_model_task(self):
         return "segment"
