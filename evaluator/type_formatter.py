@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple, Type
+from typing import Any
+
+from picsellia.sdk.asset import Asset
 
 from evaluator.framework_formatter import FrameworkFormatter
-from picsellia.sdk.asset import Asset
-from picsellia.sdk.label import Label
 
 
 class TypeFormatter(ABC):
@@ -11,7 +11,7 @@ class TypeFormatter(ABC):
         self._framework_formatter = framework_formatter
 
     @abstractmethod
-    def format_predictions(self, asset: Asset, predictions):
+    def format_prediction(self, asset: Asset, prediction):
         pass
 
     @abstractmethod
@@ -24,70 +24,45 @@ class TypeFormatter(ABC):
 
 
 class ClassificationFormatter(TypeFormatter):
-    def format_predictions(
-        self, asset: Asset, prediction
-    ) -> Tuple[List[float], List[List[int]], List[int]]:
-        picsellia_predictions = {}
-        picsellia_predictions[
-            "confidences"
-        ] = self._framework_formatter.format_confidences(
-            confidences=prediction.boxes.conf
-        )
-        picsellia_predictions["classes"] = self._framework_formatter.format_classes(
-            classes=prediction.boxes.cls
-        )
-
-        return picsellia_predictions
+    def format_prediction(
+            self, asset: Asset, prediction
+    ) -> dict[str, list[float] | list[int]]:
+        return {"confidences": self._framework_formatter.format_confidences(prediction=prediction),
+                "classes": self._framework_formatter.format_classes(prediction=prediction)}
 
     def format_evaluation(self, picsellia_prediction):
-        return (picsellia_prediction["classes"], picsellia_prediction["confidences"])
+        return picsellia_prediction["classes"], picsellia_prediction["confidences"]
 
     def get_shape_type(self):
         return "classifications"
 
 
 class DetectionFormatter(TypeFormatter):
-    def format_predictions(
-        self, asset: Asset, prediction
-    ) -> Tuple[List[float], List[List[int]], List[int]]:
-        picsellia_predictions = {}
-        picsellia_predictions["boxes"] = self._framework_formatter.format_boxes(
-            asset=asset, prediction=prediction
-        )
-        picsellia_predictions[
-            "confidences"
-        ] = self._framework_formatter.format_confidences(prediction=prediction)
-        picsellia_predictions["classes"] = self._framework_formatter.format_classes(
-            prediction=prediction
-        )
-
-        return picsellia_predictions
+    def format_prediction(
+            self, asset: Asset, prediction
+    ) -> dict[str, list[int] | list[float]]:
+        return {"boxes": self._framework_formatter.format_boxes(asset=asset, prediction=prediction),
+                "confidences": self._framework_formatter.format_confidences(prediction=prediction),
+                "classes": self._framework_formatter.format_classes(prediction=prediction)}
 
     def format_evaluation(self, picsellia_prediction):
-        box = picsellia_prediction["boxes"]
-        box.append(picsellia_prediction["classes"])
-        box.append(picsellia_prediction["confidences"])
-        return tuple(box)
+        return (
+            *picsellia_prediction["boxes"],
+            picsellia_prediction["classes"],
+            picsellia_prediction["confidences"]
+        )
 
     def get_shape_type(self):
         return "rectangles"
 
 
 class SegmentationFormatter(TypeFormatter):
-    def format_predictions(
-        self, asset: Asset, prediction
-    ) -> Tuple[List[float], List[List[int]], List[int]]:
-        picsellia_predictions = {}
-        picsellia_predictions["polygons"] = self._framework_formatter.format_polygons(
-            prediction=prediction
-        )
-        picsellia_predictions[
-            "confidences"
-        ] = self._framework_formatter.format_confidences(prediction=prediction)
-        picsellia_predictions["classes"] = self._framework_formatter.format_classes(
-            prediction=prediction
-        )
-        return picsellia_predictions
+    def format_prediction(
+            self, asset: Asset, prediction
+    ) -> dict[str, list[float] | list[int] | Any]:
+        return {"polygons": self._framework_formatter.format_polygons(prediction=prediction),
+                "confidences": self._framework_formatter.format_confidences(prediction=prediction),
+                "classes": self._framework_formatter.format_classes(prediction=prediction)}
 
     def format_evaluation(self, picsellia_prediction):
         return (
