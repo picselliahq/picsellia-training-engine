@@ -12,9 +12,11 @@ from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.label import Label
+from picsellia.types.enums import InferenceType
 
 from evaluator.framework_formatter import FrameworkFormatter
 from evaluator.type_formatter import TypeFormatter
+
 
 
 def _labels_coherence_check(experiment_labelmap, dataset_labels) -> bool:
@@ -139,7 +141,8 @@ class AbstractEvaluator(ABC):
                 i * self._batch_size : (i + 1) * self._batch_size
             ]
             self._evaluate_asset_list(asset_list)
-        self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
+        if self._dataset.type in [InferenceType.OBJECT_DETECTION, InferenceType.SEGMENTATION]:
+            self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
 
     def _evaluate_asset_list(self, asset_list: List[Asset]) -> None:
         inputs = self._preprocess_images(asset_list)

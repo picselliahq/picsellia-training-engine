@@ -127,7 +127,7 @@ cfg = yolo_utils.setup_hyp(
     cwd=current_dir,
     task='segment'
 )
-
+print(cfg.task)
 trainer = PicselliaSegmentationTrainer(experiment=experiment, cfg=cfg)
 trainer.train()
 
