@@ -63,4 +63,6 @@ def rescale_normalized_box(box: List, width: int, height: int) -> List[int]:
 
 def open_asset_as_array(asset: Asset) -> np.array:
     image = Image.open(requests.get(asset.url, stream=True).raw)
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     return np.array(image)

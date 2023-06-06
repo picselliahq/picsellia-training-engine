@@ -19,7 +19,6 @@ docker push picsellpn/custom-run:1.0
 docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" capture-run/. -t picsellpn/capture-run:1.0
 docker push picsellpn/capture-run:1.0
 
-
 docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" captured-training-yolov5-detection/. -t picsellpn/yolov5-detection:capture
 docker push picsellpn/yolov5-detection:capture
 
