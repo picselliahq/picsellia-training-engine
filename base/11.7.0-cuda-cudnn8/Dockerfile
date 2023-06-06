@@ -19,5 +19,7 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64:/
 COPY ./base/11.7.0-cuda-cudnn8/picsellia /picsellia
 COPY ./base/11.7.0-cuda-cudnn8/run.sh /picsellia
 
+RUN ln -s /picsellia/run.sh /usr/bin/run
+
 RUN chmod +x /picsellia/run.sh
 RUN chown -R 42420:42420 /picsellia
