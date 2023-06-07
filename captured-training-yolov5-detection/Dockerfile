@@ -9,6 +9,6 @@ RUN pip3 install picsellia --upgrade
 
 WORKDIR /picsellia
 
-COPY ./captured-training-yolov5-detection /picsellia
+COPY ./captured-training-yolov5-detection/picsellia ./
 
 ENTRYPOINT ["run", "main.py"]
