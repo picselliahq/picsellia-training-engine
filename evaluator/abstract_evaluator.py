@@ -141,8 +141,7 @@ class AbstractEvaluator(ABC):
                 i * self._batch_size : (i + 1) * self._batch_size
             ]
             self._evaluate_asset_list(asset_list)
-        if self._dataset.type in [InferenceType.OBJECT_DETECTION, InferenceType.SEGMENTATION]:
-            self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
+        self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
 
     def _evaluate_asset_list(self, asset_list: List[Asset]) -> None:
         inputs = self._preprocess_images(asset_list)
@@ -178,17 +177,11 @@ class AbstractEvaluator(ABC):
         return evaluations
 
     def _send_evaluations_to_platform(self, asset: Asset, evaluations: List) -> None:
-        if len(evaluations) > 0:
-            shapes = {self._type_formatter.get_shape_type(): evaluations}
+        shapes = {self._type_formatter.get_shape_type(): evaluations}
 
-            self._experiment.add_evaluation(asset=asset, **shapes)
-            print(f"Asset: {asset.filename} evaluated.")
-            logging.info(f"Asset: {asset.filename} evaluated.")
-        else:
-            logging.info(
-                f"Asset: {asset.filename} non evaluated, either because the model made no predictions \
-                         or because the confidence of the predictions was too low."
-            )
-            
+        self._experiment.add_evaluation(asset=asset, **shapes)
+        print(f"Asset: {asset.filename} evaluated.")
+        logging.info(f"Asset: {asset.filename} evaluated.")
+
     def _get_model_artifact_filename(self) -> str:
         pass
