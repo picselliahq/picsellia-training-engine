@@ -86,12 +86,12 @@ while True:
                 'datetime': str(datetime.now().isoformat()),
                 'logs': {}
             }
-        if text.startswith('-----'):
-            progress_line_nb = experiment.line_nb
-            replace_log = True
+        # if text.startswith('-----'):
+        #     progress_line_nb = experiment.line_nb
+        #     replace_log = True
 
-        if text.startswith('--*--'):
-            replace_log = False
+        # if text.startswith('--*--'):
+        #     replace_log = False
 
         if re.match("--[0-9]--", text[:6]):
             start_buffer = True
