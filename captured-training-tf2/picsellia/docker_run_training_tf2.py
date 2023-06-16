@@ -75,7 +75,7 @@ if len(attached_datasets) == 3:
 
     labels = train_ds.list_labels()
     label_names = [label.name for label in labels]
-    labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    labelmap = {str(i+1): label.name for i, label in enumerate(labels)}
     label_path = pxl_utils.generate_label_map(
         classes=label_names,
         output_path=experiment.base_dir,
@@ -129,7 +129,7 @@ else:
     
     labels = dataset.list_labels()
     label_names = [label.name for label in labels]
-    labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    labelmap = {str(i+1): label.name for i, label in enumerate(labels)}
     label_path = pxl_utils.generate_label_map(
         classes=label_names,
         output_path=experiment.base_dir,

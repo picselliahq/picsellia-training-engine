@@ -18,7 +18,7 @@ ARG REBUILD_PICSELLIA
 RUN pip3 install --no-cache-dir picsellia --upgrade
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
-COPY ./picsellia /picsellia
+COPY ./captured-training-tf2/picsellia /picsellia
 
 
 CMD ["/picsellia/launch_sub.py"]

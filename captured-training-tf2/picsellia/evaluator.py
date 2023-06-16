@@ -324,10 +324,6 @@ class Evaluator:
         nb_polygons_limit = 100
         if len(masks) < nb_polygons_limit:
             nb_box_limit = len(masks)
-        if len(masks) > 0:
-            annotation: Annotation = asset.create_annotation(duration=0.0)
-        else:
-            return
         for i in range(nb_box_limit):
             if scores[i] >= confidence_threshold:
                 try:

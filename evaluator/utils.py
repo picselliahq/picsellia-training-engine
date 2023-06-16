@@ -7,33 +7,16 @@ from picsellia.sdk.asset import Asset
 from torch import Tensor
 
 
-def get_image_shape_with_exif_transpose(image: Image):
-    """
-        This method reads exif tags of an image and invert width and height if needed.
-        Orientation flags that need inversion are : TRANSPOSE, ROTATE_90, TRANSVERSE and ROTATE_270
+def transpose_if_exif_tags(image: Image) -> Image:
+    """Check if image needs to be transposed, and do the operation if so.
 
-    Args:
-        image: PIL Image to read
-
-    Returns:
-        width and height of image
+    This check is here to prevent unnecessary copy of the image by Pillow.
     """
     exif = image.getexif()
-    orientation = exif.get(0x0112)
-
-    # Orientation when height and width are inverted :
-    # 5: Image.Transpose.TRANSPOSE
-    # 6: Image.Transpose.ROTATE_270
-    # 7: Image.Transpose.TRANSVERSE
-    # 8: Image.Transpose.ROTATE_90
-    if orientation == 3:
-        image = image.rotate(180, expand=True)
-    elif orientation == 6:
-        image = image.rotate(270, expand=True)
-    elif orientation == 8:
-        image = image.rotate(90, expand=True)
+    orientation = exif.get(0x0112, 1)
+    if orientation != 1:
+        image = ImageOps.exif_transpose(image)
     return image
-
 
 def is_labelmap_starting_at_zero(labelmap: dict) -> bool:
     return "0" in labelmap.keys()
@@ -63,6 +46,7 @@ def rescale_normalized_box(box: List, width: int, height: int) -> List[int]:
 
 def open_asset_as_array(asset: Asset) -> np.array:
     image = Image.open(requests.get(asset.url, stream=True).raw)
+    image = transpose_if_exif_tags(image)
     if image.mode != "RGB":
         image = image.convert("RGB")
     return np.array(image)

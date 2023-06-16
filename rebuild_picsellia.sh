@@ -1,4 +1,4 @@
-docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" captured-training-tf2/. -t picsellpn/trainingtf2:capture
+docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" . -f captured-training-tf2/Dockerfile -t picsellpn/trainingtf2:capture
 docker push picsellpn/trainingtf2:capture
 
 docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" captured-training-classif/. -t picsellpn/training-classif:capture
