@@ -145,6 +145,9 @@ test_data = coco_detection_yolo_format_val(
     },
     dataloader_params=DATALOADER_PARAMS,
 )
+# disable augmentations
+# train_data.dataset.transforms[0].enable_mosaic = False
+# train_data.dataset.transforms[2].enable_mixup = False
 
 trainer = Trainer(experiment_name=EXPERIMENT_NAME, ckpt_root_dir=CHECKPOINT_DIR)
 
