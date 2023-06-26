@@ -19,10 +19,13 @@ docker push picsellpn/custom-run:1.0
 docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" capture-run/. -t picsellpn/capture-run:1.0
 docker push picsellpn/capture-run:1.0
 
-docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" captured-training-yolov5-detection/. -t picsellpn/yolov5-detection:capture
+docker build --build-arg REBUILD_ALL="$(date +%Y%m%d%h)" . -f captured-classification-keras/Dockerfile -t picsellpn/classification-keras:capture
+docker push picsellpn/classification-keras:capture
+
+docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" . -f captured-training-yolov5-detection/Dockerfile -t picsellpn/yolov5-detection:capture
 docker push picsellpn/yolov5-detection:capture
 
-docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" captured-training-yolov5-segmentation/. -t picsellpn/yolov5-segmentation:capture
+docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" . -f captured-training-yolov5-segmentation/Dockerfile -t picsellpn/yolov5-segmentation:capture
 docker push picsellpn/yolov5-segmentation:capture
 
 docker build --build-arg REBUILD_PICSELLIA="$(date +%Y%m%d)" . -f captured-training-yolov8-detection/Dockerfile -t picsellpn/yolov8-detection:capture
