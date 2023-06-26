@@ -101,7 +101,7 @@ elif len(dataset_list) == 1:
     evaluation_ds = train_set
     evaluation_assets = eval_assets
 else:
-    raise Exception("You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, val)")
+    raise Exception("You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, eval)")
 
 names = os.listdir("data/train")  # class names list
 labelmap = {str(i): label for i, label in enumerate(sorted(names))}
