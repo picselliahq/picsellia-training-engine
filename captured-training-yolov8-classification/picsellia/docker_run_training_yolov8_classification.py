@@ -19,12 +19,12 @@ if len(dataset_list) == 3:
         train_set = experiment.get_dataset(name="train")
     except Exception:
         raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')")
+                                            expecting 'train', 'test', 'eval')")
     try:
         test_set = experiment.get_dataset(name="test")
     except Exception:
         raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')")
+                                            expecting 'train', 'test', 'eval')")
     try:
         val_set = experiment.get_dataset(name="val")
     except Exception:
@@ -32,7 +32,7 @@ if len(dataset_list) == 3:
             val_set = experiment.get_dataset(name="eval")
         except Exception:
             raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                expecting 'train', 'test', ('val' or 'eval')")
+                                                expecting 'train', 'test', 'eval')")
 
     for data_type, dataset in {'train': train_set, 'test': test_set, 'val': val_set}.items():
         dataset.download(
