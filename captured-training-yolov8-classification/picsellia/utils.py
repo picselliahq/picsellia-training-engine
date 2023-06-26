@@ -11,8 +11,10 @@ import picsellia
 from pycocotools.coco import COCO
 import shutil
 from picsellia import Client
-# from sklearn.metrics import f1_score, recall_score, precision_score
+from picsellia.types.enums import AnnotationFileType
 
+
+# from sklearn.metrics import f1_score, recall_score, precision_score
 
 
 def dataset(experiment, assets, count, split_type, new_size, n_classes):
@@ -169,3 +171,29 @@ dependencies = {
     'precision_m': precision_m,
     'f1_micro': f1_micro
 }
+
+
+def prepare_datasets_with_annotation(train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion):
+    coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
+
+    _move_files_in_class_directories(coco_train, "data/train")
+    _move_files_in_class_directories(coco_test, "data/test")
+    _move_files_in_class_directories(coco_val, "data/val")
+
+    evaluation_ds = test_set
+    evaluation_assets = evaluation_ds.list_assets()
+
+    return evaluation_ds, evaluation_assets
+
+
+def _create_coco_objects(train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion):
+    train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
+    coco_train = COCO(train_annotation_path)
+
+    test_annotation_path = test_set.export_annotation_file(AnnotationFileType.COCO)
+    coco_test = COCO(test_annotation_path)
+
+    val_annotation_path = val_set.export_annotation_file(AnnotationFileType.COCO)
+    coco_val = COCO(val_annotation_path)
+
+    return coco_train, coco_test, coco_val
