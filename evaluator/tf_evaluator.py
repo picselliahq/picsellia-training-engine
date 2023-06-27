@@ -33,14 +33,14 @@ class TensorflowEvaluator(AbstractEvaluator):
             self._loaded_model = tf.saved_model.load(self._model_weights_path)
             print("Model loaded in memory.")
             try:
-                self._loaded_model = self._loaded_model.signatures[
+                signature = self._loaded_model.signatures[
                     tf.saved_model.DEFAULT_SERVING_SIGNATURE_DEF_KEY
                 ]
                 self.input_width, self.input_height = (
-                    self._loaded_model.inputs[0].shape[1],
-                    self._loaded_model.inputs[0].shape[2],
+                    signature.inputs[0].shape[1],
+                    signature.inputs[0].shape[2],
                 )
-                self.output_names = list(self._loaded_model.structured_outputs.keys())
+                self.output_names = list(signature.structured_outputs.keys())
             except Exception as e:
                 print(e)
                 self.input_width, self.input_height = None, None
@@ -57,10 +57,12 @@ class TensorflowEvaluator(AbstractEvaluator):
             evaluations = self._format_prediction_to_evaluations(
                 asset=asset, prediction=predictions[i]
             )
-            self._send_evaluations_to_platform(asset=asset, evaluations=evaluations)
+            self._send_evaluations_to_platform(
+                asset=asset, evaluations=evaluations)
 
-    def _preprocess_image(self, asset:Asset):
-        image = open_asset_as_tensor(asset, self.input_width, self.input_height)
+    def _preprocess_image(self, asset: Asset):
+        image = open_asset_as_tensor(
+            asset, self.input_width, self.input_height)
         return image
 
     def _get_model_weights_path(self):
