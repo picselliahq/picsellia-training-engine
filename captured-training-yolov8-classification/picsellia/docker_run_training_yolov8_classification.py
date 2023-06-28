@@ -15,6 +15,7 @@ experiment = get_experiment()
 dataset_list = experiment.list_attached_dataset_versions()
 
 if len(dataset_list) == 3:
+
     try:
         train_set = experiment.get_dataset(name="train")
     except Exception:
@@ -26,20 +27,23 @@ if len(dataset_list) == 3:
         raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
                                             expecting 'train', 'test', 'eval')")
     try:
-        val_set = experiment.get_dataset(name="val")
+        eval_set = experiment.get_dataset(name="val")
     except Exception:
         try:
-            val_set = experiment.get_dataset(name="eval")
+            eval_set = experiment.get_dataset(name="eval")
         except Exception:
             raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
                                                 expecting 'train', 'test', 'eval')")
 
-    for data_type, dataset in {'train': train_set, 'test': test_set, 'val': val_set}.items():
+    for data_type, dataset in {'train': train_set, 'test': test_set, 'val': eval_set}.items():
         dataset.download(
-                target_path=os.path.join("data", data_type), max_workers=8
-            )
+            target_path=os.path.join("data", data_type), max_workers=8
+        )
 
-    evaluation_ds, evaluation_assets = prepare_datasets_with_annotation(train_set, test_set, val_set)
+    _, _ = prepare_datasets_with_annotation(train_set, test_set, eval_set)
+
+    evaluation_ds = eval_set
+    evaluation_assets = evaluation_ds.list_assets()
 
 elif len(dataset_list) == 2:
     train_set = experiment.get_dataset("train")
