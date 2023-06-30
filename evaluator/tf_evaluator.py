@@ -11,8 +11,7 @@ import numpy as np
 from picsellia.sdk.experiment import Experiment, DatasetVersion
 from evaluator.abstract_evaluator import AbstractEvaluator
 from evaluator.framework_formatter import TensorflowFormatter
-from evaluator.type_formatter import (ClassificationFormatter,
-                                      DetectionFormatter,
+from evaluator.type_formatter import (DetectionFormatter,
                                       SegmentationFormatter, TypeFormatter)
 from evaluator.utils import open_asset_as_tensor
 
@@ -57,12 +56,10 @@ class TensorflowEvaluator(AbstractEvaluator):
             evaluations = self._format_prediction_to_evaluations(
                 asset=asset, prediction=predictions[i]
             )
-            self._send_evaluations_to_platform(
-                asset=asset, evaluations=evaluations)
+            self._send_evaluations_to_platform(asset=asset, evaluations=evaluations)
 
-    def _preprocess_image(self, asset: Asset):
-        image = open_asset_as_tensor(
-            asset, self.input_width, self.input_height)
+    def _preprocess_image(self, asset:Asset):
+        image = open_asset_as_tensor(asset, self.input_width, self.input_height)
         return image
 
     def _get_model_weights_path(self):
