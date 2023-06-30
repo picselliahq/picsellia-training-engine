@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Any
+import numpy as np
 
 from picsellia.sdk.asset import Asset
 
 from evaluator.utils import (cast_type_list_to_float, cast_type_list_to_int,
-                             convert_tensor_to_list, rescale_normalized_box)
+                             # convert_tensor_to_list,
+                             rescale_normalized_box)
 
 
 class FrameworkFormatter(ABC):
@@ -29,9 +31,10 @@ class FrameworkFormatter(ABC):
 
 
 class YoloFormatter(FrameworkFormatter):
-    def format_confidences(self, prediction) -> List[Any] | List[float]:
+    def format_confidences(self, prediction):
         if prediction.boxes is not None:
-            confidences_list = convert_tensor_to_list(tensor=prediction.boxes.conf)
+            confidences_list = convert_tensor_to_list(
+                tensor=prediction.boxes.conf)
 
         elif prediction.probs is not None:
             confidences_list = [max(prediction.probs)]
@@ -40,7 +43,7 @@ class YoloFormatter(FrameworkFormatter):
         casted_confidences = cast_type_list_to_float(_list=confidences_list)
         return casted_confidences
 
-    def format_classes(self, prediction) -> List[Any] | List[int]:
+    def format_classes(self, prediction):
         if prediction.boxes is not None:
             classes_list = convert_tensor_to_list(tensor=prediction.boxes.cls)
         elif prediction.probs is not None:
@@ -54,7 +57,7 @@ class YoloFormatter(FrameworkFormatter):
         )
         return picsellia_labels
 
-    def format_boxes(self, asset: Asset, prediction) -> list[Any] | list[list]:
+    def format_boxes(self, asset: Asset, prediction):
         if not prediction.boxes:
             return []
         normalized_boxes = prediction.boxes.xyxyn
@@ -74,5 +77,20 @@ class YoloFormatter(FrameworkFormatter):
         if prediction.masks is None:
             return []
         polygons = prediction.masks.xy
-        casted_polygons = list(map(lambda polygon: polygon.astype(int), polygons))
+        casted_polygons = list(
+            map(lambda polygon: polygon.astype(int), polygons))
         return list(map(lambda polygon: polygon.tolist(), casted_polygons))
+
+
+class TensorflowFormatter(FrameworkFormatter):
+    def format_confidences(self, prediction):
+        pass
+
+    def format_classes(self, prediction):
+        pass
+
+    def format_boxes(self, asset: Asset, prediction):
+        pass
+
+    def format_polygons(self, prediction):
+        pass

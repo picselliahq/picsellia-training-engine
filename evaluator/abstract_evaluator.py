@@ -74,7 +74,7 @@ class AbstractEvaluator(ABC):
         )
         self._setup_evaluation_job()
 
-    def _setup_label_map(self) -> dict[int, Label]:
+    def _setup_label_map(self):
         experiment_labelmap = self._get_experiment_labelmap()
         dataset_labels = {label.name: label for label in self._dataset.list_labels()}
         _labels_coherence_check(experiment_labelmap, dataset_labels)
@@ -83,6 +83,11 @@ class AbstractEvaluator(ABC):
             int(category_id): dataset_labels[label_name]
             for category_id, label_name in experiment_labelmap.items()
         }
+
+    @abstractmethod
+    def _get_model_weights_path(self):
+        pass
+
 
     def _get_experiment_labelmap(self) -> dict:
         try:
@@ -95,6 +100,7 @@ class AbstractEvaluator(ABC):
         self._model_sanity_check()
         self._dataset_inclusion_check()
         self._download_model_weights()
+        self._get_model_weights_path()
         self._load_saved_model()
 
     def _model_sanity_check(self) -> None:
@@ -141,7 +147,8 @@ class AbstractEvaluator(ABC):
                 i * self._batch_size : (i + 1) * self._batch_size
             ]
             self._evaluate_asset_list(asset_list)
-        self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
+        if self._dataset.type in [InferenceType.OBJECT_DETECTION, InferenceType.SEGMENTATION]:
+            self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
 
     def _evaluate_asset_list(self, asset_list: List[Asset]) -> None:
         inputs = self._preprocess_images(asset_list)
@@ -152,9 +159,13 @@ class AbstractEvaluator(ABC):
             )
             self._send_evaluations_to_platform(asset=asset, evaluations=evaluations)
 
-    @abstractmethod
-    def _preprocess_images(self, assets: List[Asset]) -> List[np.ndarray]:
-        pass
+    # @abstractmethod
+    # def _preprocess_images(self, assets: List[Asset]) -> List[np.ndarray]:
+    #     pass
+    #
+    # @abstractmethod
+    # def _preprocess_image(self, asset: Asset) -> np.ndarray:
+    #     pass
 
     def _format_prediction_to_evaluations(self, asset: Asset, prediction: List) -> List:
         picsellia_predictions = self._type_formatter.format_prediction(
@@ -177,11 +188,17 @@ class AbstractEvaluator(ABC):
         return evaluations
 
     def _send_evaluations_to_platform(self, asset: Asset, evaluations: List) -> None:
-        shapes = {self._type_formatter.get_shape_type(): evaluations}
+        if len(evaluations) > 0:
+            shapes = {self._type_formatter.get_shape_type(): evaluations}
 
-        self._experiment.add_evaluation(asset=asset, **shapes)
-        print(f"Asset: {asset.filename} evaluated.")
-        logging.info(f"Asset: {asset.filename} evaluated.")
-
+            self._experiment.add_evaluation(asset=asset, **shapes)
+            print(f"Asset: {asset.filename} evaluated.")
+            logging.info(f"Asset: {asset.filename} evaluated.")
+        else:
+            logging.info(
+                f"Asset: {asset.filename} non evaluated, either because the model made no predictions \
+                         or because the confidence of the predictions was too low."
+            )
+            
     def _get_model_artifact_filename(self) -> str:
         pass

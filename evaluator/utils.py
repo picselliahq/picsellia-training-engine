@@ -5,6 +5,7 @@ import requests
 from PIL import Image
 from picsellia.sdk.asset import Asset
 from torch import Tensor
+import tensorflow as tf
 
 
 def transpose_if_exif_tags(image: Image) -> Image:
@@ -17,6 +18,7 @@ def transpose_if_exif_tags(image: Image) -> Image:
     if orientation != 1:
         image = ImageOps.exif_transpose(image)
     return image
+
 
 def is_labelmap_starting_at_zero(labelmap: dict) -> bool:
     return "0" in labelmap.keys()
@@ -50,3 +52,21 @@ def open_asset_as_array(asset: Asset) -> np.array:
     if image.mode != "RGB":
         image = image.convert("RGB")
     return np.array(image)
+
+
+def open_asset_as_tensor(asset: Asset, input_width: int = None, input_height: int = None):
+    # image_array = open_asset_as_array(asset)
+    image = Image.open(requests.get(asset.url, stream=True).raw)
+
+    if input_width is not None and input_height is not None:
+        image = image.resize((input_width, input_height))
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    image = np.asarray(image)
+    image = np.expand_dims(image, axis=0)
+    if input_width is not None and input_height is not None:
+        image = tf.convert_to_tensor(image, dtype=tf.float32)
+    else:
+        image = tf.convert_to_tensor(image, dtype=tf.uint8)
+
+    return image
