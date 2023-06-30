@@ -83,51 +83,42 @@ class YoloFormatter(FrameworkFormatter):
 
 class TensorflowFormatter(FrameworkFormatter):
 
+
     def format_confidences(self, prediction):
         if prediction['detection_scores'] is not None:
-            try:
-                scores = prediction["detection_scores"].numpy()[
-                    0].astype(np.float).tolist()
-            except KeyError:
-                _, scores, _ = self._guess_output_names(
-                    raw_output=prediction)
+            scores = prediction["detection_scores"].numpy()[
+                0].astype(np.float).tolist()
 
         return scores
 
     def format_classes(self, prediction):
         if prediction['detection_scores'] is not None:
-            try:
-                classes = (
-                    prediction["detection_classes"].numpy()[
-                        0].astype(np.float).tolist()
-                )
-            except KeyError:
-                _, _, classes = self._guess_output_names(
-                    raw_output=prediction)
+            classes = (
+                prediction["detection_classes"].numpy()[
+                    0].astype(np.float).tolist()
+            )
+        casted_classes = cast_type_list_to_int(_list=classes)
+        picsellia_labels = list(
+            map(lambda label: self._labelmap[label], casted_classes)
+        )
+        return picsellia_labels
 
         return classes
 
     def format_boxes(self, asset: Asset, prediction):
-        try:
-            boxes = self._postprocess_boxes(
-                prediction["detection_boxes"].numpy(
-                )[0].astype(np.float).tolist()
-            )
-
-        except KeyError:
-            boxes, _, _ = self._guess_output_names(
-                raw_output=prediction)
-            boxes = self._postprocess_boxes(boxes)
+        boxes = self._postprocess_boxes(
+            prediction["detection_boxes"].numpy(
+            )[0].astype(np.float).tolist(),
+            asset.width, asset.height
+        )
 
         return boxes
 
-    def format_polygons(self, prediction):
-        scores = (
-            prediction["detection_scores"].numpy(
-            )[0].astype(np.float).tolist()[:10]
-        )
+    def format_polygons(self, asset: Asset, prediction):
         boxes = self._postprocess_boxes(
-            prediction["detection_boxes"].numpy()[0].astype(np.float).tolist()
+            prediction["detection_boxes"].numpy()[0].astype(np.float).tolist(),
+            asset.width, asset.height
+
         )
         masks = self._postprocess_masks(
             detection_masks=prediction["detection_masks"]
@@ -137,50 +128,17 @@ class TensorflowFormatter(FrameworkFormatter):
             resized_detection_boxes=boxes,
             mask_threshold=0.4,
         )
-        classes = (
-            prediction["detection_classes"].numpy(
-            )[0].astype(np.float).tolist()[:10]
-        )
-        response = {
-            "detection_scores": scores,
-            "detection_boxes": boxes,
-            "detection_masks": masks,
-            "detection_classes": classes,
-        }
 
-        return response
-
-    def _guess_output_names(self, raw_output) -> Tuple[list, list, list]:
-        boxes, scores, classes = [], [], []
-        possible_choices = ["bbox", "classes", "scores", "num_detections"]
-        for output_name in self.output_names:
-            unknown_layer = raw_output[output_name]
-            if len(unknown_layer.shape) == 3:
-                assert "bbox" in possible_choices
-                boxes = unknown_layer[0].astype(np.float).tolist()
-                possible_choices.remove("bbox")
-            elif len(unknown_layer.shape) == 1:
-                assert "num_detections" in possible_choices
-                possible_choices.remove("num_detections")
-            elif unknown_layer.dtype == np.float32:
-                assert "scores" in possible_choices
-                scores = unknown_layer[0].astype(np.float).tolist()
-                possible_choices.remove("scores")
-            else:
-                assert "classes" in possible_choices
-                classes = unknown_layer[0].astype(np.int16).tolist()
-                possible_choices.remove("classes")
-        assert len(possible_choices) == 0
-        return (boxes, scores, classes)
+        return masks
 
 
-    def _postprocess_boxes(self, detection_boxes: list) -> list:
+    def _postprocess_boxes(self, detection_boxes: list, image_width:int, image_height:int) -> list:
         return [
             [
-                int(e[1] * self.image_width),
-                int(e[0] * self.image_height),
-                int((e[3] - e[1]) * self.image_width),
-                int((e[2] - e[0]) * self.image_height),
+                int(e[1] * image_width),
+                int(e[0] * image_height),
+                int((e[3] - e[1]) * image_width),
+                int((e[2] - e[0]) * image_height),
             ]
             for e in detection_boxes
         ]

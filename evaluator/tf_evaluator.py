@@ -54,7 +54,7 @@ class TensorflowEvaluator(AbstractEvaluator):
             inputs = self._preprocess_image(asset)
             predictions = self._loaded_model(inputs)  # Predict
             evaluations = self._format_prediction_to_evaluations(
-                asset=asset, prediction=predictions[i]
+                asset=asset, prediction=predictions
             )
             self._send_evaluations_to_platform(asset=asset, evaluations=evaluations)
 

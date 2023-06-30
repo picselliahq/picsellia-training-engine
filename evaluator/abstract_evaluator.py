@@ -2,7 +2,7 @@ import logging
 import math
 import os
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import List, Type, Union
 
 import numpy as np
 import tqdm
@@ -165,7 +165,7 @@ class AbstractEvaluator(ABC):
     # def _preprocess_image(self, asset: Asset) -> np.ndarray:
     #     pass
 
-    def _format_prediction_to_evaluations(self, asset: Asset, prediction: List) -> List:
+    def _format_prediction_to_evaluations(self, asset: Asset, prediction: Union[List, dict]) -> List:
         picsellia_predictions = self._type_formatter.format_prediction(
             asset=asset, prediction=prediction
         )
