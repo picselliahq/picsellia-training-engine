@@ -83,7 +83,6 @@ class YoloFormatter(FrameworkFormatter):
 
 class TensorflowFormatter(FrameworkFormatter):
 
-
     def format_confidences(self, prediction):
         if prediction['detection_scores'] is not None:
             scores = prediction["detection_scores"].numpy()[
@@ -122,17 +121,18 @@ class TensorflowFormatter(FrameworkFormatter):
         )
         masks = self._postprocess_masks(
             detection_masks=prediction["detection_masks"]
-            .numpy()[0]
-            .astype(np.float)
-            .tolist()[:10],
+                            .numpy()[0]
+                            .astype(np.float)
+                            .tolist()[:10],
             resized_detection_boxes=boxes,
             mask_threshold=0.4,
+            image_height=asset.height,
+            image_width=asset.width
         )
 
         return masks
 
-
-    def _postprocess_boxes(self, detection_boxes: list, image_width:int, image_height:int) -> list:
+    def _postprocess_boxes(self, detection_boxes: list, image_width: int, image_height: int) -> list:
         return [
             [
                 int(e[1] * image_width),
@@ -142,17 +142,21 @@ class TensorflowFormatter(FrameworkFormatter):
             ]
             for e in detection_boxes
         ]
+
     def _postprocess_masks(
-        self,
-        detection_masks: list,
-        resized_detection_boxes: list,
-        mask_threshold: float = 0.5,
+            self,
+            detection_masks: list,
+            resized_detection_boxes: list,
+            image_width: int,
+            image_height: int,
+            mask_threshold: float = 0.5,
+
     ) -> list:
         list_mask = []
         for idx, detection_mask in enumerate(detection_masks):
 
             # background_mask with all black=0
-            mask = np.zeros((self.image_height, self.image_width))
+            mask = np.zeros((image_height, image_width))
             # Get normalised bbox coordinates
             xmin, ymin, w, h = resized_detection_boxes[idx]
 
@@ -173,7 +177,7 @@ class TensorflowFormatter(FrameworkFormatter):
             assert bbox_mask.shape == mask[ymin:ymax, xmin:xmax].shape
             mask[ymin:ymax, xmin:xmax] = bbox_mask
             if (
-                mask_threshold > 0
+                    mask_threshold > 0
             ):  # np.where(mask != 1, 0, mask)  # in case threshold is used to have other values (0)
                 mask = np.where(np.abs(mask) > mask_threshold * 255, 1, mask)
                 mask = np.where(mask != 1, 0, mask)
@@ -197,6 +201,7 @@ class TensorflowFormatter(FrameworkFormatter):
                 pass  # No contours
 
         return list_mask
+
 
 class KerasClassificationFormatter(FrameworkFormatter):
     def format_confidences(self, prediction):

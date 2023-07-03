@@ -1,254 +1,330 @@
-from abc import ABC, abstractmethod
-from typing import List, Any
-import numpy as np
-from typing import Tuple
-from picsellia.sdk.asset import Asset
-import cv2
-from evaluator.utils import (cast_type_list_to_float, cast_type_list_to_int,
-    # convert_tensor_to_list,
-                             rescale_normalized_box)
-from PIL import Image
+import os
+from picsellia import Client
+from picsellia.exceptions import ResourceNotFoundError
 
+from picsellia_tf2 import pxl_utils
+from picsellia_tf2 import pxl_tf
+from picsellia.types.enums import InferenceType
 
-class FrameworkFormatter(ABC):
-    def __init__(self, labelmap) -> None:
-        self._labelmap = labelmap
+from evaluator.tf_evaluator import DetectionTensorflowEvaluator, SegmentationTensorflowEvaluator
 
-    @abstractmethod
-    def format_classes(self, prediction) -> List[int]:
-        pass
+import logging
+import shutil
 
-    @abstractmethod
-    def format_confidences(self, prediction) -> List[float]:
-        pass
+os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
+os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
+os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
-    @abstractmethod
-    def format_boxes(self, asset: Asset, prediction) -> List[int]:
-        pass
+logging.getLogger('picsellia').setLevel(logging.INFO)
 
-    @abstractmethod
-    def format_polygons(self, prediction):
-        pass
+if 'api_token' not in os.environ:
+    raise RuntimeError("You must set an api_token to run this image")
 
+api_token = os.environ["api_token"]
 
-class YoloFormatter(FrameworkFormatter):
-    def format_confidences(self, prediction):
-        if prediction.boxes is not None:
-            confidences_list = convert_tensor_to_list(tensor=prediction.boxes.conf)
+if "host" not in os.environ:
+    host = "https://app.picsellia.com"
+else:
+    host = os.environ["host"]
 
-        elif prediction.probs is not None:
-            confidences_list = [max(prediction.probs)]
-        else:
-            return []
-        casted_confidences = cast_type_list_to_float(_list=confidences_list)
-        return casted_confidences
+if "organization_id" not in os.environ:
+    organization_id = None
+else:
+    organization_id = os.environ["organization_id"]
 
-    def format_classes(self, prediction):
-        if prediction.boxes is not None:
-            classes_list = convert_tensor_to_list(tensor=prediction.boxes.cls)
-        elif prediction.probs is not None:
-            confidences_list = convert_tensor_to_list(tensor=prediction.probs)
-            classes_list = [confidences_list.index(max(confidences_list))]
-        else:
-            return []
-        casted_classes = cast_type_list_to_int(_list=classes_list)
-        picsellia_labels = list(
-            map(lambda label: self._labelmap[label], casted_classes)
-        )
-        return picsellia_labels
+client = Client(
+    api_token=api_token,
+    host=host,
+    organization_id=organization_id
+)
 
-    def format_boxes(self, asset: Asset, prediction):
-        if not prediction.boxes:
-            return []
-        normalized_boxes = prediction.boxes.xyxyn
-        boxes_list = convert_tensor_to_list(tensor=normalized_boxes)
-        rescaled_boxes = list(
-            map(
-                lambda box: rescale_normalized_box(
-                    box=box, width=asset.width, height=asset.height
-                ),
-                boxes_list,
-            )
-        )
-        casted_boxes = list(map(cast_type_list_to_int, rescaled_boxes))
-        return casted_boxes
+if "experiment_name" in os.environ:
+    experiment_name = os.environ["experiment_name"]
+    if "project_token" in os.environ:
+        project_token = os.environ["project_token"]
+        project = client.get_project_by_id(project_token)
+    elif "project_name" in os.environ:
+        project_name = os.environ["project_name"]
+        project = client.get_project(project_name)
+    experiment = project.get_experiment(experiment_name)
+else:
+    raise RuntimeError(
+        "You must set the project_token or project_name and experiment_name")
 
-    def format_polygons(self, prediction):
-        if prediction.masks is None:
-            return []
-        polygons = prediction.masks.xy
-        casted_polygons = list(map(lambda polygon: polygon.astype(int), polygons))
-        return list(map(lambda polygon: polygon.tolist(), casted_polygons))
+experiment.download_artifacts(with_tree=True)
+parameters = experiment.get_log(name='parameters').data
+attached_datasets = experiment.list_attached_dataset_versions()
 
-
-class TensorflowFormatter(FrameworkFormatter):
-
-    def format_confidences(self, prediction):
-        if prediction['detection_scores'] is not None:
-            try:
-                scores = prediction["detection_scores"].numpy()[
-                    0].astype(np.float).tolist()
-            except KeyError:
-                _, scores, _ = self._guess_output_names(
-                    raw_output=prediction)
-
-        return scores
-
-    def format_classes(self, prediction):
-        if prediction['detection_scores'] is not None:
-            try:
-                classes = (
-                    prediction["detection_classes"].numpy()[
-                        0].astype(np.float).tolist()
-                )
-            except KeyError:
-                _, _, classes = self._guess_output_names(
-                    raw_output=prediction)
-
-        return classes
-
-    def format_boxes(self, asset: Asset, prediction):
+if len(attached_datasets) == 3:
+    try:
+        train_ds = experiment.get_dataset(name="train")
+    except Exception:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
+                                            accepting 'train', 'test', 'eval'")
+    try:
+        test_ds = experiment.get_dataset(name="test")
+    except Exception:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
+                                            accepting 'train', 'test', 'eval'")
+    try:
+        eval_ds = experiment.get_dataset(name="val")
+    except Exception:
         try:
-            boxes = self._postprocess_boxes(
-                prediction["detection_boxes"].numpy(
-                )[0].astype(np.float).tolist()
+            eval_ds = experiment.get_dataset(name="eval")
+        except Exception:
+            raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
+                                               accepting 'train', 'test', 'eval'")
+
+    labels = train_ds.list_labels()
+    label_names = [label.name for label in labels]
+    labelmap = {str(i + 1): label.name for i, label in enumerate(labels)}
+    label_path = pxl_utils.generate_label_map(
+        classes=label_names,
+        output_path=experiment.base_dir,
+    )
+
+    for data_type, dataset in {'train': train_ds, 'test': test_ds, 'eval': eval_ds}.items():
+        dataset.download(
+            target_path=os.path.join(experiment.png_dir, data_type), max_workers=8
+        )
+        stats = dataset.retrieve_stats()
+        split = {'x': list(stats.label_repartition.keys()),
+                 'y': list(stats.label_repartition.values())}
+
+        annotation_path = dataset.build_coco_file_locally(
+            enforced_ordered_categories=label_names)
+        annotations = annotation_path.dict()
+        categories_dict = [category['name']
+                           for category in annotations['categories']]
+        for label in label_names:
+            if label not in categories_dict:
+                annotations['categories'].append(
+                    {"id": len(annotations['categories']), "name": label, "supercategory": ""})
+
+        if data_type == 'train':
+            train_split = split
+            train_annotations, _, _ = pxl_utils.format_coco_file(
+                imgdir=experiment.png_dir,
+                annotations=annotations,
+                train_assets=dataset.list_assets()
             )
-
-        except KeyError:
-            boxes, _, _ = self._guess_output_names(
-                raw_output=prediction)
-            boxes = self._postprocess_boxes(boxes)
-
-        return boxes
-
-    def format_polygons(self, prediction):
-        scores = (
-            prediction["detection_scores"].numpy(
-            )[0].astype(np.float).tolist()[:10]
-        )
-        boxes = self._postprocess_boxes(
-            prediction["detection_boxes"].numpy()[0].astype(np.float).tolist()
-        )
-        masks = self._postprocess_masks(
-            detection_masks=prediction["detection_masks"]
-            .numpy()[0]
-            .astype(np.float)
-            .tolist()[:10],
-            resized_detection_boxes=boxes,
-            mask_threshold=0.4,
-        )
-        classes = (
-            prediction["detection_classes"].numpy(
-            )[0].astype(np.float).tolist()[:10]
-        )
-        response = {
-            "detection_scores": scores,
-            "detection_boxes": boxes,
-            "detection_masks": masks,
-            "detection_classes": classes,
-        }
-
-        return response
-
-    def _guess_output_names(self, raw_output) -> Tuple[list, list, list]:
-        boxes, scores, classes = [], [], []
-        possible_choices = ["bbox", "classes", "scores", "num_detections"]
-        for output_name in self.output_names:
-            unknown_layer = raw_output[output_name]
-            if len(unknown_layer.shape) == 3:
-                assert "bbox" in possible_choices
-                boxes = unknown_layer[0].astype(np.float).tolist()
-                possible_choices.remove("bbox")
-            elif len(unknown_layer.shape) == 1:
-                assert "num_detections" in possible_choices
-                possible_choices.remove("num_detections")
-            elif unknown_layer.dtype == np.float32:
-                assert "scores" in possible_choices
-                scores = unknown_layer[0].astype(np.float).tolist()
-                possible_choices.remove("scores")
-            else:
-                assert "classes" in possible_choices
-                classes = unknown_layer[0].astype(np.int16).tolist()
-                possible_choices.remove("classes")
-        assert len(possible_choices) == 0
-        return (boxes, scores, classes)
-
-
-    def _postprocess_boxes(self, detection_boxes: list) -> list:
-        return [
-            [
-                int(e[1] * self.image_width),
-                int(e[0] * self.image_height),
-                int((e[3] - e[1]) * self.image_width),
-                int((e[2] - e[0]) * self.image_height),
-            ]
-            for e in detection_boxes
-        ]
-    def _postprocess_masks(
-        self,
-        detection_masks: list,
-        resized_detection_boxes: list,
-        mask_threshold: float = 0.5,
-    ) -> list:
-        list_mask = []
-        for idx, detection_mask in enumerate(detection_masks):
-
-            # background_mask with all black=0
-            mask = np.zeros((self.image_height, self.image_width))
-            # Get normalised bbox coordinates
-            xmin, ymin, w, h = resized_detection_boxes[idx]
-
-            xmax = xmin + w
-            ymax = ymin + h
-
-            # Define bbox height and width
-            bbox_height, bbox_width = h, w
-
-            # Resize 'detection_mask' to bbox size
-            bbox_mask = np.array(
-                Image.fromarray(np.array(detection_mask) * 255).resize(
-                    size=(bbox_width, bbox_height), resample=Image.BILINEAR
-                )
-                # Image.NEAREST is fastest and no weird artefacts
+        elif data_type == 'test':
+            test_split = split
+            _, _, test_annotations = pxl_utils.format_coco_file(
+                imgdir=experiment.png_dir,
+                annotations=annotations,
+                train_assets=[],
+                eval_assets=[],
+                test_assets=dataset.list_assets()
             )
-            # Insert detection_mask into image.size np.zeros((height, width)) background_mask
-            assert bbox_mask.shape == mask[ymin:ymax, xmin:xmax].shape
-            mask[ymin:ymax, xmin:xmax] = bbox_mask
-            if (
-                mask_threshold > 0
-            ):  # np.where(mask != 1, 0, mask)  # in case threshold is used to have other values (0)
-                mask = np.where(np.abs(mask) > mask_threshold * 255, 1, mask)
-                mask = np.where(mask != 1, 0, mask)
+        else:
+            eval_split = split
+            _, eval_annotations, _ = pxl_utils.format_coco_file(
+                imgdir=experiment.png_dir,
+                annotations=annotations,
+                train_assets=[],
+                eval_assets=dataset.list_assets(),
+                test_assets=[]
+            )
+            eval_assets = dataset.list_assets()
 
-            try:
-                contours, _ = cv2.findContours(
-                    mask.astype(np.uint8),
-                    cv2.RETR_EXTERNAL,
-                    cv2.CHAIN_APPROX_TC89_KCOS,
-                )
-                to_add = (
-                    contours[len(contours) - 1][::1]
-                    .reshape(
-                        contours[len(contours) - 1][::1].shape[0],
-                        contours[len(contours) - 1][::1].shape[2],
-                    )
-                    .tolist()
-                )
-                list_mask.append(to_add)
-            except Exception:
-                pass  # No contours
+else:
+    dataset = experiment.list_attached_dataset_versions()[0]
+    prop = parameters.get('prop_train_split', 0.7)
+    train_assets, test_assets, eval_assets, train_split, test_split, eval_split, _ = dataset.train_test_val_split(
+        ratios=[prop, (1. - prop) / 2, (1. - prop) / 2], random_seed=42)
 
-        return list_mask
+    labels = dataset.list_labels()
+    label_names = [label.name for label in labels]
+    labelmap = {str(i + 1): label.name for i, label in enumerate(labels)}
+    label_path = pxl_utils.generate_label_map(
+        classes=label_names,
+        output_path=experiment.base_dir,
+    )
 
-class KerasClassificationFormatter(FrameworkFormatter):
-    def format_confidences(self, prediction):
-        pass
+    annotation_path = dataset.build_coco_file_locally(
+        enforced_ordered_categories=label_names)
+    annotations = annotation_path.dict()
+    categories_dict = [category['name']
+                       for category in annotations['categories']]
+    for label in label_names:
+        if label not in categories_dict:
+            annotations['categories'].append(
+                {"id": len(annotations['categories']), "name": label, "supercategory": ""})
 
-    def format_classes(self, prediction):
-        pass
+    for data_type, assets in {'train': train_assets, 'test': test_assets, 'eval': eval_assets}.items():
+        assets.download(target_path=os.path.join(
+            experiment.png_dir, data_type), max_workers=8)
 
-    def format_boxes(self, asset: Asset, prediction):
-        pass
+    eval_ds = dataset
 
-    def format_polygons(self, prediction):
-        pass
+    train_annotations, eval_annotations, test_annotations = pxl_utils.format_coco_file(
+        imgdir=experiment.png_dir,
+        annotations=annotations,
+        train_assets=train_assets,
+        eval_assets=eval_assets,
+        test_assets=test_assets
+    )
+
+experiment.log('labelmap', labelmap, 'labelmap', replace=True)
+experiment.log('train-split', pxl_utils.sort_split(train_split,
+                                                   label_names), 'bar', replace=True)
+experiment.log('eval-split', pxl_utils.sort_split(eval_split,
+                                                  label_names), 'bar', replace=True)
+experiment.log('test-split', pxl_utils.sort_split(test_split,
+                                                  label_names), 'bar', replace=True)
+
+print("\n")
+experiment.start_logging_chapter('Create records')
+
+pxl_utils.create_record_files(
+    train_annotations=train_annotations,
+    eval_annotations=eval_annotations,
+    test_annotations=test_annotations,
+    label_path=label_path,
+    record_dir=experiment.record_dir,
+    tfExample_generator=pxl_tf.tf_vars_generator,
+    annotation_type=parameters['annotation_type']
+)
+
+# edit training config
+training_config_dir = experiment.config_dir
+eval_config = os.path.join(experiment.base_dir, 'eval_config')
+if not os.path.exists(eval_config):
+    os.makedirs(eval_config)
+if os.path.isfile(os.path.join(training_config_dir, 'pipeline.config')):
+    shutil.copy(os.path.join(training_config_dir, 'pipeline.config'),
+                os.path.join(eval_config, 'pipeline.config'))
+
+pxl_utils.edit_config(
+    model_selected=experiment.checkpoint_dir,
+    input_config_dir=training_config_dir,
+    output_config_dir=training_config_dir,
+    train_record_path=os.path.join(experiment.record_dir, 'train.record'),
+    eval_record_path=os.path.join(experiment.record_dir, 'test.record'),
+    label_map_path=label_path,
+    num_steps=parameters["steps"],
+    batch_size=parameters['batch_size'],
+    learning_rate=parameters['learning_rate'],
+    annotation_type=parameters['annotation_type'],
+    parameters=parameters
+)
+
+# edit final test config
+
+pxl_utils.edit_config(
+    model_selected=experiment.checkpoint_dir,
+    input_config_dir=eval_config,
+    output_config_dir=eval_config,
+    train_record_path=os.path.join(experiment.record_dir, 'train.record'),
+    eval_record_path=os.path.join(experiment.record_dir, 'eval.record'),
+    label_map_path=label_path,
+    num_steps=parameters["steps"],
+    batch_size=parameters['batch_size'],
+    learning_rate=parameters['learning_rate'],
+    annotation_type=parameters['annotation_type'],
+    parameters=parameters
+)
+
+print("\n")
+experiment.start_logging_chapter('Start training')
+
+pxl_utils.train(
+    ckpt_dir=experiment.checkpoint_dir,
+    config_dir=experiment.config_dir,
+    log_real_time=experiment,
+    evaluate_fn=pxl_utils.evaluate,
+    log_metrics=pxl_utils.log_metrics,
+    checkpoint_every_n=parameters.get('checkpoint_every_n', 10)
+)
+
+print("\n")
+experiment.start_logging_chapter('Store artifacts')
+
+pxl_utils.export_graph(
+    ckpt_dir=experiment.checkpoint_dir,
+    exported_model_dir=experiment.exported_model_dir,
+    config_dir=training_config_dir
+)
+experiment.store('model-latest')
+experiment.store('config')
+experiment.store('checkpoint-data-latest')
+experiment.store('checkpoint-index-latest')
+
+print("\n")
+experiment.start_logging_chapter('Computing metrics on test dataset')
+
+experiment.start_logging_buffer(9)
+
+eval_metrics_dir = os.path.join(experiment.base_dir, 'eval_metrics')
+if not os.path.exists(eval_metrics_dir):
+    os.makedirs(eval_metrics_dir)
+
+pxl_utils.evaluate(
+    eval_metrics_dir,
+    eval_config,
+    experiment.checkpoint_dir
+)
+
+metrics = pxl_utils.tf_events_to_dict(
+    '{}/eval_metrics'.format(experiment.name), 'eval')
+experiment.log('Evaluation/Metrics', metrics, 'table', replace=True)
+
+conf, eval = pxl_utils.get_confusion_matrix(
+    input_tfrecord_path=os.path.join(experiment.record_dir, 'eval.record'),
+    model=os.path.join(experiment.exported_model_dir, 'saved_model'),
+    labelmap=labelmap
+)
+
+confusion = {
+    'categories': list(labelmap.values()),
+    'values': conf.tolist()
+}
+
+experiment.log('Evaluation/confusion-matrix',
+               confusion, 'heatmap', replace=True)
+
+experiment.end_logging_buffer()
+
+# pxl_utils.infer(
+#     experiment.record_dir,
+#     exported_model_dir=experiment.exported_model_dir,
+#     label_map_path=label_path,
+#     results_dir=experiment.results_dir,
+#     from_tfrecords=True,
+#     disp=False
+# )
+
+print("\n")
+experiment.start_logging_chapter('Starting Evaluation')
+
+inference_type = experiment.get_base_model_version().type
+
+if inference_type == InferenceType.OBJECT_DETECTION:
+    try:
+        detection_evaluator = DetectionTensorflowEvaluator(
+            experiment=experiment,
+            dataset=eval_ds,
+            asset_list=eval_assets,
+            confidence_threshold=0.1
+        )
+
+        detection_evaluator.evaluate()
+    except Exception as e:
+        print(f"Error during evaluation: {e}")
+
+elif inference_type == InferenceType.SEGMENTATION:
+    try:
+        segmentation_evaluator = SegmentationTensorflowEvaluator(
+            experiment=experiment,
+            dataset=eval_ds,
+            asset_list=eval_assets,
+            confidence_threshold=0.1
+        )
+        segmentation_evaluator.evaluate()
+    except Exception as e:
+        print(f"Error during evaluation: {e}")
+
+else:
+    print("The only supported inference types for evaluation are object detection and segmentation. "
+          "Please add inference type to model if you haven't already")
