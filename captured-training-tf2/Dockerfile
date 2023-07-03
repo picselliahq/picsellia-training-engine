@@ -16,6 +16,9 @@ ARG REBUILD_ALL
 RUN pip3 install --no-cache-dir picsellia_tf2==0.11.10
 ARG REBUILD_PICSELLIA
 RUN pip3 install --no-cache-dir picsellia --upgrade
+COPY ./captured-training-tf2/picsellia/requirements.txt .
+ARG REBUILD_ALL
+RUN python3.8 -m pip install -r requirements.txt --no-cache-dir
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY ./captured-training-tf2/picsellia /picsellia
