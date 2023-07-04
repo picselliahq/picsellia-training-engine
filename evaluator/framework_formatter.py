@@ -5,7 +5,7 @@ from typing import Tuple
 from picsellia.sdk.asset import Asset
 import cv2
 from evaluator.utils import (cast_type_list_to_float, cast_type_list_to_int,
-    # convert_tensor_to_list,
+                             # convert_tensor_to_list,
                              rescale_normalized_box)
 from PIL import Image
 
@@ -34,7 +34,8 @@ class FrameworkFormatter(ABC):
 class YoloFormatter(FrameworkFormatter):
     def format_confidences(self, prediction):
         if prediction.boxes is not None:
-            confidences_list = convert_tensor_to_list(tensor=prediction.boxes.conf)
+            confidences_list = convert_tensor_to_list(
+                tensor=prediction.boxes.conf)
 
         elif prediction.probs is not None:
             confidences_list = [max(prediction.probs)]
@@ -77,7 +78,8 @@ class YoloFormatter(FrameworkFormatter):
         if prediction.masks is None:
             return []
         polygons = prediction.masks.xy
-        casted_polygons = list(map(lambda polygon: polygon.astype(int), polygons))
+        casted_polygons = list(
+            map(lambda polygon: polygon.astype(int), polygons))
         return list(map(lambda polygon: polygon.tolist(), casted_polygons))
 
 
@@ -121,9 +123,9 @@ class TensorflowFormatter(FrameworkFormatter):
         )
         masks = self._postprocess_masks(
             detection_masks=prediction["detection_masks"]
-                            .numpy()[0]
-                            .astype(np.float)
-                            .tolist()[:10],
+            .numpy()[0]
+            .astype(np.float)
+            .tolist(),
             resized_detection_boxes=boxes,
             mask_threshold=0.4,
             image_height=asset.height,

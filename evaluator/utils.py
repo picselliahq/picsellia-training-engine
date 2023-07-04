@@ -4,7 +4,6 @@ import numpy as np
 import requests
 from PIL import Image
 from picsellia.sdk.asset import Asset
-from torch import Tensor
 import tensorflow as tf
 
 
@@ -32,7 +31,7 @@ def cast_type_list_to_float(_list: List) -> List:
     return list(map(float, _list))
 
 
-def convert_tensor_to_list(tensor: Tensor) -> List:
+def convert_tensor_to_list(tensor) -> List:
     return tensor.cpu().numpy().tolist()
 
 

@@ -301,29 +301,24 @@ experiment.start_logging_chapter('Starting Evaluation')
 inference_type = experiment.get_base_model_version().type
 
 if inference_type == InferenceType.OBJECT_DETECTION:
-    try:
-        detection_evaluator = DetectionTensorflowEvaluator(
-            experiment=experiment,
-            dataset=eval_ds,
-            asset_list=eval_assets,
-            confidence_threshold=0.1
-        )
+    detection_evaluator = DetectionTensorflowEvaluator(
+        experiment=experiment,
+        dataset=eval_ds,
+        asset_list=eval_assets,
+        confidence_threshold=0.1
+    )
 
-        detection_evaluator.evaluate()
-    except Exception as e:
-        print(f"Error during evaluation: {e}")
+    detection_evaluator.evaluate()
 
 elif inference_type == InferenceType.SEGMENTATION:
-    try:
-        segmentation_evaluator = SegmentationTensorflowEvaluator(
-            experiment=experiment,
-            dataset=eval_ds,
-            asset_list=eval_assets,
-            confidence_threshold=0.1
-        )
-        segmentation_evaluator.evaluate()
-    except Exception as e:
-        print(f"Error during evaluation: {e}")
+    segmentation_evaluator = SegmentationTensorflowEvaluator(
+        experiment=experiment,
+        dataset=eval_ds,
+        asset_list=eval_assets,
+        confidence_threshold=0.1
+    )
+    segmentation_evaluator.evaluate()
+
 
 else:
     print("The only supported inference types for evaluation are object detection and segmentation. "
