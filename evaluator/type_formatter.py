@@ -60,7 +60,7 @@ class SegmentationFormatter(TypeFormatter):
     def format_prediction(
             self, asset: Asset, prediction
     ):
-        return {"polygons": self._framework_formatter.format_polygons(prediction=prediction),
+        return {"polygons": self._framework_formatter.format_polygons(asset=asset, prediction=prediction),
                 "confidences": self._framework_formatter.format_confidences(prediction=prediction),
                 "classes": self._framework_formatter.format_classes(prediction=prediction)}
 

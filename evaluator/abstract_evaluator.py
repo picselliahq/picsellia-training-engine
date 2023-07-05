@@ -2,7 +2,7 @@ import logging
 import math
 import os
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import List, Type, Union
 
 import numpy as np
 import tqdm
@@ -16,7 +16,6 @@ from picsellia.types.enums import InferenceType
 
 from evaluator.framework_formatter import FrameworkFormatter
 from evaluator.type_formatter import TypeFormatter
-
 
 
 def _labels_coherence_check(experiment_labelmap, dataset_labels) -> bool:
@@ -37,11 +36,11 @@ class AbstractEvaluator(ABC):
     framework_formatter: Type[FrameworkFormatter]
 
     def __init__(
-        self,
-        experiment: Experiment,
-        dataset: DatasetVersion,
-        asset_list: List[Asset] = None,
-        confidence_threshold: float = 0.1
+            self,
+            experiment: Experiment,
+            dataset: DatasetVersion,
+            asset_list: List[Asset] = None,
+            confidence_threshold: float = 0.1
     ) -> None:
         self._experiment = experiment
         self._dataset = dataset
@@ -87,7 +86,6 @@ class AbstractEvaluator(ABC):
     @abstractmethod
     def _get_model_weights_path(self):
         pass
-
 
     def _get_experiment_labelmap(self) -> dict:
         try:
@@ -144,8 +142,8 @@ class AbstractEvaluator(ABC):
 
         for i in tqdm.tqdm(range(total_batch_number)):
             asset_list = self._asset_list[
-                i * self._batch_size : (i + 1) * self._batch_size
-            ]
+                         i * self._batch_size: (i + 1) * self._batch_size
+                         ]
             self._evaluate_asset_list(asset_list)
         if self._dataset.type in [InferenceType.OBJECT_DETECTION, InferenceType.SEGMENTATION]:
             self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
@@ -167,14 +165,14 @@ class AbstractEvaluator(ABC):
     # def _preprocess_image(self, asset: Asset) -> np.ndarray:
     #     pass
 
-    def _format_prediction_to_evaluations(self, asset: Asset, prediction: List) -> List:
+    def _format_prediction_to_evaluations(self, asset: Asset, prediction: Union[List, dict]) -> List:
         picsellia_predictions = self._type_formatter.format_prediction(
             asset=asset, prediction=prediction
         )
 
         evaluations = []
         for i in range(
-            min(self._nb_object_limit, len(picsellia_predictions["confidences"]))
+                min(self._nb_object_limit, len(picsellia_predictions["confidences"]))
         ):
             if picsellia_predictions["confidences"][i] >= self._confidence_threshold:
                 picsellia_prediction = {
@@ -199,6 +197,6 @@ class AbstractEvaluator(ABC):
                 f"Asset: {asset.filename} non evaluated, either because the model made no predictions \
                          or because the confidence of the predictions was too low."
             )
-            
+
     def _get_model_artifact_filename(self) -> str:
         pass

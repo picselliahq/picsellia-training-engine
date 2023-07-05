@@ -1,12 +1,12 @@
 import os
 from picsellia import Client
-from evaluator import Evaluator
 from picsellia.exceptions import ResourceNotFoundError
 
 from picsellia_tf2 import pxl_utils
 from picsellia_tf2 import pxl_tf
+from picsellia.types.enums import InferenceType
 
-from evaluator.tf_evaluator import DetectionTensorflowEvaluator
+from evaluator.tf_evaluator import DetectionTensorflowEvaluator, SegmentationTensorflowEvaluator
 
 import logging
 import shutil
@@ -60,12 +60,12 @@ if len(attached_datasets) == 3:
         train_ds = experiment.get_dataset(name="train")
     except Exception:
         raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')")
+                                            accepting 'train', 'test', 'eval'")
     try:
         test_ds = experiment.get_dataset(name="test")
     except Exception:
         raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')")
+                                            accepting 'train', 'test', 'eval'")
     try:
         eval_ds = experiment.get_dataset(name="val")
     except Exception:
@@ -73,11 +73,11 @@ if len(attached_datasets) == 3:
             eval_ds = experiment.get_dataset(name="eval")
         except Exception:
             raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                expecting 'train', 'test', ('val' or 'eval')")
+                                               accepting 'train', 'test', 'eval'")
 
     labels = train_ds.list_labels()
     label_names = [label.name for label in labels]
-    labelmap = {str(i+1): label.name for i, label in enumerate(labels)}
+    labelmap = {str(i + 1): label.name for i, label in enumerate(labels)}
     label_path = pxl_utils.generate_label_map(
         classes=label_names,
         output_path=experiment.base_dir,
@@ -132,11 +132,11 @@ else:
     dataset = experiment.list_attached_dataset_versions()[0]
     prop = parameters.get('prop_train_split', 0.7)
     train_assets, test_assets, eval_assets, train_split, test_split, eval_split, _ = dataset.train_test_val_split(
-        ratios=[prop, (1.-prop)/2, (1.-prop)/2], random_seed=42)
+        ratios=[prop, (1. - prop) / 2, (1. - prop) / 2], random_seed=42)
 
     labels = dataset.list_labels()
     label_names = [label.name for label in labels]
-    labelmap = {str(i+1): label.name for i, label in enumerate(labels)}
+    labelmap = {str(i + 1): label.name for i, label in enumerate(labels)}
     label_path = pxl_utils.generate_label_map(
         classes=label_names,
         output_path=experiment.base_dir,
@@ -168,11 +168,11 @@ else:
 
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)
 experiment.log('train-split', pxl_utils.sort_split(train_split,
-               label_names), 'bar', replace=True)
+                                                   label_names), 'bar', replace=True)
 experiment.log('eval-split', pxl_utils.sort_split(eval_split,
-               label_names), 'bar', replace=True)
+                                                  label_names), 'bar', replace=True)
 experiment.log('test-split', pxl_utils.sort_split(test_split,
-               label_names), 'bar', replace=True)
+                                                  label_names), 'bar', replace=True)
 
 print("\n")
 experiment.start_logging_chapter('Create records')
@@ -251,7 +251,6 @@ experiment.store('config')
 experiment.store('checkpoint-data-latest')
 experiment.store('checkpoint-index-latest')
 
-
 print("\n")
 experiment.start_logging_chapter('Computing metrics on test dataset')
 
@@ -299,28 +298,28 @@ experiment.end_logging_buffer()
 print("\n")
 experiment.start_logging_chapter('Starting Evaluation')
 
-try:
-    X = DetectionTensorflowEvaluator(
+inference_type = experiment.get_base_model_version().type
+
+if inference_type == InferenceType.OBJECT_DETECTION:
+    detection_evaluator = DetectionTensorflowEvaluator(
         experiment=experiment,
         dataset=eval_ds,
         asset_list=eval_assets,
         confidence_threshold=0.1
     )
-    X.evaluate()
-except Exception as e:
-    print(f"Error during evaluation: {e}")
+
+    detection_evaluator.evaluate()
+
+elif inference_type == InferenceType.SEGMENTATION:
+    segmentation_evaluator = SegmentationTensorflowEvaluator(
+        experiment=experiment,
+        dataset=eval_ds,
+        asset_list=eval_assets,
+        confidence_threshold=0.1
+    )
+    segmentation_evaluator.evaluate()
 
 
-evaluator_object = DetectionTensorflowEvaluator(
-    experiment=experiment,
-    dataset=evaluation_ds,
-    asset_list=asset_list,
-    confidence_threshold=0.1
-)
-
-X = Evaluator(
-    client=client,
-    experiment=experiment,  # same
-    dataset=eval_ds,
-    asset_list=eval_assets
-)
+else:
+    print("The only supported inference types for evaluation are object detection and segmentation. "
+          "Please add inference type to model if you haven't already")
