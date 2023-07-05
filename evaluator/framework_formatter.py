@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import List
 import numpy as np
-from typing import Tuple
 from picsellia.sdk.asset import Asset
 import cv2
-from evaluator.utils import (cast_type_list_to_float, cast_type_list_to_int,
-                             convert_tensor_to_list,
-                             rescale_normalized_box)
+from evaluator.utils.general import (cast_type_list_to_float, cast_type_list_to_int,
+                                     convert_tensor_to_list,
+                                     rescale_normalized_box)
 from PIL import Image
 
 

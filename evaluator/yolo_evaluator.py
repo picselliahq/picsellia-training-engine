@@ -8,7 +8,7 @@ from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import (ClassificationFormatter,
                                       DetectionFormatter,
                                       SegmentationFormatter, TypeFormatter)
-from evaluator.utils import open_asset_as_array
+from evaluator.utils.general import open_asset_as_array
 from picsellia.exceptions import PicselliaError
 from picsellia.sdk.asset import Asset
 from PIL import UnidentifiedImageError

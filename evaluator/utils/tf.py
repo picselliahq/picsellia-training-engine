@@ -1,0 +1,23 @@
+from typing import List
+
+import numpy as np
+import requests
+from PIL import Image
+from picsellia.sdk.asset import Asset
+import tensorflow as tf
+
+
+def open_asset_as_tensor(asset: Asset, input_width: int = None, input_height: int = None):
+    image = Image.open(requests.get(asset.reset_url(), stream=True).raw)
+    if input_width is not None and input_height is not None:
+        image = image.resize((input_width, input_height))
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    image = np.asarray(image)
+    image = np.expand_dims(image, axis=0)
+    if input_width is not None and input_height is not None:
+        image = tf.convert_to_tensor(image, dtype=tf.float32)
+    else:
+        image = tf.convert_to_tensor(image, dtype=tf.uint8)
+
+    return image

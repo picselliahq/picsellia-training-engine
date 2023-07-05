@@ -7,7 +7,7 @@ from evaluator.abstract_evaluator import AbstractEvaluator
 from evaluator.framework_formatter import TensorflowFormatter
 from evaluator.type_formatter import (DetectionFormatter,
                                       SegmentationFormatter)
-from evaluator.utils import open_asset_as_tensor
+from evaluator.utils.tf import open_asset_as_tensor
 
 from picsellia.exceptions import PicselliaError
 from picsellia.sdk.asset import Asset
