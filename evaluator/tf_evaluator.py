@@ -1,23 +1,18 @@
 import tensorflow as tf
-import requests
-from PIL import Image
-import logging
 import zipfile
 import os
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 from typing import List
-import numpy as np
-
-from picsellia.sdk.experiment import Experiment, DatasetVersion
 from evaluator.abstract_evaluator import AbstractEvaluator
 from evaluator.framework_formatter import TensorflowFormatter
 from evaluator.type_formatter import (DetectionFormatter,
-                                      SegmentationFormatter, TypeFormatter)
+                                      SegmentationFormatter)
 from evaluator.utils import open_asset_as_tensor
 
 from picsellia.exceptions import PicselliaError
 from picsellia.sdk.asset import Asset
-from functools import partial
+from PIL import UnidentifiedImageError
+import logging
 
 
 class TensorflowEvaluator(AbstractEvaluator):
@@ -51,14 +46,18 @@ class TensorflowEvaluator(AbstractEvaluator):
 
     def _evaluate_asset_list(self, asset_list: List[Asset]) -> None:
         for i, asset in enumerate(asset_list):
-            inputs = self._preprocess_image(asset)
+            try:
+                inputs = self._preprocess_image(asset)
+            except UnidentifiedImageError:
+                logging.warning(f"Can't evaluate {asset.filename}, error opening the image")
+                continue
             predictions = self._loaded_model(inputs)  # Predict
             evaluations = self._format_prediction_to_evaluations(
                 asset=asset, prediction=predictions
             )
             self._send_evaluations_to_platform(asset=asset, evaluations=evaluations)
 
-    def _preprocess_image(self, asset:Asset):
+    def _preprocess_image(self, asset: Asset):
         image = open_asset_as_tensor(asset, self.input_width, self.input_height)
         return image
 

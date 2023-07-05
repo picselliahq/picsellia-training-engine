@@ -46,7 +46,7 @@ def rescale_normalized_box(box: List, width: int, height: int) -> List[int]:
 
 
 def open_asset_as_array(asset: Asset) -> np.array:
-    image = Image.open(requests.get(asset.url, stream=True).raw)
+    image = Image.open(requests.get(asset.reset_url()).raw)
     image = transpose_if_exif_tags(image)
     if image.mode != "RGB":
         image = image.convert("RGB")
@@ -54,9 +54,7 @@ def open_asset_as_array(asset: Asset) -> np.array:
 
 
 def open_asset_as_tensor(asset: Asset, input_width: int = None, input_height: int = None):
-    # image_array = open_asset_as_array(asset)
-    image = Image.open(requests.get(asset.url, stream=True).raw)
-
+    image = Image.open(requests.get(asset.reset_url()).raw)
     if input_width is not None and input_height is not None:
         image = image.resize((input_width, input_height))
     if image.mode != "RGB":
