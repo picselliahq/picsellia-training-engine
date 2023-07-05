@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.4.2-cudnn8-runtime-ubuntu20.04 as base
+FROM nvidia/cuda:11.4.3-cudnn8-runtime-ubuntu20.04 as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -8,7 +8,7 @@ RUN apt-get install --no-install-recommends -y python3.6 python3-pip libpq-dev p
 RUN python3.8 -m pip install --upgrade pip
 RUN pip3 install -U setuptools
 
-COPY ./requirements.txt .
+COPY ./captured-training-yolov5-segmentation/requirements.txt .
 ARG REBUILD_ALL
 RUN pip3 install -r requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
@@ -16,7 +16,7 @@ RUN python3 -m pip install picsellia-yolov5==0.2.8
 RUN pip3 install picsellia --upgrade
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
-COPY ./picsellia /picsellia
+COPY ./captured-training-yolov5-segmentation/picsellia /picsellia
 
 CMD ["/picsellia/launch_sub.py"]
 ENTRYPOINT ["python3"]

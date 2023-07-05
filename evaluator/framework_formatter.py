@@ -26,7 +26,7 @@ class FrameworkFormatter(ABC):
         pass
 
     @abstractmethod
-    def format_polygons(self, prediction):
+    def format_polygons(self, asset: Asset, prediction):
         pass
 
 
@@ -73,7 +73,7 @@ class YoloFormatter(FrameworkFormatter):
         casted_boxes = list(map(cast_type_list_to_int, rescaled_boxes))
         return casted_boxes
 
-    def format_polygons(self, prediction):
+    def format_polygons(self, asset: Asset, prediction):
         if prediction.masks is None:
             return []
         polygons = prediction.masks.xy
