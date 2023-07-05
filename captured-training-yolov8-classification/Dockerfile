@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.7.0-cudnn8-runtime-ubuntu20.04 as base
+FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04 as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1

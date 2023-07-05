@@ -43,10 +43,14 @@ class YOLOEvaluator(AbstractEvaluator):
             try:
                 image = open_asset_as_array(asset)
             except UnidentifiedImageError:
-                logging.warning(f"Can't evaluate {asset.filename}, error opening the image")
+                logging.warning(
+                    f"Can't evaluate {asset.filename}, error opening the image")
                 continue
             images.append(image)
         return images
+
+    def _get_model_weights_path(self):
+        pass
 
 
 class ClassificationYOLOEvaluator(YOLOEvaluator):
