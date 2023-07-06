@@ -186,17 +186,12 @@ class AbstractEvaluator(ABC):
         return evaluations
 
     def _send_evaluations_to_platform(self, asset: Asset, evaluations: List) -> None:
-        if len(evaluations) > 0:
-            shapes = {self._type_formatter.get_shape_type(): evaluations}
+        shapes = {self._type_formatter.get_shape_type(): evaluations}
 
-            self._experiment.add_evaluation(asset=asset, **shapes)
-            print(f"Asset: {asset.filename} evaluated.")
-            logging.info(f"Asset: {asset.filename} evaluated.")
-        else:
-            logging.info(
-                f"Asset: {asset.filename} non evaluated, either because the model made no predictions \
-                         or because the confidence of the predictions was too low."
-            )
+        self._experiment.add_evaluation(asset=asset, **shapes)
+        print(f"Asset: {asset.filename} evaluated.")
+        logging.info(f"Asset: {asset.filename} evaluated.")
+
 
     def _get_model_artifact_filename(self) -> str:
         pass
