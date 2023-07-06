@@ -27,9 +27,9 @@ def dataset(experiment, assets, count, split_type, new_size, n_classes):
 
     y = np.zeros(len(assets))
     indices = np.cumsum(count['y'])
-    for i in range(len(indices)-1):
-        y[indices[i]:indices[i+1]
-          ] = np.ones(len(y[indices[i]:indices[i+1]]))*(i)
+    for i in range(len(indices) - 1):
+        y[indices[i]:indices[i + 1]
+        ] = np.ones(len(y[indices[i]:indices[i + 1]])) * (i)
     y = to_categorical(y, n_classes)
 
     return np.asarray(X), y
@@ -72,28 +72,28 @@ def get_experiment() -> Experiment:
 
 
 def get_train_test_valid_datasets_from_experiment(experiment: Experiment) -> Tuple[DatasetVersion]:
-    is_split = _is_train_test_valid_dataset(experiment)
+    is_split = _is_train_test_eval_dataset(experiment)
     if is_split:
         print("We found 3 datasets:")
         train: DatasetVersion = experiment.get_dataset('train')
         print(f"{train.name}/{train.version} for training")
         test: DatasetVersion = experiment.get_dataset('test')
         print(f"{test.name}/{test.version} for testing")
-        valid: DatasetVersion = experiment.get_dataset('valid')
-        print(f"{valid.name}/{valid.version} for validation")
+        eval: DatasetVersion = experiment.get_dataset('eval')
+        print(f"{eval.name}/{eval.version} for evaluation")
     else:
         print("We only found one dataset inside your experiment, the train/test/split will be performed automatically.")
         train: DatasetVersion = experiment.list_attached_dataset_versions()[0]
         test = None
-        valid = None
-    return is_split, train, test, valid
+        eval = None
+    return is_split, train, test, eval
 
 
-def _is_train_test_valid_dataset(experiment: Experiment) -> bool:
+def _is_train_test_eval_dataset(experiment: Experiment) -> bool:
     datasets: List[DatasetVersion] = experiment.list_attached_dataset_versions()
     if len(datasets) < 3:
         return False
-    template = ["train", "test", "valid"]
+    template = ["train", "test", "eval"]
     ok_counter = 0
     for dataset in datasets:
         if dataset.version in template:
@@ -172,7 +172,7 @@ def f1_micro(y_true, y_pred):
         y_true, y_pred)  # calls precision metric and takes the score of precision of the batch
     # calls recall metric and takes the score of precision of the batch
     recall = recall_m(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
 
 
 dependencies = {
@@ -201,7 +201,6 @@ class Metrics(tf.keras.callbacks.Callback):
         val_pred = []
         val_true = []
         for batch in range(batches):
-
             xVal, yVal = next(self.validation_data)
 
             val_pred_batch = np.zeros((len(xVal)))
@@ -230,11 +229,11 @@ class Metrics(tf.keras.callbacks.Callback):
 
         if self.experiment is not None:
             self.experiment.log(name='val_f1', data=[
-                                float(_val_f1)], type=LogType.LINE)
+                float(_val_f1)], type=LogType.LINE)
             self.experiment.log(name='val_recall', data=[
-                                float(_val_recall)], type=LogType.LINE)
+                float(_val_recall)], type=LogType.LINE)
             self.experiment.log(name='val_precision', data=[
-                                float(_val_precision)], type=LogType.LINE)
+                float(_val_precision)], type=LogType.LINE)
 
         predIdxs = self.model.predict(self.validation_data)
         predIdxs = np.argmax(predIdxs, axis=1)

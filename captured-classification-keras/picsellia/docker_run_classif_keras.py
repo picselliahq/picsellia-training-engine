@@ -1,29 +1,28 @@
 import os
 import random
 import numpy as np
-from picsellia.types.enums import AnnotationFileType
 import logging
 import tqdm
-import json
-from classification_models.keras import Classifiers
-from picsellia.types.enums import AnnotationFileType
-import tensorflow as tf
-from picsellia.types.enums import LogType
+
+from picsellia.types.enums import LogType, AnnotationFileType, InferenceType
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.experiment import Experiment
+
+from classification_models.keras import Classifiers
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.utils import class_weight
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import keras
+from pycocotools.coco import COCO
+
 import utils
 from utils import (
     _move_files_in_class_directories, get_experiment, get_train_test_valid_datasets_from_experiment
 )
-from pycocotools.coco import COCO
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-# os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
@@ -41,54 +40,52 @@ model_path = os.path.join(experiment.checkpoint_dir, model_name)
 
 os.rename(os.path.join(experiment.base_dir, model_name), model_path)
 
-is_split, train_ds, test_ds, valid_ds = get_train_test_valid_datasets_from_experiment(
+is_split, train_ds, test_ds, eval_ds = get_train_test_valid_datasets_from_experiment(
     experiment)
-# if not is_split:
-dataset = train_ds
+if not is_split:
+    dataset = train_ds
 
-print("Downloading annotation COCO file ...")
-annotation_path = dataset.export_annotation_file(
-    AnnotationFileType.COCO, experiment.base_dir)
-print("Downloading annotation COCO file ... OK")
+    print("Downloading annotation COCO file ...")
+    annotation_path = dataset.export_annotation_file(
+        AnnotationFileType.COCO, experiment.base_dir)
+    print("Downloading annotation COCO file ... OK")
 
-coco = COCO(annotation_path)
-labelmap = {}
-for x in coco.cats:
-    labelmap[str(x)] = coco.cats[x]['name']
+    coco = COCO(annotation_path)
+    labelmap = {}
+    for x in coco.cats:
+        labelmap[str(x)] = coco.cats[x]['name']
 
-n_classes = len(labelmap)
+    n_classes = len(labelmap)
 
-train_assets, test_assets, val_assets, count_train, count_test, count_val, _ = dataset.train_test_val_split()
+    train_assets, test_assets, eval_assets, count_train, count_test, count_eval, _ = dataset.train_test_val_split()
 
-train_list = train_assets.items
-test_list = test_assets.items
-val_list = val_assets.items
+    train_list = train_assets.items
+    test_list = test_assets.items
+    eval_list = eval_assets.items
 
-random.shuffle(train_list)
-random.shuffle(test_list)
-random.shuffle(val_list)
-train_assets = MultiAsset(dataset.connexion, dataset.id, train_list)
-test_assets = MultiAsset(dataset.connexion, dataset.id, test_list)
-eval_assets = MultiAsset(dataset.connexion, dataset.id, val_list)
+    random.shuffle(train_list)
+    random.shuffle(test_list)
+    random.shuffle(eval_list)
 
-train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'))
-test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'))
-eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'))
+    train_assets = MultiAsset(dataset.connexion, dataset.id, train_list)
+    test_assets = MultiAsset(dataset.connexion, dataset.id, test_list)
+    eval_assets = MultiAsset(dataset.connexion, dataset.id, eval_list)
 
-_move_files_in_class_directories(
-    coco=coco, base_imdir=os.path.join(experiment.png_dir, 'train'))
-_move_files_in_class_directories(
-    coco=coco, base_imdir=os.path.join(experiment.png_dir, 'test'))
-_move_files_in_class_directories(
-    coco=coco, base_imdir=os.path.join(experiment.png_dir, 'eval'))
+    train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'))
+    test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'))
+    eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'))
+
+    _move_files_in_class_directories(
+        coco=coco, base_imdir=os.path.join(experiment.png_dir, 'train'))
+    _move_files_in_class_directories(
+        coco=coco, base_imdir=os.path.join(experiment.png_dir, 'test'))
+    _move_files_in_class_directories(
+        coco=coco, base_imdir=os.path.join(experiment.png_dir, 'eval'))
 
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)
 experiment.log('train-split', count_train, 'bar', replace=True)
 experiment.log('test-split', count_test, 'bar', replace=True)
-experiment.log('eval-split', count_val, 'bar', replace=True)
-count_train['y'].insert(0, 0)
-count_test['y'].insert(0, 0)
-count_val['y'].insert(0, 0)
+experiment.log('eval-split', count_eval, 'bar', replace=True)
 
 parameters = experiment.get_log(name='parameters').data
 random_seed = parameters.get("random_seed", 12)
@@ -114,6 +111,7 @@ train_datagen = ImageDataGenerator(rescale=1. / 255.,
                                    )
 
 test_datagen = ImageDataGenerator(rescale=1. / 255., dtype='float32')
+eval_datagen = test_datagen
 
 train_generator = train_datagen.flow_from_directory(
     os.path.join(experiment.png_dir, 'train'),
@@ -131,7 +129,7 @@ test_generator = test_datagen.flow_from_directory(
     seed=random_seed,
     shuffle=True
 )
-eval_generator = test_datagen.flow_from_directory(
+eval_generator = eval_datagen.flow_from_directory(
     os.path.join(experiment.png_dir, 'eval'),
     target_size=target_size,
     batch_size=batch_size,
@@ -224,3 +222,4 @@ for i, pred in enumerate(tqdm.tqdm(predictions)):
     experiment.add_evaluation(asset=asset, classifications=[(
         dataset_labels[labelmap[str(np.argmax(pred))]], float(max(pred)))])
     print(f"Asset: {asset_filename} evaluated.")
+experiment.compute_evaluations_metrics(InferenceType.CLASSIFICATION)
