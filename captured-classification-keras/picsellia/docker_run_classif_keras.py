@@ -3,6 +3,7 @@ import random
 import numpy as np
 from picsellia.types.enums import AnnotationFileType
 import logging
+import tqdm
 import json
 from classification_models.keras import Classifiers
 from picsellia.types.enums import AnnotationFileType
@@ -40,12 +41,14 @@ model_path = os.path.join(experiment.checkpoint_dir, model_name)
 
 os.rename(os.path.join(experiment.base_dir, model_name), model_path)
 
-is_split, train_ds, test_ds, valid_ds = get_train_test_valid_datasets_from_experiment(experiment)
+is_split, train_ds, test_ds, valid_ds = get_train_test_valid_datasets_from_experiment(
+    experiment)
 # if not is_split:
 dataset = train_ds
 
 print("Downloading annotation COCO file ...")
-annotation_path = dataset.export_annotation_file(AnnotationFileType.COCO, experiment.base_dir)
+annotation_path = dataset.export_annotation_file(
+    AnnotationFileType.COCO, experiment.base_dir)
 print("Downloading annotation COCO file ... OK")
 
 coco = COCO(annotation_path)
@@ -72,9 +75,12 @@ train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'))
 test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'))
 eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'))
 
-_move_files_in_class_directories(coco=coco, base_imdir=os.path.join(experiment.png_dir, 'train'))
-_move_files_in_class_directories(coco=coco, base_imdir=os.path.join(experiment.png_dir, 'test'))
-_move_files_in_class_directories(coco=coco, base_imdir=os.path.join(experiment.png_dir, 'eval'))
+_move_files_in_class_directories(
+    coco=coco, base_imdir=os.path.join(experiment.png_dir, 'train'))
+_move_files_in_class_directories(
+    coco=coco, base_imdir=os.path.join(experiment.png_dir, 'test'))
+_move_files_in_class_directories(
+    coco=coco, base_imdir=os.path.join(experiment.png_dir, 'eval'))
 
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)
 experiment.log('train-split', count_train, 'bar', replace=True)
@@ -138,10 +144,12 @@ experiment.start_logging_chapter('Init Model')
 
 Architecture, preprocess_input = Classifiers.get(model_architecture)
 
-base_model = Architecture(input_shape=target_input, include_top=False, weights=None)
+base_model = Architecture(input_shape=target_input,
+                          include_top=False, weights=None)
 
 try:
-    base_model.load_weights(os.path.join(experiment.checkpoint_dir, model_name))
+    base_model.load_weights(os.path.join(
+        experiment.checkpoint_dir, model_name))
     x = keras.layers.GlobalAveragePooling2D()(base_model.output)
     output = keras.layers.Dense(n_classes, activation='softmax')(x)
     model = keras.models.Model(inputs=[base_model.input], outputs=[output])
@@ -164,7 +172,8 @@ class_weights = class_weight.compute_class_weight(
     y=train_generator.classes
 )
 history = model.fit(train_generator, batch_size=batch_size, epochs=EPOCHS, validation_data=test_generator,
-                    callbacks=[utils.Metrics(val_data=test_generator, batch_size=batch_size, experiment=experiment)],
+                    callbacks=[utils.Metrics(
+                        val_data=test_generator, batch_size=batch_size, experiment=experiment)],
                     verbose=1, class_weight=dict(enumerate(class_weights)))
 for k, v in history.history.items():
     try:
@@ -174,10 +183,14 @@ for k, v in history.history.items():
 
 model.save(os.path.join(experiment.exported_model_dir, 'model.h5'))
 model.save_weights(os.path.join(experiment.exported_model_dir, 'cp.ckpt'))
-tf.saved_model.save(model, os.path.join(experiment.exported_model_dir, 'saved_model'))
-experiment.store("model-latest", os.path.join(experiment.exported_model_dir, 'saved_model'), do_zip=True)
-experiment.store(name='keras-model', path=os.path.join(experiment.exported_model_dir, 'model.h5'))
-experiment.store(name='checkpoint-index', path=os.path.join(experiment.exported_model_dir, 'cp.ckpt.index'))
+tf.saved_model.save(model, os.path.join(
+    experiment.exported_model_dir, 'saved_model'))
+experiment.store(
+    "model-latest", os.path.join(experiment.exported_model_dir, 'saved_model'), do_zip=True)
+experiment.store(name='keras-model',
+                 path=os.path.join(experiment.exported_model_dir, 'model.h5'))
+experiment.store(name='checkpoint-index',
+                 path=os.path.join(experiment.exported_model_dir, 'cp.ckpt.index'))
 experiment.store(name='checkpoint-data',
                  path=os.path.join(experiment.exported_model_dir, 'cp.ckpt.data-00000-of-00001'))
 
@@ -185,9 +198,11 @@ experiment.start_logging_chapter('Evaluation')
 
 predictions = model.predict(eval_generator)
 
-eval_accuracy = accuracy_score(eval_generator.classes, predictions.argmax(axis=1))
+eval_accuracy = accuracy_score(
+    eval_generator.classes, predictions.argmax(axis=1))
 
-experiment.log(name='eval_accuracy', data=eval_accuracy.item(), type=LogType.VALUE)
+experiment.log(name='eval_accuracy',
+               data=eval_accuracy.item(), type=LogType.VALUE)
 
 cm = confusion_matrix(eval_generator.classes, predictions.argmax(axis=1))
 
@@ -196,3 +211,16 @@ confusion = {
     'values': cm.tolist()
 }
 log = experiment.log(name='confusion', data=confusion, type=LogType.HEATMAP)
+
+dataset_labels = {label.name: label for label in dataset.list_labels()}
+
+for i, pred in enumerate(tqdm.tqdm(predictions)):
+    asset_filename = eval_generator.filenames[i].split("/")[1]
+    try:
+        asset = dataset.find_asset(
+            filename=asset_filename)
+    except Exception as e:
+        print(e)
+    experiment.add_evaluation(asset=asset, classifications=[(
+        dataset_labels[labelmap[str(np.argmax(pred))]], float(max(pred)))])
+    print(f"Asset: {asset_filename} evaluated.")
