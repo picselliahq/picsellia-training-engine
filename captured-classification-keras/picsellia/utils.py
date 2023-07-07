@@ -71,7 +71,7 @@ def get_experiment() -> Experiment:
     return experiment
 
 
-def get_train_test_valid_datasets_from_experiment(experiment: Experiment) -> Tuple[DatasetVersion]:
+def get_train_test_eval_datasets_from_experiment(experiment: Experiment) -> Tuple[DatasetVersion]:
     is_split = _is_train_test_eval_dataset(experiment)
     if is_split:
         print("We found 3 datasets:")
@@ -79,14 +79,14 @@ def get_train_test_valid_datasets_from_experiment(experiment: Experiment) -> Tup
         print(f"{train.name}/{train.version} for training")
         test: DatasetVersion = experiment.get_dataset('test')
         print(f"{test.name}/{test.version} for testing")
-        eval: DatasetVersion = experiment.get_dataset('eval')
-        print(f"{eval.name}/{eval.version} for evaluation")
+        eval_dataset: DatasetVersion = experiment.get_dataset('eval')
+        print(f"{eval_dataset.name}/{eval_dataset.version} for evaluation")
     else:
         print("We only found one dataset inside your experiment, the train/test/split will be performed automatically.")
         train: DatasetVersion = experiment.list_attached_dataset_versions()[0]
         test = None
-        eval = None
-    return is_split, train, test, eval
+        eval_dataset = None
+    return is_split, train, test, eval_dataset
 
 
 def _is_train_test_eval_dataset(experiment: Experiment) -> bool:

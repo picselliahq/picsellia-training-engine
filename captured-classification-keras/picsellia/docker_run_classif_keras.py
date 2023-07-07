@@ -18,7 +18,7 @@ from pycocotools.coco import COCO
 
 import utils
 from utils import (
-    _move_files_in_class_directories, get_experiment, get_train_test_valid_datasets_from_experiment
+    _move_files_in_class_directories, get_experiment, get_train_test_eval_datasets_from_experiment
 )
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
@@ -40,7 +40,7 @@ model_path = os.path.join(experiment.checkpoint_dir, model_name)
 
 os.rename(os.path.join(experiment.base_dir, model_name), model_path)
 
-is_split, train_ds, test_ds, eval_ds = get_train_test_valid_datasets_from_experiment(
+is_split, train_ds, test_ds, eval_ds = get_train_test_eval_datasets_from_experiment(
     experiment)
 if not is_split:
     dataset = train_ds
@@ -50,42 +50,65 @@ if not is_split:
         AnnotationFileType.COCO, experiment.base_dir)
     print("Downloading annotation COCO file ... OK")
 
-    coco = COCO(annotation_path)
-    labelmap = {}
-    for x in coco.cats:
-        labelmap[str(x)] = coco.cats[x]['name']
-
-    n_classes = len(labelmap)
-
+    coco_train = COCO(annotation_path)
+    coco_test = coco_train
+    coco_eval = coco_train
     train_assets, test_assets, eval_assets, count_train, count_test, count_eval, _ = dataset.train_test_val_split()
+    experiment.log('train-split', count_train, 'bar', replace=True)
+    experiment.log('test-split', count_test, 'bar', replace=True)
+    experiment.log('eval-split', count_eval, 'bar', replace=True)
+    
+    dataset_labels = {label.name: label for label in dataset.list_labels()}
 
-    train_list = train_assets.items
-    test_list = test_assets.items
-    eval_list = eval_assets.items
 
-    random.shuffle(train_list)
-    random.shuffle(test_list)
-    random.shuffle(eval_list)
+else:
+    
+    print("Downloading annotation COCO file ...")
+    train_annotation_path = train_ds.export_annotation_file(
+        AnnotationFileType.COCO, experiment.base_dir)
+    print("Downloading annotation COCO file ... OK")
+    print("Downloading annotation COCO file ...")
+    test_annotation_path = test_ds.export_annotation_file(
+        AnnotationFileType.COCO, experiment.base_dir)
+    print("Downloading annotation COCO file ... OK")
+    print("Downloading annotation COCO file ...")
+    eval_annotation_path = eval_ds.export_annotation_file(
+        AnnotationFileType.COCO, experiment.base_dir)
+    print("Downloading annotation COCO file ... OK")
+    
+    coco_train = COCO(train_annotation_path)
+    coco_test = COCO(test_annotation_path)
+    coco_eval = COCO(eval_annotation_path)
+    
+    train_assets = train_ds.list_assets()
+    test_assets = test_ds.list_assets()
+    eval_assets = eval_ds.list_assets()
+    
+    dataset_labels = {label.name: label for label in eval_ds.list_labels()}
 
-    train_assets = MultiAsset(dataset.connexion, dataset.id, train_list)
-    test_assets = MultiAsset(dataset.connexion, dataset.id, test_list)
-    eval_assets = MultiAsset(dataset.connexion, dataset.id, eval_list)
+    
 
-    train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'))
-    test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'))
-    eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'))
+random.shuffle(train_assets)
+random.shuffle(test_assets)
+random.shuffle(eval_assets)
+train_assets.download(target_path=os.path.join(experiment.png_dir, 'train'))
+test_assets.download(target_path=os.path.join(experiment.png_dir, 'test'))
+eval_assets.download(target_path=os.path.join(experiment.png_dir, 'eval'))
 
-    _move_files_in_class_directories(
-        coco=coco, base_imdir=os.path.join(experiment.png_dir, 'train'))
-    _move_files_in_class_directories(
-        coco=coco, base_imdir=os.path.join(experiment.png_dir, 'test'))
-    _move_files_in_class_directories(
-        coco=coco, base_imdir=os.path.join(experiment.png_dir, 'eval'))
+_move_files_in_class_directories(
+    coco=coco_train, base_imdir=os.path.join(experiment.png_dir, 'train'))
+_move_files_in_class_directories(
+    coco=coco_test, base_imdir=os.path.join(experiment.png_dir, 'test'))
+_move_files_in_class_directories(
+    coco=coco_eval, base_imdir=os.path.join(experiment.png_dir, 'eval'))
 
+labelmap = {}
+for x in coco_train.cats:
+    labelmap[str(x)] = coco_train.cats[x]['name']
+
+n_classes = len(labelmap)
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)
-experiment.log('train-split', count_train, 'bar', replace=True)
-experiment.log('test-split', count_test, 'bar', replace=True)
-experiment.log('eval-split', count_eval, 'bar', replace=True)
+
 
 parameters = experiment.get_log(name='parameters').data
 random_seed = parameters.get("random_seed", 12)
@@ -210,7 +233,6 @@ confusion = {
 }
 log = experiment.log(name='confusion', data=confusion, type=LogType.HEATMAP)
 
-dataset_labels = {label.name: label for label in dataset.list_labels()}
 
 for i, pred in enumerate(tqdm.tqdm(predictions)):
     asset_filename = eval_generator.filenames[i].split("/")[1]
