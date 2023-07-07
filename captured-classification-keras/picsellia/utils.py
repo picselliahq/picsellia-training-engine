@@ -95,9 +95,12 @@ def _is_train_test_eval_dataset(experiment: Experiment) -> bool:
         return False
     template = ["train", "test", "eval"]
     ok_counter = 0
-    for dataset in datasets:
-        if dataset.version in template:
+    for alias in template:
+        try:
+            experiment.get_dataset(alias)
             ok_counter += 1
+        except Exception:
+            pass
     return ok_counter == 3
 
 

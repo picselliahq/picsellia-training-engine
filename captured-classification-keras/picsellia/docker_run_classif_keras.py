@@ -5,7 +5,6 @@ import logging
 import tqdm
 
 from picsellia.types.enums import LogType, AnnotationFileType, InferenceType
-from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.experiment import Experiment
 
 from classification_models.keras import Classifiers
@@ -44,7 +43,7 @@ is_split, train_ds, test_ds, eval_ds = get_train_test_eval_datasets_from_experim
     experiment)
 if not is_split:
     dataset = train_ds
-
+    eval_ds = train_ds
     print("Downloading annotation COCO file ...")
     annotation_path = dataset.export_annotation_file(
         AnnotationFileType.COCO, experiment.base_dir)
@@ -57,12 +56,11 @@ if not is_split:
     experiment.log('train-split', count_train, 'bar', replace=True)
     experiment.log('test-split', count_test, 'bar', replace=True)
     experiment.log('eval-split', count_eval, 'bar', replace=True)
-    
+
     dataset_labels = {label.name: label for label in dataset.list_labels()}
 
 
 else:
-    
     print("Downloading annotation COCO file ...")
     train_annotation_path = train_ds.export_annotation_file(
         AnnotationFileType.COCO, experiment.base_dir)
@@ -75,18 +73,16 @@ else:
     eval_annotation_path = eval_ds.export_annotation_file(
         AnnotationFileType.COCO, experiment.base_dir)
     print("Downloading annotation COCO file ... OK")
-    
+
     coco_train = COCO(train_annotation_path)
     coco_test = COCO(test_annotation_path)
     coco_eval = COCO(eval_annotation_path)
-    
+
     train_assets = train_ds.list_assets()
     test_assets = test_ds.list_assets()
     eval_assets = eval_ds.list_assets()
-    
-    dataset_labels = {label.name: label for label in eval_ds.list_labels()}
 
-    
+    dataset_labels = {label.name: label for label in eval_ds.list_labels()}
 
 random.shuffle(train_assets)
 random.shuffle(test_assets)
@@ -108,7 +104,6 @@ for x in coco_train.cats:
 
 n_classes = len(labelmap)
 experiment.log('labelmap', labelmap, 'labelmap', replace=True)
-
 
 parameters = experiment.get_log(name='parameters').data
 random_seed = parameters.get("random_seed", 12)
@@ -228,16 +223,15 @@ experiment.log(name='eval_accuracy',
 cm = confusion_matrix(eval_generator.classes, predictions.argmax(axis=1))
 
 confusion = {
-    'categories': count_train['x'],
+    'categories': list(labelmap.values()),
     'values': cm.tolist()
 }
 log = experiment.log(name='confusion', data=confusion, type=LogType.HEATMAP)
 
-
 for i, pred in enumerate(tqdm.tqdm(predictions)):
     asset_filename = eval_generator.filenames[i].split("/")[1]
     try:
-        asset = dataset.find_asset(
+        asset = eval_ds.find_asset(
             filename=asset_filename)
     except Exception as e:
         print(e)
