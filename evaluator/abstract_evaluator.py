@@ -40,7 +40,8 @@ class AbstractEvaluator(ABC):
             experiment: Experiment,
             dataset: DatasetVersion,
             asset_list: List[Asset] = None,
-            confidence_threshold: float = 0.1
+            confidence_threshold: float = 0.1,
+            weights_path: str = None
     ) -> None:
         self._experiment = experiment
         self._dataset = dataset
@@ -56,13 +57,16 @@ class AbstractEvaluator(ABC):
         )
 
         self._confidence_threshold = confidence_threshold
-
-        self._model_weights = self._experiment.get_artifact(
-            self._get_model_artifact_filename()
-        )
-        self._model_weights_path = os.path.join(
-            os.path.join(os.getcwd(), "saved_model"), self._model_weights.filename
-        )
+        self.do_download = True
+        if not weights_path:
+            self._model_weights = self._experiment.get_artifact(
+                self._get_model_artifact_filename()
+            )
+            self._model_weights_path = os.path.join(
+                os.path.join(os.getcwd(), "saved_model"), self._model_weights.filename
+            )
+        else:
+            self._model_weights_path = weights_path
         self._loaded_model = None
         self._nb_object_limit = 100
 
@@ -97,8 +101,9 @@ class AbstractEvaluator(ABC):
         logging.info(f"Setting up the evaluation for this experiment")
         self._model_sanity_check()
         self._dataset_inclusion_check()
-        self._download_model_weights()
-        self._get_model_weights_path()
+        if self.do_download:
+            self._download_model_weights()
+            self._get_model_weights_path()
         self._load_saved_model()
 
     def _model_sanity_check(self) -> None:
@@ -191,7 +196,6 @@ class AbstractEvaluator(ABC):
         self._experiment.add_evaluation(asset=asset, **shapes)
         print(f"Asset: {asset.filename} evaluated.")
         logging.info(f"Asset: {asset.filename} evaluated.")
-
 
     def _get_model_artifact_filename(self) -> str:
         pass

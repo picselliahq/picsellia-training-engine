@@ -139,6 +139,7 @@ onnx_path = os.path.join(weights_dir_path, "last.onnx")
 export_model.export(format="onnx")
 experiment.store("model-latest", onnx_path)
 
+model = YOLO(weights_path)
 metrics = model.val(data=data_path)
 accuracy = metrics.top1
 experiment.log("val/accuracy", float(accuracy), "value")
@@ -167,7 +168,8 @@ X = ClassificationYOLOEvaluator(
     experiment=experiment,
     dataset=evaluation_ds,
     asset_list=evaluation_assets,
-    confidence_threshold=parameters.get("confidence_threshold", 0.1)
+    confidence_threshold=parameters.get("confidence_threshold", 0.1),
+    weights_path=weights_path
 )
 
 X.evaluate()
