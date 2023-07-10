@@ -160,46 +160,46 @@ class TensorflowFormatter(FrameworkFormatter):
             mask = np.zeros((image_height, image_width))
             # Get normalised bbox coordinates
             xmin, ymin, w, h = resized_detection_boxes[idx]
+            if w > 0 and h >0 and xmin > 0 and ymin > 0:
+                xmax = xmin + w
+                ymax = ymin + h
 
-            xmax = xmin + w
-            ymax = ymin + h
+                # Define bbox height and width
+                bbox_height, bbox_width = h, w
 
-            # Define bbox height and width
-            bbox_height, bbox_width = h, w
-
-            # Resize 'detection_mask' to bbox size
-            bbox_mask = np.array(
-                Image.fromarray(np.array(detection_mask) * 255).resize(
-                    size=(bbox_width, bbox_height), resample=Image.BILINEAR
-                )
-                # Image.NEAREST is fastest and no weird artefacts
-            )
-            # Insert detection_mask into image.size np.zeros((height, width)) background_mask
-            assert bbox_mask.shape == mask[ymin:ymax, xmin:xmax].shape
-            mask[ymin:ymax, xmin:xmax] = bbox_mask
-            if (
-                    mask_threshold > 0
-            ):  # np.where(mask != 1, 0, mask)  # in case threshold is used to have other values (0)
-                mask = np.where(np.abs(mask) > mask_threshold * 255, 1, mask)
-                mask = np.where(mask != 1, 0, mask)
-
-            try:
-                contours, _ = cv2.findContours(
-                    mask.astype(np.uint8),
-                    cv2.RETR_EXTERNAL,
-                    cv2.CHAIN_APPROX_TC89_KCOS,
-                )
-                to_add = (
-                    contours[len(contours) - 1][::1]
-                    .reshape(
-                        contours[len(contours) - 1][::1].shape[0],
-                        contours[len(contours) - 1][::1].shape[2],
+                # Resize 'detection_mask' to bbox size
+                bbox_mask = np.array(
+                    Image.fromarray(np.array(detection_mask) * 255).resize(
+                        size=(bbox_width, bbox_height), resample=Image.BILINEAR
                     )
-                    .tolist()
+                    # Image.NEAREST is fastest and no weird artefacts
                 )
-                list_mask.append(to_add)
-            except Exception:
-                pass  # No contours
+                # Insert detection_mask into image.size np.zeros((height, width)) background_mask
+                assert bbox_mask.shape == mask[ymin:ymax, xmin:xmax].shape
+                mask[ymin:ymax, xmin:xmax] = bbox_mask
+                if (
+                        mask_threshold > 0
+                ):  # np.where(mask != 1, 0, mask)  # in case threshold is used to have other values (0)
+                    mask = np.where(np.abs(mask) > mask_threshold * 255, 1, mask)
+                    mask = np.where(mask != 1, 0, mask)
+
+                try:
+                    contours, _ = cv2.findContours(
+                        mask.astype(np.uint8),
+                        cv2.RETR_EXTERNAL,
+                        cv2.CHAIN_APPROX_TC89_KCOS,
+                    )
+                    to_add = (
+                        contours[len(contours) - 1][::1]
+                        .reshape(
+                            contours[len(contours) - 1][::1].shape[0],
+                            contours[len(contours) - 1][::1].shape[2],
+                        )
+                        .tolist()
+                    )
+                    list_mask.append(to_add)
+                except Exception:
+                    pass  # No contours
 
         return list_mask
 
