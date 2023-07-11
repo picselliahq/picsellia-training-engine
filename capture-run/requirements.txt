@@ -1,3 +1,0 @@
-picsellia_tf2
-pycocotools
-Ipython

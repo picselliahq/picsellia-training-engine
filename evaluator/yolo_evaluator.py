@@ -8,9 +8,10 @@ from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import (ClassificationFormatter,
                                       DetectionFormatter,
                                       SegmentationFormatter, TypeFormatter)
-from evaluator.utils import open_asset_as_array
+from evaluator.utils.general import open_asset_as_array
 from picsellia.exceptions import PicselliaError
 from picsellia.sdk.asset import Asset
+from PIL import UnidentifiedImageError
 from ultralytics import YOLO
 
 
@@ -37,8 +38,19 @@ class YOLOEvaluator(AbstractEvaluator):
         pass
 
     def _preprocess_images(self, assets: List[Asset]) -> List[np.array]:
-        images = list(map(open_asset_as_array, assets))
+        images = []
+        for asset in assets:
+            try:
+                image = open_asset_as_array(asset)
+            except UnidentifiedImageError:
+                logging.warning(
+                    f"Can't evaluate {asset.filename}, error opening the image")
+                continue
+            images.append(image)
         return images
+
+    def _get_model_weights_path(self):
+        pass
 
 
 class ClassificationYOLOEvaluator(YOLOEvaluator):

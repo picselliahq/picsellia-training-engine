@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.4.2-cudnn8-runtime-ubuntu20.04 as base
+FROM nvidia/cuda:11.4.3-cudnn8-runtime-ubuntu20.04 as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -18,8 +18,8 @@ ARG REBUILD_PICSELLIA
 RUN pip3 install --no-cache-dir picsellia --upgrade
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
-COPY ./picsellia /picsellia
-
+COPY ./captured-training-tf2/picsellia /picsellia
+COPY ./evaluator /picsellia/evaluator
 
 CMD ["/picsellia/launch_sub.py"]
 ENTRYPOINT ["python3"]

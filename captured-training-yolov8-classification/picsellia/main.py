@@ -1,18 +1,51 @@
-from picsellia import Client
 from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
-from utils import _move_files_in_class_directories, get_experiment
+from utils import _move_files_in_class_directories, get_experiment, prepare_datasets_with_annotation
 from ultralytics import YOLO
 import os
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 import shutil
+from picsellia.exceptions import ResourceNotFoundError
 from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
+from PIL import Image
 
 experiment = get_experiment()
 
 dataset_list = experiment.list_attached_dataset_versions()
-if len(dataset_list) == 2:
+
+if len(dataset_list) == 3:
+
+    try:
+        train_set = experiment.get_dataset(name="train")
+    except Exception:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
+                                            expecting 'train', 'test', 'eval')")
+    try:
+        test_set = experiment.get_dataset(name="test")
+    except Exception:
+        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
+                                            expecting 'train', 'test', 'eval')")
+    try:
+        eval_set = experiment.get_dataset(name="val")
+    except Exception:
+        try:
+            eval_set = experiment.get_dataset(name="eval")
+        except Exception:
+            raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
+                                                expecting 'train', 'test', 'eval')")
+
+    for data_type, dataset in {'train': train_set, 'test': test_set, 'val': eval_set}.items():
+        dataset.download(
+            target_path=os.path.join("data", data_type), max_workers=8
+        )
+
+    _, _ = prepare_datasets_with_annotation(train_set, test_set, eval_set)
+
+    evaluation_ds = eval_set
+    evaluation_assets = evaluation_ds.list_assets()
+
+elif len(dataset_list) == 2:
     train_set = experiment.get_dataset("train")
     train_set.download("data/train")
     test_set = experiment.get_dataset("test")
@@ -20,34 +53,11 @@ if len(dataset_list) == 2:
     val_set = experiment.get_dataset("test")
     val_set.download("data/val")
 
-    # labels = train_set.list_labels()
-    # label_names = [label.name for label in labels]
-    # labelmap = {str(i): label.name for i, label in enumerate(labels)}
-    # experiment.log("labelmap", labelmap, "labelmap", replace=True)
+    evaluation_ds, evaluation_assets = prepare_datasets_with_annotation(train_set, test_set, val_set)
 
-    train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
-    coco_train = COCO(train_annotation_path)
-
-    test_annotation_path = test_set.export_annotation_file(AnnotationFileType.COCO)
-    coco_test = COCO(test_annotation_path)
-
-    val_annotation_path = val_set.export_annotation_file(AnnotationFileType.COCO)
-    coco_val = COCO(val_annotation_path)
-
-    _move_files_in_class_directories(coco_train, "data/train")
-    _move_files_in_class_directories(coco_test, "data/test")
-    _move_files_in_class_directories(coco_val, "data/val")
-
-    evaluation_ds = test_set
-    evaluation_assets = evaluation_ds.list_assets()
 elif len(dataset_list) == 1:
     train_set = dataset_list[0]
     train_set.download("images")
-
-    # labels = train_set.list_labels()
-    # label_names = [label.name for label in labels]
-    # labelmap = {str(i): label.name for i, label in enumerate(labels)}
-    # experiment.log("labelmap", labelmap, "labelmap", replace=True)
     parameters = experiment.get_log("parameters").data
     prop = (
         0.7
@@ -85,7 +95,7 @@ elif len(dataset_list) == 1:
     evaluation_ds = train_set
     evaluation_assets = eval_assets
 else:
-    raise Exception("You must either have only one Dataset or 2 (train, test)")
+    raise Exception("You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, eval)")
 
 names = os.listdir("data/train")  # class names list
 labelmap = {str(i): label for i, label in enumerate(sorted(names))}
@@ -119,6 +129,7 @@ onnx_path = os.path.join(weights_dir_path, "last.onnx")
 export_model.export(format="onnx")
 experiment.store("model-latest", onnx_path)
 
+model = YOLO(weights_path)
 metrics = model.val(data=data_path)
 accuracy = metrics.top1
 experiment.log("val/accuracy", float(accuracy), "value")
@@ -131,7 +142,9 @@ for class_id, label in labelmap.items():
     if os.path.exists(label_path):
         file_list = [os.path.join(label_path, filepath) for filepath in os.listdir(label_path)]
         for image in file_list:
-            pred = model.predict(source=image)
+            # pred = model.predict(source=image)
+            image = Image.open(image).convert("RGB")
+            pred = model(np.array(image))
             pred_label = np.argmax([float(score) for score in list(pred[0].probs)])
             gt_class.append(int(class_id))
             pred_class.append(pred_label)
@@ -147,7 +160,8 @@ X = ClassificationYOLOEvaluator(
     experiment=experiment,
     dataset=evaluation_ds,
     asset_list=evaluation_assets,
-    confidence_threshold=parameters.get("confidence_threshold", 0.1)
+    confidence_threshold=parameters.get("confidence_threshold", 0.1),
+    weights_path=weights_path
 )
 
 X.evaluate()

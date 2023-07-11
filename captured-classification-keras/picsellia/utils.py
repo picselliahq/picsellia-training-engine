@@ -8,12 +8,13 @@ from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.types.enums import LogType
 import sys
 import picsellia
-from pycocotools.coco import COCO 
-import shutil 
+from pycocotools.coco import COCO
+import shutil
 from keras import backend as K
 from sklearn.metrics import classification_report
 from sklearn.metrics import f1_score, recall_score, precision_score
-import tensorflow as tf 
+import tensorflow as tf
+
 
 def dataset(experiment, assets, count, split_type, new_size, n_classes):
     X = []
@@ -26,11 +27,13 @@ def dataset(experiment, assets, count, split_type, new_size, n_classes):
 
     y = np.zeros(len(assets))
     indices = np.cumsum(count['y'])
-    for i in range(len(indices)-1):
-        y[indices[i]:indices[i+1]] = np.ones(len(y[indices[i]:indices[i+1]]))*(i)
+    for i in range(len(indices) - 1):
+        y[indices[i]:indices[i + 1]
+        ] = np.ones(len(y[indices[i]:indices[i + 1]])) * (i)
     y = to_categorical(y, n_classes)
 
     return np.asarray(X), y
+
 
 def get_experiment() -> Experiment:
     if 'api_token' not in os.environ:
@@ -63,36 +66,43 @@ def get_experiment() -> Experiment:
             project = client.get_project(project_name)
         experiment = project.get_experiment(experiment_name)
     else:
-        Exception("You must set the project_token or project_name and experiment_name")
+        Exception(
+            "You must set the project_token or project_name and experiment_name")
     return experiment
 
-def get_train_test_valid_datasets_from_experiment(experiment: Experiment) -> Tuple[DatasetVersion]:
-    is_split = _is_train_test_valid_dataset(experiment)
+
+def get_train_test_eval_datasets_from_experiment(experiment: Experiment) -> Tuple[DatasetVersion]:
+    is_split = _is_train_test_eval_dataset(experiment)
     if is_split:
         print("We found 3 datasets:")
         train: DatasetVersion = experiment.get_dataset('train')
         print(f"{train.name}/{train.version} for training")
-        test : DatasetVersion = experiment.get_dataset('test')
+        test: DatasetVersion = experiment.get_dataset('test')
         print(f"{test.name}/{test.version} for testing")
-        valid: DatasetVersion = experiment.get_dataset('valid')
-        print(f"{valid.name}/{valid.version} for validation")
+        eval_dataset: DatasetVersion = experiment.get_dataset('eval')
+        print(f"{eval_dataset.name}/{eval_dataset.version} for evaluation")
     else:
         print("We only found one dataset inside your experiment, the train/test/split will be performed automatically.")
         train: DatasetVersion = experiment.list_attached_dataset_versions()[0]
-        test = None 
-        valid = None
-    return is_split, train, test, valid
+        test = None
+        eval_dataset = None
+    return is_split, train, test, eval_dataset
 
-def _is_train_test_valid_dataset(experiment: Experiment) -> bool:
+
+def _is_train_test_eval_dataset(experiment: Experiment) -> bool:
     datasets: List[DatasetVersion] = experiment.list_attached_dataset_versions()
     if len(datasets) < 3:
         return False
-    template = ["train", "test", "valid"]
+    template = ["train", "test", "eval"]
     ok_counter = 0
-    for dataset in datasets:
-        if dataset.version in template:
+    for alias in template:
+        try:
+            experiment.get_dataset(alias)
             ok_counter += 1
+        except Exception:
+            pass
     return ok_counter == 3
+
 
 def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None:
     fnames = os.listdir(base_imdir)
@@ -108,7 +118,7 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
             continue
         ann = coco.loadAnns(im["id"])
         if len(ann) > 1:
-            print(f"{im['file_name']} has more than one class. Skipping") 
+            print(f"{im['file_name']} has more than one class. Skipping")
         ann = ann[0]
         cat = coco.loadCats(ann['category_id'])[0]
         fpath = os.path.join(base_imdir, im['file_name'])
@@ -120,6 +130,7 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
     print(f"Formatting {base_imdir} .. OK")
     return base_imdir
 
+
 def recall_m(y_true, y_pred):
     '''
     This function returns recall_score between y_true and y_pred
@@ -127,10 +138,14 @@ def recall_m(y_true, y_pred):
     Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred 
     as input and returns recall score of the batch
     '''
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1))) # calculates number of true positives
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))      # calculates number of actual positives
-    recall = true_positives / (possible_positives + K.epsilon())   # K.epsilon takes care of non-zero divisions
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1))
+                           )  # calculates number of true positives
+    # calculates number of actual positives
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    # K.epsilon takes care of non-zero divisions
+    recall = true_positives / (possible_positives + K.epsilon())
     return recall
+
 
 def precision_m(y_true, y_pred):
     '''
@@ -139,11 +154,15 @@ def precision_m(y_true, y_pred):
     Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred 
     as input and returns prediction score of the batch
     '''
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))  # calculates number of true positives
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))      # calculates number of predicted positives   
-    precision = true_positives /(predicted_positives + K.epsilon()) # K.epsilon takes care of non-zero divisions
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1))
+                           )  # calculates number of true positives
+    # calculates number of predicted positives
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    # K.epsilon takes care of non-zero divisions
+    precision = true_positives / (predicted_positives + K.epsilon())
     return precision
-    
+
+
 def f1_micro(y_true, y_pred):
     '''
     This function returns f1_score between y_true and y_pred
@@ -152,76 +171,82 @@ def f1_micro(y_true, y_pred):
     Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred 
     as input and returns f1 score of the batch
     '''
-    precision = precision_m(y_true, y_pred)  # calls precision metric and takes the score of precision of the batch
-    recall = recall_m(y_true, y_pred)        # calls recall metric and takes the score of precision of the batch
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
-    
+    precision = precision_m(
+        y_true, y_pred)  # calls precision metric and takes the score of precision of the batch
+    # calls recall metric and takes the score of precision of the batch
+    recall = recall_m(y_true, y_pred)
+    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+
+
 dependencies = {
-    'recall_m':recall_m,
-    'precision_m':precision_m,
-    'f1_micro':f1_micro
+    'recall_m': recall_m,
+    'precision_m': precision_m,
+    'f1_micro': f1_micro
 }
 
+
 class Metrics(tf.keras.callbacks.Callback):
-        def __init__(self, val_data, batch_size=None, experiment: Experiment = None):
-            super().__init__()
-            self.validation_data = val_data
-            self.batch_size = batch_size
-            self.experiment = experiment
+    def __init__(self, val_data, batch_size=None, experiment: Experiment = None):
+        super().__init__()
+        self.validation_data = val_data
+        self.batch_size = batch_size
+        self.experiment = experiment
 
-        def on_train_begin(self, logs={}):
-            self.val_f1s = []
-            self.val_recalls = []
-            self.val_precisions = []
+    def on_train_begin(self, logs={}):
+        self.val_f1s = []
+        self.val_recalls = []
+        self.val_precisions = []
 
-        def on_epoch_end(self, epoch, logs={}):
-            batches = len(self.validation_data)
-            total = batches * self.batch_size
+    def on_epoch_end(self, epoch, logs={}):
+        batches = len(self.validation_data)
+        total = batches * self.batch_size
 
-            val_pred = []
-            val_true = []
-            for batch in range(batches):
-                
-                xVal, yVal = next(self.validation_data)
-                
-                val_pred_batch = np.zeros((len(xVal)))
-                val_true_batch = np.zeros((len(xVal)))
+        val_pred = []
+        val_true = []
+        for batch in range(batches):
+            xVal, yVal = next(self.validation_data)
 
-                val_pred_batch = np.argmax(np.asarray(self.model.predict(xVal)), axis=1)
-                val_true_batch = np.argmax(yVal,axis=1)
+            val_pred_batch = np.zeros((len(xVal)))
+            val_true_batch = np.zeros((len(xVal)))
 
-                val_pred.append(val_pred_batch)
-                val_true.append(val_true_batch)
+            val_pred_batch = np.argmax(np.asarray(
+                self.model.predict(xVal)), axis=1)
+            val_true_batch = np.argmax(yVal, axis=1)
 
-            import itertools
-            val_pred = np.asarray(list(itertools.chain.from_iterable(val_pred)))
-            val_true = np.asarray(list(itertools.chain.from_iterable(val_true)))
+            val_pred.append(val_pred_batch)
+            val_true.append(val_true_batch)
 
-            _val_f1 = f1_score(val_true, val_pred, average='macro')
-            _val_precision = precision_score(val_true, val_pred, average='macro')
-            _val_recall = recall_score(val_true, val_pred, average='macro')
+        import itertools
+        val_pred = np.asarray(list(itertools.chain.from_iterable(val_pred)))
+        val_true = np.asarray(list(itertools.chain.from_iterable(val_true)))
 
-            
-            logs['val_f1'] = _val_f1
-            logs['val_recall'] = _val_recall
-            logs['val_precision'] = _val_precision
-            print(" - val_f1_macro: %f - val_precision_macro: %f - val_recall_macro: %f" % (_val_f1, _val_precision, _val_recall))
-            
-            if self.experiment is not None:
-                self.experiment.log(name='val_f1', data=[float(_val_f1)], type=LogType.LINE)
-                self.experiment.log(name='val_recall', data=[float(_val_recall)], type=LogType.LINE)
-                self.experiment.log(name='val_precision', data=[float(_val_precision)], type=LogType.LINE)
+        _val_f1 = f1_score(val_true, val_pred, average='macro')
+        _val_precision = precision_score(val_true, val_pred, average='macro')
+        _val_recall = recall_score(val_true, val_pred, average='macro')
 
+        logs['val_f1'] = _val_f1
+        logs['val_recall'] = _val_recall
+        logs['val_precision'] = _val_precision
+        print(" - val_f1_macro: %f - val_precision_macro: %f - val_recall_macro: %f" %
+              (_val_f1, _val_precision, _val_recall))
 
-            predIdxs = self.model.predict(self.validation_data)
-            predIdxs = np.argmax(predIdxs, axis=1)
-            # cr = classification_report(self.validation_data.classes, predIdxs, target_names=np.unique(self.validation_data.classes))
-            
-            original_stdout = sys.stdout # Save a reference to the original standard output
-            # with open('cm_by_epoch.txt', 'a') as f:
-            #     sys.stdout = f # Change the standard output to the file we created.
-            #     print("Confusion matrix on validation data on epoch "+str(epoch+1)+"\n"+"--------------------------------------------------------"+"\n")
-            #     print(cr)
-            #     print("\n")
-            #     sys.stdout = original_stdout # Reset the standard output to its original value​
-            return
+        if self.experiment is not None:
+            self.experiment.log(name='val_f1', data=[
+                float(_val_f1)], type=LogType.LINE)
+            self.experiment.log(name='val_recall', data=[
+                float(_val_recall)], type=LogType.LINE)
+            self.experiment.log(name='val_precision', data=[
+                float(_val_precision)], type=LogType.LINE)
+
+        predIdxs = self.model.predict(self.validation_data)
+        predIdxs = np.argmax(predIdxs, axis=1)
+        # cr = classification_report(self.validation_data.classes, predIdxs, target_names=np.unique(self.validation_data.classes))
+
+        original_stdout = sys.stdout  # Save a reference to the original standard output
+        # with open('cm_by_epoch.txt', 'a') as f:
+        #     sys.stdout = f # Change the standard output to the file we created.
+        #     print("Confusion matrix on validation data on epoch "+str(epoch+1)+"\n"+"--------------------------------------------------------"+"\n")
+        #     print(cr)
+        #     print("\n")
+        #     sys.stdout = original_stdout # Reset the standard output to its original value​
+        return
