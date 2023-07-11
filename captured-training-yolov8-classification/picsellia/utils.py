@@ -112,7 +112,7 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
         im = coco.imgs[i]
         if im["file_name"] not in fnames:
             continue
-        ann = coco.loadAnns(im["id"])
+        ann = coco.loadAnns(coco.getAnnIds(im["id"]))
         if len(ann) > 1:
             print(f"{im['file_name']} has more than one class. Skipping")
         ann = ann[0]
@@ -121,6 +121,7 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
         new_fpath = os.path.join(base_imdir, cat['name'], im['file_name'])
         try:
             shutil.move(fpath, new_fpath)
+            pass
         except Exception as e:
             print(f"{im['file_name']} skipped.")
     print(f"Formatting {base_imdir} .. OK")

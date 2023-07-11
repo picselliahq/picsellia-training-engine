@@ -1,4 +1,3 @@
-from picsellia import Client
 from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
 from utils import _move_files_in_class_directories, get_experiment, prepare_datasets_with_annotation
@@ -53,21 +52,11 @@ elif len(dataset_list) == 2:
     val_set = experiment.get_dataset("test")
     val_set.download("data/val")
 
-    # labels = train_set.list_labels()
-    # label_names = [label.name for label in labels]
-    # labelmap = {str(i): label.name for i, label in enumerate(labels)}
-    # experiment.log("labelmap", labelmap, "labelmap", replace=True)
-
     evaluation_ds, evaluation_assets = prepare_datasets_with_annotation(train_set, test_set, val_set)
 
 elif len(dataset_list) == 1:
     train_set = dataset_list[0]
     train_set.download("images")
-
-    # labels = train_set.list_labels()
-    # label_names = [label.name for label in labels]
-    # labelmap = {str(i): label.name for i, label in enumerate(labels)}
-    # experiment.log("labelmap", labelmap, "labelmap", replace=True)
     parameters = experiment.get_log("parameters").data
     prop = (
         0.7
