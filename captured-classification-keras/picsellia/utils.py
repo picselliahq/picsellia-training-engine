@@ -116,7 +116,7 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
         im = coco.imgs[i]
         if im["file_name"] not in fnames:
             continue
-        ann = coco.loadAnns(im["id"])
+        ann = coco.loadAnns(coco.getAnnIds(im["id"]))
         if len(ann) > 1:
             print(f"{im['file_name']} has more than one class. Skipping")
         ann = ann[0]
