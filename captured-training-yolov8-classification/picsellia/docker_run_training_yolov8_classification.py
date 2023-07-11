@@ -8,6 +8,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 import shutil
 from picsellia.exceptions import ResourceNotFoundError
 from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
+from PIL import Image
 
 experiment = get_experiment()
 
@@ -141,7 +142,9 @@ for class_id, label in labelmap.items():
     if os.path.exists(label_path):
         file_list = [os.path.join(label_path, filepath) for filepath in os.listdir(label_path)]
         for image in file_list:
-            pred = model.predict(source=image)
+            # pred = model.predict(source=image)
+            image = Image.open(image).convert("RGB")
+            pred = model(np.array(image))
             pred_label = np.argmax([float(score) for score in list(pred[0].probs)])
             gt_class.append(int(class_id))
             pred_class.append(pred_label)

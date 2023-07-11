@@ -66,6 +66,7 @@ class AbstractEvaluator(ABC):
                 os.path.join(os.getcwd(), "saved_model"), self._model_weights.filename
             )
         else:
+            self.do_download = False
             self._model_weights_path = weights_path
         self._loaded_model = None
         self._nb_object_limit = 100
