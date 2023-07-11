@@ -131,6 +131,13 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
     return base_imdir
 
 
+def order_repartition_according_labelmap(labelmap, repartition):
+    ordered_rep = {"x": list(labelmap.values()), "y": []}
+    for name in ordered_rep["x"]:
+        ordered_rep["y"].append(repartition["y"][repartition["x"].index(name)])
+    return ordered_rep
+
+
 def recall_m(y_true, y_pred):
     '''
     This function returns recall_score between y_true and y_pred

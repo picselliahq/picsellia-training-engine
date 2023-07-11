@@ -1,6 +1,7 @@
 from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
-from utils import _move_files_in_class_directories, get_experiment, prepare_datasets_with_annotation
+from utils import _move_files_in_class_directories, get_experiment, prepare_datasets_with_annotation, \
+    order_repartition_according_labelmap
 from ultralytics import YOLO
 import os
 import numpy as np
@@ -68,9 +69,7 @@ elif len(dataset_list) == 1:
     coco_train = COCO(train_annotation_path)
     train_assets, test_assets, eval_assets, train_rep, test_rep, val_rep, labels = train_set.train_test_val_split(
         [prop, (1 - prop) / 2, (1 - prop) / 2])
-    experiment.log('train-split', train_rep, 'bar', replace=True)
-    experiment.log('test-split', test_rep, 'bar', replace=True)
-    experiment.log('val-split', val_rep, 'bar', replace=True)
+
     os.makedirs("data/train", exist_ok=True)
     os.makedirs("data/test", exist_ok=True)
     os.makedirs("data/val", exist_ok=True)
@@ -92,6 +91,11 @@ elif len(dataset_list) == 1:
     _move_files_in_class_directories(coco_train, "data/test")
     _move_files_in_class_directories(coco_train, "data/val")
 
+    names = os.listdir("data/train")  # class names list
+    labelmap = {str(i): label for i, label in enumerate(sorted(names))}
+    experiment.log('train-split', order_repartition_according_labelmap(labelmap, train_rep), 'bar', replace=True)
+    experiment.log('test-split', order_repartition_according_labelmap(labelmap, test_rep), 'bar', replace=True)
+    experiment.log('val-split', order_repartition_according_labelmap(labelmap, val_rep), 'bar', replace=True)
     evaluation_ds = train_set
     evaluation_assets = eval_assets
 else:
