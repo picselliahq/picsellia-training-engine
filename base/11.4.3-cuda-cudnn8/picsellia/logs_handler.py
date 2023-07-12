@@ -120,7 +120,6 @@ def tail_f(log_file: TextIO) -> Generator[str, Any, None]:
         line = log_file.readline()
 
         if not line:
-            time.sleep(0.1)  # sleep briefly
             continue
 
         yield line

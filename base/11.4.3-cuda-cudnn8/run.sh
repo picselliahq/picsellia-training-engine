@@ -33,7 +33,7 @@ if [ "${1: -3}" != ".py" ]; then
   usage
 fi
 
-log_file_path="/var/log/training.log"
+log_file_path="/picsellia/training.log"
 python_cmd=$(get_python)
 
 $python_cmd logs_handler.py --log_file_path "$log_file_path" &
@@ -45,3 +45,5 @@ RETURN_CODE=$?
 echo "--ec-- $RETURN_CODE" >> "$log_file_path"
 
 wait "$LOG_HANDLER_PID"
+
+exit $RETURN_CODE
