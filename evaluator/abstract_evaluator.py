@@ -151,7 +151,7 @@ class AbstractEvaluator(ABC):
                          i * self._batch_size: (i + 1) * self._batch_size
                          ]
             self._evaluate_asset_list(asset_list)
-        if self._dataset.type in [InferenceType.OBJECT_DETECTION, InferenceType.SEGMENTATION]:
+        if self._dataset.type in [InferenceType.OBJECT_DETECTION, InferenceType.SEGMENTATION, InferenceType.CLASSIFICATION]:
             self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
 
     def _evaluate_asset_list(self, asset_list: List[Asset]) -> None:

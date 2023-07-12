@@ -17,7 +17,8 @@ from pycocotools.coco import COCO
 
 import utils
 from utils import (
-    _move_files_in_class_directories, get_experiment, get_train_test_eval_datasets_from_experiment
+    _move_files_in_class_directories, get_experiment, get_train_test_eval_datasets_from_experiment,
+    order_repartition_according_labelmap
 )
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
@@ -53,9 +54,12 @@ if not is_split:
     coco_test = coco_train
     coco_eval = coco_train
     train_assets, test_assets, eval_assets, count_train, count_test, count_eval, _ = dataset.train_test_val_split()
-    experiment.log('train-split', count_train, 'bar', replace=True)
-    experiment.log('test-split', count_test, 'bar', replace=True)
-    experiment.log('eval-split', count_eval, 'bar', replace=True)
+    labelmap = {}
+    for x in coco_train.cats:
+        labelmap[str(x)] = coco_train.cats[x]['name']
+    experiment.log('train-split', order_repartition_according_labelmap(labelmap, count_train), 'bar', replace=True)
+    experiment.log('test-split', order_repartition_according_labelmap(labelmap, count_test), 'bar', replace=True)
+    experiment.log('eval-split', order_repartition_according_labelmap(labelmap, count_eval), 'bar', replace=True)
 
     dataset_labels = {label.name: label for label in dataset.list_labels()}
 

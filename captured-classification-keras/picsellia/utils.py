@@ -116,7 +116,7 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
         im = coco.imgs[i]
         if im["file_name"] not in fnames:
             continue
-        ann = coco.loadAnns(im["id"])
+        ann = coco.loadAnns(coco.getAnnIds(im["id"]))
         if len(ann) > 1:
             print(f"{im['file_name']} has more than one class. Skipping")
         ann = ann[0]
@@ -129,6 +129,13 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
             print(f"{im['file_name']} skipped.")
     print(f"Formatting {base_imdir} .. OK")
     return base_imdir
+
+
+def order_repartition_according_labelmap(labelmap, repartition):
+    ordered_rep = {"x": list(labelmap.values()), "y": []}
+    for name in ordered_rep["x"]:
+        ordered_rep["y"].append(repartition["y"][repartition["x"].index(name)])
+    return ordered_rep
 
 
 def recall_m(y_true, y_pred):
