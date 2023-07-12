@@ -3,6 +3,7 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04 as base
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ARG DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && apt upgrade -y && \
     apt install -y build-essential && \
     apt install software-properties-common -y && \

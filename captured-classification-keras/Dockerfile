@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.4.3-cudnn8-runtime-ubuntu20.04 as base
+FROM picsellia/cuda:11.4.3-cudnn8-ubuntu20.04
 
 COPY ./captured-classification-keras/requirements.txt /requirements.txt
 
