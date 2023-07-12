@@ -1,8 +1,4 @@
-FROM nvidia/cuda:11.4.2-cudnn8-runtime-ubuntu20.04 as base
-
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ARG DEBIAN_FRONTEND=noninteractive
+FROM nvidia/cuda:11.4.3-cudnn8-runtime-ubuntu20.04 as base
 
 RUN apt-get update && \
     apt install -y build-essential && \
@@ -18,8 +14,8 @@ RUN pip3 install --no-cache-dir picsellia
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 
-COPY ./base/11.4.2-cuda-cudnn8/picsellia /picsellia
-COPY ./base/11.4.2-cuda-cudnn8/run.sh /picsellia
+COPY ./base/11.4.3-cuda-cudnn8/picsellia /picsellia
+COPY ./base/11.4.3-cuda-cudnn8/run.sh /picsellia
 
 RUN ln -s /picsellia/run.sh /usr/bin/run
 

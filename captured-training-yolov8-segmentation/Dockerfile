@@ -1,4 +1,4 @@
-FROM picsellpn/base-11.7.0-cuda:capture
+FROM picsellpn/base-11.7.1-cuda:capture
 
 COPY ./captured-training-yolov8-segmentation/requirements.txt .
 ARG REBUILD_ALL

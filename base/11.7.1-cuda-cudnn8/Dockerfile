@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.7.0-cudnn8-runtime-ubuntu20.04 as base
+FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04 as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -16,8 +16,8 @@ ARG REBUILD_PICSELLIA
 RUN python3.10 -m pip install picsellia --upgrade
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda-11.6/targets/x86_64-linux/lib:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/lib/x86_64-linux-gnu
 
-COPY ./base/11.7.0-cuda-cudnn8/picsellia /picsellia
-COPY ./base/11.7.0-cuda-cudnn8/run.sh /picsellia
+COPY ./base/11.7.1-cuda-cudnn8/picsellia /picsellia
+COPY ./base/11.7.1-cuda-cudnn8/run.sh /picsellia
 
 RUN ln -s /picsellia/run.sh /usr/bin/run
 

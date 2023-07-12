@@ -16,28 +16,27 @@ import logging
 
 logging.getLogger('picsellia').setLevel(logging.INFO)
 
-command = "python3 docker_run_training_tf2.py"
-    
+command = "python3.10 docker_run_training_yolov8_detection.py"
+
 if "host" not in os.environ:
     host = "https://app.picsellia.com"
 else:
     host = os.environ["host"]
 if 'api_token' not in os.environ:
     raise RuntimeError("You must set an api_token to run this image")
+api_token = os.environ["api_token"]
 
 if "organization_id" not in os.environ:
     organization_id = None
 else:
     organization_id = os.environ["organization_id"]
-
-api_token = os.environ["api_token"]
-
-
+    
 client = Client(
     api_token=api_token,
     host=host,
     organization_id=organization_id
 )
+
 if "job_id" not in os.environ:
     job = None
 else:
@@ -46,7 +45,7 @@ else:
 
 if job:
     job.update_job_run_with_status(JobRunStatus.RUNNING)
-
+    
 if "experiment_name" in os.environ:
     experiment_name = os.environ["experiment_name"]
     if "project_token" in os.environ:
@@ -87,12 +86,12 @@ while True:
                 'datetime': str(datetime.now().isoformat()),
                 'logs': {}
             }
-        if text.startswith('-----'):
-            progress_line_nb = experiment.line_nb
-            replace_log = True
+        # if text.startswith('-----'):
+        #     progress_line_nb = experiment.line_nb
+        #     replace_log = True
 
-        if text.startswith('--*--'):
-            replace_log = False
+        # if text.startswith('--*--'):
+        #     replace_log = False
 
         if re.match("--[0-9]--", text[:6]):
             start_buffer = True
