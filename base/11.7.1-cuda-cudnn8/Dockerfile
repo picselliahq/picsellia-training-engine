@@ -10,6 +10,7 @@ RUN apt-get update && apt upgrade -y && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get install --no-install-recommends -y python3.10-full python3.10-distutils python3.10-dev libpq-dev libgtk2.0-dev libgl1-mesa-dev && \
     rm -rf /var/lib/apt/lists/*
+
 RUN python3.10 -m ensurepip --upgrade
 RUN python3.10 -m pip install -U setuptools
 
@@ -17,8 +18,7 @@ ARG REBUILD_PICSELLIA
 RUN python3.10 -m pip install picsellia --upgrade
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda-11.6/targets/x86_64-linux/lib:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/lib/x86_64-linux-gnu
 
-COPY ./base/11.7.1-cuda-cudnn8/picsellia /picsellia
-COPY ./base/11.7.1-cuda-cudnn8/run.sh /picsellia
+COPY ./base/common /picsellia
 
 RUN ln -s /picsellia/run.sh /usr/bin/run
 

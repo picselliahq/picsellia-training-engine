@@ -18,8 +18,7 @@ RUN pip3 install --no-cache-dir picsellia
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 
-COPY ./base/11.4.3-cuda-cudnn8/picsellia /picsellia
-COPY ./base/11.4.3-cuda-cudnn8/run.sh /picsellia
+COPY ./base/common /picsellia
 
 RUN ln -s /picsellia/run.sh /usr/bin/run
 
