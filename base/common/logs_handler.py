@@ -3,8 +3,6 @@ import json
 import logging
 import os
 import re
-import shlex
-import subprocess
 import time
 from datetime import datetime
 from typing import TextIO, Generator, Any
@@ -120,10 +118,11 @@ def tail_f(log_file: TextIO) -> Generator[str, Any, None]:
         line = log_file.readline()
 
         if not line or line == "\n":
+            time.sleep(0.1)
             continue
-        
+
         if not line.endswith("\n"):
-                line = f"{line}\n"
+            line = f"{line}\n"
 
         yield line
 
@@ -155,7 +154,7 @@ def start_log_monitoring(client: Client, log_file_path: str):
     logs = {section_header: {"datetime": str(datetime.now().isoformat()), "logs": {}}}
 
     with open(log_file_path, "r") as log_file:
-        for line in tail_f(log_file):                
+        for line in tail_f(log_file):
             exit_match = re.search(r"--ec-- ([0-9]+)", line)
 
             if exit_match:
