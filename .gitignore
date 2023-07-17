@@ -147,3 +147,5 @@ checkpoint
 *.png 
 *.pt
 .env
+
+.idea
