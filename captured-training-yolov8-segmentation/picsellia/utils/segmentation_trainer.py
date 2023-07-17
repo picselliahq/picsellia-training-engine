@@ -3,10 +3,9 @@ import os
 
 from picsellia import Experiment
 from picsellia.types.enums import LogType
-from ultralytics.yolo.v8.segment.train import SegmentationTrainer
 from ultralytics import YOLO
-
-from processing import send_run_to_picsellia
+from ultralytics.yolo.v8.segment.train import SegmentationTrainer
+from utils.processing import send_run_to_picsellia
 
 
 class PicselliaSegmentationTrainer(SegmentationTrainer):

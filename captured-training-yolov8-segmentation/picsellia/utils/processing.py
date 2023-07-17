@@ -2,17 +2,17 @@ import os
 import random
 import re
 import shutil
-from pathlib import Path
 from collections import OrderedDict
+from pathlib import Path
 
 import numpy as np
 import tqdm
 import yaml
 from picsellia import Client
-from picsellia.types.enums import LogType
+from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import Asset, MultiAsset
 from picsellia.sdk.dataset import Dataset
-from picsellia.exceptions import NoDataError
+from picsellia.types.enums import LogType
 
 
 def find_image_id(annotations, fname):
@@ -84,7 +84,7 @@ def to_yolo(
                     x1, y1, w, h = a["bbox"]
                     category_id = a["category_id"]
                     f.write(
-                        f"{category_id} {(x1 + w / 2)/width} {(y1 + h / 2)/height} {w/width} {h/height}\n"
+                        f"{category_id} {(x1 + w / 2) / width} {(y1 + h / 2) / height} {w / width} {h / height}\n"
                     )
         else:
             continue
