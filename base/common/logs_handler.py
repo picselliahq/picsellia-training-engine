@@ -117,7 +117,9 @@ def is_string_valid(line: str) -> bool:
     Returns:
         bool: True if the line is valid, False otherwise.
     """
-    return not (not line or all(char == "\b" for char in line) or line == "\n")
+    line = line.rstrip("\n")
+    return not (not line or all(ord(char) == 8 for char in line))
+
 
 
 def format_line(line: str) -> str:
@@ -131,10 +133,8 @@ def format_line(line: str) -> str:
         str: The formatted line. If the input line ended with one or more backspaces, these are removed.
         If the input line did not end with a newline, one is added.
     """
-    result = line.rstrip("\b")
-
-    if not result.endswith("\n"):
-        result += "\n"
+    result = line.rstrip("\n").rstrip(chr(8))
+    result += "\n"
 
     return result
 
@@ -156,7 +156,7 @@ def tail_f(log_file: TextIO) -> Generator[str, Any, None]:
         if not is_string_valid(line):
             time.sleep(0.04)
             continue
-
+        
         line = format_line(line)
 
         yield line
