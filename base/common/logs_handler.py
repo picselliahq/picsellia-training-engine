@@ -103,6 +103,42 @@ def get_picsellia_experiment(client: Client) -> Experiment:
         )
 
 
+def is_string_valid(line: str) -> bool:
+    """
+    Check if a line is valid or not.
+
+    A line is considered invalid if it's None, an empty string,
+    a string composed only of backspaces, or a string composed
+    only of a newline character.
+
+    Args:
+        line (str): The line to check.
+
+    Returns:
+        bool: True if the line is valid, False otherwise.
+    """
+    return not (not line or all(char == "\b" for char in line) or line == "\n")
+
+
+def format_line(line: str) -> str:
+    """
+    Format the given line by removing trailing backspaces and ensuring it ends with a newline.
+
+    Args:
+        line (str): The line to be formatted. It's assumed that this is not None.
+
+    Returns:
+        str: The formatted line. If the input line ended with one or more backspaces, these are removed.
+        If the input line did not end with a newline, one is added.
+    """
+    result = line.rstrip("\b")
+
+    if not result.endswith("\n"):
+        result += "\n"
+
+    return result
+
+
 def tail_f(log_file: TextIO) -> Generator[str, Any, None]:
     """
     Stream the content of the provided file_path
@@ -117,12 +153,11 @@ def tail_f(log_file: TextIO) -> Generator[str, Any, None]:
     while True:
         line = log_file.readline()
 
-        if not line or line == "\n":
+        if not is_string_valid(line):
             time.sleep(0.04)
             continue
 
-        if not line.endswith("\n"):
-            line = f"{line}\n"
+        line = format_line(line)
 
         yield line
 
