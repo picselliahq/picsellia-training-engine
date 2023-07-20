@@ -2,10 +2,8 @@ import json
 import logging
 import os
 
-import picsellia_utils
-import yolo_utils
+from utils import processing, yolo, detection_trainer
 from picsellia.exceptions import ResourceNotFoundError
-from picsellia_detection_trainer import PicselliaDetectionTrainer
 from pycocotools.coco import COCO
 from evaluator.yolo_evaluator import DetectionYOLOEvaluator
 
@@ -15,13 +13,14 @@ os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 
 logging.getLogger("picsellia").setLevel(logging.INFO)
 
-experiment = picsellia_utils.get_experiment()
+experiment = processing.get_experiment()
 
 experiment.download_artifacts(with_tree=True)
 current_dir = os.path.join(os.getcwd(), experiment.base_dir)
 base_imgdir = experiment.png_dir
 parameters = experiment.get_log(name="parameters").data
 attached_datasets = experiment.list_attached_dataset_versions()
+
 if len(attached_datasets) == 3:
     try:
         train_ds = experiment.get_dataset(name="train")
@@ -47,7 +46,7 @@ if len(attached_datasets) == 3:
                 "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
                                                 expecting 'train', 'test', ('val' or 'eval')"
             )
-    
+
     evaluation_ds = test_ds
     evaluation_assets = test_ds.list_assets()
 
@@ -72,7 +71,7 @@ if len(attached_datasets) == 3:
         dataset.list_assets().download(
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
-        picsellia_utils.create_yolo_detection_label(
+        processing.create_yolo_detection_label(
             experiment, data_type, annotations_dict, annotations_coco, label_names
         )
 
@@ -108,7 +107,7 @@ else:
         else parameters["prop_train_split"]
     )
 
-    train_assets, test_assets, val_assets = picsellia_utils.train_test_val_split(
+    train_assets, test_assets, val_assets = processing.train_test_val_split(
         experiment, dataset, prop, len(annotations_dict["images"]), label_names
     )
 
@@ -123,14 +122,14 @@ else:
         assets.download(
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
-        picsellia_utils.create_yolo_detection_label(
+        processing.create_yolo_detection_label(
             experiment, data_type, annotations_dict, annotations_coco, label_names
         )
 
 experiment.log("labelmap", labelmap, "labelmap", replace=True)
 cwd = os.getcwd()
-data_yaml_path = picsellia_utils.generate_data_yaml(experiment, labelmap, current_dir)
-cfg = yolo_utils.setup_hyp(
+data_yaml_path = processing.generate_data_yaml(experiment, labelmap, current_dir)
+cfg = yolo.setup_hyp(
     experiment=experiment,
     data_yaml_path=data_yaml_path,
     params=parameters,
@@ -139,16 +138,16 @@ cfg = yolo_utils.setup_hyp(
     task="detect",
 )
 
-trainer = PicselliaDetectionTrainer(experiment=experiment, cfg=cfg)
+trainer = detection_trainer.PicselliaDetectionTrainer(experiment=experiment, cfg=cfg)
 trainer.train()
 
-picsellia_utils.send_run_to_picsellia(experiment, current_dir, trainer.save_dir)
+processing.send_run_to_picsellia(experiment, current_dir, trainer.save_dir)
 
 X = DetectionYOLOEvaluator(
     experiment=experiment,
     dataset=evaluation_ds,
     asset_list=evaluation_assets,
-    confidence_threshold=parameters.get("confidence_threshold", 0.1)
+    confidence_threshold=parameters.get("confidence_threshold", 0.1),
 )
 
 X.evaluate()

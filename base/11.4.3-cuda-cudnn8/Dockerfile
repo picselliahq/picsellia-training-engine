@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.4.2-cudnn8-runtime-ubuntu20.04 as base
+FROM nvidia/cuda:11.4.3-cudnn8-runtime-ubuntu20.04 as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -12,14 +12,15 @@ RUN apt-get update && \
 RUN python3.8 -m pip install --upgrade pip
 RUN pip3 install -U setuptools
 
-ARG REBUILD_ALL
-RUN pip3 install --no-cache-dir picsellia_tf2
 ARG REBUILD_PICSELLIA
 RUN pip3 install --no-cache-dir picsellia
+
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
-COPY ./picsellia /picsellia
 
-CMD ["/picsellia/docker_run_training_tf2.py"]
-ENTRYPOINT ["python3"]
+COPY ./base/common /picsellia
+
+RUN ln -s /picsellia/run.sh /usr/bin/run
+
+RUN chmod +x /picsellia/run.sh
 RUN chown -R 42420:42420 /picsellia
