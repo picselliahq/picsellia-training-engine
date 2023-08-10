@@ -21,7 +21,6 @@ import evaluate
 from utils import (
     move_files_in_class_directories,
     get_predicted_label_confidence,
-    transforms,
     compute_metrics,
     prepare_datasets_with_annotation
 )

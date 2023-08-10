@@ -1,4 +1,4 @@
-FROM picsellia/cuda:11.4.3-cudnn8-ubuntu20.04
+FROM picsellia/cuda:11.7.1-cudnn8-ubuntu20.04
 
 COPY ./captured-classification-ViT/requirements.txt .
 
@@ -7,6 +7,8 @@ RUN pip3 install -r ./requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
 
 RUN pip3 install --no-cache-dir picsellia
+RUN pip3 install -U accelerate
+RUN pip3 install -U transformers
 
 WORKDIR /picsellia
 
