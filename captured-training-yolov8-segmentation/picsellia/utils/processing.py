@@ -4,8 +4,10 @@ import re
 import shutil
 from collections import OrderedDict
 from pathlib import Path
+import logging
 
 import numpy as np
+from ultralytics import YOLO
 import tqdm
 import yaml
 from picsellia import Client
@@ -548,28 +550,45 @@ def get_metrics_curves(final_run_path):
     )
 
 
-def send_run_to_picsellia(experiment, cwd, save_dir=None):
+def send_run_to_picsellia(experiment, cwd, save_dir=None, imgsz=640):
     if save_dir is not None:
-        final_run_path = save_dir
+        final_run_path=save_dir
     else:
         final_run_path = find_final_run(cwd)
     best_weigths, hyp_yaml = get_weights_and_config(final_run_path)
-
-    model_latest_path = os.path.join(final_run_path, "weights", "best.onnx")
-
+    
+    model_latest_path = os.path.join(final_run_path, 'weights', 'best.onnx')
+    model_dir = os.path.join(final_run_path, 'weights')
+    if os.path.isfile(os.path.join(model_dir, "best.onnx")):
+        model_latest_path = os.path.join(model_dir, "best.onnx")
+    elif os.path.isfile(os.path.join(model_dir, "last.onnx")):
+        model_latest_path = os.path.join(model_dir, "last.onnx")
+    elif os.path.isfile(os.path.join(model_dir, "best.pt")):
+        checkpoint_path = os.path.join(model_dir, 'best.pt')
+        model = YOLO(checkpoint_path)
+        model.export(format='onnx', imgsz=imgsz, task='segment')
+        model_latest_path = os.path.join(final_run_path, 'weights', 'best.onnx')
+    elif not os.path.isfile(os.path.join(model_dir, "last.pt")):
+        checkpoint_path = os.path.join(model_dir, 'last.pt')
+        model = YOLO(checkpoint_path)
+        model.export(format='onnx', imgsz=imgsz, task='segment')
+        model_latest_path = os.path.join(final_run_path, 'weights', 'last.onnx')
+    else:
+        logging.warning("Can't find last checkpoints to be uploaded")
+        model_latest_path = None
     if model_latest_path is not None:
-        experiment.store("model-latest", model_latest_path)
+        experiment.store('model-latest', model_latest_path)
     if best_weigths is not None:
-        experiment.store("checkpoint-index-latest", best_weigths)
+        experiment.store('checkpoint-index-latest', best_weigths)
     if hyp_yaml is not None:
-        experiment.store("checkpoint-data-latest", hyp_yaml)
+        experiment.store('checkpoint-data-latest', hyp_yaml)
     for curve in get_metrics_curves(final_run_path):
         if curve is not None:
-            name = curve.split("/")[-1].split(".")[0]
+            name = curve.split('/')[-1].split('.')[0]
             experiment.log(name, curve, LogType.IMAGE)
     for batch in get_batch_mosaics(final_run_path):
         if batch is not None:
-            name = batch.split("/")[-1].split(".")[0]
+            name = batch.split('/')[-1].split('.')[0]
             experiment.log(name, batch, LogType.IMAGE)
 
 
