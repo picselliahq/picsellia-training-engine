@@ -73,6 +73,10 @@ transform = albumentations.Compose(
 )
 
 
+def get_category_mapping(annotations: dict) -> list[str]:
+    return [cat['name'] for cat in annotations['categories']]
+
+
 def read_annotation_file(dataset, target_path) -> tuple[dict, str]:
     annotation_file_path = dataset.export_annotation_file(annotation_file_type=AnnotationFileType.COCO,
                                                           target_path=target_path)
@@ -113,7 +117,7 @@ def write_metadata_file(data, output_path):
             f.write('\n')
 
 
-def custom_train_test_split(loaded_dataset: DatasetDict, test_prop: float) -> DatasetDict:
+def custom_train_test_eval_split(loaded_dataset: DatasetDict, test_prop: float) -> DatasetDict:
     first_split = loaded_dataset['train'].train_test_split(test_size=test_prop)
     test_valid = first_split['test'].train_test_split(test_size=0.5)
     train_test_valid_dataset = DatasetDict({
@@ -249,6 +253,8 @@ def format_evaluation_results(results: dict) -> dict:
 
 
 def run_evaluation(test_ds_coco_format, im_processor, model):
+    test_ds_coco_format = CocoDetection(path_output, image_processor, path_anno)
+
     module = evaluate.load("ybelkada/cocoevaluate", coco=test_ds_coco_format.coco)
     val_dataloader = torch.utils.data.DataLoader(
         test_ds_coco_format, batch_size=8, shuffle=False, num_workers=4, collate_fn=collate_fn

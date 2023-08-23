@@ -1,21 +1,16 @@
 import os
 import logging
-from picsellia import Client
 from picsellia.sdk.experiment import Experiment
-from picsellia.sdk.dataset import DatasetVersion
-
-import torch
-from PIL import Image
 
 from datasets import load_dataset
 from picsellia.types.enums import AnnotationFileType, InferenceType
 from transformers import AutoModelForObjectDetection, TrainingArguments, AutoImageProcessor
 from transformers import Trainer
-from transformers import pipeline, TrainerCallback
+from transformers import TrainerCallback
 
-from utils import get_experiment, download_data, read_annotation_file, format_coco_annot_to_jsonlines_format, \
+from utils import get_experiment, download_data, read_annotation_file, get_category_mapping,  format_coco_annot_to_jsonlines_format, \
     write_metadata_file, \
-    custom_train_test_split, transform_aug_ann, collate_fn, save_annotation_file_images, format_evaluation_results, \
+    custom_train_test_eval_split, transform_aug_ann, collate_fn, save_annotation_file_images, format_evaluation_results, \
     run_evaluation, CocoDetection, get_dataset_image_ids, get_filenames_by_ids, evaluate_asset
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
@@ -32,9 +27,9 @@ formatted_coco = format_coco_annot_to_jsonlines_format(annotations=annotations)
 write_metadata_file(data=formatted_coco, output_path=os.path.join(data_dir, 'metadata.jsonl'))
 
 loaded_dataset = load_dataset("imagefolder", data_dir=data_dir)
-train_test_valid_dataset = custom_train_test_split(loaded_dataset=loaded_dataset, test_prop=0.2)
+train_test_valid_dataset = custom_train_test_eval_split(loaded_dataset=loaded_dataset, test_prop=0.2)
 
-categories = [cat['name'] for cat in annotations['categories']]
+categories = get_category_mapping(annotations=annotations)
 id2label = {index: x for index, x in enumerate(categories, start=0)}
 label2id = {v: k for k, v in id2label.items()}
 labelmap = {str(i): category for i, category in enumerate(categories)}
@@ -102,7 +97,6 @@ casted_results = format_evaluation_results(results=results)
 experiment.log(name='evaluation metrics', type='table', data=casted_results)
 
 # evaluate
-model = AutoModelForObjectDetection.from_pretrained(output_model_dir)
 dataset_labels = {label.name: label for label in dataset.list_labels()}
 eval_image_ids = get_dataset_image_ids(train_test_valid_dataset, "eval")
 id2filename_eval = get_filenames_by_ids(image_ids=eval_image_ids, annotations=annotations)
