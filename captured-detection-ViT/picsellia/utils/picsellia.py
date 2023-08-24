@@ -10,64 +10,21 @@ from PIL import Image
 import transformers
 
 
-def get_experiment() -> Experiment:
-    if 'api_token' not in os.environ:
-        raise Exception("You must set an api_token to run this image")
-    api_token = os.environ["api_token"]
-
-    if "host" not in os.environ:
-        host = "https://app.picsellia.com"
-    else:
-        host = os.environ["host"]
-
-    if "organization_id" not in os.environ:
-        organization_id = None
-    else:
-        organization_id = os.environ["organization_id"]
-
-    client = picsellia.Client(
-        api_token=api_token,
-        host=host,
-        organization_id=organization_id
-    )
-
-    if "experiment_name" in os.environ:
-        experiment_name = os.environ["experiment_name"]
-        if "project_token" in os.environ:
-            project_token = os.environ["project_token"]
-            project = client.get_project_by_id(project_token)
-        elif "project_name" in os.environ:
-            project_name = os.environ["project_name"]
-            project = client.get_project(project_name)
-        experiment = project.get_experiment(experiment_name)
-    else:
-        Exception(
-            "You must set the project_token or project_name and experiment_name")
-    return experiment
-
-
-def download_data(experiment: Experiment) -> tuple[DatasetVersion, str]:
+def download_data(experiment: Experiment) -> DatasetVersion:
     dataset_list = experiment.list_attached_dataset_versions()
     dataset = dataset_list[0]
-    data_dir = os.path.join(experiment.base_dir, "data")
-    dataset.download(data_dir)
+    dataset.download(os.path.join(experiment.base_dir, "data"))
 
-    return dataset, data_dir
-
-
-def reformat_box_to_coco(box: torch.Tensor) -> list[int]:
-    box = [int(i) for i in box.tolist()]
-    formatted_box = [
-        box[0],
-        box[1],
-        box[2] - box[0],
-        box[3] - box[1]
-    ]
-    return formatted_box
+    return dataset
 
 
-def evaluate_asset(file_path: str, data_dir: str, experiment: Experiment, dataset_labels: dict,
-                   model: transformers.models):
+def evaluate_asset(
+    file_path: str,
+    data_dir: str,
+    experiment: Experiment,
+    dataset_labels: dict,
+    model: transformers.models,
+):
     image_path = os.path.join(data_dir, file_path)
     asset = find_asset_from_path(image_path=image_path)
     results = predict_image(image_path=image_path, threshold=0.5)
@@ -88,23 +45,29 @@ def get_filename_from_fullpath(full_path: str) -> str:
     return full_path.split("/")[-1]
 
 
-def predict_image(image_path: str, threshold: float, image_processor, model: transformers.models) -> dict:
+def predict_image(
+    image_path: str, threshold: float, image_processor, model: transformers.models
+) -> dict:
     with torch.no_grad():
         image = Image.open(image_path)
         inputs = image_processor(images=image, return_tensors="pt")
         outputs = model(**inputs)
         target_sizes = torch.tensor([image.size[::-1]])
-        results = \
-            image_processor.post_process_object_detection(outputs, threshold=threshold, target_sizes=target_sizes)[0]
+        results = image_processor.post_process_object_detection(
+            outputs, threshold=threshold, target_sizes=target_sizes
+        )[0]
         # box format in results is: top_left_x, top_left_y, bottom_right_x, bottom_right_y)
 
     return results
 
 
-def create_rectangle_list(results: dict, dataset_labels: dict, model: transformers.models) -> list[
-    tuple[int, int, int, int, Label, float]]:
+def create_rectangle_list(
+    results: dict, dataset_labels: dict, model: transformers.models
+) -> list[tuple[int, int, int, int, Label, float]]:
     rectangle_list = []
-    for score, label, box in zip(results['scores'], results['labels'], results['boxes']):
+    for score, label, box in zip(
+        results["scores"], results["labels"], results["boxes"]
+    ):
         formatted_box = reformat_box_to_coco(box)
         score = round(score.item(), 3)
         detected_label = dataset_labels[model.config.id2label[label.item()]]
@@ -116,7 +79,15 @@ def create_rectangle_list(results: dict, dataset_labels: dict, model: transforme
     return rectangle_list
 
 
-def send_rectangle_list_to_evaluations(rectangle_list: list, experiment: Experiment, asset: Asset):
+def reformat_box_to_coco(box: torch.Tensor) -> list[int]:
+    box = [int(i) for i in box.tolist()]
+    formatted_box = [box[0], box[1], box[2] - box[0], box[3] - box[1]]
+    return formatted_box
+
+
+def send_rectangle_list_to_evaluations(
+    rectangle_list: list, experiment: Experiment, asset: Asset
+):
     if len(rectangle_list) > 0:
         try:
             experiment.add_evaluation(asset=asset, rectangles=rectangle_list)
@@ -124,12 +95,3 @@ def send_rectangle_list_to_evaluations(rectangle_list: list, experiment: Experim
         except Exception as e:
             print(e)
             pass
-
-
-def log_metrics(metric_name: str, value: float, experiment: Experiment):
-    if value < 1000:
-        if metric_name in ['train_loss', 'total_flos', 'train_steps_per_second', 'train_samples_per_second',
-                           'train_runtime']:
-            experiment.log(str(metric_name), float(value), 'value')
-        else:
-            experiment.log(str(metric_name), float(value), 'line')
