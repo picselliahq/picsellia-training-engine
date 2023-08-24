@@ -3,15 +3,16 @@ import logging
 from picsellia.sdk.experiment import Experiment
 
 from datasets import load_dataset
-from picsellia.types.enums import AnnotationFileType, InferenceType
+from picsellia.types.enums import InferenceType
 from transformers import AutoModelForObjectDetection, TrainingArguments, AutoImageProcessor
 from transformers import Trainer
 from transformers import TrainerCallback
 
-from utils import get_experiment, download_data, read_annotation_file, get_category_mapping,  format_coco_annot_to_jsonlines_format, \
-    write_metadata_file, \
-    custom_train_test_eval_split, transform_aug_ann, collate_fn, save_annotation_file_images, format_evaluation_results, \
-    run_evaluation, CocoDetection, get_dataset_image_ids, get_filenames_by_ids, evaluate_asset
+from utils.picsellia import get_experiment, download_data, evaluate_asset, log_metrics
+from utils.vit import CocoDetection, get_category_mapping, run_evaluation, get_filenames_by_ids, write_metadata_file, \
+    read_annotation_file, get_category_mapping, format_coco_annot_to_jsonlines_format, transform_aug_ann, \
+    custom_train_test_eval_split, collate_fn, save_annotation_file_images, format_evaluation_results, \
+    get_dataset_image_ids
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
@@ -60,18 +61,14 @@ training_args = TrainingArguments(
 )
 
 
+
+
+
 class LogObjectDetectionMetricsCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         if state.is_local_process_zero:
             for metric_name, value in logs.items():
-                if value < 1000:
-
-                    if metric_name in ['train_loss', 'total_flos', 'train_steps_per_second', 'train_samples_per_second',
-                                       'train_runtime']:
-                        experiment.log(str(metric_name), float(value), 'value')
-                    else:
-                        experiment.log(str(metric_name), float(value), 'line')
-
+                log_metrics(metric_name=metric_name, value=value)
 
 trainer = Trainer(
     model=model,

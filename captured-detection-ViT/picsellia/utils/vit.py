@@ -1,18 +1,16 @@
 import torchvision
-from PIL import Image
-from pycocotools.coco import COCO
 import json
 from datasets import DatasetDict
-from picsellia.types.enums import AnnotationFileType, InferenceType
 import numpy as np
 import os
 import albumentations
 from tqdm import tqdm
 import torch
 import evaluate
-from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
-from picsellia import Experiment
+from picsellia.types.enums import AnnotationFileType
+
+
 
 transform = albumentations.Compose(
     [
@@ -25,7 +23,11 @@ transform = albumentations.Compose(
 )
 
 
-def read_annotation_file(dataset, target_path) -> tuple[dict, str]:
+def get_category_mapping(annotations: dict) -> list[str]:
+    return [cat['name'] for cat in annotations['categories']]
+
+
+def read_annotation_file(dataset: DatasetVersion, target_path: str) -> tuple[dict, str]:
     annotation_file_path = dataset.export_annotation_file(annotation_file_type=AnnotationFileType.COCO,
                                                           target_path=target_path)
     with open(annotation_file_path) as f:
@@ -33,7 +35,7 @@ def read_annotation_file(dataset, target_path) -> tuple[dict, str]:
     return annotations, annotation_file_path
 
 
-def create_objects_dict(annotations, image_id) -> dict:
+def create_objects_dict(annotations: dict, image_id: int) -> dict:
     curr_object = {key: [] for key in ['id', 'bbox', 'category', 'area', 'image_id']}
 
     for ann in annotations['annotations']:
@@ -47,7 +49,7 @@ def create_objects_dict(annotations, image_id) -> dict:
     return curr_object
 
 
-def format_coco_annot_to_jsonlines_format(annotations) -> list[dict]:
+def format_coco_annot_to_jsonlines_format(annotations: dict) -> list[dict]:
     formatted_coco = []
     for image in annotations['images']:
         image_id = image['id']
@@ -58,14 +60,14 @@ def format_coco_annot_to_jsonlines_format(annotations) -> list[dict]:
     return formatted_coco
 
 
-def write_metadata_file(data, output_path):
+def write_metadata_file(data: list[dict], output_path: str):
     with open(output_path, 'w') as f:
         for entry in data:
             json.dump(entry, f)
             f.write('\n')
 
 
-def custom_train_test_split(loaded_dataset: DatasetDict, test_prop: float) -> DatasetDict:
+def custom_train_test_eval_split(loaded_dataset: DatasetDict, test_prop: float) -> DatasetDict:
     first_split = loaded_dataset['train'].train_test_split(test_size=test_prop)
     test_valid = first_split['test'].train_test_split(test_size=0.5)
     train_test_valid_dataset = DatasetDict({
@@ -200,7 +202,7 @@ def format_evaluation_results(results: dict) -> dict:
     return casted_results
 
 
-def run_evaluation(test_ds_coco_format, im_processor, model):
+def run_evaluation(test_ds_coco_format, im_processor, model) -> dict:
     module = evaluate.load("ybelkada/cocoevaluate", coco=test_ds_coco_format.coco)
     val_dataloader = torch.utils.data.DataLoader(
         test_ds_coco_format, batch_size=8, shuffle=False, num_workers=4, collate_fn=collate_fn
@@ -228,20 +230,7 @@ def run_evaluation(test_ds_coco_format, im_processor, model):
     return results
 
 
-def predict_image(image_path: str, threshold: float, image_processor, model):
-    with torch.no_grad():
-        image = Image.open(image_path)
-        inputs = image_processor(images=image, return_tensors="pt")
-        outputs = model(**inputs)
-        target_sizes = torch.tensor([image.size[::-1]])
-        results = \
-            image_processor.post_process_object_detection(outputs, threshold=threshold, target_sizes=target_sizes)[0]
-        # box format in results is: top_left_x, top_left_y, bottom_right_x, bottom_right_y)
-
-    return results
-
-
-def get_dataset_image_ids(dataset, dataset_type: str) -> list:
+def get_dataset_image_ids(dataset: DatasetDict, dataset_type: str) -> list:
     # dataset_type is either train, test or eval
     image_id_list = []
     for example in dataset[dataset_type]:
@@ -256,60 +245,3 @@ def get_filenames_by_ids(image_ids: list, annotations: dict, id_list) -> dict:
             if image_id == element['id']:
                 id2filename[image_id] = element['file_name']
     return id2filename
-
-
-def reformat_box_to_coco(box: torch.Tensor):
-    box = [int(i) for i in box.tolist()]
-    formatted_box = [
-        box[0],
-        box[1],
-        box[2] - box[0],
-        box[3] - box[1]
-    ]
-    return formatted_box
-
-
-def create_rectangle_list(results, dataset_labels, model):
-    rectangle_list = []
-    for score, label, box in zip(results['scores'], results['labels'], results['boxes']):
-        formatted_box = reformat_box_to_coco(box)
-        score = round(score.item(), 3)
-        detected_label = dataset_labels[model.config.id2label[label.item()]]
-
-        formatted_box.append(detected_label)
-        formatted_box.append(float(score))
-
-        rectangle_list.append(tuple(formatted_box))
-
-    return rectangle_list
-
-
-def send_rectangle_list_to_evaluations(rectangle_list, experiment, asset):
-    if len(rectangle_list) > 0:
-        try:
-            experiment.add_evaluation(asset=asset, rectangles=rectangle_list)
-            print(f"Asset: {asset.filename} evaluated.")
-        except Exception as e:
-            print(e)
-            pass
-
-
-def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset:
-    asset_filename = get_filename_from_fullpath(image_path)
-    try:
-        asset = dataset.find_asset(filename=asset_filename)
-    except Exception as e:
-        print(e)
-    return asset
-
-
-def get_filename_from_fullpath(full_path: str) -> str:
-    return full_path.split("/")[-1]
-
-
-def evaluate_asset(file_path: str, data_dir: str, experiment: Experiment, dataset_labels, model):
-    image_path = os.path.join(data_dir, file_path)
-    asset = find_asset_from_path(image_path=image_path)
-    results = predict_image(image_path=image_path, threshold=0.5)
-    rectangle_list = create_rectangle_list(results, dataset_labels, model)
-    send_rectangle_list_to_evaluations(rectangle_list, experiment, asset)
