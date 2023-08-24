@@ -12,7 +12,7 @@ from utils.picsellia import get_experiment, download_data, evaluate_asset, log_m
 from utils.vit import CocoDetection, get_category_mapping, run_evaluation, get_filenames_by_ids, write_metadata_file, \
     read_annotation_file, get_category_mapping, format_coco_annot_to_jsonlines_format, transform_aug_ann, \
     custom_train_test_eval_split, collate_fn, save_annotation_file_images, format_evaluation_results, \
-    get_dataset_image_ids
+    get_dataset_image_ids, format_and_write_annotations
 
 os.environ['PICSELLIA_SDK_CUSTOM_LOGGING'] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
@@ -22,10 +22,7 @@ checkpoint = "facebook/detr-resnet-50"
 
 experiment: Experiment = get_experiment()
 dataset, data_dir = download_data(experiment=experiment)
-
-annotations, annotation_file_path = read_annotation_file(dataset=dataset, target_path=data_dir)
-formatted_coco = format_coco_annot_to_jsonlines_format(annotations=annotations)
-write_metadata_file(data=formatted_coco, output_path=os.path.join(data_dir, 'metadata.jsonl'))
+annotations = format_and_write_annotations(dataset=dataset, data_dir=data_dir)
 
 loaded_dataset = load_dataset("imagefolder", data_dir=data_dir)
 train_test_valid_dataset = custom_train_test_eval_split(loaded_dataset=loaded_dataset, test_prop=0.2)
@@ -61,14 +58,12 @@ training_args = TrainingArguments(
 )
 
 
-
-
-
 class LogObjectDetectionMetricsCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         if state.is_local_process_zero:
             for metric_name, value in logs.items():
                 log_metrics(metric_name=metric_name, value=value)
+
 
 trainer = Trainer(
     model=model,

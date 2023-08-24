@@ -9,8 +9,8 @@ import torch
 import evaluate
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import AnnotationFileType
-
-
+from picsellia.sdk.experiment import Experiment
+from datasets.arrow_dataset import Dataset
 
 transform = albumentations.Compose(
     [
@@ -23,16 +23,28 @@ transform = albumentations.Compose(
 )
 
 
+class CocoDetection(torchvision.datasets.CocoDetection):
+    def __init__(self, img_folder, feature_extractor, ann_file):
+        super().__init__(img_folder, ann_file)
+        self.feature_extractor = feature_extractor
+
+    def __getitem__(self, idx):
+        # read in PIL image and target in COCO format
+        img, target = super(CocoDetection, self).__getitem__(idx)
+
+        # preprocess image and target: converting target to DETR format,
+        # resizing + normalization of both image and target)
+        image_id = self.ids[idx]
+        target = {"image_id": image_id, "annotations": target}
+        encoding = self.feature_extractor(images=img, annotations=target, return_tensors="pt")
+        pixel_values = encoding["pixel_values"].squeeze()  # remove batch dimension
+        target = encoding["labels"][0]  # remove batch dimension
+
+        return {"pixel_values": pixel_values, "labels": target}
+
+
 def get_category_mapping(annotations: dict) -> list[str]:
     return [cat['name'] for cat in annotations['categories']]
-
-
-def read_annotation_file(dataset: DatasetVersion, target_path: str) -> tuple[dict, str]:
-    annotation_file_path = dataset.export_annotation_file(annotation_file_type=AnnotationFileType.COCO,
-                                                          target_path=target_path)
-    with open(annotation_file_path) as f:
-        annotations = json.load(f)
-    return annotations, annotation_file_path
 
 
 def create_objects_dict(annotations: dict, image_id: int) -> dict:
@@ -47,6 +59,21 @@ def create_objects_dict(annotations: dict, image_id: int) -> dict:
             curr_object['image_id'].append(image_id)
 
     return curr_object
+
+
+def format_and_write_annotations(dataset: DatasetVersion, data_dir: str) -> dict:
+    annotations = read_annotation_file(dataset=dataset, target_path=data_dir)
+    formatted_coco = format_coco_annot_to_jsonlines_format(annotations=annotations)
+    write_metadata_file(data=formatted_coco, output_path=os.path.join(data_dir, 'metadata.jsonl'))
+    return annotations
+
+
+def read_annotation_file(dataset: DatasetVersion, target_path: str) -> dict:
+    annotation_file_path = dataset.export_annotation_file(annotation_file_type=AnnotationFileType.COCO,
+                                                          target_path=target_path)
+    with open(annotation_file_path) as f:
+        annotations = json.load(f)
+    return annotations
 
 
 def format_coco_annot_to_jsonlines_format(annotations: dict) -> list[dict]:
@@ -139,28 +166,8 @@ def val_formatted_anns(image_id, objects):
     return annotations
 
 
-class CocoDetection(torchvision.datasets.CocoDetection):
-    def __init__(self, img_folder, feature_extractor, ann_file):
-        super().__init__(img_folder, ann_file)
-        self.feature_extractor = feature_extractor
-
-    def __getitem__(self, idx):
-        # read in PIL image and target in COCO format
-        img, target = super(CocoDetection, self).__getitem__(idx)
-
-        # preprocess image and target: converting target to DETR format,
-        # resizing + normalization of both image and target)
-        image_id = self.ids[idx]
-        target = {"image_id": image_id, "annotations": target}
-        encoding = self.feature_extractor(images=img, annotations=target, return_tensors="pt")
-        pixel_values = encoding["pixel_values"].squeeze()  # remove batch dimension
-        target = encoding["labels"][0]  # remove batch dimension
-
-        return {"pixel_values": pixel_values, "labels": target}
-
-
 # Save images and annotations into the files torchvision.datasets.CocoDetection expects
-def save_annotation_file_images(dataset, experiment, id2label):
+def save_annotation_file_images(dataset: Dataset, experiment: Experiment, id2label: dict) -> tuple[str, str]:
     output_json = {}
     path_output = os.path.join(experiment.base_dir, "output")
 
