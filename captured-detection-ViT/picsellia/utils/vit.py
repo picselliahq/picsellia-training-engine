@@ -44,8 +44,20 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         return {"pixel_values": pixel_values, "labels": target}
 
 
+def get_id2label_mapping(annotations: dict) -> dict:
+    categories = get_category_mapping(annotations=annotations)
+    id2label = {index: x for index, x in enumerate(categories, start=0)}
+
+    return id2label
+
+
 def get_category_mapping(annotations: dict) -> list[str]:
     return [cat["name"] for cat in annotations["categories"]]
+
+
+def log_labelmap(id2label: dict, experiment: Experiment):
+    labelmap = {str(k): v for k, v in id2label.items()}
+    experiment.log("labelmap", labelmap, "labelmap", replace=True)
 
 
 def create_objects_dict(annotations: dict, image_id: int) -> dict:
@@ -118,24 +130,7 @@ def custom_train_test_eval_split(
     return train_test_valid_dataset
 
 
-def formatted_anns(image_id, category, area, bbox):
-    annotations = []
-
-    for i in range(0, len(category)):
-        new_ann = {
-            "image_id": image_id,
-            "category_id": category[i],
-            "isCrowd": 0,
-            "area": area[i],
-            "bbox": list(bbox[i]),
-        }
-        annotations.append(new_ann)
-
-    return annotations
-
-
-# transforming a batch
-def transform_aug_ann(examples, image_processor):
+def transform_images_and_annotations(examples, image_processor):
     image_ids = examples["image_id"]
     images, bboxes, area, categories = [], [], [], []
     for image, objects in zip(examples["image"], examples["objects"]):
@@ -150,45 +145,17 @@ def transform_aug_ann(examples, image_processor):
         categories.append(out["category"])
 
     targets = [
-        {"image_id": id_, "annotations": formatted_anns(id_, cat_, ar_, box_)}
+        {"image_id": id_, "annotations": formatted_annotations(id_, cat_, ar_, box_)}
         for id_, cat_, ar_, box_ in zip(image_ids, categories, area, bboxes)
     ]
 
     return image_processor(images=images, annotations=targets, return_tensors="pt")
 
 
-def collate_fn(batch, image_processor):
-    pixel_values = [item["pixel_values"] for item in batch]
-    encoding = image_processor.pad(pixel_values, return_tensors="pt")
-    labels = [item["labels"] for item in batch]
-    batch = {
-        "pixel_values": encoding["pixel_values"],
-        "pixel_mask": encoding["pixel_mask"],
-        "labels": labels,
-    }
-    return batch
-
-
-def val_formatted_anns(image_id, objects):
-    annotations = []
-    for i in range(0, len(objects["id"])):
-        new_ann = {
-            "id": objects["id"][i],
-            "category_id": objects["category"][i],
-            "iscrowd": 0,
-            "image_id": image_id,
-            "area": objects["area"][i],
-            "bbox": objects["bbox"][i],
-        }
-        annotations.append(new_ann)
-
-    return annotations
-
-
-# Save images and annotations into the files torchvision.datasets.CocoDetection expects
 def save_annotation_file_images(
     dataset: Dataset, experiment: Experiment, id2label: dict
 ) -> tuple[str, str]:
+    # Save images and annotations into the files torchvision.datasets.CocoDetection expects
     output_json = {}
     path_output = os.path.join(experiment.base_dir, "output")
 
@@ -202,7 +169,7 @@ def save_annotation_file_images(
     output_json["images"] = []
     output_json["annotations"] = []
     for example in dataset:
-        ann = val_formatted_anns(example["image_id"], example["objects"])
+        ann = val_formatted_annotations(example["image_id"], example["objects"])
         output_json["images"].append(
             {
                 "id": example["image_id"],
@@ -222,6 +189,50 @@ def save_annotation_file_images(
         im.save(path_img)
 
     return path_output, path_anno
+
+
+def formatted_annotations(image_id, category, area, bbox):
+    annotations = []
+
+    for i in range(0, len(category)):
+        new_ann = {
+            "image_id": image_id,
+            "category_id": category[i],
+            "isCrowd": 0,
+            "area": area[i],
+            "bbox": list(bbox[i]),
+        }
+        annotations.append(new_ann)
+
+    return annotations
+
+
+def collate_fn(batch, image_processor):
+    pixel_values = [item["pixel_values"] for item in batch]
+    encoding = image_processor.pad(pixel_values, return_tensors="pt")
+    labels = [item["labels"] for item in batch]
+    batch = {
+        "pixel_values": encoding["pixel_values"],
+        "pixel_mask": encoding["pixel_mask"],
+        "labels": labels,
+    }
+    return batch
+
+
+def val_formatted_annotations(image_id, objects):
+    annotations = []
+    for i in range(0, len(objects["id"])):
+        new_ann = {
+            "id": objects["id"][i],
+            "category_id": objects["category"][i],
+            "iscrowd": 0,
+            "image_id": image_id,
+            "area": objects["area"][i],
+            "bbox": objects["bbox"][i],
+        }
+        annotations.append(new_ann)
+
+    return annotations
 
 
 def format_evaluation_results(results: dict) -> dict:
