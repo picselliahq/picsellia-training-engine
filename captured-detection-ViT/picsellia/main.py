@@ -10,7 +10,7 @@ from transformers import TrainerCallback
 
 from utils.picsellia import get_experiment, download_data, evaluate_asset, log_metrics
 from utils.vit import CocoDetection, get_category_mapping, run_evaluation, get_filenames_by_ids, write_metadata_file, \
-    read_annotation_file, get_category_mapping, format_coco_annot_to_jsonlines_format, transform_aug_ann, \
+    get_category_mapping, transform_aug_ann, \
     custom_train_test_eval_split, collate_fn, save_annotation_file_images, format_evaluation_results, \
     get_dataset_image_ids, format_and_write_annotations
 
