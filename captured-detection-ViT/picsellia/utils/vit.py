@@ -17,7 +17,6 @@ transform = albumentations.Compose(
         albumentations.Resize(960, 960),
         albumentations.HorizontalFlip(p=1.0),
         albumentations.RandomBrightnessContrast(p=1.0),
-
     ],
     bbox_params=albumentations.BboxParams(format="coco", label_fields=["category"]),
 )
@@ -36,7 +35,9 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         # resizing + normalization of both image and target)
         image_id = self.ids[idx]
         target = {"image_id": image_id, "annotations": target}
-        encoding = self.feature_extractor(images=img, annotations=target, return_tensors="pt")
+        encoding = self.feature_extractor(
+            images=img, annotations=target, return_tensors="pt"
+        )
         pixel_values = encoding["pixel_values"].squeeze()  # remove batch dimension
         target = encoding["labels"][0]  # remove batch dimension
 
@@ -44,19 +45,19 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
 
 def get_category_mapping(annotations: dict) -> list[str]:
-    return [cat['name'] for cat in annotations['categories']]
+    return [cat["name"] for cat in annotations["categories"]]
 
 
 def create_objects_dict(annotations: dict, image_id: int) -> dict:
-    curr_object = {key: [] for key in ['id', 'bbox', 'category', 'area', 'image_id']}
+    curr_object = {key: [] for key in ["id", "bbox", "category", "area", "image_id"]}
 
-    for ann in annotations['annotations']:
-        if ann['image_id'] == image_id:
-            curr_object['id'].append(ann['id'])
-            curr_object['bbox'].append(ann['bbox'])
-            curr_object['category'].append(ann['category_id'])
-            curr_object['area'].append(ann['area'])
-            curr_object['image_id'].append(image_id)
+    for ann in annotations["annotations"]:
+        if ann["image_id"] == image_id:
+            curr_object["id"].append(ann["id"])
+            curr_object["bbox"].append(ann["bbox"])
+            curr_object["category"].append(ann["category_id"])
+            curr_object["area"].append(ann["area"])
+            curr_object["image_id"].append(image_id)
 
     return curr_object
 
@@ -64,13 +65,16 @@ def create_objects_dict(annotations: dict, image_id: int) -> dict:
 def format_and_write_annotations(dataset: DatasetVersion, data_dir: str) -> dict:
     annotations = read_annotation_file(dataset=dataset, target_path=data_dir)
     formatted_coco = format_coco_annot_to_jsonlines_format(annotations=annotations)
-    write_metadata_file(data=formatted_coco, output_path=os.path.join(data_dir, 'metadata.jsonl'))
+    write_metadata_file(
+        data=formatted_coco, output_path=os.path.join(data_dir, "metadata.jsonl")
+    )
     return annotations
 
 
 def read_annotation_file(dataset: DatasetVersion, target_path: str) -> dict:
-    annotation_file_path = dataset.export_annotation_file(annotation_file_type=AnnotationFileType.COCO,
-                                                          target_path=target_path)
+    annotation_file_path = dataset.export_annotation_file(
+        annotation_file_type=AnnotationFileType.COCO, target_path=target_path
+    )
     with open(annotation_file_path) as f:
         annotations = json.load(f)
     return annotations
@@ -78,30 +82,39 @@ def read_annotation_file(dataset: DatasetVersion, target_path: str) -> dict:
 
 def format_coco_annot_to_jsonlines_format(annotations: dict) -> list[dict]:
     formatted_coco = []
-    for image in annotations['images']:
-        image_id = image['id']
-        one_line = {'file_name': image['file_name'], 'image_id': image_id, 'width': image['width'],
-                    'height': image['height'], 'objects': create_objects_dict(annotations, image_id)}
+    for image in annotations["images"]:
+        image_id = image["id"]
+        one_line = {
+            "file_name": image["file_name"],
+            "image_id": image_id,
+            "width": image["width"],
+            "height": image["height"],
+            "objects": create_objects_dict(annotations, image_id),
+        }
         formatted_coco.append(one_line)
 
     return formatted_coco
 
 
 def write_metadata_file(data: list[dict], output_path: str):
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         for entry in data:
             json.dump(entry, f)
-            f.write('\n')
+            f.write("\n")
 
 
-def custom_train_test_eval_split(loaded_dataset: DatasetDict, test_prop: float) -> DatasetDict:
-    first_split = loaded_dataset['train'].train_test_split(test_size=test_prop)
-    test_valid = first_split['test'].train_test_split(test_size=0.5)
-    train_test_valid_dataset = DatasetDict({
-        'train': first_split['train'],
-        'test': test_valid['test'],
-        'eval': test_valid['train']
-    })
+def custom_train_test_eval_split(
+    loaded_dataset: DatasetDict, test_prop: float
+) -> DatasetDict:
+    first_split = loaded_dataset["train"].train_test_split(test_size=test_prop)
+    test_valid = first_split["test"].train_test_split(test_size=0.5)
+    train_test_valid_dataset = DatasetDict(
+        {
+            "train": first_split["train"],
+            "test": test_valid["test"],
+            "eval": test_valid["train"],
+        }
+    )
     return train_test_valid_dataset
 
 
@@ -127,7 +140,9 @@ def transform_aug_ann(examples, image_processor):
     images, bboxes, area, categories = [], [], [], []
     for image, objects in zip(examples["image"], examples["objects"]):
         image = np.array(image.convert("RGB"))[:, :, ::-1]
-        out = transform(image=image, bboxes=objects["bbox"], category=objects["category"])
+        out = transform(
+            image=image, bboxes=objects["bbox"], category=objects["category"]
+        )
 
         area.append(objects["area"])
         images.append(out["image"])
@@ -146,7 +161,11 @@ def collate_fn(batch, image_processor):
     pixel_values = [item["pixel_values"] for item in batch]
     encoding = image_processor.pad(pixel_values, return_tensors="pt")
     labels = [item["labels"] for item in batch]
-    batch = {"pixel_values": encoding["pixel_values"], "pixel_mask": encoding["pixel_mask"], "labels": labels}
+    batch = {
+        "pixel_values": encoding["pixel_values"],
+        "pixel_mask": encoding["pixel_mask"],
+        "labels": labels,
+    }
     return batch
 
 
@@ -167,7 +186,9 @@ def val_formatted_anns(image_id, objects):
 
 
 # Save images and annotations into the files torchvision.datasets.CocoDetection expects
-def save_annotation_file_images(dataset: Dataset, experiment: Experiment, id2label: dict) -> tuple[str, str]:
+def save_annotation_file_images(
+    dataset: Dataset, experiment: Experiment, id2label: dict
+) -> tuple[str, str]:
     output_json = {}
     path_output = os.path.join(experiment.base_dir, "output")
 
@@ -175,7 +196,9 @@ def save_annotation_file_images(dataset: Dataset, experiment: Experiment, id2lab
         os.makedirs(path_output)
 
     path_anno = os.path.join(path_output, "ann.json")
-    categories_json = [{"supercategory": "none", "id": id, "name": id2label[id]} for id in id2label]
+    categories_json = [
+        {"supercategory": "none", "id": id, "name": id2label[id]} for id in id2label
+    ]
     output_json["images"] = []
     output_json["annotations"] = []
     for example in dataset:
@@ -203,7 +226,7 @@ def save_annotation_file_images(dataset: Dataset, experiment: Experiment, id2lab
 
 def format_evaluation_results(results: dict) -> dict:
     casted_results = {}
-    for metric, value in results['iou_bbox'].items():
+    for metric, value in results["iou_bbox"].items():
         casted_results[metric] = float(value)
 
     return casted_results
@@ -212,7 +235,11 @@ def format_evaluation_results(results: dict) -> dict:
 def run_evaluation(test_ds_coco_format, im_processor, model) -> dict:
     module = evaluate.load("ybelkada/cocoevaluate", coco=test_ds_coco_format.coco)
     val_dataloader = torch.utils.data.DataLoader(
-        test_ds_coco_format, batch_size=8, shuffle=False, num_workers=4, collate_fn=collate_fn
+        test_ds_coco_format,
+        batch_size=8,
+        shuffle=False,
+        num_workers=4,
+        collate_fn=collate_fn,
     )
 
     with torch.no_grad():
@@ -227,8 +254,12 @@ def run_evaluation(test_ds_coco_format, im_processor, model) -> dict:
             # forward pass
             outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask)
 
-            orig_target_sizes = torch.stack([target["orig_size"] for target in labels], dim=0)
-            results = im_processor.post_process(outputs, orig_target_sizes)  # convert outputs of model to COCO api
+            orig_target_sizes = torch.stack(
+                [target["orig_size"] for target in labels], dim=0
+            )
+            results = im_processor.post_process(
+                outputs, orig_target_sizes
+            )  # convert outputs of model to COCO api
 
             module.add(prediction=results, reference=labels)
             del batch
@@ -241,14 +272,14 @@ def get_dataset_image_ids(dataset: DatasetDict, dataset_type: str) -> list:
     # dataset_type is either train, test or eval
     image_id_list = []
     for example in dataset[dataset_type]:
-        image_id_list.append(example['image_id'])
+        image_id_list.append(example["image_id"])
     return image_id_list
 
 
 def get_filenames_by_ids(image_ids: list, annotations: dict, id_list) -> dict:
-    id2filename = {key: '' for key in image_ids}
+    id2filename = {key: "" for key in image_ids}
     for image_id in id_list:
-        for element in annotations['images']:
-            if image_id == element['id']:
-                id2filename[image_id] = element['file_name']
+        for element in annotations["images"]:
+            if image_id == element["id"]:
+                id2filename[image_id] = element["file_name"]
     return id2filename
