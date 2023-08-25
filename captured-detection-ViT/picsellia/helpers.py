@@ -41,7 +41,8 @@ class TrainingPipeline:
         self.data_dir = os.path.join(self.experiment.base_dir, "data")
         self.id2label = {}
 
-    def get_experiment(self) -> Experiment:
+    @staticmethod
+    def get_experiment() -> Experiment:
         if "api_token" not in os.environ:
             raise Exception("You must set an api_token to run this image")
         api_token = os.environ["api_token"]

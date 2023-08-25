@@ -45,13 +45,13 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
 
 def get_id2label_mapping(annotations: dict) -> dict:
-    categories = get_category_mapping(annotations=annotations)
+    categories = get_category_names(annotations=annotations)
     id2label = {index: x for index, x in enumerate(categories, start=0)}
 
     return id2label
 
 
-def get_category_mapping(annotations: dict) -> list[str]:
+def get_category_names(annotations: dict) -> list[str]:
     return [cat["name"] for cat in annotations["categories"]]
 
 
@@ -83,12 +83,22 @@ def format_and_write_annotations(dataset: DatasetVersion, data_dir: str) -> dict
     return annotations
 
 
-def read_annotation_file(dataset: DatasetVersion, target_path: str) -> dict:
+def internal_export_annotation_file(dataset: DatasetVersion, target_path: str) -> str:
     annotation_file_path = dataset.export_annotation_file(
         annotation_file_type=AnnotationFileType.COCO, target_path=target_path
     )
+    return annotation_file_path
+
+
+def read_annotation_file(annotation_file_path: str) -> dict:
     with open(annotation_file_path) as f:
         annotations = json.load(f)
+    return annotations
+
+
+def export_and_read_annotation_file(dataset: DatasetVersion, target_path: str):
+    annotation_path = internal_export_annotation_file(dataset, target_path)
+    annotations = read_annotation_file(annotation_file_path=annotation_path)
     return annotations
 
 
@@ -109,10 +119,13 @@ def format_coco_annot_to_jsonlines_format(annotations: dict) -> list[dict]:
 
 
 def write_metadata_file(data: list[dict], output_path: str):
-    with open(output_path, "w") as f:
-        for entry in data:
-            json.dump(entry, f)
-            f.write("\n")
+    try:
+        with open(output_path, "w") as f:
+            for entry in data:
+                json.dump(entry, f)
+                f.write("\n")
+    except IOError:
+        print("could not write metadata file")
 
 
 def custom_train_test_eval_split(
@@ -155,7 +168,7 @@ def transform_images_and_annotations(examples, image_processor):
 def save_annotation_file_images(
     dataset: Dataset, experiment: Experiment, id2label: dict
 ) -> tuple[str, str]:
-    # Save images and annotations into the files torchvision.datasets.CocoDetection expects
+    # Save images and annotations into the test_files torchvision.datasets.CocoDetection expects
     output_json = {}
     path_output = os.path.join(experiment.base_dir, "output")
 

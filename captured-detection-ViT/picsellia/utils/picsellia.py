@@ -5,7 +5,6 @@ from picsellia.sdk.label import Label
 
 import os
 import torch
-import picsellia
 from PIL import Image
 import transformers
 
@@ -28,7 +27,9 @@ def evaluate_asset(
     image_path = os.path.join(data_dir, file_path)
     asset = find_asset_from_path(image_path=image_path)
     results = predict_image(image_path=image_path, threshold=0.5)
-    rectangle_list = create_rectangle_list(results, dataset_labels, model)
+    rectangle_list = create_rectangle_list(
+        results, dataset_labels, model.config.id2label
+    )
     send_rectangle_list_to_evaluations(rectangle_list, experiment, asset)
 
 
@@ -62,7 +63,7 @@ def predict_image(
 
 
 def create_rectangle_list(
-    results: dict, dataset_labels: dict, model: transformers.models
+    results: dict, dataset_labels: dict, id2label: dict
 ) -> list[tuple[int, int, int, int, Label, float]]:
     rectangle_list = []
     for score, label, box in zip(
@@ -70,7 +71,7 @@ def create_rectangle_list(
     ):
         formatted_box = reformat_box_to_coco(box)
         score = round(score.item(), 3)
-        detected_label = dataset_labels[model.config.id2label[label.item()]]
+        detected_label = dataset_labels[id2label[label.item()]]
 
         formatted_box.append(detected_label)
         formatted_box.append(float(score))
