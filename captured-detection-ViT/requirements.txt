@@ -10,3 +10,4 @@ torchvision==0.15.2
 tqdm==4.66.1
 coverage==7.3.0
 picsellia==6.10.0
+pycocotools==2.0.6
