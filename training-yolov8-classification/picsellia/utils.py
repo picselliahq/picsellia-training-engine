@@ -1,18 +1,13 @@
 from PIL import Image
 import numpy as np
-from typing import Tuple, List
 import os
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.dataset_version import DatasetVersion
-from picsellia.exceptions import AuthenticationError
-from picsellia.types.enums import LogType
-import sys
-import picsellia
+
 from pycocotools.coco import COCO
 import shutil
-from picsellia import Client
 from picsellia.types.enums import AnnotationFileType
-
+from picsellia.exceptions import ResourceNotFoundError
 
 # from sklearn.metrics import f1_score, recall_score, precision_score
 
