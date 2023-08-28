@@ -1,0 +1,56 @@
+from abc import ABC, abstractmethod
+from picsellia import Experiment, Client
+import os
+
+
+class AbstractTrainer(ABC):
+    def __init__(self):
+        self.experiment = self.get_experiment()
+        self.dataset_list = self.experiment.list_attached_dataset_versions()
+        self.parameters = self.experiment.get_log("parameters").data
+        self.labelmap = {}
+
+    @staticmethod
+    def get_experiment() -> Experiment:
+        if "api_token" not in os.environ:
+            raise Exception("You must set an api_token to run this image")
+        api_token = os.environ["api_token"]
+
+        if "host" not in os.environ:
+            host = "https://app.picsellia.com"
+        else:
+            host = os.environ["host"]
+
+        if "organization_id" not in os.environ:
+            organization_id = None
+        else:
+            organization_id = os.environ["organization_id"]
+
+        client = Client(api_token=api_token, host=host, organization_id=organization_id)
+
+        if "experiment_name" in os.environ:
+            experiment_name = os.environ["experiment_name"]
+            if "project_token" in os.environ:
+                project_token = os.environ["project_token"]
+                project = client.get_project_by_id(project_token)
+            elif "project_name" in os.environ:
+                project_name = os.environ["project_name"]
+                project = client.get_project(project_name)
+            experiment = project.get_experiment(experiment_name)
+        else:
+            Exception(
+                "You must set the project_token or project_name and experiment_name"
+            )
+        return experiment
+
+    def prepare_data_for_training(self):
+        pass
+
+    def train(self):
+        pass
+
+    def test(self):
+        pass
+
+    def eval(self):
+        pass
