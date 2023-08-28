@@ -131,8 +131,8 @@ def write_metadata_file(data: list[dict], output_path: str):
 def custom_train_test_eval_split(
     loaded_dataset: DatasetDict, test_prop: float
 ) -> DatasetDict:
-    first_split = loaded_dataset["train"].train_test_split(test_size=test_prop)
-    test_valid = first_split["test"].train_test_split(test_size=0.5)
+    first_split = loaded_dataset["train"].train_test_split(test_size=test_prop, seed=11)
+    test_valid = first_split["test"].train_test_split(test_size=0.5, seed=11)
     train_test_valid_dataset = DatasetDict(
         {
             "train": first_split["train"],
