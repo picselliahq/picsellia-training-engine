@@ -149,3 +149,5 @@ checkpoint
 .env
 
 .idea
+
+*/poetry.lock
