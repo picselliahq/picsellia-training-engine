@@ -90,6 +90,13 @@ def f1_micro(y_true, y_pred):
 dependencies = {"recall_m": recall_m, "precision_m": precision_m, "f1_micro": f1_micro}
 
 
+def create_and_log_labelmap(experiment: Experiment) -> dict:
+    names = os.listdir("data/train")  # class names list
+    labelmap = {str(i): label for i, label in enumerate(sorted(names))}
+    experiment.log("labelmap", labelmap, "labelmap", replace=True)
+    return labelmap
+
+
 def prepare_datasets_with_annotation(
     train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion
 ):
@@ -196,7 +203,7 @@ def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
 ) -> tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]:
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
-    is_split_three, is_split_two = False
+    is_split_three, is_split_two = False, False
     if number_of_attached_datasets == 3:
         is_split_three = True
         train_set, test_set, eval_set = _get_three_attached_datasets(experiment)
@@ -333,6 +340,6 @@ def predict_class(labelmap: dict, val_folder_path: str, model):
     return gt_class, pred_class
 
 
-def log_confusion_to_experiment(experiment: Experiment, labelmap, matrix)
+def log_confusion_to_experiment(experiment: Experiment, labelmap, matrix):
     confusion = {"categories": list(labelmap.values()), "values": matrix.tolist()}
     experiment.log(name="confusion", data=confusion, type="heatmap")
