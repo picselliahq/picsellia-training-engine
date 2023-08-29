@@ -243,3 +243,7 @@ class TestDetectionVit(unittest.TestCase):
 
         formatted_annotation_list = formatted_annotations(id_, cat_, ar_, box_)
         self.assertEqual(formatted_annotation_list, expected_results)
+
+
+if __name__ == '__main__':
+    unittest.main()
