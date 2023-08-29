@@ -28,19 +28,12 @@ class AbstractTrainer(ABC):
 
         client = Client(api_token=api_token, host=host, organization_id=organization_id)
 
-        if "experiment_name" in os.environ:
-            experiment_name = os.environ["experiment_name"]
-            if "project_token" in os.environ:
-                project_token = os.environ["project_token"]
-                project = client.get_project_by_id(project_token)
-            elif "project_name" in os.environ:
-                project_name = os.environ["project_name"]
-                project = client.get_project(project_name)
-            experiment = project.get_experiment(experiment_name)
+        if "experiment_id" in os.environ:
+            experiment_id = os.environ["experiment_id"]
+
+            experiment = client.get_experiment_by_id(experiment_id)
         else:
-            Exception(
-                "You must set the project_token or project_name and experiment_name"
-            )
+            raise Exception("You must set the experiment_id")
         return experiment
 
     def prepare_data_for_training(self):
