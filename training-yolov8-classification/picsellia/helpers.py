@@ -1,8 +1,10 @@
 import os
 from ultralytics import YOLO
 from sklearn.metrics import classification_report, confusion_matrix
-
+from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
 from trainer.abstract_trainer import AbstractTrainer
+
+
 from utils import (
     get_train_test_eval_datasets_from_experiment,
     download_triple_dataset,
@@ -12,8 +14,8 @@ from utils import (
     log_split_dataset_repartition_to_experiment,
     predict_class,
     log_confusion_to_experiment,
+    create_and_log_labelmap,
 )
-from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
 
 
 class Yolov8ClassificationTrainer(AbstractTrainer):
@@ -25,9 +27,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
         self.working_directory = os.getcwd()
         self.data_path = os.path.join(self.working_directory, "data")
         self.val_folder_path = os.path.join(self.data_path, "val")
-        self.weights_dir_path = os.path.join(
-            self.working_directory, "runs", "classify", "train", "weights"
-        )
+        self.weights_dir_path = os.path.join(self.working_directory, "train", "weights")
         self.weights_path = os.path.join(self.weights_dir_path, "last.pt")
         self.evaluation_ds, self.evaluation_assets = None, None
 
@@ -73,6 +73,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             raise Exception(
                 "You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, eval)"
             )
+        self.labelmap = create_and_log_labelmap(experiment=self.experiment)
 
     def train(self):
         self.model.train(
@@ -80,6 +81,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             epochs=self.parameters["epochs"],
             imgsz=self.parameters["image_size"],
             patience=self.parameters["patience"],
+            project=self.working_directory,
         )
         self.experiment.store("weights", self.weights_path)
         export_model = YOLO(self.weights_path)
