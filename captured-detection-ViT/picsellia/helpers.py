@@ -61,18 +61,13 @@ class TrainingPipeline:
             api_token=api_token, host=host, organization_id=organization_id
         )
 
-        if "experiment_name" in os.environ:
-            experiment_name = os.environ["experiment_name"]
-            if "project_token" in os.environ:
-                project_token = os.environ["project_token"]
-                project = client.get_project_by_id(project_token)
-            elif "project_name" in os.environ:
-                project_name = os.environ["project_name"]
-                project = client.get_project(project_name)
-            experiment = project.get_experiment(experiment_name)
+        if "experiment_id" in os.environ:
+            experiment_id = os.environ["experiment_id"]
+
+            experiment = client.get_experiment_by_id(experiment_id)
         else:
-            Exception(
-                "You must set the project_token or project_name and experiment_name"
+            raise Exception(
+                "You must set the experiment_id"
             )
         return experiment
 
@@ -91,7 +86,7 @@ class TrainingPipeline:
             "train"
         ].with_transform(transform_images_and_annotations)
         self.id2label = get_id2label_mapping(annotations=self.annotations)
-        log_labelmap(id2label=self.id2label)
+        log_labelmap(id2label=self.id2label, experiment=self.experiment)
         return train_test_valid_dataset, dataset
 
     def train(
@@ -109,7 +104,7 @@ class TrainingPipeline:
         training_args = TrainingArguments(
             output_dir=self.output_model_dir,
             per_device_train_batch_size=8,
-            num_train_epochs=30,
+            num_train_epochs=4,
             fp16=True,
             save_steps=200,
             logging_steps=50,
@@ -128,6 +123,7 @@ class TrainingPipeline:
             callbacks=callback_list,
         )
         trainer.train()
+        trainer.save_model(output_dir=self.output_model_dir)
 
         return trainer
 
@@ -135,15 +131,18 @@ class TrainingPipeline:
         self,
         train_test_valid_dataset: DatasetDict,
     ) -> tuple[transformers.models, transformers.models]:
-        image_processor = AutoImageProcessor.from_pretrained(self.output_model_dir)
-        model = AutoModelForObjectDetection.from_pretrained(self.output_model_dir)
+        image_processor = AutoImageProcessor.from_pretrained(
+            self.output_model_dir)
+        model = AutoModelForObjectDetection.from_pretrained(
+            self.output_model_dir)
 
         path_output, path_anno = save_annotation_file_images(
             dataset=train_test_valid_dataset["test"],
             experiment=self.experiment,
             id2label=self.id2label,
         )
-        test_ds_coco_format = CocoDetection(path_output, image_processor, path_anno)
+        test_ds_coco_format = CocoDetection(
+            path_output, image_processor, path_anno)
 
         results = run_evaluation(
             test_ds_coco_format=test_ds_coco_format,
@@ -162,19 +161,22 @@ class TrainingPipeline:
         train_test_valid_dataset: DatasetDict,
         model: transformers.models,
     ):
-        dataset_labels = {label.name: label for label in dataset.list_labels()}
-        eval_image_ids = get_dataset_image_ids(train_test_valid_dataset, "eval")
+        eval_image_ids = get_dataset_image_ids(
+            train_test_valid_dataset, "eval")
         id2filename_eval = get_filenames_by_ids(
-            image_ids=eval_image_ids, annotations=self.annotations
+            image_ids=eval_image_ids, annotations=self.annotations, id_list=eval_image_ids
         )
+        image_processor = AutoImageProcessor.from_pretrained(
+            self.output_model_dir)
 
         for file_path in list(id2filename_eval.values()):
             evaluate_asset(
                 file_path=file_path,
                 data_dir=self.data_dir,
                 experiment=self.experiment,
-                dataset_labels=dataset_labels,
+                dataset=dataset,
                 model=model,
+                image_processor=image_processor
             )
 
         self.experiment.compute_evaluations_metrics(

@@ -11,6 +11,11 @@ from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import AnnotationFileType
 from picsellia.sdk.experiment import Experiment
 from datasets.arrow_dataset import Dataset
+from transformers import AutoImageProcessor
+
+
+image_processor = AutoImageProcessor.from_pretrained(
+    "facebook/detr-resnet-50")
 
 transform = albumentations.Compose(
     [
@@ -18,7 +23,8 @@ transform = albumentations.Compose(
         albumentations.HorizontalFlip(p=1.0),
         albumentations.RandomBrightnessContrast(p=1.0),
     ],
-    bbox_params=albumentations.BboxParams(format="coco", label_fields=["category"]),
+    bbox_params=albumentations.BboxParams(
+        format="coco", label_fields=["category"]),
 )
 
 
@@ -38,7 +44,8 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         encoding = self.feature_extractor(
             images=img, annotations=target, return_tensors="pt"
         )
-        pixel_values = encoding["pixel_values"].squeeze()  # remove batch dimension
+        # remove batch dimension
+        pixel_values = encoding["pixel_values"].squeeze()
         target = encoding["labels"][0]  # remove batch dimension
 
         return {"pixel_values": pixel_values, "labels": target}
@@ -61,7 +68,8 @@ def log_labelmap(id2label: dict, experiment: Experiment):
 
 
 def create_objects_dict(annotations: dict, image_id: int) -> dict:
-    curr_object = {key: [] for key in ["id", "bbox", "category", "area", "image_id"]}
+    curr_object = {key: []
+                   for key in ["id", "bbox", "category", "area", "image_id"]}
 
     for ann in annotations["annotations"]:
         if ann["image_id"] == image_id:
@@ -75,10 +83,14 @@ def create_objects_dict(annotations: dict, image_id: int) -> dict:
 
 
 def format_and_write_annotations(dataset: DatasetVersion, data_dir: str) -> dict:
-    annotations = read_annotation_file(dataset=dataset, target_path=data_dir)
-    formatted_coco = format_coco_annot_to_jsonlines_format(annotations=annotations)
+    annotation_file_path = internal_export_annotation_file(
+        dataset=dataset, target_path=data_dir)
+    annotations = read_annotation_file(annotation_file_path)
+    formatted_coco = format_coco_annot_to_jsonlines_format(
+        annotations=annotations)
     write_metadata_file(
-        data=formatted_coco, output_path=os.path.join(data_dir, "metadata.jsonl")
+        data=formatted_coco, output_path=os.path.join(
+            data_dir, "metadata.jsonl")
     )
     return annotations
 
@@ -131,7 +143,8 @@ def write_metadata_file(data: list[dict], output_path: str):
 def custom_train_test_eval_split(
     loaded_dataset: DatasetDict, test_prop: float
 ) -> DatasetDict:
-    first_split = loaded_dataset["train"].train_test_split(test_size=test_prop, seed=11)
+    first_split = loaded_dataset["train"].train_test_split(
+        test_size=test_prop, seed=11)
     test_valid = first_split["test"].train_test_split(test_size=0.5, seed=11)
     train_test_valid_dataset = DatasetDict(
         {
@@ -143,7 +156,7 @@ def custom_train_test_eval_split(
     return train_test_valid_dataset
 
 
-def transform_images_and_annotations(examples, image_processor):
+def transform_images_and_annotations(examples):
     image_ids = examples["image_id"]
     images, bboxes, area, categories = [], [], [], []
     for image, objects in zip(examples["image"], examples["objects"]):
@@ -158,7 +171,8 @@ def transform_images_and_annotations(examples, image_processor):
         categories.append(out["category"])
 
     targets = [
-        {"image_id": id_, "annotations": formatted_annotations(id_, cat_, ar_, box_)}
+        {"image_id": id_, "annotations": formatted_annotations(
+            id_, cat_, ar_, box_)}
         for id_, cat_, ar_, box_ in zip(image_ids, categories, area, bboxes)
     ]
 
@@ -182,7 +196,8 @@ def save_annotation_file_images(
     output_json["images"] = []
     output_json["annotations"] = []
     for example in dataset:
-        ann = val_formatted_annotations(example["image_id"], example["objects"])
+        ann = val_formatted_annotations(
+            example["image_id"], example["objects"])
         output_json["images"].append(
             {
                 "id": example["image_id"],
@@ -220,7 +235,7 @@ def formatted_annotations(image_id, category, area, bbox):
     return annotations
 
 
-def collate_fn(batch, image_processor):
+def collate_fn(batch):
     pixel_values = [item["pixel_values"] for item in batch]
     encoding = image_processor.pad(pixel_values, return_tensors="pt")
     labels = [item["labels"] for item in batch]
@@ -257,7 +272,8 @@ def format_evaluation_results(results: dict) -> dict:
 
 
 def run_evaluation(test_ds_coco_format, im_processor, model) -> dict:
-    module = evaluate.load("ybelkada/cocoevaluate", coco=test_ds_coco_format.coco)
+    module = evaluate.load("ybelkada/cocoevaluate",
+                           coco=test_ds_coco_format.coco)
     val_dataloader = torch.utils.data.DataLoader(
         test_ds_coco_format,
         batch_size=8,

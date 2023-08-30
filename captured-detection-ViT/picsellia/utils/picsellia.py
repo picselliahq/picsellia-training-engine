@@ -21,12 +21,15 @@ def evaluate_asset(
     file_path: str,
     data_dir: str,
     experiment: Experiment,
-    dataset_labels: dict,
     model: transformers.models,
+    image_processor: transformers.models,
+    dataset: DatasetVersion
 ):
+    dataset_labels = {label.name: label for label in dataset.list_labels()}
     image_path = os.path.join(data_dir, file_path)
-    asset = find_asset_from_path(image_path=image_path)
-    results = predict_image(image_path=image_path, threshold=0.5)
+    asset = find_asset_from_path(image_path=image_path, dataset=dataset)
+    results = predict_image(image_path=image_path, threshold=0.4,
+                            model=model, image_processor=image_processor)
     rectangle_list = create_rectangle_list(
         results, dataset_labels, model.config.id2label
     )
