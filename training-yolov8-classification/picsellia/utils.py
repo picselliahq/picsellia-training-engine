@@ -1,3 +1,5 @@
+from typing import Tuple, Any
+
 from PIL import Image
 import numpy as np
 import os
@@ -114,30 +116,52 @@ def prepare_datasets_with_annotation(
 
 def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None:
     fnames = os.listdir(base_imdir)
+    _create_class_directories(coco=coco, base_imdir=base_imdir)
+    for i in coco.imgs:
+        image = coco.imgs[i]
+        cat = get_image_annotation(coco=coco, fnames=fnames, image=image)
+        if cat is None:
+            continue
+        move_image(
+            filename=image["file_name"],
+            old_location_path=base_imdir,
+            new_location_path=os.path.join(base_imdir, cat["name"]),
+        )
+    print(f"Formatting {base_imdir} .. OK")
+    return base_imdir
+
+
+def _create_class_directories(coco: COCO, base_imdir: str = None):
     for i in coco.cats:
         cat = coco.cats[i]
         class_folder = os.path.join(base_imdir, cat["name"])
+        print("cwd", os.getcwd())
         if not os.path.isdir(class_folder):
-            os.mkdir(class_folder)
+            os.makedirs(class_folder)
     print(f"Formatting {base_imdir} ..")
-    for i in coco.imgs:
-        im = coco.imgs[i]
-        if im["file_name"] not in fnames:
-            continue
-        ann = coco.loadAnns(coco.getAnnIds(im["id"]))
-        if len(ann) > 1:
-            print(f"{im['file_name']} has more than one class. Skipping")
-        ann = ann[0]
-        cat = coco.loadCats(ann["category_id"])[0]
-        fpath = os.path.join(base_imdir, im["file_name"])
-        new_fpath = os.path.join(base_imdir, cat["name"], im["file_name"])
-        try:
-            shutil.move(fpath, new_fpath)
-            pass
-        except Exception as e:
-            print(f"{im['file_name']} skipped.")
-    print(f"Formatting {base_imdir} .. OK")
-    return base_imdir
+
+
+def get_image_annotation(
+    coco: COCO, fnames: list[str], image: dict
+) -> tuple[None, None] | tuple[dict, dict]:
+    if image["file_name"] not in fnames:
+        return None
+    ann = coco.loadAnns(coco.getAnnIds(image["id"]))
+    if len(ann) > 1:
+        print(f"{image['file_name']} has more than one class. Skipping")
+    ann = ann[0]
+    cat = coco.loadCats(ann["category_id"])[0]
+
+    return cat
+
+
+def move_image(filename: str, old_location_path: str, new_location_path: str):
+    old_path = os.path.join(old_location_path, filename)
+    new_path = os.path.join(new_location_path, filename)
+    try:
+        shutil.move(old_path, new_path)
+    except Exception as e:
+        print(f"{filename} skipped.")
 
 
 def _create_coco_objects(
@@ -173,15 +197,12 @@ def _get_three_attached_datasets(
                                             expecting 'train', 'test', 'eval')"
         )
     try:
-        eval_set = experiment.get_dataset(name="val")
+        eval_set = experiment.get_dataset(name="eval")
     except Exception:
-        try:
-            eval_set = experiment.get_dataset(name="eval")
-        except Exception:
-            raise ResourceNotFoundError(
-                "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
+        raise ResourceNotFoundError(
+            "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
                                                 expecting 'train', 'test', 'eval')"
-            )
+        )
     return train_set, test_set, eval_set
 
 
@@ -226,13 +247,40 @@ def get_train_test_eval_datasets_from_experiment(
     return is_split_two, is_split_three, train_set, test_set, eval_set
 
 
+def get_prop_parameter(parameters: dict):
+    prop = parameters.get("prop_train_split", 0.7)
+    return prop
+
+
+def make_train_test_val_dirs():
+    os.makedirs("data/train", exist_ok=True)
+    os.makedirs("data/test", exist_ok=True)
+    os.makedirs("data/val", exist_ok=True)
+
+
+def move_images_in_train_test_val_folders(train_assets, test_assets, eval_assets):
+    for asset in train_assets:
+        move_image(
+            filename=asset.filename,
+            old_location_path="images",
+            new_location_path="data/train",
+        )
+    for asset in test_assets:
+        move_image(filename=asset.filename, new_location_path="data/test")
+
+    for asset in eval_assets:
+        move_image(filename=asset.filename, new_location_path="data/val")
+
+
+def move_image(filename: str, old_location_path: str, new_location_path: str):
+    old_path = os.path.join(old_location_path, filename)
+    new_path = os.path.join(new_location_path, filename)
+    shutil.move(old_path, new_path)
+
+
 def split_single_dataset(experiment: Experiment, train_set: DatasetVersion):
     parameters = experiment.get_log("parameters").data
-    prop = (
-        0.7
-        if not "prop_train_split" in parameters.keys()
-        else parameters["prop_train_split"]
-    )
+    prop = get_prop_parameter(parameters)
     (
         train_assets,
         test_assets,
@@ -243,23 +291,10 @@ def split_single_dataset(experiment: Experiment, train_set: DatasetVersion):
         labels,
     ) = train_set.train_test_val_split([prop, (1 - prop) / 2, (1 - prop) / 2])
 
-    os.makedirs("data/train", exist_ok=True)
-    os.makedirs("data/test", exist_ok=True)
-    os.makedirs("data/val", exist_ok=True)
-    for asset in train_assets:
-        old_path = os.path.join("images", asset.filename)
-        new_path = os.path.join("data/train", asset.filename)
-        shutil.move(old_path, new_path)
-
-    for asset in test_assets:
-        old_path = os.path.join("images", asset.filename)
-        new_path = os.path.join("data/test", asset.filename)
-        shutil.move(old_path, new_path)
-
-    for asset in eval_assets:
-        old_path = os.path.join("images", asset.filename)
-        new_path = os.path.join("data/val", asset.filename)
-        shutil.move(old_path, new_path)
+    make_train_test_val_dirs()
+    move_images_in_train_test_val_folders(
+        train_assets=train_assets, test_assets=test_assets, eval_assets=eval_assets
+    )
 
     return train_assets, test_assets, eval_assets, train_rep, test_rep, val_rep, labels
 
