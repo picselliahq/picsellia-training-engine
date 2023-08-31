@@ -21,13 +21,14 @@ class AbstractTrainer(ABC):
         else:
             host = os.environ["host"]
 
-        if "organization_id" not in os.environ:
-            organization_id = None
+        if "organization_name" not in os.environ:
+            organization_name = None
         else:
-            organization_id = os.environ["organization_id"]
+            organization_name = os.environ["organization_name"]
 
-        client = Client(api_token=api_token, host=host, organization_id=organization_id)
-
+        client = Client(
+            api_token=api_token, host=host, organization_name=organization_name
+        )
         if "experiment_id" in os.environ:
             experiment_id = os.environ["experiment_id"]
 
