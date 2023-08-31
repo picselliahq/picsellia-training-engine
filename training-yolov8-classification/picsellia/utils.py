@@ -1,5 +1,6 @@
 from typing import Tuple, Any
 
+import numpy
 from PIL import Image
 import numpy as np
 import os
@@ -12,84 +13,6 @@ from picsellia.types.enums import AnnotationFileType
 from picsellia.exceptions import ResourceNotFoundError
 
 # from sklearn.metrics import f1_score, recall_score, precision_score
-
-
-def dataset(experiment, assets, count, split_type, new_size, n_classes):
-    X = []
-    for i in range(len(assets)):
-        path = os.path.join(experiment.png_dir, split_type, assets[i].filename)
-        x = Image.open(path).convert("RGB")
-        x = x.resize(new_size)
-        x = np.array(x)
-        X.append(x)
-
-    y = np.zeros(len(assets))
-    indices = np.cumsum(count["y"])
-    for i in range(len(indices) - 1):
-        y[indices[i] : indices[i + 1]] = np.ones(
-            len(y[indices[i] : indices[i + 1]])
-        ) * (i)
-    y = to_categorical(y, n_classes)
-
-    return np.asarray(X), y
-
-
-def recall_m(y_true, y_pred):
-    """
-    This function returns recall_score between y_true and y_pred
-    This function is ported as a metric to the Neural Network Models
-    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred
-    as input and returns recall score of the batch
-    """
-    true_positives = K.sum(
-        K.round(K.clip(y_true * y_pred, 0, 1))
-    )  # calculates number of true positives
-    possible_positives = K.sum(
-        K.round(K.clip(y_true, 0, 1))
-    )  # calculates number of actual positives
-    recall = true_positives / (
-        possible_positives + K.epsilon()
-    )  # K.epsilon takes care of non-zero divisions
-    return recall
-
-
-def precision_m(y_true, y_pred):
-    """
-    This function returns precison_score between y_true and y_pred
-    This function is ported as a metric to the Neural Network Models
-    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred
-    as input and returns prediction score of the batch
-    """
-    true_positives = K.sum(
-        K.round(K.clip(y_true * y_pred, 0, 1))
-    )  # calculates number of true positives
-    predicted_positives = K.sum(
-        K.round(K.clip(y_pred, 0, 1))
-    )  # calculates number of predicted positives
-    precision = true_positives / (
-        predicted_positives + K.epsilon()
-    )  # K.epsilon takes care of non-zero divisions
-    return precision
-
-
-def f1_micro(y_true, y_pred):
-    """
-    This function returns f1_score between y_true and y_pred
-    This
-    This function is ported as a metric to the Neural Network Models
-    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred
-    as input and returns f1 score of the batch
-    """
-    precision = precision_m(
-        y_true, y_pred
-    )  # calls precision metric and takes the score of precision of the batch
-    recall = recall_m(
-        y_true, y_pred
-    )  # calls recall metric and takes the score of precision of the batch
-    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
-
-
-dependencies = {"recall_m": recall_m, "precision_m": precision_m, "f1_micro": f1_micro}
 
 
 def create_and_log_labelmap(experiment: Experiment) -> dict:
@@ -135,15 +58,12 @@ def _create_class_directories(coco: COCO, base_imdir: str = None):
     for i in coco.cats:
         cat = coco.cats[i]
         class_folder = os.path.join(base_imdir, cat["name"])
-        print("cwd", os.getcwd())
         if not os.path.isdir(class_folder):
             os.makedirs(class_folder)
     print(f"Formatting {base_imdir} ..")
 
 
-def get_image_annotation(
-    coco: COCO, fnames: list[str], image: dict
-) -> tuple[None, None] | tuple[dict, dict]:
+def get_image_annotation(coco: COCO, fnames: list[str], image: dict) -> None | dict:
     if image["file_name"] not in fnames:
         return None
     ann = coco.loadAnns(coco.getAnnIds(image["id"]))
@@ -266,10 +186,18 @@ def move_images_in_train_test_val_folders(train_assets, test_assets, eval_assets
             new_location_path="data/train",
         )
     for asset in test_assets:
-        move_image(filename=asset.filename, new_location_path="data/test")
+        move_image(
+            filename=asset.filename,
+            old_location_path="images",
+            new_location_path="data/test",
+        )
 
     for asset in eval_assets:
-        move_image(filename=asset.filename, new_location_path="data/val")
+        move_image(
+            filename=asset.filename,
+            old_location_path="images",
+            new_location_path="data/val",
+        )
 
 
 def move_image(filename: str, old_location_path: str, new_location_path: str):
@@ -349,12 +277,6 @@ def order_repartition_according_labelmap(labelmap, repartition):
     return ordered_rep
 
 
-def log_labelmap(experiment: Experiment):
-    names = os.listdir("data/train")  # class names list
-    labelmap = {str(i): label for i, label in enumerate(sorted(names))}
-    experiment.log("labelmap", labelmap, "labelmap", replace=True)
-
-
 def predict_class(labelmap: dict, val_folder_path: str, model):
     gt_class = []
     pred_class = []
@@ -375,6 +297,12 @@ def predict_class(labelmap: dict, val_folder_path: str, model):
     return gt_class, pred_class
 
 
-def log_confusion_to_experiment(experiment: Experiment, labelmap, matrix):
-    confusion = {"categories": list(labelmap.values()), "values": matrix.tolist()}
+def format_confusion_matrix(labelmap: dict, matrix: numpy.ndarray) -> dict:
+    return {"categories": list(labelmap.values()), "values": matrix.tolist()}
+
+
+def log_confusion_to_experiment(
+    experiment: Experiment, labelmap: dict, matrix: numpy.ndarray
+):
+    confusion = format_confusion_matrix(labelmap=labelmap, matrix=matrix)
     experiment.log(name="confusion", data=confusion, type="heatmap")
