@@ -226,8 +226,6 @@ class TestYoloClassificationHelpers(unittest.TestCase):
         shutil.rmtree("data")
         shutil.rmtree("images")
         shutil.rmtree("train")
-        os.remove("data.zip")
-        os.remove("last.pt")
         os.remove("yolov8x-cls.pt")
 
     def test_preprocess_train_test(self):
