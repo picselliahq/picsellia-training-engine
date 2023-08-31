@@ -65,7 +65,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             ) = split_single_dataset(experiment=self.experiment, train_set=train_set)
             _move_all_files_in_class_directories(train_set=train_set)
             self.labelmap = log_split_dataset_repartition_to_experiment(
-                train_rep, test_rep, val_rep
+                self.experiment, train_rep, test_rep, val_rep
             )
             self.evaluation_ds = train_set
             self.evaluation_assets = eval_assets
