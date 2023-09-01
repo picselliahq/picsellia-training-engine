@@ -88,15 +88,17 @@ def get_picsellia_experiment(client: Client) -> Experiment:
         client: A Picsellia's client instance.
 
     Returns:
-        An Experiment instance if experiment_name is provided, else raises a RuntimeError.
+        An Experiment instance if experiment_name or experiment_id is provided, else raises a RuntimeError.
 
     Raises:
-        RuntimeError: If experiment_name is not available as an environment variable.
+        RuntimeError: If experiment_name or experiment_name is not available as an environment variable.
     """
 
     if experiment_name := os.environ.get("experiment_name"):
         picsellia_project = get_picsellia_project(client)
         return picsellia_project.get_experiment(experiment_name)
+    elif experiment_id := os.environ.get("experiment_id"):
+        return client.get_experiment_by_id(experiment_id)
     else:
         raise RuntimeError(
             "Cannot retrieve the Experiment, environment variable experiment_name must be specified."
@@ -119,7 +121,6 @@ def is_string_valid(line: str) -> bool:
     """
     line = line.rstrip("\n")
     return not (not line or all(ord(char) == 8 for char in line))
-
 
 
 def format_line(line: str) -> str:
@@ -156,7 +157,7 @@ def tail_f(log_file: TextIO) -> Generator[str, Any, None]:
         if not is_string_valid(line):
             time.sleep(0.04)
             continue
-        
+
         line = format_line(line)
 
         yield line
@@ -186,7 +187,8 @@ def start_log_monitoring(client: Client, log_file_path: str):
     except Exception:
         pass
 
-    logs = {section_header: {"datetime": str(datetime.now().isoformat()), "logs": {}}}
+    logs = {section_header: {"datetime": str(
+        datetime.now().isoformat()), "logs": {}}}
 
     with open(log_file_path, "r") as log_file:
         for line in tail_f(log_file):
@@ -224,7 +226,8 @@ def start_log_monitoring(client: Client, log_file_path: str):
             if re.match("---[0-9]---", line[:8]):
                 start_buffer = False
                 try:
-                    experiment.send_logging(buffer, section_header, special="buffer")
+                    experiment.send_logging(
+                        buffer, section_header, special="buffer")
                     experiment.line_nb += len(buffer) - 1
                 except Exception:
                     pass
@@ -248,7 +251,8 @@ def start_log_monitoring(client: Client, log_file_path: str):
                 if not replace_log:
                     try:
                         experiment.send_logging(line, section_header)
-                        logs[section_header]["logs"][str(experiment.line_nb)] = line
+                        logs[section_header]["logs"][str(
+                            experiment.line_nb)] = line
                     except Exception:
                         pass
                 else:
@@ -284,7 +288,8 @@ def end_log_monitoring(
     with open("{}-logs.json".format(experiment.id), "w") as json_log_file:
         if buffer:
             for i, line in enumerate(buffer):
-                logs[section_header]["logs"][str(experiment.line_nb + i)] = line
+                logs[section_header]["logs"][str(
+                    experiment.line_nb + i)] = line
             experiment.send_logging(buffer, section_header, special="buffer")
 
         logs["exit_code"] = {
@@ -293,7 +298,8 @@ def end_log_monitoring(
         }
         json.dump(logs, json_log_file)
 
-    experiment.send_logging(str(exit_code), section_header, special="exit_code")
+    experiment.send_logging(
+        str(exit_code), section_header, special="exit_code")
     experiment.store_logging_file("{}-logs.json".format(experiment.id))
 
     if exit_code == 0:
