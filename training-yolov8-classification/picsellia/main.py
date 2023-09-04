@@ -15,7 +15,7 @@ experiment = training_pipeline.experiment
 def on_train_epoch_end(trainer):
     metrics = trainer.metrics
     experiment.log("accuracy", float(metrics["metrics/accuracy_top1"]), "line")
-    experiment.log("val/loss", float(metrics["val/loss"]), "line")
+    experiment.log("test/loss", float(metrics["test/loss"]), "line")
 
 
 training_pipeline.model.add_callback("on_train_epoch_end", on_train_epoch_end)
