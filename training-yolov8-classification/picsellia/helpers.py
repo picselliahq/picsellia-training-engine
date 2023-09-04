@@ -106,13 +106,15 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
         accuracy = metrics.top1
         self.experiment.log("val/accuracy", float(accuracy), "value")
 
-        gt_class, pred_class = predict_evaluation_images(
+        ground_truths, predictions = predict_evaluation_images(
             labelmap=self.labelmap,
             val_folder_path=self.val_folder_path,
             model=self.model,
         )
-        classification_report(gt_class, pred_class, target_names=self.labelmap.values())
-        matrix = confusion_matrix(gt_class, pred_class)
+        classification_report(
+            ground_truths, predictions, target_names=self.labelmap.values()
+        )
+        matrix = confusion_matrix(ground_truths, predictions)
         log_confusion_to_experiment(
             experiment=self.experiment, labelmap=self.labelmap, matrix=matrix
         )
