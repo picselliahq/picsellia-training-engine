@@ -91,7 +91,7 @@ def get_picsellia_experiment(client: Client) -> Experiment:
         An Experiment instance if experiment_name or experiment_id is provided, else raises a RuntimeError.
 
     Raises:
-        RuntimeError: If experiment_name or experiment_name is not available as an environment variable.
+        RuntimeError: If experiment_name or experiment_id is not available as an environment variable.
     """
 
     if experiment_name := os.environ.get("experiment_name"):
