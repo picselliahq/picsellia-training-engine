@@ -12,7 +12,7 @@ from utils import (
     split_single_dataset,
     _move_all_files_in_class_directories,
     log_split_dataset_repartition_to_experiment,
-    predict_class,
+    predict_evaluation_images,
     log_confusion_to_experiment,
     create_and_log_labelmap,
 )
@@ -33,26 +33,26 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
 
     def prepare_data_for_training(self):
         (
-            is_split_two,
-            is_split_three,
+            has_two_datasets,
+            has_three_datasets,
             train_set,
             test_set,
             eval_set,
         ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
-        if is_split_three:
+        if has_three_datasets:
             download_triple_dataset(train_set, test_set, eval_set)
             _, _ = prepare_datasets_with_annotation(train_set, test_set, eval_set)
             self.evaluation_ds = eval_set
             self.evaluation_assets = self.evaluation_ds.list_assets()
 
-        elif is_split_two:
+        elif has_two_datasets:
             download_triple_dataset(train_set, test_set, eval_set)
             (
                 self.evaluation_ds,
                 self.evaluation_assets,
             ) = prepare_datasets_with_annotation(train_set, test_set, eval_set)
 
-        elif not is_split_two and not is_split_three:
+        elif not has_two_datasets and not has_three_datasets:
             train_set.download("images")
             (
                 train_assets,
@@ -64,8 +64,13 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
                 labels,
             ) = split_single_dataset(experiment=self.experiment, train_set=train_set)
             _move_all_files_in_class_directories(train_set=train_set)
-            self.labelmap = log_split_dataset_repartition_to_experiment(
-                self.experiment, train_rep, test_rep, val_rep
+            self.labelmap = create_and_log_labelmap(experiment=self.experiment)
+            log_split_dataset_repartition_to_experiment(
+                experiment=self.experiment,
+                labelmap=self.labelmap,
+                train_rep=train_rep,
+                test_rep=test_rep,
+                val_rep=val_rep,
             )
             self.evaluation_ds = train_set
             self.evaluation_assets = eval_assets
@@ -83,19 +88,25 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             patience=self.parameters["patience"],
             project=self.working_directory,
         )
+        self._save_weights()
+        self._save_onnx_model()
+
+    def _save_weights(self):
         self.experiment.store("weights", self.weights_path)
+
+    def _save_onnx_model(self):
         export_model = YOLO(self.weights_path)
         onnx_path = os.path.join(self.weights_dir_path, "last.onnx")
         export_model.export(format="onnx")
         self.experiment.store("model-latest", onnx_path)
 
-    def test(self):
+    def eval(self):
         self.model = YOLO(self.weights_path)
         metrics = self.model.val(data=self.data_path)
         accuracy = metrics.top1
         self.experiment.log("val/accuracy", float(accuracy), "value")
 
-        gt_class, pred_class = predict_class(
+        gt_class, pred_class = predict_evaluation_images(
             labelmap=self.labelmap,
             val_folder_path=self.val_folder_path,
             model=self.model,
@@ -105,8 +116,9 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
         log_confusion_to_experiment(
             experiment=self.experiment, labelmap=self.labelmap, matrix=matrix
         )
+        self._run_picsellia_evaluation()
 
-    def eval(self):
+    def _run_picsellia_evaluation(self):
         yolo_evaluator = ClassificationYOLOEvaluator(
             experiment=self.experiment,
             dataset=self.evaluation_ds,
