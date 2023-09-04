@@ -311,7 +311,7 @@ def predict_evaluation_images(
 
 def log_confusion_to_experiment(
     experiment: Experiment, labelmap: dict, matrix: numpy.ndarray
-):
+) -> None:
     confusion = format_confusion_matrix(labelmap=labelmap, matrix=matrix)
     experiment.log(name="confusion", data=confusion, type="heatmap")
 
