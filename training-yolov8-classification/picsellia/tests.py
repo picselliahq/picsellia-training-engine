@@ -15,7 +15,7 @@ from utils import (
     format_confusion_matrix,
     order_repartition_according_labelmap,
 )
-from helpers import Yolov8ClassificationTrainer
+from trainer import Yolov8ClassificationTrainer
 from picsellia import Client
 from datetime import date
 import time
@@ -93,9 +93,9 @@ class TestYoloClassificationUtils(unittest.TestCase):
         make_train_test_val_dirs()
         is_created = False
         if (
-            os.path.exists(self.train_path)
-            and os.path.exists(self.test_path)
-            and os.path.exists(self.val_path)
+                os.path.exists(self.train_path)
+                and os.path.exists(self.test_path)
+                and os.path.exists(self.val_path)
         ):
             is_created = True
         self.assertTrue(is_created)
@@ -114,9 +114,9 @@ class TestYoloClassificationUtils(unittest.TestCase):
         _create_class_directories(coco=self.coco_train, base_imdir=self.train_path)
         is_created = False
         if (
-            os.path.exists(os.path.join(self.train_path, "covid"))
-            and os.path.exists(os.path.join(self.train_path, "normal"))
-            and os.path.exists(os.path.join(self.train_path, "pneumonia"))
+                os.path.exists(os.path.join(self.train_path, "covid"))
+                and os.path.exists(os.path.join(self.train_path, "normal"))
+                and os.path.exists(os.path.join(self.train_path, "pneumonia"))
         ):
             is_created = True
         self.assertTrue(is_created)

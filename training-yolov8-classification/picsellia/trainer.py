@@ -2,8 +2,7 @@ import os
 from ultralytics import YOLO
 from sklearn.metrics import classification_report, confusion_matrix
 from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
-from trainer.abstract_trainer import AbstractTrainer
-
+from abstract_trainer.trainer import AbstractTrainer
 
 from utils import (
     get_train_test_eval_datasets_from_experiment,

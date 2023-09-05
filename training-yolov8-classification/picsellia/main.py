@@ -1,7 +1,7 @@
 import os
 import logging
 
-from helpers import Yolov8ClassificationTrainer
+from trainer import Yolov8ClassificationTrainer
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
