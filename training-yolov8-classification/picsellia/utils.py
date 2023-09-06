@@ -1,18 +1,18 @@
-from typing import Tuple, Any
-
+import logging
 import numpy
+import shutil
 from PIL import Image
 import numpy as np
 import os
+
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.dataset_version import DatasetVersion
-
-from pycocotools.coco import COCO
-import shutil
 from picsellia.types.enums import AnnotationFileType
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.label import Label
+
+from pycocotools.coco import COCO
 from ultralytics.yolo.engine.model import YOLO
 
 
@@ -30,7 +30,7 @@ def get_train_test_eval_datasets_from_experiment(
             experiment
         )
     elif number_of_attached_datasets == 1:
-        print(
+        logging.info(
             "We only found one dataset inside your experiment, the train/test/split will be performed automatically."
         )
         train_set: DatasetVersion = experiment.list_attached_dataset_versions()[0]
@@ -38,7 +38,9 @@ def get_train_test_eval_datasets_from_experiment(
         eval_set = None
 
     else:
-        print("We need at least 1 and at most 3 datasets attached to this experiment ")
+        logging.info(
+            "We need at least 1 and at most 3 datasets attached to this experiment "
+        )
 
     return has_two_datasets, has_three_datasets, train_set, test_set, eval_set
 
@@ -85,8 +87,8 @@ def _transform_two_attached_datasets_to_three(
 
 
 def create_and_log_labelmap(experiment: Experiment) -> dict:
-    names = os.listdir("data/train")  # class names list
-    labelmap = {str(i): label for i, label in enumerate(sorted(names))}
+    class_names_list = os.listdir("data/train")
+    labelmap = {str(i): label for i, label in enumerate(sorted(class_names_list))}
     experiment.log("labelmap", labelmap, "labelmap", replace=True)
     return labelmap
 
@@ -142,7 +144,7 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
             old_location_path=base_imdir,
             new_location_path=os.path.join(base_imdir, cat["name"]),
         )
-    print(f"Formatting {base_imdir} .. OK")
+    logging.info(f"Formatting {base_imdir} .. OK")
     return base_imdir
 
 
@@ -152,7 +154,7 @@ def _create_class_directories(coco: COCO, base_imdir: str = None) -> None:
         class_folder = os.path.join(base_imdir, cat["name"])
         if not os.path.isdir(class_folder):
             os.makedirs(class_folder)
-    print(f"Formatting {base_imdir} ..")
+    logging.info(f"Formatting {base_imdir} ..")
 
 
 def get_image_annotation(coco: COCO, fnames: list[str], image: dict) -> None | dict:
@@ -160,7 +162,7 @@ def get_image_annotation(coco: COCO, fnames: list[str], image: dict) -> None | d
         return None
     ann = coco.loadAnns(coco.getAnnIds(image["id"]))
     if len(ann) > 1:
-        print(f"{image['file_name']} has more than one class. Skipping")
+        logging.info(f"{image['file_name']} has more than one class. Skipping")
     ann = ann[0]
     cat = coco.loadCats(ann["category_id"])[0]
 
@@ -239,7 +241,7 @@ def move_image(filename: str, old_location_path: str, new_location_path: str) ->
     try:
         shutil.move(old_path, new_path)
     except Exception as e:
-        print(f"{filename} skipped.")
+        logging.info(f"{filename} skipped.")
 
 
 def download_triple_dataset(
@@ -300,7 +302,6 @@ def predict_evaluation_images(
                 for filepath in os.listdir(label_path)
             ]
             for image in file_list:
-                # pred = model.predict(source=image)
                 image = Image.open(image).convert("RGB")
                 pred = model(np.array(image))
                 pred_label = np.argmax([float(score) for score in list(pred[0].probs)])
