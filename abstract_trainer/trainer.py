@@ -43,8 +43,5 @@ class AbstractTrainer(ABC):
     def train(self):
         pass
 
-    def test(self):
-        pass
-
     def eval(self):
         pass

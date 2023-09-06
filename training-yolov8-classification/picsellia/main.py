@@ -20,5 +20,4 @@ def on_train_epoch_end(trainer):
 
 training_pipeline.model.add_callback("on_train_epoch_end", on_train_epoch_end)
 training_pipeline.train()
-training_pipeline.test()
 training_pipeline.eval()
