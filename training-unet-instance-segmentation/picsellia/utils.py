@@ -35,6 +35,34 @@ def download_image_mask_assets(
     return image_files, mask_files
 
 
+def get_image_mask_assets(
+    experiment: Experiment, dataset_list: list
+) -> tuple[DatasetVersion, DatasetVersion]:
+    attached_dataset_names = [
+        dataset_version.version for dataset_version in dataset_list
+    ]
+    if len(attached_dataset_names) != 2:
+        raise Exception(
+            "You must have exactly two datasets, 'original' for the original images, and 'masks' for the masks "
+        )
+
+    try:
+        image_assets = experiment.get_dataset(name="original")
+    except Exception:
+        raise ResourceNotFoundError(
+            "Can't find 'original' datasetversion. Expecting 'original' and 'masks', as attached datasets"
+        )
+
+    try:
+        mask_assets = experiment.get_dataset(name="masks")
+    except Exception:
+        raise ResourceNotFoundError(
+            "Can't find 'masks' datasetversion. Expecting 'original' and 'masks', as attached datasets"
+        )
+
+    return image_assets, mask_assets
+
+
 def split_train_test_val_filenames(
     image_files: list[str],
 ) -> tuple[list[str], list[str], list[str]]:
@@ -255,31 +283,3 @@ def format_and_log_eval_metrics(experiment: Experiment, metrics: list, scores: l
         eval_metrics[metric.__name__] = float("{:.5f}".format(value))
 
     experiment.log(name="eval-results", type=LogType.TABLE, data=eval_metrics)
-
-
-def get_image_mask_assets(
-    experiment: Experiment, dataset_list: list
-) -> tuple[DatasetVersion, DatasetVersion]:
-    attached_dataset_names = [
-        dataset_version.version for dataset_version in dataset_list
-    ]
-    if len(attached_dataset_names) != 2:
-        raise Exception(
-            "You must have exactly two datasets, 'original' for the original images, and 'masks' for the masks "
-        )
-
-    try:
-        image_assets = experiment.get_dataset(name="original")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Can't find 'original' datasetversion. Expecting 'original' and 'masks', as attached datasets"
-        )
-
-    try:
-        mask_assets = experiment.get_dataset(name="masks")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Can't find 'masks' datasetversion. Expecting 'original' and 'masks', as attached datasets"
-        )
-
-    return image_assets, mask_assets
