@@ -121,7 +121,7 @@ def move_images_and_masks_to_directories(
         shutil.copy(mask_file_path, mask_dest)
 
 
-def _find_mask_by_image(image_filename: str, mask_files: list[str]):
+def _find_mask_by_image(image_filename: str, mask_files: list[str]) -> str:
     base_filename = image_filename.split("- ")[1].split(".")[0]
     for mask_file in mask_files:
         if base_filename in mask_file:
@@ -165,7 +165,6 @@ class Dataset:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mask = cv2.imread(self.masks_filenames[i], 0)
 
-        # extract certain classes from mask
         masks = [(mask == v) for v in self.class_values]
         mask = np.stack(masks, axis=-1).astype("float")
 
