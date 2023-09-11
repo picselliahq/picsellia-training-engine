@@ -152,7 +152,9 @@ class Dataset:
         self.masks_filenames = [
             os.path.join(
                 masks_dir,
-                image_id.split(".")[0] + "." + get_mask_file_extension(masks_dir),
+                image_id.split(".")[0]
+                + "."
+                + get_mask_file_extension(os.listdir(masks_dir)[0]),
             )
             for image_id in self.ids
         ]
@@ -186,8 +188,8 @@ class Dataset:
         return len(self.ids)
 
 
-def get_mask_file_extension(masks_dir: str) -> str:
-    return os.listdir(masks_dir)[0].split(".")[1]
+def get_mask_file_extension(mask_file_path: str) -> str:
+    return mask_file_path.split(".")[1]
 
 
 def extract_classes_from_mask(mask: np.ndarray, class_values: list) -> np.ndarray:

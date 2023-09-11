@@ -1,0 +1,168 @@
+import os
+import unittest
+from picsellia import Client
+from datetime import date
+import time
+from utils import (
+    get_classes_from_mask_dataset,
+    download_image_mask_assets,
+    get_image_mask_assets,
+    split_train_test_val_filenames,
+    makedirs_images_masks,
+    _find_mask_by_image,
+    _change_mask_filename_to_match_image,
+    get_mask_file_extension,
+)
+from picsellia.sdk.dataset import DatasetVersion
+
+TOKEN = os.environ["api_token"]
+ORGA_NAME = os.environ["TEST_ORGA"]
+
+
+class TestUnetSegmentation(unittest.TestCase):
+    dataset = None
+    experiment = None
+    project = None
+    client = None
+    organization_name: str
+    token: str
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.token = TOKEN
+        cls.organization_name = ORGA_NAME
+        cls.client = Client(
+            api_token=cls.token, organization_name=cls.organization_name
+        )
+        cls.project = cls.client.create_project(
+            name=f"test_unet{str(date.today())}-{str(time.time())}"
+        )
+        cls.model_version = cls.client.get_model_version_by_id(
+            "018a703e-80fc-7d8f-9983-1430e5f7a427"
+        )
+
+        cls.experiment = cls.project.create_experiment(name="car-segmentation-unet")
+        cls.dataset = cls.client.get_dataset_by_id(
+            "018a64b5-c2b7-7667-8242-83583dfdf176"
+        )
+
+        cls.experiment.attach_dataset(
+            name="original", dataset_version=cls.dataset.get_version("original")
+        )
+        cls.experiment.attach_dataset(
+            name="masks", dataset_version=cls.dataset.get_version("masks")
+        )
+
+        cls.image_path = os.path.join(cls.experiment.png_dir, "original")
+        cls.mask_path = os.path.join(cls.experiment.png_dir, "masks")
+
+        cls.x_train_dir = os.path.join(cls.experiment.png_dir, "train-images")
+        cls.y_train_dir = os.path.join(cls.experiment.png_dir, "train-masks")
+
+        cls.x_test_dir = os.path.join(cls.experiment.png_dir, "test-images")
+        cls.y_test_dir = os.path.join(cls.experiment.png_dir, "test-masks")
+
+        cls.x_eval_dir = os.path.join(cls.experiment.png_dir, "eval-images")
+        cls.y_eval_dir = os.path.join(cls.experiment.png_dir, "eval-masks")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.project.delete()
+
+    def test_get_classes_from_mask_dataset(self):
+        expected_results = ["car"]
+        results = get_classes_from_mask_dataset(self.experiment)
+        self.assertEqual(expected_results, results)
+
+    def test_download_image_mask_assets(self):
+        image_files, mask_files = download_image_mask_assets(
+            experiment=self.experiment,
+            image_path=self.image_path,
+            mask_path=self.mask_path,
+        )
+        self.assertNotEquals((image_files, mask_files), ([], []))
+        self.assertTrue(os.path.exists(self.image_path))
+        self.assertTrue(os.path.exists(self.mask_path))
+
+    def test_get_image_mask_assets(self):
+        image_assets, mask_assets = get_image_mask_assets(
+            experiment=self.experiment,
+            dataset_list=self.experiment.list_attached_dataset_versions(),
+        )
+
+        self.assertEqual(
+            (type(image_assets), type(mask_assets)), (DatasetVersion, DatasetVersion)
+        )
+
+    def test_split_train_test_val_filenames(self):
+        image_files = [
+            "orig - DS834.JPG",
+            "orig - DS1058.jpg",
+            "orig - DS500.jpg",
+            "orig - DS1258.JPG",
+            "orig - DS758.JPG",
+            "orig - DS559.JPG",
+            "orig - DS420.jpg",
+            "orig - DS1054.JPG",
+            "orig - DS1290.jpg",
+        ]
+
+        (
+            train_image_filenames,
+            test_images_filenames,
+            eval_images_filenames,
+        ) = split_train_test_val_filenames(image_files=image_files)
+
+        self.assertEqual(len(train_image_filenames), 7)
+        self.assertEqual(len(test_images_filenames), 1)
+        self.assertEqual(len(eval_images_filenames), 1)
+
+    def test_makedirs_images_masks(self):
+        all_directories_are_created = True
+        makedirs_images_masks(
+            x_train_dir=self.x_train_dir,
+            y_train_dir=self.y_train_dir,
+            x_test_dir=self.x_test_dir,
+            y_test_dir=self.y_test_dir,
+            x_eval_dir=self.x_eval_dir,
+            y_eval_dir=self.y_eval_dir,
+        )
+        for directory_path in [
+            self.x_train_dir,
+            self.y_test_dir,
+            self.x_test_dir,
+            self.y_test_dir,
+            self.y_eval_dir,
+            self.x_eval_dir,
+        ]:
+            if not os.path.exists(directory_path):
+                all_directories_are_created = False
+
+        self.assertTrue(all_directories_are_created)
+
+    def test_find_mask_by_image(self):
+        mask_files = [
+            "mask - DS944.png",
+            "mask - DS1238.png",
+            "mask - DS363.png",
+            "mask - DS982.png",
+        ]
+        resulting_mask_file = _find_mask_by_image(
+            image_filename="orig - DS1238.jpg", mask_files=mask_files
+        )
+        expected_mask_file = "mask - DS1238.png"
+        self.assertEqual(expected_mask_file, resulting_mask_file)
+
+    def test_change_mask_filename_to_match_image(self):
+        new_mask_filename = _change_mask_filename_to_match_image(
+            mask_prefix="mask",
+            image_prefix="orig",
+            old_mask_filename="mask - DS944.png",
+        )
+        expected_mask_filename = "orig - DS944.png"
+
+        self.assertEqual(expected_mask_filename, new_mask_filename)
+
+    def test_get_mask_file_extension(self):
+        file_extension = get_mask_file_extension(mask_file_path="home/mask - DS944.png")
+        self.assertEqual("png", file_extension)
