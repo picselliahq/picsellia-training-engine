@@ -65,10 +65,16 @@ class UnetSegmentationTrainer(AbstractTrainer):
         ]
 
     def prepare_data_for_training(self):
+        self._download_data()
+        self._split_and_move_data()
+        self._create_train_test_eval_dataloaders()
+
+    def _download_data(self):
         self.image_files, self.mask_files = download_image_mask_assets(
             self.experiment, self.image_path, self.mask_path
         )
 
+    def _split_and_move_data(self):
         (
             self.train_images_filenames,
             self.test_images_filenames,
@@ -83,7 +89,6 @@ class UnetSegmentationTrainer(AbstractTrainer):
             y_eval_dir=self.y_eval_dir,
         )
         self._move_all_images_masks_to_directories()
-        self._create_train_test_eval_dataloaders()
 
     def _move_all_images_masks_to_directories(self):
         dataset_mappings = [
