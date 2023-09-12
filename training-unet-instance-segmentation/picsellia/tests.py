@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 from picsellia import Client
 from datetime import date
@@ -17,6 +18,7 @@ from utils import (
     Dataset,
     Dataloader,
 )
+from trainer import UnetSegmentationTrainer
 from picsellia.sdk.dataset import DatasetVersion
 
 TOKEN = os.environ["api_token"]
@@ -24,6 +26,7 @@ ORGA_NAME = os.environ["TEST_ORGA"]
 
 
 class TestUnetSegmentation(unittest.TestCase):
+    model_version = None
     dataset = None
     experiment = None
     project = None
@@ -47,7 +50,7 @@ class TestUnetSegmentation(unittest.TestCase):
 
         cls.experiment = cls.project.create_experiment(name="car-segmentation-unet")
         cls.dataset = cls.client.get_dataset_by_id(
-            "018a64b5-c2b7-7667-8242-83583dfdf176"
+            "018a89c6-0bc8-7de8-8ba2-487fd24567ad"
         )
 
         cls.experiment.attach_dataset(
@@ -55,6 +58,15 @@ class TestUnetSegmentation(unittest.TestCase):
         )
         cls.experiment.attach_dataset(
             name="masks", dataset_version=cls.dataset.get_version("masks")
+        )
+        cls.model_version = cls.client.get_model_version_by_id(
+            "018a703e-80fc-7d8f-9983-1430e5f7a427"
+        )
+        cls.experiment.log_parameters(
+            {"epochs": 1, "batch_size": 2, "learning_rate": 0.0001}
+        )
+        cls.experiment.attach_model_version(
+            model_version=cls.model_version, do_attach_base_parameters=False
         )
 
         cls.image_path = os.path.join(cls.experiment.png_dir, "original")
@@ -69,9 +81,14 @@ class TestUnetSegmentation(unittest.TestCase):
         cls.x_eval_dir = os.path.join(cls.experiment.png_dir, "eval-images")
         cls.y_eval_dir = os.path.join(cls.experiment.png_dir, "eval-masks")
 
+        os.environ["experiment_id"] = str(cls.experiment.id)
+        cls.training_pipeline = UnetSegmentationTrainer()
+
     @classmethod
     def tearDownClass(cls) -> None:
         cls.project.delete()
+        if os.path.isdir(cls.experiment.name):
+            shutil.rmtree(cls.experiment.name)
 
     def test_get_classes_from_mask_dataset(self):
         expected_results = ["car"]
@@ -115,7 +132,7 @@ class TestUnetSegmentation(unittest.TestCase):
             train_image_filenames,
             test_images_filenames,
             eval_images_filenames,
-        ) = split_train_test_val_filenames(image_files=image_files)
+        ) = split_train_test_val_filenames(image_files=image_files, seed=11)
 
         self.assertEqual(len(train_image_filenames), 7)
         self.assertEqual(len(test_images_filenames), 1)
@@ -191,39 +208,71 @@ class TestUnetSegmentation(unittest.TestCase):
 
         self.assertIsNone(np.testing.assert_array_equal(expected_result, result))
 
-    def test_dataset_constructor(self):
-        images_dir = "test_files/images"
-        masks_dir = "test_files/masks"
-        classes = ["class1"]
-        augmentation = None
-        preprocessing = None
-        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
+    def test_launch_training_pipeline(self):
+        self.training_pipeline.prepare_data_for_training()
+        directories_to_check = [
+            self.training_pipeline.x_train_dir,
+            self.training_pipeline.y_train_dir,
+            self.training_pipeline.x_test_dir,
+            self.training_pipeline.y_test_dir,
+            self.training_pipeline.x_eval_dir,
+            self.training_pipeline.y_eval_dir,
+        ]
+        for directory in directories_to_check:
+            self.assertGreaterEqual(len(os.listdir(directory)), 1)
+        self.assertNotEquals(self.training_pipeline.train_dataloader, None)
+        self.assertNotEquals(self.training_pipeline.test_dataloader, None)
+        self.assertNotEquals(self.training_pipeline.eval_dataloader, None)
 
-        self.assertEqual(dataset.augmentation, augmentation)
-        self.assertEqual(dataset.preprocessing, preprocessing)
-        self.assertEqual(len(dataset), len(os.listdir(images_dir)))
+        self.training_pipeline.train()
+        self.assertTrue(os.path.isfile(self.training_pipeline.best_model_path))
+
+        self.training_pipeline.eval()
+        self.assertNotEquals(
+            type(self.training_pipeline.experiment.get_log(name="eval-results").data),
+            None,
+        )
+
+
+class TestDataset(unittest.TestCase):
+    preprocessing = None
+    augmentation = None
+    masks_dir = None
+    images_dir = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.images_dir = "test_files/images"
+        cls.masks_dir = "test_files/masks"
+        classes = ["class1"]
+        cls.dataset = Dataset(
+            cls.images_dir,
+            cls.masks_dir,
+            classes,
+            cls.augmentation,
+            cls.preprocessing,
+        )
+
+    def test_dataset_constructor(self):
+        self.assertEqual(self.dataset.augmentation, self.augmentation)
+        self.assertEqual(self.dataset.preprocessing, self.preprocessing)
+        self.assertEqual(len(self.dataset), len(os.listdir(self.images_dir)))
 
     def test_get_item_dataset(self):
-        images_dir = "test_files/images"
-        masks_dir = "test_files/masks"
-        classes = ["class1"]
-        augmentation = None
-        preprocessing = None
-        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
         index = 0
-        image, mask = dataset[index]
+        image, mask = self.dataset[index]
         self.assertIsInstance(image, np.ndarray)
         self.assertIsInstance(mask, np.ndarray)
         self.assertEqual(image.shape[-1], 3)
         self.assertEqual(mask.shape[-1], 1)
 
     def test_get_item_dataset_multiclass(self):
-        images_dir = "test_files/images"
-        masks_dir = "test_files/masks"
         classes = ["class1", "class2"]
         augmentation = None
         preprocessing = None
-        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
+        dataset = Dataset(
+            self.images_dir, self.masks_dir, classes, augmentation, preprocessing
+        )
         index = 0
         image, mask = dataset[index]
         self.assertIsInstance(image, np.ndarray)
@@ -232,21 +281,49 @@ class TestUnetSegmentation(unittest.TestCase):
         self.assertEqual(mask.shape[-1], len(classes) + 1)
 
     def test_len_dataset(self):
-        images_dir = "test_files/images"
-        masks_dir = "test_files/masks"
         classes = ["class1", "class2"]
         augmentation = None
         preprocessing = None
-        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
-        expected_length = len(os.listdir(images_dir))
+        dataset = Dataset(
+            self.images_dir, self.masks_dir, classes, augmentation, preprocessing
+        )
+        expected_length = len(os.listdir(self.images_dir))
         actual_length = len(dataset)
 
         self.assertEqual(actual_length, expected_length)
 
-    def test_dataloader_constructor(self):
-        dataset = Dataset("test_files/images", "test_files/masks", ["class1"])
-        batch_size = 4
-        shuffle = True
-        dataloader = Dataloader(dataset, batch_size=batch_size, shuffle=shuffle)
+
+class TestDataloader(unittest.TestCase):
+    batch_size = 4
+    shuffle = True
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.dataset = Dataset("test_files/images", "test_files/masks", ["class1"])
+
+    def test_dataloader_constructor(self, batch_size=None, shuffle=True):
+        dataloader = Dataloader(self.dataset, batch_size=batch_size, shuffle=shuffle)
         self.assertEqual(dataloader.batch_size, batch_size)
         self.assertEqual(dataloader.shuffle, shuffle)
+
+    def test_get_item_dataloader(self):
+        batch_size = 2
+        dataloader = Dataloader(self.dataset, batch_size=batch_size)
+        index = 0
+        batch = dataloader[index]
+        self.assertIsInstance(batch, list)
+        self.assertEqual(len(batch), 2)  # Check the batch size
+        self.assertIsInstance(batch[0], np.ndarray)
+        self.assertIsInstance(batch[1], np.ndarray)
+
+    def test_get_len_dataloader(self):
+        batch_size = 2
+        dataloader = Dataloader(self.dataset, batch_size=batch_size)
+        expected_length = len(self.dataset) // batch_size
+        actual_length = len(dataloader)
+
+        self.assertEqual(expected_length, actual_length)
+
+
+if __name__ == "__main__":
+    unittest.main()
