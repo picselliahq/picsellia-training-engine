@@ -70,7 +70,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         )
 
         (
-            self.train_image_filenames,
+            self.train_images_filenames,
             self.test_images_filenames,
             self.eval_images_filenames,
         ) = split_train_test_val_filenames(image_files=self.image_files, seed=11)
@@ -86,31 +86,21 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self._create_train_test_eval_dataloaders()
 
     def _move_all_images_masks_to_directories(self):
-        move_images_and_masks_to_directories(
-            image_path=self.image_path,
-            mask_path=self.mask_path,
-            image_list=self.train_image_filenames,
-            mask_list=self.mask_files,
-            dest_image_dir=self.x_train_dir,
-            dest_mask_dir=self.y_train_dir,
-        )
+        dataset_mappings = [
+            (self.train_images_filenames, self.x_train_dir, self.y_train_dir),
+            (self.test_images_filenames, self.x_test_dir, self.y_test_dir),
+            (self.eval_images_filenames, self.x_eval_dir, self.y_eval_dir),
+        ]
 
-        move_images_and_masks_to_directories(
-            image_path=self.image_path,
-            mask_path=self.mask_path,
-            image_list=self.test_images_filenames,
-            mask_list=self.mask_files,
-            dest_image_dir=self.x_test_dir,
-            dest_mask_dir=self.y_test_dir,
-        )
-        move_images_and_masks_to_directories(
-            image_path=self.image_path,
-            mask_path=self.mask_path,
-            image_list=self.eval_images_filenames,
-            mask_list=self.mask_files,
-            dest_image_dir=self.x_eval_dir,
-            dest_mask_dir=self.y_eval_dir,
-        )
+        for image_list, dest_image_dir, dest_mask_dir in dataset_mappings:
+            move_images_and_masks_to_directories(
+                image_path=self.image_path,
+                mask_path=self.mask_path,
+                image_list=image_list,
+                mask_list=self.mask_files,
+                dest_image_dir=dest_image_dir,
+                dest_mask_dir=dest_mask_dir,
+            )
 
     def _create_train_test_eval_dataloaders(self):
         train_dataset = Dataset(
