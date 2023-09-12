@@ -38,6 +38,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.y_eval_dir = os.path.join(self.experiment.png_dir, "eval-masks")
 
         self.backbone = "efficientnetb1"
+        self.parameters = self.experiment.get_log("parameters").data
         self.preprocess_input = sm.get_preprocessing(self.backbone)
         self.classes = get_classes_from_mask_dataset(self.experiment)
         self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
@@ -137,7 +138,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.eval_dataloader = Dataloader(eval_dataset, batch_size=1, shuffle=False)
 
     def train(self):
-        epochs = int(self.parameters.get("epochs", 5))
+        epochs = int(self.parameters.get("epochs", 1))
         learning_rate = self.parameters.get("learning_rate", 5e-4)
         activation = "sigmoid" if self.n_classes == 1 else "softmax"
 
