@@ -3,6 +3,7 @@ import unittest
 from picsellia import Client
 from datetime import date
 import time
+import numpy as np
 from utils import (
     get_classes_from_mask_dataset,
     download_image_mask_assets,
@@ -12,6 +13,9 @@ from utils import (
     _find_mask_by_image,
     _change_mask_filename_to_match_image,
     get_mask_file_extension,
+    extract_classes_from_mask,
+    Dataset,
+    Dataloader,
 )
 from picsellia.sdk.dataset import DatasetVersion
 
@@ -153,6 +157,18 @@ class TestUnetSegmentation(unittest.TestCase):
         expected_mask_file = "mask - DS1238.png"
         self.assertEqual(expected_mask_file, resulting_mask_file)
 
+    def test_find_mask_by_image_not_found(self):
+        mask_files = [
+            "mask - DS944.png",
+            "mask - DS363.png",
+            "mask - DS982.png",
+        ]
+        image_filename = "orig - DS1238.jpg"
+        with self.assertRaises(ValueError) as context:
+            _find_mask_by_image(image_filename, mask_files)
+
+        self.assertIn("No mask found for image", str(context.exception))
+
     def test_change_mask_filename_to_match_image(self):
         new_mask_filename = _change_mask_filename_to_match_image(
             mask_prefix="mask",
@@ -166,3 +182,71 @@ class TestUnetSegmentation(unittest.TestCase):
     def test_get_mask_file_extension(self):
         file_extension = get_mask_file_extension(mask_file_path="home/mask - DS944.png")
         self.assertEqual("png", file_extension)
+
+    def test_extract_classes_from_mask(self):
+        mask = np.array([[1, 1, 2], [2, 3, 3]])
+        class_values = [1]
+        expected_result = np.array([[[1.0], [1.0], [0.0]], [[0.0], [0.0], [0.0]]])
+        result = extract_classes_from_mask(mask, class_values)
+
+        self.assertIsNone(np.testing.assert_array_equal(expected_result, result))
+
+    def test_dataset_constructor(self):
+        images_dir = "test_files/images"
+        masks_dir = "test_files/masks"
+        classes = ["class1"]
+        augmentation = None
+        preprocessing = None
+        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
+
+        self.assertEqual(dataset.augmentation, augmentation)
+        self.assertEqual(dataset.preprocessing, preprocessing)
+        self.assertEqual(len(dataset), len(os.listdir(images_dir)))
+
+    def test_get_item_dataset(self):
+        images_dir = "test_files/images"
+        masks_dir = "test_files/masks"
+        classes = ["class1"]
+        augmentation = None
+        preprocessing = None
+        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
+        index = 0
+        image, mask = dataset[index]
+        self.assertIsInstance(image, np.ndarray)
+        self.assertIsInstance(mask, np.ndarray)
+        self.assertEqual(image.shape[-1], 3)
+        self.assertEqual(mask.shape[-1], 1)
+
+    def test_get_item_dataset_multiclass(self):
+        images_dir = "test_files/images"
+        masks_dir = "test_files/masks"
+        classes = ["class1", "class2"]
+        augmentation = None
+        preprocessing = None
+        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
+        index = 0
+        image, mask = dataset[index]
+        self.assertIsInstance(image, np.ndarray)
+        self.assertIsInstance(mask, np.ndarray)
+        self.assertEqual(image.shape[-1], 3)
+        self.assertEqual(mask.shape[-1], len(classes) + 1)
+
+    def test_len_dataset(self):
+        images_dir = "test_files/images"
+        masks_dir = "test_files/masks"
+        classes = ["class1", "class2"]
+        augmentation = None
+        preprocessing = None
+        dataset = Dataset(images_dir, masks_dir, classes, augmentation, preprocessing)
+        expected_length = len(os.listdir(images_dir))
+        actual_length = len(dataset)
+
+        self.assertEqual(actual_length, expected_length)
+
+    def test_dataloader_constructor(self):
+        dataset = Dataset("test_files/images", "test_files/masks", ["class1"])
+        batch_size = 4
+        shuffle = True
+        dataloader = Dataloader(dataset, batch_size=batch_size, shuffle=shuffle)
+        self.assertEqual(dataloader.batch_size, batch_size)
+        self.assertEqual(dataloader.shuffle, shuffle)
