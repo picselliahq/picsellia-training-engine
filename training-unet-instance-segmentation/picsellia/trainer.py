@@ -1,5 +1,9 @@
-from abstract_trainer.trainer import AbstractTrainer
 import os
+import segmentation_models as sm
+import keras
+from picsellia.exceptions import ResourceNotFoundError
+
+from abstract_trainer.trainer import AbstractTrainer
 from utils import (
     split_train_test_val_filenames,
     makedirs_images_masks,
@@ -13,12 +17,6 @@ from utils import (
     download_image_mask_assets,
     get_classes_from_mask_dataset,
 )
-
-os.environ["SM_FRAMEWORK"] = "tf.keras"
-
-import segmentation_models as sm
-import keras
-from picsellia.exceptions import ResourceNotFoundError
 
 
 class UnetSegmentationTrainer(AbstractTrainer):
@@ -75,7 +73,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
             self.train_image_filenames,
             self.test_images_filenames,
             self.eval_images_filenames,
-        ) = split_train_test_val_filenames(image_files=self.image_files)
+        ) = split_train_test_val_filenames(image_files=self.image_files, seed=11)
         makedirs_images_masks(
             x_train_dir=self.x_train_dir,
             y_train_dir=self.y_train_dir,

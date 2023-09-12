@@ -64,9 +64,9 @@ def get_image_mask_assets(
 
 
 def split_train_test_val_filenames(
-    image_files: list[str],
+    image_files: list[str], seed: int
 ) -> tuple[list[str], list[str], list[str]]:
-    random.Random(11).shuffle(image_files)
+    random.Random(seed).shuffle(image_files)
     nbr_images = len(image_files)
     train_image_filenames, test_images_filenames, eval_images_filenames = np.split(
         image_files, [int(nbr_images * 0.8), int(nbr_images * 0.9)]
@@ -102,9 +102,12 @@ def move_images_and_masks_to_directories(
     dest_mask_dir: str,
 ):
     for image_filename in tqdm.tqdm(image_list):
-        mask_filename = _find_mask_by_image(
-            image_filename=image_filename, mask_files=mask_list
-        )
+        try:
+            mask_filename = _find_mask_by_image(
+                image_filename=image_filename, mask_files=mask_list
+            )
+        except ValueError:
+            continue
 
         image_dest = os.path.join(dest_image_dir, image_filename)
         mask_dest = os.path.join(
@@ -126,6 +129,7 @@ def _find_mask_by_image(image_filename: str, mask_files: list[str]) -> str:
     for mask_file in mask_files:
         if base_filename in mask_file:
             return mask_file
+    raise ValueError(f"No mask found for image {image_filename}")
 
 
 def _change_mask_filename_to_match_image(
