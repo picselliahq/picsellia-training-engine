@@ -25,7 +25,7 @@ from utils import (
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 
-logging.getLogger("experiment").setLevel(logging.INFO)
+logging.getLogger("picsellia").setLevel(logging.INFO)
 
 experiment: Experiment = get_experiment()
 

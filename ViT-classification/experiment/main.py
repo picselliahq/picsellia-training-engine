@@ -28,7 +28,7 @@ os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
-logging.getLogger("experiment").setLevel(logging.INFO)
+logging.getLogger("picsellia").setLevel(logging.INFO)
 
 if "api_token" not in os.environ:
     raise RuntimeError("You must set an api_token to run this image")

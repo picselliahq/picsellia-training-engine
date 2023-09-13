@@ -12,7 +12,7 @@ os.environ["PYTHONUNBUFFERED"] = "1"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 
-logging.getLogger("experiment").setLevel(logging.INFO)
+logging.getLogger("picsellia").setLevel(logging.INFO)
 
 experiment = processing.get_experiment()
 

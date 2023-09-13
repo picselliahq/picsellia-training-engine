@@ -40,7 +40,7 @@ FROM picsellia/cuda:<base-tag>
 COPY your-custom-image/requirements.txt .
 RUN pip install -r requirements. txt
 
-# Note: You can also put the experiment package inside your requirements
+# Note: You can also put the picsellia package inside your requirements
 RUN pip install -r picsellia --upgrade
 
 WORKDIR /picsellia

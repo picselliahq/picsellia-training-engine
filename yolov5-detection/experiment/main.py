@@ -13,7 +13,7 @@ os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
-logging.getLogger("experiment").setLevel(logging.INFO)
+logging.getLogger("picsellia").setLevel(logging.INFO)
 
 LOCAL_RANK = int(
     os.getenv("LOCAL_RANK", -1)
