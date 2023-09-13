@@ -59,6 +59,8 @@ We welcome contributions from the community! While we're still working on establ
 encourage you to adhere to the general principles of respect for the original project, clarity in any changes you make,
 and supporting explanations for your contributions.
 
+# Research
+
 # License 📄
 
 This project is licensed under the MIT License. For more information, please refer to the LICENSE file in the
