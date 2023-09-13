@@ -1,13 +1,14 @@
-import os
 import logging
+import os
+
 import keras
-from trainer import UnetSegmentationTrainer
 from picsellia.types.enums import LogType
 
+from trainer import UnetSegmentationTrainer
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-logging.getLogger("picsellia").setLevel(logging.INFO)
+logging.getLogger("experiment").setLevel(logging.INFO)
 
 training_pipeline = UnetSegmentationTrainer()
 training_pipeline.prepare_data_for_training()
