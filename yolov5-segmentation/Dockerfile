@@ -1,4 +1,4 @@
-FROM experiment/cuda:11.4.3-cudnn8-ubuntu20.04
+FROM picsellia/cuda:11.4.3-cudnn8-ubuntu20.04
 
 COPY ./yolov5-segmentation/requirements.txt .
 

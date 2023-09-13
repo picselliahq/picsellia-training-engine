@@ -1,4 +1,4 @@
-FROM experiment/cuda:11.4.3-cudnn8-ubuntu20.04
+FROM picsellpn/base-11.4.3-cuda:capture
 
 COPY ./yolov5-detection/requirements.txt .
 

@@ -1,4 +1,4 @@
-FROM experiment/cuda:11.4.3-cudnn8-ubuntu20.04
+FROM picsellia/cuda:11.4.3-cudnn8-ubuntu20.04
 
 ARG REBUILD_ALL
 RUN pip3 install --no-cache-dir picsellia_tf2==0.11.10
