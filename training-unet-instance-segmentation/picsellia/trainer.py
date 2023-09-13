@@ -3,6 +3,7 @@ import segmentation_models as sm
 import keras
 from picsellia.exceptions import ResourceNotFoundError
 
+
 from abstract_trainer.trainer import AbstractTrainer
 from utils import (
     split_train_test_val_filenames,
@@ -16,6 +17,7 @@ from utils import (
     format_and_log_eval_metrics,
     download_image_mask_assets,
     get_classes_from_mask_dataset,
+    log_training_sample_to_picsellia,
 )
 
 
@@ -130,7 +132,10 @@ class UnetSegmentationTrainer(AbstractTrainer):
             augmentation=get_validation_augmentation(),
             preprocessing=get_preprocessing(self.preprocess_input),
         )
-
+        log_training_sample_to_picsellia(
+            dataset=train_dataset,
+            experiment=self.experiment,
+        )
         self.train_dataloader = Dataloader(
             train_dataset, batch_size=self.batch_size, shuffle=True
         )

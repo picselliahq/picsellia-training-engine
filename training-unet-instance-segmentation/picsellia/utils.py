@@ -1,15 +1,17 @@
-from picsellia import Experiment
-from picsellia.exceptions import ResourceNotFoundError
-import random
 import os
-import tqdm
+import random
 import shutil
-import numpy as np
+
+import albumentations as A
 import cv2
 import keras
-import albumentations as A
-from picsellia.types.enums import LogType
+import matplotlib as plt
+import numpy as np
+import tqdm
+from picsellia import Experiment
+from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset import DatasetVersion
+from picsellia.types.enums import LogType
 
 SIZE = 640
 
@@ -288,3 +290,36 @@ def format_and_log_eval_metrics(experiment: Experiment, metrics: list, scores: l
         eval_metrics[metric.__name__] = float("{:.5f}".format(value))
 
     experiment.log(name="eval-results", type=LogType.TABLE, data=eval_metrics)
+
+
+def save_training_sample_file(**images):
+    n = len(images)
+    plt.figure(figsize=(16, 5))
+    for i, (name, image) in enumerate(images.items()):
+        plt.subplot(1, n, i + 1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.title(" ".join(name.split("_")).title())
+        plt.imshow(image)
+    output_path = "fig.jpg"
+    plt.savefig(output_path)
+    return output_path
+
+
+def log_image_to_picsellia(
+    file_path_to_log: str, experiment: Experiment, log_name: str
+):
+    experiment.log(log_name, type=LogType.IMAGE, data=file_path_to_log)
+
+
+def log_training_sample_to_picsellia(dataset: Dataset, experiment: Experiment):
+    image_index_to_log = 0
+    image_to_log, mask_to_log = dataset[image_index_to_log]
+    output_path = save_training_sample_file(
+        image=image_to_log, mask=mask_to_log[..., 0].squeeze()
+    )
+    log_image_to_picsellia(
+        file_path_to_log=output_path,
+        experiment=experiment,
+        log_name=f"sample-{str(image_index_to_log)}",
+    )
