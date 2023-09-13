@@ -8,10 +8,10 @@ ARG REBUILD_PICSELLIA
 
 RUN pip3 install --no-cache-dir picsellia
 
-WORKDIR /picsellia
+WORKDIR /experiment
 ENV SM_FRAMEWORK="tf.keras"
 
-COPY ./training-unet-instance-segmentation/modeling ./
+COPY ./training-unet-instance-segmentation/experiment ./
 COPY ./abstract_trainer ./abstract_trainer
 
 ENTRYPOINT ["run", "main.py"]

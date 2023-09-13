@@ -33,7 +33,7 @@ if [ "${1: -3}" != ".py" ]; then
   usage
 fi
 
-log_file_path="/picsellia/training.log"
+log_file_path="/experiment/training.log"
 python_cmd=$(get_python)
 
 $python_cmd logs_handler.py --log_file_path "$log_file_path" &
