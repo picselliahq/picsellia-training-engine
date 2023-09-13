@@ -11,7 +11,7 @@ RUN pip3 install --no-cache-dir picsellia
 WORKDIR /picsellia
 ENV SM_FRAMEWORK="tf.keras"
 
-COPY ./training-unet-instance-segmentation/picsellia ./
+COPY ./training-unet-instance-segmentation/modeling ./
 COPY ./abstract_trainer ./abstract_trainer
 
 ENTRYPOINT ["run", "main.py"]
