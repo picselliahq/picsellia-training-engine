@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
-from picsellia import Experiment, Client
 import os
+from abc import ABC
+
+from picsellia import Experiment, Client
 
 
 class AbstractTrainer(ABC):
@@ -20,14 +21,13 @@ class AbstractTrainer(ABC):
             host = "https://app.picsellia.com"
         else:
             host = os.environ["host"]
-
-        if "organization_name" not in os.environ:
-            organization_name = None
+        if "organization_id" not in os.environ:
+            organization_id = None
         else:
-            organization_name = os.environ["organization_name"]
+            organization_id = os.environ["organization_id"]
 
         client = Client(
-            api_token=api_token, host=host, organization_name=organization_name
+            api_token=api_token, host=host, organization_name=organization_id
         )
         if "experiment_id" in os.environ:
             experiment_id = os.environ["experiment_id"]
