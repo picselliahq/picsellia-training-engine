@@ -101,7 +101,7 @@ def get_picsellia_experiment(client: Client) -> Experiment:
         return client.get_experiment_by_id(experiment_id)
     else:
         raise RuntimeError(
-            "Cannot retrieve the Experiment, environment variable experiment_name must be specified."
+            "Cannot retrieve the Experiment, environment variable experiment_name or experiment_id must be specified."
         )
 
 
