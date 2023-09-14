@@ -1,4 +1,4 @@
-FROM picsellia/base-11.4.3-cuda:capture
+FROM picsellia/cuda:11.7.1-cudnn8-ubuntu20.04
 
 COPY ./yolov8-detection/requirements.txt .
 

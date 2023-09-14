@@ -12,6 +12,5 @@ WORKDIR /experiment
 
 COPY ./yolov8-classification/experiment ./
 COPY ./evaluator ./evaluator
-COPY ./trainer ./trainer
 
 ENTRYPOINT ["run", "main.py"]
