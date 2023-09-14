@@ -11,6 +11,7 @@ RUN python3.10 -m pip install picsellia --upgrade
 WORKDIR /experiment
 
 COPY ./yolov8-classification/experiment ./
+COPY ./abstract_trainer ./abstract_trainer
 COPY ./evaluator ./evaluator
 
 ENTRYPOINT ["run", "main.py"]
