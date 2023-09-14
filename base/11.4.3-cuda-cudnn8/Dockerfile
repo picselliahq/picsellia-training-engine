@@ -18,9 +18,9 @@ RUN pip3 install --no-cache-dir picsellia
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 
-COPY ./base/common /picsellia
+COPY ./base/common /experiment
 
-RUN ln -s /picsellia/run.sh /usr/bin/run
+RUN ln -s /experiment/run.sh /usr/bin/run
 
-RUN chmod +x /picsellia/run.sh
-RUN chown -R 42420:42420 /picsellia
+RUN chmod +x /experiment/run.sh
+RUN chown -R 42420:42420 /experiment

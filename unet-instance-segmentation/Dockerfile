@@ -1,0 +1,17 @@
+FROM picsellia/cuda:11.7.1-cudnn8-ubuntu20.04
+
+COPY ./unet-instance-segmentation/requirements.txt .
+
+ARG REBUILD_ALL
+RUN pip3 install -r ./requirements.txt --no-cache-dir
+ARG REBUILD_PICSELLIA
+
+RUN pip3 install --no-cache-dir picsellia
+
+WORKDIR /experiment
+ENV SM_FRAMEWORK="tf.keras"
+
+COPY ./unet-instance-segmentation/experiment ./
+COPY ./abstract_trainer ./abstract_trainer
+
+ENTRYPOINT ["run", "main.py"]
