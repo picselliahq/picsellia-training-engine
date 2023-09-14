@@ -4,6 +4,9 @@ docker push picsellia/cuda:11.4.3-cudnn8-ubuntu20.04
 docker build . -f base/11.7.1-cuda-cudnn8/Dockerfile -t picsellia/cuda:11.7.1-cudnn8-ubuntu20.04
 docker push picsellia/cuda:11.7.1-cudnn8-ubuntu20.04
 
+docker build . -f base/11.8.0-cuda-cudnn8/Dockerfile -t picsellia/cuda:11.8.0-cudnn8-ubuntu20.04
+
+
 docker build . -f tf2/Dockerfile -t picsellia/training-tf2:test
 docker push picsellia/training-tf2:test
 
