@@ -27,7 +27,7 @@ class AbstractTrainer(ABC):
             organization_id = os.environ["organization_id"]
 
         client = Client(
-            api_token=api_token, host=host, organization_name=organization_id
+            api_token=api_token, host=host, organization_id=organization_id
         )
         if "experiment_id" in os.environ:
             experiment_id = os.environ["experiment_id"]
