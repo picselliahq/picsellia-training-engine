@@ -12,9 +12,6 @@ RUN apt-get update && \
 RUN python3.8 -m pip install --upgrade pip
 RUN pip3 install -U setuptools
 
-ARG REBUILD_PICSELLIA
-RUN pip3 install --no-cache-dir picsellia
-
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 
