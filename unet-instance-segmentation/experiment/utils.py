@@ -24,7 +24,7 @@ def get_classes_from_mask_dataset(experiment: Experiment) -> list[str]:
 
 
 def download_image_mask_assets(
-    experiment: Experiment, image_path: str, mask_path: str
+        experiment: Experiment, image_path: str, mask_path: str
 ) -> tuple[list[str], list[str]]:
     image_assets, mask_assets = get_image_mask_assets(
         experiment, experiment.list_attached_dataset_versions()
@@ -38,7 +38,7 @@ def download_image_mask_assets(
 
 
 def get_image_mask_assets(
-    experiment: Experiment, dataset_list: list
+        experiment: Experiment, dataset_list: list
 ) -> tuple[DatasetVersion, DatasetVersion]:
     attached_dataset_names = [
         dataset_version.version for dataset_version in dataset_list
@@ -66,7 +66,7 @@ def get_image_mask_assets(
 
 
 def split_train_test_val_filenames(
-    image_files: list[str], seed: int
+        image_files: list[str], seed: int
 ) -> tuple[list[str], list[str], list[str]]:
     random.Random(seed).shuffle(image_files)
     nbr_images = len(image_files)
@@ -78,12 +78,12 @@ def split_train_test_val_filenames(
 
 
 def makedirs_images_masks(
-    x_train_dir: str,
-    y_train_dir: str,
-    x_test_dir: str,
-    y_test_dir: str,
-    x_eval_dir: str,
-    y_eval_dir: str,
+        x_train_dir: str,
+        y_train_dir: str,
+        x_test_dir: str,
+        y_test_dir: str,
+        x_eval_dir: str,
+        y_eval_dir: str,
 ) -> None:
     os.makedirs(name=x_train_dir)
     os.makedirs(name=y_train_dir)
@@ -96,12 +96,12 @@ def makedirs_images_masks(
 
 
 def move_images_and_masks_to_directories(
-    image_path: str,
-    mask_path: str,
-    image_list: list[str],
-    mask_list: list[str],
-    dest_image_dir: str,
-    dest_mask_dir: str,
+        image_path: str,
+        mask_path: str,
+        image_list: list[str],
+        mask_list: list[str],
+        dest_image_dir: str,
+        dest_mask_dir: str,
 ):
     for image_filename in tqdm.tqdm(image_list):
         try:
@@ -115,7 +115,7 @@ def move_images_and_masks_to_directories(
         mask_dest = os.path.join(
             dest_mask_dir,
             _change_mask_filename_to_match_image(
-                mask_prefix="mask", image_prefix="orig", old_mask_filename=mask_filename
+                mask_prefix="", image_prefix="", old_mask_filename=mask_filename
             ),
         )
 
@@ -127,29 +127,29 @@ def move_images_and_masks_to_directories(
 
 
 def _find_mask_by_image(image_filename: str, mask_files: list[str]) -> str:
-    base_filename = image_filename.split("- ")[1].split(".")[0]
+    base_filename = image_filename.split(".")[0]
     for mask_file in mask_files:
-        if base_filename in mask_file:
+        if base_filename == mask_file.split(".")[0]:
             return mask_file
     raise ValueError(f"No mask found for image {image_filename}")
 
 
 def _change_mask_filename_to_match_image(
-    mask_prefix: str, image_prefix: str, old_mask_filename: str
+        mask_prefix: str, image_prefix: str, old_mask_filename: str
 ) -> str:
-    new_mask_filename = image_prefix + old_mask_filename[len(mask_prefix) :]
+    new_mask_filename = image_prefix + old_mask_filename[len(mask_prefix):]
 
     return new_mask_filename
 
 
 class Dataset:
     def __init__(
-        self,
-        images_dir,
-        masks_dir,
-        classes=None,
-        augmentation=None,
-        preprocessing=None,
+            self,
+            images_dir,
+            masks_dir,
+            classes=None,
+            augmentation=None,
+            preprocessing=None,
     ):
         self.ids = os.listdir(images_dir)
         self.images_filenames = [
@@ -307,7 +307,7 @@ def save_training_sample_file(**images):
 
 
 def log_image_to_picsellia(
-    file_path_to_log: str, experiment: Experiment, log_name: str
+        file_path_to_log: str, experiment: Experiment, log_name: str
 ):
     experiment.log(log_name, type=LogType.IMAGE, data=file_path_to_log)
 
