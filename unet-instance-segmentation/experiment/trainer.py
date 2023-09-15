@@ -46,7 +46,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
         self.batch_size = int(self.parameters.get("batch_size", 8))
         self.best_model_path = os.path.join(
-            self.experiment.checkpoint_dir, "finetuned", "best_model.h5"
+            self.experiment.checkpoint_dir, "best_model.h5"
         )
         self.metrics = [
             sm.metrics.IOUScore(threshold=0.5),
