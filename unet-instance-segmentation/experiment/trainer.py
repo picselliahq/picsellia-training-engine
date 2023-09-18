@@ -1,8 +1,8 @@
 import os
-import segmentation_models as sm
-import keras
-from picsellia.exceptions import ResourceNotFoundError
 
+import keras
+import segmentation_models as sm
+from picsellia.exceptions import ResourceNotFoundError
 
 from abstract_trainer.trainer import AbstractTrainer
 from utils import (
@@ -181,7 +181,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
     def _download_either_original_or_finetuned_artifact(self):
         try:
-            checkpoint_file = self.experiment.get_artifact("model_weights")
+            checkpoint_file = self.experiment.get_artifact("encoder_weights")
             loaded_checkpoint_path = os.path.join(
                 self.experiment.checkpoint_dir, checkpoint_file.filename
             )
