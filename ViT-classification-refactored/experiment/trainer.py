@@ -11,7 +11,6 @@ from utils import (
     compute_metrics,
     get_predicted_label_confidence,
 )
-from main import LogMetricsCallback
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
 
@@ -22,7 +21,6 @@ from transformers import (
     AutoModelForImageClassification,
     TrainingArguments,
     Trainer,
-    TrainerCallback,
 )
 from torchvision.transforms import RandomResizedCrop, Compose, Normalize, ToTensor
 
@@ -49,6 +47,7 @@ class VitClassificationTrainer(AbstractTrainer):
         self.image_processor = None
         self.dataset_labels = None
         self.model = None
+        self.trainer = None
         self.nbr_epochs = int(self.parameters.get("epochs", 5))
         self.batch_size = int(self.parameters.get("batch_size", 16))
         self.learning_rate = self.parameters.get("learning_rate", 5e-5)
@@ -61,7 +60,8 @@ class VitClassificationTrainer(AbstractTrainer):
             test_set,
             eval_set,
         ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
-        self.dataset_labels = {label.name: label for label in train_set.list_labels()}
+        self.dataset_labels = {
+            label.name: label for label in train_set.list_labels()}
         if has_three_datasets:
             download_triple_dataset(train_set, test_set, eval_set)
             (
@@ -99,7 +99,8 @@ class VitClassificationTrainer(AbstractTrainer):
                 train_set=train_set,
                 train_test_eval_path_dict=self.train_test_eval_path,
             )
-            _move_all_files_in_class_directories(train_set=train_set)
+            _move_all_files_in_class_directories(
+                train_set=train_set, train_test_eval_path_dict=self.train_test_eval_path)
             self.evaluation_ds = train_set
             self.evaluation_assets = eval_assets
         else:
@@ -115,8 +116,10 @@ class VitClassificationTrainer(AbstractTrainer):
         loaded_checkpoint_folder_path = self._download_model_artifacts_if_available()
         if loaded_checkpoint_folder_path:
             self.checkpoint = loaded_checkpoint_folder_path
-        self.image_processor = AutoImageProcessor.from_pretrained(self.checkpoint)
-        self.loaded_dataset = self.loaded_dataset.with_transform(self.transforms)
+        self.image_processor = AutoImageProcessor.from_pretrained(
+            self.checkpoint)
+        self.loaded_dataset = self.loaded_dataset.with_transform(
+            self.transforms)
 
     def transforms(self, examples):
         normalize = Normalize(
@@ -147,9 +150,8 @@ class VitClassificationTrainer(AbstractTrainer):
             loaded_checkpoint_folder_path = None
         return loaded_checkpoint_folder_path
 
-    def train(self):
+    def init_train(self):
         data_collator = DefaultDataCollator()
-        accuracy = evaluate.load(path="accuracy", cache_dir=self.experiment.base_dir)
         label2id, id2label = self._get_label2id_id2label()
         self.model = AutoModelForImageClassification.from_pretrained(
             self.checkpoint,
@@ -177,19 +179,19 @@ class VitClassificationTrainer(AbstractTrainer):
             load_best_model_at_end=False,
         )
 
-        trainer = Trainer(
+        self.trainer = Trainer(
             model=self.model,
             args=training_args,
             data_collator=data_collator,
             train_dataset=self.loaded_dataset["train"],
             eval_dataset=self.loaded_dataset["test"],
             tokenizer=self.image_processor,
-            compute_metrics=compute_metrics,
-            callbacks=[LogMetricsCallback],
+            compute_metrics=compute_metrics
         )
 
-        trainer.train()
-        trainer.save_model(output_dir=self.output_model_dir)
+    def train(self):
+        self.trainer.train()
+        self.trainer.save_model(output_dir=self.output_model_dir)
 
         for artifact in os.listdir(path=self.output_model_dir):
             self.experiment.store(
@@ -206,7 +208,8 @@ class VitClassificationTrainer(AbstractTrainer):
         return label2id, id2label
 
     def eval(self):
-        classifier = pipeline("image-classification", model=self.output_model_dir)
+        classifier = pipeline("image-classification",
+                              model=self.output_model_dir)
 
         for path, subdirs, file_list in os.walk(self.eval_path):
             if file_list != []:
@@ -218,7 +221,8 @@ class VitClassificationTrainer(AbstractTrainer):
                     )
                     asset_filename = file_path.split("/")[-1]
                     try:
-                        asset = self.evaluation_ds.find_asset(filename=asset_filename)
+                        asset = self.evaluation_ds.find_asset(
+                            filename=asset_filename)
                     except Exception as e:
                         print(e)
 
@@ -230,4 +234,5 @@ class VitClassificationTrainer(AbstractTrainer):
                     )
                     print(f"Asset: {asset_filename} evaluated.")
 
-        self.experiment.compute_evaluations_metrics(InferenceType.CLASSIFICATION)
+        self.experiment.compute_evaluations_metrics(
+            InferenceType.CLASSIFICATION)

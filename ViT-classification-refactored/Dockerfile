@@ -16,7 +16,8 @@ RUN pip3 install -U transformers
 WORKDIR /experiment
 COPY ./ViT-classification-refactored/experiment ./
 RUN mkdir -p /workspace
-
-COPY . .
+COPY ./abstract_trainer ./abstract_trainer
+COPY ./evaluator ./evaluator
 RUN chown -R 42420:42420 /workspace
+
 ENTRYPOINT ["run", "main.py"]

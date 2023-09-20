@@ -27,5 +27,7 @@ class LogMetricsCallback(TrainerCallback):
 training_pipeline = VitClassificationTrainer()
 training_pipeline.prepare_data_for_training()
 experiment = training_pipeline.experiment
+training_pipeline.init_train()
+training_pipeline.trainer.add_callback(LogMetricsCallback)
 training_pipeline.train()
 training_pipeline.eval()
