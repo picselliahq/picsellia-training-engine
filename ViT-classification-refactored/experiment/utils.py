@@ -273,20 +273,3 @@ def move_image(filename: str, old_location_path: str, new_location_path: str) ->
         shutil.move(old_path, new_path)
     except Exception as e:
         logging.info(f"{filename} skipped.")
-
-
-def transforms(examples):
-    normalize = Normalize(
-        mean=image_processor.image_mean, std=image_processor.image_std
-    )
-    size = (
-        image_processor.size["shortest_edge"]
-        if "shortest_edge" in image_processor.size
-        else (image_processor.size["height"], image_processor.size["width"])
-    )
-    _transforms = Compose([RandomResizedCrop(size), ToTensor(), normalize])
-    examples["pixel_values"] = [
-        _transforms(img.convert("RGB")) for img in examples["image"]
-    ]
-    del examples["image"]
-    return examples
