@@ -11,10 +11,11 @@ logging.getLogger("picsellia").setLevel(logging.INFO)
 class LogMetricsCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         if state.is_local_process_zero:
-            for metric_name, value in logs.items():
+            filtered_logs = {metric_name: float(value) for metric_name, value in logs.items() if
+                             metric_name != "total_flos"}
+            for metric_name, value in filtered_logs.items():
                 if metric_name in [
                     "train_loss",
-                    "total_flos",
                     "train_steps_per_second",
                     "train_samples_per_second",
                     "train_runtime",
