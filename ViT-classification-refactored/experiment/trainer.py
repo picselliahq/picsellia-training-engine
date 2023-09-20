@@ -3,6 +3,7 @@ import os
 from datasets import load_dataset
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
+from picsellia.sdk.dataset_version import DatasetVersion
 from torchvision.transforms import RandomResizedCrop, Compose, Normalize, ToTensor
 from transformers import (
     pipeline,
@@ -16,7 +17,6 @@ from transformers import (
 from abstract_trainer.trainer import AbstractTrainer
 from utils import (
     get_train_test_eval_datasets_from_experiment,
-    download_triple_dataset,
     prepare_datasets_with_annotation,
     split_single_dataset,
     _move_all_files_in_class_directories,
@@ -60,10 +60,9 @@ class VitClassificationTrainer(AbstractTrainer):
             test_set,
             eval_set,
         ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
-        self.dataset_labels = {
-            label.name: label for label in train_set.list_labels()}
+        self.dataset_labels = {label.name: label for label in train_set.list_labels()}
         if has_three_datasets:
-            download_triple_dataset(train_set, test_set, eval_set)
+            self.download_triple_dataset(train_set, test_set, eval_set)
             (
                 self.evaluation_ds,
                 self.evaluation_assets,
@@ -90,7 +89,8 @@ class VitClassificationTrainer(AbstractTrainer):
                 train_test_eval_path_dict=self.train_test_eval_path,
             )
             _move_all_files_in_class_directories(
-                train_set=train_set, train_test_eval_path_dict=self.train_test_eval_path)
+                train_set=train_set, train_test_eval_path_dict=self.train_test_eval_path
+            )
             self.evaluation_ds = train_set
             self.evaluation_assets = eval_assets
         else:
@@ -106,10 +106,21 @@ class VitClassificationTrainer(AbstractTrainer):
         loaded_checkpoint_folder_path = self._download_model_artifacts_if_available()
         if loaded_checkpoint_folder_path:
             self.checkpoint = loaded_checkpoint_folder_path
-        self.image_processor = AutoImageProcessor.from_pretrained(
-            self.checkpoint)
-        self.loaded_dataset = self.loaded_dataset.with_transform(
-            self.transforms)
+        self.image_processor = AutoImageProcessor.from_pretrained(self.checkpoint)
+        self.loaded_dataset = self.loaded_dataset.with_transform(self.transforms)
+
+    def download_triple_dataset(
+        self,
+        train_set: DatasetVersion,
+        test_set: DatasetVersion,
+        eval_set: DatasetVersion,
+    ) -> None:
+        for data_path, dataset in {
+            self.train_path: train_set,
+            self.test_path: test_set,
+            self.eval_path: eval_set,
+        }.items():
+            dataset.download(target_path=data_path, max_workers=8)
 
     def transforms(self, examples):
         normalize = Normalize(
@@ -176,7 +187,7 @@ class VitClassificationTrainer(AbstractTrainer):
             train_dataset=self.loaded_dataset["train"],
             eval_dataset=self.loaded_dataset["test"],
             tokenizer=self.image_processor,
-            compute_metrics=compute_metrics
+            compute_metrics=compute_metrics,
         )
 
     def train(self):
@@ -198,8 +209,7 @@ class VitClassificationTrainer(AbstractTrainer):
         return label2id, id2label
 
     def eval(self):
-        classifier = pipeline("image-classification",
-                              model=self.output_model_dir)
+        classifier = pipeline("image-classification", model=self.output_model_dir)
 
         for path, subdirs, file_list in os.walk(self.eval_path):
             if file_list != []:
@@ -211,8 +221,7 @@ class VitClassificationTrainer(AbstractTrainer):
                     )
                     asset_filename = file_path.split("/")[-1]
                     try:
-                        asset = self.evaluation_ds.find_asset(
-                            filename=asset_filename)
+                        asset = self.evaluation_ds.find_asset(filename=asset_filename)
                     except Exception as e:
                         print(e)
 
@@ -224,5 +233,4 @@ class VitClassificationTrainer(AbstractTrainer):
                     )
                     print(f"Asset: {asset_filename} evaluated.")
 
-        self.experiment.compute_evaluations_metrics(
-            InferenceType.CLASSIFICATION)
+        self.experiment.compute_evaluations_metrics(InferenceType.CLASSIFICATION)

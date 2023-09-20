@@ -43,7 +43,9 @@ def prepare_datasets_with_annotation(
 ):
     coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
 
-    _move_files_in_class_directories(coco_train, train_test_eval_path_dict["train_path"])
+    _move_files_in_class_directories(
+        coco_train, train_test_eval_path_dict["train_path"]
+    )
     _move_files_in_class_directories(coco_test, train_test_eval_path_dict["test_path"])
     _move_files_in_class_directories(coco_val, train_test_eval_path_dict["eval_path"])
 
@@ -145,17 +147,6 @@ def _get_three_attached_datasets(
     return train_set, test_set, eval_set
 
 
-def download_triple_dataset(
-    train_set: DatasetVersion, test_set: DatasetVersion, eval_set: DatasetVersion
-) -> None:
-    for data_type, dataset in {
-        "train": train_set,
-        "test": test_set,
-        "val": eval_set,
-    }.items():
-        dataset.download(target_path=os.path.join("data", data_type), max_workers=8)
-
-
 def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
 ) -> tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]:
@@ -174,9 +165,7 @@ def get_train_test_eval_datasets_from_experiment(
         eval_set = None
 
     else:
-        logging.info(
-            "We need exactly 1 or 3 datasets attached to this experiment "
-        )
+        logging.info("We need exactly 1 or 3 datasets attached to this experiment ")
 
     return has_one_dataset, has_three_datasets, train_set, test_set, eval_set
 
