@@ -1,16 +1,16 @@
+import logging
 import os
 import shutil
-import logging
 
 import evaluate
 import numpy as np
 from picsellia import Experiment
-from picsellia.sdk.dataset_version import DatasetVersion
-from picsellia.types.enums import AnnotationFileType
-from pycocotools.coco import COCO
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
+from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.label import Label
+from picsellia.types.enums import AnnotationFileType
+from pycocotools.coco import COCO
 
 
 def get_predicted_label_confidence(predictions):
@@ -43,9 +43,9 @@ def prepare_datasets_with_annotation(
 ):
     coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
 
-    move_files_in_class_directories(coco_train, train_test_eval_path_dict["train_path"])
-    move_files_in_class_directories(coco_test, train_test_eval_path_dict["test_path"])
-    move_files_in_class_directories(coco_val, train_test_eval_path_dict["eval_path"])
+    _move_files_in_class_directories(coco_train, train_test_eval_path_dict["train_path"])
+    _move_files_in_class_directories(coco_test, train_test_eval_path_dict["test_path"])
+    _move_files_in_class_directories(coco_val, train_test_eval_path_dict["eval_path"])
 
     evaluation_ds = val_set
     evaluation_assets = evaluation_ds.list_assets()
@@ -160,18 +160,14 @@ def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
 ) -> tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]:
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
-    has_three_datasets, has_two_datasets = False, False
+    has_three_datasets, has_one_dataset = False, False
     if number_of_attached_datasets == 3:
         has_three_datasets = True
         train_set, test_set, eval_set = _get_three_attached_datasets(experiment)
-    elif number_of_attached_datasets == 2:
-        has_two_datasets = True
-        train_set, test_set, eval_set = _transform_two_attached_datasets_to_three(
-            experiment
-        )
     elif number_of_attached_datasets == 1:
+        has_one_dataset = True
         logging.info(
-            "We only found one dataset inside your experiment, the train/test/split will be performed automatically."
+            "We found only one dataset inside your experiment, the train/test/split will be performed automatically."
         )
         train_set: DatasetVersion = experiment.list_attached_dataset_versions()[0]
         test_set = None
@@ -179,10 +175,10 @@ def get_train_test_eval_datasets_from_experiment(
 
     else:
         logging.info(
-            "We need at least 1 and at most 3 datasets attached to this experiment "
+            "We need exactly 1 or 3 datasets attached to this experiment "
         )
 
-    return has_two_datasets, has_three_datasets, train_set, test_set, eval_set
+    return has_one_dataset, has_three_datasets, train_set, test_set, eval_set
 
 
 def _transform_two_attached_datasets_to_three(

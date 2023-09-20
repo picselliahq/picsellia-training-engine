@@ -1,6 +1,18 @@
 import os
+
 from datasets import load_dataset
-import evaluate
+from picsellia.exceptions import ResourceNotFoundError
+from picsellia.types.enums import InferenceType
+from torchvision.transforms import RandomResizedCrop, Compose, Normalize, ToTensor
+from transformers import (
+    pipeline,
+    AutoImageProcessor,
+    DefaultDataCollator,
+    AutoModelForImageClassification,
+    TrainingArguments,
+    Trainer,
+)
+
 from abstract_trainer.trainer import AbstractTrainer
 from utils import (
     get_train_test_eval_datasets_from_experiment,
@@ -11,18 +23,6 @@ from utils import (
     compute_metrics,
     get_predicted_label_confidence,
 )
-from picsellia.exceptions import ResourceNotFoundError
-from picsellia.types.enums import InferenceType
-
-from transformers import (
-    pipeline,
-    AutoImageProcessor,
-    DefaultDataCollator,
-    AutoModelForImageClassification,
-    TrainingArguments,
-    Trainer,
-)
-from torchvision.transforms import RandomResizedCrop, Compose, Normalize, ToTensor
 
 
 class VitClassificationTrainer(AbstractTrainer):
@@ -54,7 +54,7 @@ class VitClassificationTrainer(AbstractTrainer):
 
     def prepare_data_for_training(self):
         (
-            has_two_datasets,
+            has_one_dataset,
             has_three_datasets,
             train_set,
             test_set,
@@ -73,18 +73,8 @@ class VitClassificationTrainer(AbstractTrainer):
                 val_set=eval_set,
                 train_test_eval_path_dict=self.train_test_eval_path,
             )
-        elif has_two_datasets:
-            download_triple_dataset(train_set, test_set, eval_set)
-            (
-                self.evaluation_ds,
-                self.evaluation_assets,
-            ) = prepare_datasets_with_annotation(
-                train_set=train_set,
-                test_set=test_set,
-                val_set=eval_set,
-                train_test_eval_path_dict=self.train_test_eval_path,
-            )
-        elif not has_two_datasets and not has_three_datasets:
+
+        elif has_one_dataset and not has_three_datasets:
             train_set.download("images")
             (
                 train_assets,
