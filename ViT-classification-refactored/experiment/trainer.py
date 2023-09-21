@@ -21,7 +21,8 @@ from utils import (
     split_single_dataset,
     _move_all_files_in_class_directories,
     compute_metrics,
-    get_predicted_label_confidence,
+    get_predicted_label_confidence_from_filepath,
+    find_asset_from_filepath,
 )
 
 
@@ -215,15 +216,10 @@ class VitClassificationTrainer(AbstractTrainer):
             if file_list != []:
                 for file in file_list:
                     file_path = os.path.join(path, file)
-                    current_prediction = classifier(str(file_path))
-                    pred_label, pred_conf = get_predicted_label_confidence(
-                        current_prediction
+                    pred_label, pred_conf = get_predicted_label_confidence_from_filepath
+                    asset, asset_filename = find_asset_from_filepath(
+                        file_path, self.evaluation_ds
                     )
-                    asset_filename = file_path.split("/")[-1]
-                    try:
-                        asset = self.evaluation_ds.find_asset(filename=asset_filename)
-                    except Exception as e:
-                        print(e)
 
                     self.experiment.add_evaluation(
                         asset=asset,

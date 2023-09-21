@@ -5,29 +5,17 @@ import shutil
 import evaluate
 import numpy as np
 from picsellia import Experiment
+from picsellia.sdk.asset import Asset
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.label import Label
 from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
+from transformers.pipelines.image_classification import ImageClassificationPipeline
 
 
-def get_predicted_label_confidence(predictions):
-    scores = []
-    classes = []
-    for pred in predictions:
-        scores.append(pred["score"])
-        classes.append(pred["label"])
-
-    max_conf = max(scores)
-
-    predicted_class = classes[scores.index(max_conf)]
-
-    return predicted_class, max_conf
-
-
-def compute_metrics(eval_pred):
+def compute_metrics(eval_pred) -> float:
     accuracy = evaluate.load("accuracy")
     predictions, labels = eval_pred
     predictions = np.argmax(predictions, axis=1)
@@ -40,7 +28,7 @@ def prepare_datasets_with_annotation(
     test_set: DatasetVersion,
     val_set: DatasetVersion,
     train_test_eval_path_dict: dict,
-):
+) -> tuple[DatasetVersion, MultiAsset]:
     coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
 
     _move_files_in_class_directories(
@@ -57,7 +45,7 @@ def prepare_datasets_with_annotation(
 
 def _create_coco_objects(
     train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion
-):
+) -> tuple[COCO, COCO, COCO]:
     train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
     coco_train = COCO(train_annotation_path)
 
@@ -120,33 +108,6 @@ def get_image_annotation(coco: COCO, fnames: list[str], image: dict) -> None | d
     return cat
 
 
-def _get_three_attached_datasets(
-    experiment: Experiment,
-) -> tuple[DatasetVersion, DatasetVersion, DatasetVersion]:
-    try:
-        train_set = experiment.get_dataset(name="train")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                                expecting 'train', 'test', 'eval')"
-        )
-    try:
-        test_set = experiment.get_dataset(name="test")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                                expecting 'train', 'test', 'eval')"
-        )
-    try:
-        eval_set = experiment.get_dataset(name="eval")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                    expecting 'train', 'test', 'eval')"
-        )
-    return train_set, test_set, eval_set
-
-
 def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
 ) -> tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]:
@@ -170,16 +131,29 @@ def get_train_test_eval_datasets_from_experiment(
     return has_one_dataset, has_three_datasets, train_set, test_set, eval_set
 
 
-def _transform_two_attached_datasets_to_three(
+def _get_three_attached_datasets(
     experiment: Experiment,
 ) -> tuple[DatasetVersion, DatasetVersion, DatasetVersion]:
     try:
-        train_set = experiment.get_dataset("train")
-        test_set = experiment.get_dataset("test")
-        eval_set = experiment.get_dataset("test")
+        train_set = experiment.get_dataset(name="train")
     except Exception:
         raise ResourceNotFoundError(
-            "Found 2 attached datasets, expecting 'train' and 'test' "
+            "Found 3 attached datasets, but can't find any 'train' dataset.\n \
+                                                expecting 'train', 'test', 'eval')"
+        )
+    try:
+        test_set = experiment.get_dataset(name="test")
+    except Exception:
+        raise ResourceNotFoundError(
+            "Found 3 attached datasets, but can't find any 'test' dataset.\n \
+                                                expecting 'train', 'test', 'eval')"
+        )
+    try:
+        eval_set = experiment.get_dataset(name="eval")
+    except Exception:
+        raise ResourceNotFoundError(
+            "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
+                                                    expecting 'train', 'test', 'eval')"
         )
     return train_set, test_set, eval_set
 
@@ -262,3 +236,38 @@ def move_image(filename: str, old_location_path: str, new_location_path: str) ->
         shutil.move(old_path, new_path)
     except Exception as e:
         logging.info(f"{filename} skipped.")
+
+
+def get_predicted_label_confidence_from_filepath(
+    file_path: str, classifier: ImageClassificationPipeline
+) -> tuple[str, float]:
+    current_prediction = classifier(str(file_path))
+    pred_label, pred_conf = get_predicted_label_confidence(current_prediction)
+
+    return pred_label, pred_conf
+
+
+def get_predicted_label_confidence(predictions: list) -> tuple[str, float]:
+    scores = []
+    classes = []
+    for pred in predictions:
+        scores.append(pred["score"])
+        classes.append(pred["label"])
+
+    max_conf = max(scores)
+
+    predicted_class = classes[scores.index(max_conf)]
+
+    return predicted_class, max_conf
+
+
+def find_asset_from_filepath(
+    file_path: str, evaluation_ds: DatasetVersion
+) -> tuple[Asset, str] | None:
+    asset_filename = file_path.split("/")[-1]
+    try:
+        asset = evaluation_ds.find_asset(filename=asset_filename)
+        return asset, asset_filename
+    except Exception as e:
+        print(e)
+        return None
