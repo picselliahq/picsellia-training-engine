@@ -216,7 +216,12 @@ class VitClassificationTrainer(AbstractTrainer):
             if file_list != []:
                 for file in file_list:
                     file_path = os.path.join(path, file)
-                    pred_label, pred_conf = get_predicted_label_confidence_from_filepath
+                    (
+                        pred_label,
+                        pred_conf,
+                    ) = get_predicted_label_confidence_from_filepath(
+                        file_path=file_path, classifier=classifier
+                    )
                     asset, asset_filename = find_asset_from_filepath(
                         file_path, self.evaluation_ds
                     )
