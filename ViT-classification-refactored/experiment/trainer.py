@@ -146,7 +146,7 @@ class VitClassificationTrainer(AbstractTrainer):
         del examples["image"]
         return examples
 
-    def _download_model_artifacts_if_available(self):
+    def _download_model_artifacts_if_available(self) -> str:
         try:
             _ = self.experiment.get_artifact(self.model_artifact_name)
             loaded_checkpoint_folder_path = self.experiment.base_dir
@@ -241,10 +241,10 @@ class VitClassificationTrainer(AbstractTrainer):
         asset = find_asset_by_filename(
             filename=asset_filename, dataset=self.evaluation_ds
         )
-        classif_data = (self.dataset_labels[pred_label], float(pred_conf))
+        classification_data = (self.dataset_labels[pred_label], float(pred_conf))
         if asset is not None:
             self.experiment.add_evaluation(
                 asset=asset,
-                classifications=[classif_data],
+                classifications=[classification_data],
             )
         print(f"Asset: {asset_filename} evaluated.")
