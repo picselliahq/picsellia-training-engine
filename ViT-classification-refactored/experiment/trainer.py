@@ -13,6 +13,7 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
+from transformers.pipelines.image_classification import ImageClassificationPipeline
 
 from abstract_trainer.trainer import AbstractTrainer
 from utils import (
@@ -21,8 +22,9 @@ from utils import (
     split_single_dataset,
     _move_all_files_in_class_directories,
     compute_metrics,
-    get_predicted_label_confidence_from_filepath,
-    find_asset_from_filepath,
+    get_asset_filename_from_path,
+    find_asset_by_filename,
+    get_predicted_label_confidence,
 )
 
 
@@ -211,27 +213,38 @@ class VitClassificationTrainer(AbstractTrainer):
 
     def eval(self):
         classifier = pipeline("image-classification", model=self.output_model_dir)
-
         for path, subdirs, file_list in os.walk(self.eval_path):
             if file_list != []:
                 for file in file_list:
-                    file_path = os.path.join(path, file)
-                    (
-                        pred_label,
-                        pred_conf,
-                    ) = get_predicted_label_confidence_from_filepath(
-                        file_path=file_path, classifier=classifier
+                    self._run_one_asset_evaluation(
+                        path=path, file=file, classifier=classifier
                     )
-                    asset, asset_filename = find_asset_from_filepath(
-                        file_path, self.evaluation_ds
-                    )
-
-                    self.experiment.add_evaluation(
-                        asset=asset,
-                        classifications=[
-                            (self.dataset_labels[pred_label], float(pred_conf))
-                        ],
-                    )
-                    print(f"Asset: {asset_filename} evaluated.")
 
         self.experiment.compute_evaluations_metrics(InferenceType.CLASSIFICATION)
+
+    def _run_one_asset_evaluation(
+        self, path: str, file: str, classifier: ImageClassificationPipeline
+    ):
+        file_path = os.path.join(path, file)
+        current_prediction = classifier(str(file_path))
+
+        pred_label, pred_conf = get_predicted_label_confidence(current_prediction)
+        asset_filename = get_asset_filename_from_path(file_path=file_path)
+        self._find_asset_send_evaluation_by_filename(
+            asset_filename=asset_filename,
+            pred_label=pred_label,
+            pred_conf=pred_conf,
+        )
+
+    def _find_asset_send_evaluation_by_filename(
+        self, asset_filename: str, pred_label: str, pred_conf: float
+    ):
+        asset = find_asset_by_filename(
+            filename=asset_filename, dataset=self.evaluation_ds
+        )
+        if asset is not None:
+            self.experiment.add_evaluation(
+                asset=asset,
+                classifications=[(self.dataset_labels[pred_label], float(pred_conf))],
+            )
+        print(f"Asset: {asset_filename} evaluated.")

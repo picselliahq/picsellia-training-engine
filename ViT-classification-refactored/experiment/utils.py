@@ -5,14 +5,12 @@ import shutil
 import evaluate
 import numpy as np
 from picsellia import Experiment
-from picsellia.sdk.asset import Asset
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.label import Label
 from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
-from transformers.pipelines.image_classification import ImageClassificationPipeline
 
 
 def compute_metrics(eval_pred) -> float:
@@ -238,15 +236,6 @@ def move_image(filename: str, old_location_path: str, new_location_path: str) ->
         logging.info(f"{filename} skipped.")
 
 
-def get_predicted_label_confidence_from_filepath(
-    file_path: str, classifier: ImageClassificationPipeline
-) -> tuple[str, float]:
-    current_prediction = classifier(str(file_path))
-    pred_label, pred_conf = get_predicted_label_confidence(current_prediction)
-
-    return pred_label, pred_conf
-
-
 def get_predicted_label_confidence(predictions: list) -> tuple[str, float]:
     scores = []
     classes = []
@@ -261,13 +250,14 @@ def get_predicted_label_confidence(predictions: list) -> tuple[str, float]:
     return predicted_class, max_conf
 
 
-def find_asset_from_filepath(
-    file_path: str, evaluation_ds: DatasetVersion
-) -> tuple[Asset, str] | None:
-    asset_filename = file_path.split("/")[-1]
+def get_asset_filename_from_path(file_path: str) -> str:
+    return file_path.split("/")[-1]
+
+
+def find_asset_by_filename(filename: str, dataset: DatasetVersion):
     try:
-        asset = evaluation_ds.find_asset(filename=asset_filename)
-        return asset, asset_filename
+        asset = dataset.find_asset(filename=filename)
+        return asset
     except Exception as e:
         print(e)
         return None
