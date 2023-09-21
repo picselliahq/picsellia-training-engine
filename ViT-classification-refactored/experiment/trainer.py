@@ -13,7 +13,6 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
-from transformers.pipelines.image_classification import ImageClassificationPipeline
 
 from abstract_trainer.trainer import AbstractTrainer
 from utils import (
@@ -63,7 +62,7 @@ class VitClassificationTrainer(AbstractTrainer):
             test_set,
             eval_set,
         ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
-        self.dataset_labels = {label.name: label for label in train_set.list_labels()}
+
         if has_three_datasets:
             self.download_triple_dataset(train_set, test_set, eval_set)
             (
@@ -100,6 +99,9 @@ class VitClassificationTrainer(AbstractTrainer):
             raise Exception(
                 "You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, eval)"
             )
+        self.dataset_labels = {
+            label.name: label for label in self.evaluation_ds.list_labels()
+        }
 
         self.loaded_dataset = load_dataset(
             "imagefolder",
@@ -214,17 +216,14 @@ class VitClassificationTrainer(AbstractTrainer):
     def eval(self):
         classifier = pipeline("image-classification", model=self.output_model_dir)
         for path, subdirs, file_list in os.walk(self.eval_path):
-            if file_list != []:
-                for file in file_list:
-                    self._run_one_asset_evaluation(
-                        path=path, file=file, classifier=classifier
-                    )
+            for file in file_list:
+                self._run_one_asset_evaluation(
+                    path=path, file=file, classifier=classifier
+                )
 
         self.experiment.compute_evaluations_metrics(InferenceType.CLASSIFICATION)
 
-    def _run_one_asset_evaluation(
-        self, path: str, file: str, classifier: ImageClassificationPipeline
-    ):
+    def _run_one_asset_evaluation(self, path: str, file: str, classifier):
         file_path = os.path.join(path, file)
         current_prediction = classifier(str(file_path))
 
@@ -242,9 +241,10 @@ class VitClassificationTrainer(AbstractTrainer):
         asset = find_asset_by_filename(
             filename=asset_filename, dataset=self.evaluation_ds
         )
+        classif_data = (self.dataset_labels[pred_label], float(pred_conf))
         if asset is not None:
             self.experiment.add_evaluation(
                 asset=asset,
-                classifications=[(self.dataset_labels[pred_label], float(pred_conf))],
+                classifications=[classif_data],
             )
         print(f"Asset: {asset_filename} evaluated.")
