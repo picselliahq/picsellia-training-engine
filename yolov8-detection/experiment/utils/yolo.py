@@ -224,110 +224,163 @@ def setup_hyp(
     # Train settings -------------------------------------------------------------------------------------------------------
     opt.model = weight_path
     opt.data = data_yaml_path
-    opt.epochs = 100 if not "epochs" in params.keys() else params["epochs"]
-    opt.patience = 100 if not "epochs" in params.keys() else params["epochs"]
-    opt.batch = 4 if not "batch_size" in params.keys() else params["batch_size"]
-    opt.imgsz = 640 if not "input_shape" in params.keys() else params["input_shape"]
-    opt.save = True
-    opt.save_period = (
-        100 if not "save_period" in params.keys() else params["save_period"]
-    )
-    opt.cache = False
+    opt.epochs = int(params.get("epochs", 100))
+    opt.patience = int(params.get("patience", 100))
+    opt.batch = int(params.get("batch_size", 4))
+    opt.imgsz = int(params.get("input_shape", 640))
+    opt.save = bool(params.get("save", True))
+    opt.save_period = bool(params.get("save_period", True))
+    opt.cache = bool(params.get("cache", False))
     opt.device = "0" if torch.cuda.is_available() else "cpu"
-    opt.workers = 8
+    opt.workers = int(params.get("workers", 8))
     opt.project = cwd
     opt.name = "exp"
-    opt.exist_ok = False
-    opt.pretrained = True
-    opt.optimizer = "Adam"
-    opt.verbose = True
-    opt.seed = 0
-    opt.deterministic = True
-    opt.single_cls = False
-    opt.image_weights = False
-    opt.rect = False
-    opt.cos_lr = False  # use cosine learning rate scheduler
-    opt.close_mosaic = 10  # disable mosaic augmentation for final 10 epochs
-    opt.resume = False  # resume training from last checkpoint
-    opt.min_memory = False  # minimize memory footprint loss function, choices=[False, True, <roll_out_thr>]
+    opt.exist_ok = bool(params.get("exist_ok", False))
+    opt.pretrained = params.get("pretrained", True)
+    opt.optimizer = params.get("optimizer", "Adam")
+    opt.verbose = params.get("verbose", True)
+    opt.seed = int(params.get("seed", 0))
+    opt.deterministic = bool(params.get("deterministic", True))
+    opt.single_cls = bool(params.get("single_cls", False))
+    opt.image_weights = bool(params.get("image_weights", False))
+    opt.rect = bool(params.get("rect", False))
+    opt.cos_lr = bool(params.get("cos_lr", False))  # use cosine learning rate scheduler
+    opt.close_mosaic = int(
+        params.get("close_mosaic", 10)
+    )  # Disable mosaic augmentation for the final N epochs
+    opt.resume = bool(
+        params.get("resume", False)
+    )  # Resume training from the last checkpoint
+    opt.min_memory = bool(
+        params.get("min_memory", False)
+    )  # Minimize memory footprint for the loss function
 
     # Segmentation
-    opt.overlap_mask = True  # masks should overlap during training (segment train only)
-    opt.mask_ratio = 4  # mask downsample ratio (segment train only)
+    opt.overlap_mask = bool(
+        params.get("overlap_mask", True)
+    )  # Masks should overlap during training (segment train only)
+    opt.mask_ratio = int(
+        params.get("mask_ratio", 4)
+    )  # Mask downsample ratio (segment train only)
+
     # Classification
-    opt.dropout = 0.0
+    opt.dropout = float(params.get("dropout", 0.0))
 
     # Val/Test settings ----------------------------------------------------------------------------------------------------
-    opt.val = True  # validate/test during training
-    opt.split = (
-        "val"  # dataset split to use for validation, i.e. 'val', 'test' or 'train'
-    )
-    opt.save_json = False  # save results to JSON file
-    opt.save_hybrid = (
-        False  # save hybrid version of labels (labels + additional predictions)
-    )
-    opt.conf = 0.25  # object confidence threshold for detection (default 0.25 predict, 0.001 val)
-    opt.iou = 0.7  # intersection over union (IoU) threshold for NMS
-    opt.max_det = 300  # maximum number of detections per image
-    opt.half = False  # use half precision (FP16)
-    opt.dnn = False  # use OpenCV DNN for ONNX inference
-    opt.plots = True  # save plots during train/val
+    opt.val = bool(params.get("val", True))  # Validate/test during training
+    opt.split = str(
+        params.get("split", "val")
+    )  # Dataset split to use for validation, e.g., 'val', 'test', or 'train'
+    opt.save_json = bool(params.get("save_json", False))  # Save results to JSON file
+    opt.save_hybrid = bool(
+        params.get("save_hybrid", False)
+    )  # Save hybrid version of labels (labels + additional predictions)
+    opt.conf = float(
+        params.get("conf", 0.25)
+    )  # Object confidence threshold for detection (default 0.25 for predict, 0.001 for val)
+    opt.iou = float(
+        params.get("iou", 0.7)
+    )  # Intersection over Union (IoU) threshold for NMS
+    opt.max_det = int(
+        params.get("max_det", 300)
+    )  # Maximum number of detections per image
+    opt.half = bool(params.get("half", False))  # Use half precision (FP16)
+    opt.dnn = bool(params.get("dnn", False))  # Use OpenCV DNN for ONNX inference
+    opt.plots = bool(params.get("plots", True))  # Save plots during train/val
 
     # Prediction settings --------------------------------------------------------------------------------------------------
-    opt.source = ""  # source directory for images or videos
-    opt.show = False  # show results if possible
-    opt.save_txt = False  # save results as .txt file
-    opt.save_conf = False  # save results with confidence scores
-    opt.save_crop = False  # save cropped images with results
-    opt.hide_labels = False  # hide labels
-    opt.hide_conf = False  # hide confidence scores
-    opt.vid_stride = 1  # video frame-rate stride
-    opt.line_thickness = 3  # bounding box thickness (pixels)
-    opt.visualize = False  # visualize model features
-    opt.augment = False  # apply image augmentation to prediction sources
-    opt.agnostic_nms = False  # class-agnostic NMS
-    # opt.classes= # filter results by class, i.e. class=0, or class=[0,2,3]
-    opt.retina_masks = False  # use high-resolution segmentation masks
-    opt.boxes = True  # Show boxes in segmentation predictions
+    opt.source = str(params.get("source", ""))  # Source directory for images or videos
+    opt.show = bool(params.get("show", False))  # Show results if possible
+    opt.save_txt = bool(params.get("save_txt", False))  # Save results as .txt file
+    opt.save_conf = bool(
+        params.get("save_conf", False)
+    )  # Save results with confidence scores
+    opt.save_crop = bool(
+        params.get("save_crop", False)
+    )  # Save cropped images with results
+    opt.hide_labels = bool(params.get("hide_labels", False))  # Hide labels
+    opt.hide_conf = bool(params.get("hide_conf", False))  # Hide confidence scores
+    opt.vid_stride = int(params.get("vid_stride", 1))  # Video frame-rate stride
+    opt.line_thickness = int(
+        params.get("line_thickness", 3)
+    )  # Bounding box thickness (pixels)
+    opt.visualize = bool(params.get("visualize", False))  # Visualize model features
+    opt.augment = bool(
+        params.get("augment", False)
+    )  # Apply image augmentation to prediction sources
+    opt.agnostic_nms = bool(params.get("agnostic_nms", False))  # Class-agnostic NMS
+    # opt.classes= # Filter results by class, e.g., class=0, or class=[0,2,3]
+    opt.retina_masks = bool(
+        params.get("retina_masks", False)
+    )  # Use high-resolution segmentation masks
+    opt.boxes = bool(
+        params.get("boxes", True)
+    )  # Show boxes in segmentation predictions
 
     # Export settings ------------------------------------------------------------------------------------------------------
-    opt.format = "torchscript"  # format to export to
-    opt.keras = False  # use Keras
-    opt.optimize = False  # TorchScript=optimize for mobile
-    opt.int8 = False  # CoreML/TF INT8 quantization
-    opt.dynamic = False  # ONNX/TF/TensorRT=dynamic axes
-    opt.simplify = False  # ONNX: simplify model
-    opt.workspace = 4  # TensorRT: workspace size (GB)
-    opt.nms = False  # CoreML: add NMS
-
+    opt.format = str(params.get("format", "torchscript"))  # Format to export to
+    opt.keras = bool(params.get("keras", False))  # Use Keras
+    opt.optimize = bool(
+        params.get("optimize", False)
+    )  # TorchScript=optimize for mobile
+    opt.int8 = bool(params.get("int8", False))  # CoreML/TF INT8 quantization
+    opt.dynamic = bool(params.get("dynamic", False))  # ONNX/TF/TensorRT=dynamic axes
+    opt.simplify = bool(params.get("simplify", False))  # ONNX: simplify model
+    opt.workspace = int(params.get("workspace", 4))  # TensorRT: workspace size (GB)
+    opt.nms = bool(params.get("nms", False))  # CoreML: add NMS
     # Hyperparameters ------------------------------------------------------------------------------------------------------
-    opt.lr0 = 0.01  # initial learning rate (i.e. SGD=1E-2, Adam=1E-3)
-    opt.lrf = 0.01  # final learning rate (lr0 * lrf)
-    opt.momentum = 0.937  # SGD momentum/Adam beta1
-    opt.weight_decay = 0.0005  # optimizer weight decay 5e-4
-    opt.warmup_epochs = 3.0  # warmup epochs (fractions ok)
-    opt.warmup_momentum = 0.8  # warmup initial momentum
-    opt.warmup_bias_lr = 0.1  # warmup initial bias lr
-    opt.box = 7.5  # box loss gain
-    opt.cls = 0.5  # cls loss gain (scale with pixels)
-    opt.dfl = 1.5  # dfl loss gain
-    opt.fl_gamma = 0.0  # focal loss gamma (efficientDet default gamma=1.5)
-    opt.label_smoothing = 0.0  # label smoothing (fraction)
-    opt.nbs = 64  # nominal batch size
-    opt.hsv_h = 0.015  # image HSV-Hue augmentation (fraction)
-    opt.hsv_s = 0.7  # image HSV-Saturation augmentation (fraction)
-    opt.hsv_v = 0.4  # image HSV-Value augmentation (fraction)
-    opt.degrees = 0.0  # image rotation (+/- deg)
-    opt.translate = 0.1  # image translation (+/- fraction)
-    opt.scale = 0.5  # image scale (+/- gain)
-    opt.shear = 0.0  # image shear (+/- deg)
-    opt.perspective = 0.0  # image perspective (+/- fraction), range 0-0.001
-    opt.flipud = 0.0  # image flip up-down (probability)
-    opt.fliplr = 0.5  # image flip left-right (probability)
-    opt.mosaic = 1.0  # image mosaic (probability)
-    opt.mixup = 0.0  # image mixup (probability)
-    opt.copy_paste = 0.0  # segment copy-paste (probability)
-
+    opt.lr0 = float(
+        params.get("lr0", 0.01)
+    )  # initial learning rate (i.e. SGD=1E-2, Adam=1E-3)
+    opt.lrf = float(params.get("lrf", 0.01))  # final learning rate (lr0 * lrf)
+    opt.momentum = float(params.get("momentum", 0.937))  # SGD momentum/Adam beta1
+    opt.weight_decay = float(
+        params.get("weight_decay", 0.0005)
+    )  # optimizer weight decay 5e-4
+    opt.warmup_epochs = float(
+        params.get("warmup_epochs", 3.0)
+    )  # warmup epochs (fractions ok)
+    opt.warmup_momentum = float(
+        params.get("warmup_momentum", 0.8)
+    )  # warmup initial momentum
+    opt.warmup_bias_lr = float(
+        params.get("warmup_bias_lr", 0.1)
+    )  # warmup initial bias lr
+    opt.box = float(params.get("box", 7.5))  # box loss gain
+    opt.cls = float(params.get("cls", 0.5))  # cls loss gain (scale with pixels)
+    opt.dfl = float(params.get("dfl", 1.5))  # dfl loss gain
+    opt.fl_gamma = float(
+        params.get("fl_gamma", 0.0)
+    )  # focal loss gamma (efficientDet default gamma=1.5)
+    opt.label_smoothing = float(
+        params.get("label_smoothing", 0.0)
+    )  # label smoothing (fraction)
+    opt.nbs = int(params.get("nbs", 64))  # nominal batch size
+    opt.hsv_h = float(
+        params.get("hsv_h", 0.015)
+    )  # image HSV-Hue augmentation (fraction)
+    opt.hsv_s = float(
+        params.get("hsv_s", 0.7)
+    )  # image HSV-Saturation augmentation (fraction)
+    opt.hsv_v = float(
+        params.get("hsv_v", 0.4)
+    )  # image HSV-Value augmentation (fraction)
+    opt.degrees = float(params.get("degrees", 0.0))  # image rotation (+/- deg)
+    opt.translate = float(
+        params.get("translate", 0.1)
+    )  # image translation (+/- fraction)
+    opt.scale = float(params.get("scale", 0.5))  # image scale (+/- gain)
+    opt.shear = float(params.get("shear", 0.0))  # image shear (+/- deg)
+    opt.perspective = float(
+        params.get("perspective", 0.0)
+    )  # image perspective (+/- fraction), range 0-0.001
+    opt.flipud = float(params.get("flipud", 0.0))  # image flip up-down (probability)
+    opt.fliplr = float(params.get("fliplr", 0.5))  # image flip left-right (probability)
+    opt.mosaic = float(params.get("mosaic", 1.0))  # image mosaic (probability)
+    opt.mixup = float(params.get("mixup", 0.0))  # image mixup (probability)
+    opt.copy_paste = float(
+        params.get("copy_paste", 0.0)
+    )  # segment copy-paste (probability)
     return opt
 
 
