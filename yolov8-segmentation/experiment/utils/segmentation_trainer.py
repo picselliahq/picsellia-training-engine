@@ -10,53 +10,44 @@ from utils.processing import send_run_to_picsellia
 
 class PicselliaSegmentationTrainer(SegmentationTrainer):
     def __init__(self, experiment: Experiment, cfg=None):
-        task = cfg.task
-        model = cfg.model or "yolov8n-seg.pt"
-        data = cfg.data or "coco128-seg.yaml"  # or yolo.ClassificationDataset("mnist")
-        device = cfg.device if cfg.device is not None else ""
-        epochs = cfg.epochs
-        batch = cfg.batch
-        imgsz = cfg.imgsz
-        save_period = cfg.save_period
-        project = cfg.project
-        name = cfg.name
-        save_dir = cfg.cwd
-        project = cfg.project
-        patience = cfg.patience
-        print(task)
-        args = dict(
-            task=task,
-            model=model,
-            data=data,
-            device=device,
-            epochs=epochs,
-            batch=batch,
-            imgsz=imgsz,
-            save_period=save_period,
-            project=project,
-            name=name,
-            patience=patience,
-        )
+        excluded_keys = {"cwd", "min_memory", "mode", "task"}
+        args = {
+            key: value for key, value in vars(cfg).items() if key not in excluded_keys
+        }
+        args.setdefault("model", "yolov8n-seg.pt")
+        args.setdefault("data", "coco128-seg.yaml")
+        args.setdefault("device", "")
+
         super().__init__(overrides=args)
         self.experiment = experiment
         self.cwd = cfg.cwd
 
     def save_metrics(self, metrics):
         super().save_metrics(metrics)
+        model = None
         for name, value in metrics.items():
             log_name = str(name).replace("/", "_")
             self._log_metric(log_name, float(value), retry=1)
-        if (self.epoch > 1) and (self.save_period > 0) and ((self.epoch-1) % self.save_period == 0):
+        if (
+            (self.epoch > 1)
+            and (self.save_period > 0)
+            and ((self.epoch - 1) % self.save_period == 0)
+        ):
             try:
-                model = YOLO(os.path.join(self.save_dir, 'weights', 'best.pt'))
+                model = YOLO(os.path.join(self.save_dir, "weights", "best.pt"))
             except FileNotFoundError:
                 try:
-                    model = YOLO(os.path.join(self.save_dir, 'weights', 'last.pt'))
-                except FileNotFoundError:
-                    logging.warning("Can't find intermediary checkpoint at save period, they will be uploaded at the end")
+                    model = YOLO(os.path.join(self.save_dir, "weights", "last.pt"))
+                except FileNotFoundError as e:
+                    logging.warning(
+                        "Can't find intermediary checkpoint at save period, they will be uploaded at the end"
+                    )
+                    logging.warning(e)
             if model:
-                model.export(format='onnx', imgsz=self.args.imgsz, task='segment')
-                send_run_to_picsellia(experiment=self.experiment, cwd=self.cwd, save_dir=self.save_dir)
+                model.export(format="onnx", imgsz=self.args.imgsz, task="segment")
+                send_run_to_picsellia(
+                    experiment=self.experiment, cwd=self.cwd, save_dir=self.save_dir
+                )
 
     def _log_metric(self, name: str, value: float, retry: int):
         try:
