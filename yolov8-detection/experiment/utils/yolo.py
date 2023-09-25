@@ -229,7 +229,7 @@ def setup_hyp(
     opt.batch = int(params.get("batch_size", 4))
     opt.imgsz = int(params.get("input_shape", 640))
     opt.save = bool(params.get("save", True))
-    opt.save_period = bool(params.get("save_period", True))
+    opt.save_period = int(params.get("save_period", 100))
     opt.cache = bool(params.get("cache", False))
     opt.device = "0" if torch.cuda.is_available() else "cpu"
     opt.workers = int(params.get("workers", 8))
