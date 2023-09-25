@@ -9,15 +9,27 @@ from utils.processing import send_run_to_picsellia
 
 
 class PicselliaSegmentationTrainer(SegmentationTrainer):
-    def __init__(self, experiment: Experiment, cfg=None):
-        excluded_keys = {"cwd", "min_memory", "mode", "task"}
-        args = {
-            key: value for key, value in vars(cfg).items() if key not in excluded_keys
-        }
-        args.setdefault("model", "yolov8n-seg.pt")
-        args.setdefault("data", "coco128-seg.yaml")
-        args.setdefault("device", "")
+    def __init__(self, experiment: Experiment, cfg=None, parameters: dict = None):
+        args = dict(
+            task=cfg.task,
+            model=cfg.model or "yolov8n-seg.pt",
+            data=cfg.data or "coco128-seg.yaml",
+            device=cfg.device if cfg.device is not None else "",
+            epochs=cfg.epochs,
+            batch=cfg.batch,
+            imgsz=cfg.imgsz,
+            save_period=cfg.save_period,
+            name=cfg.name,
+            project=cfg.project,
+            patience=cfg.patience,
+        )
+        cfg_dict = vars(cfg)
+        for parameter_key in parameters.keys():
+            if parameter_key in cfg_dict:
+                parameter_type = type(cfg_dict[parameter_key])
+                args[parameter_key] = parameter_type(parameters[parameter_key])
 
+        print("here are args ", args)
         super().__init__(overrides=args)
         self.experiment = experiment
         self.cwd = cfg.cwd

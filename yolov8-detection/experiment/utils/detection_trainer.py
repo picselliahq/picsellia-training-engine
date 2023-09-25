@@ -1,5 +1,6 @@
 import logging
 import os
+from math import isnan
 
 from picsellia import Experiment
 from picsellia.types.enums import LogType
@@ -9,14 +10,25 @@ from utils.processing import send_run_to_picsellia
 
 
 class PicselliaDetectionTrainer(DetectionTrainer):
-    def __init__(self, experiment: Experiment, cfg=None):
-        excluded_keys = {"cwd", "mode", "task"}
-        args = {
-            key: value for key, value in vars(cfg).items() if key not in excluded_keys
-        }
-        args.setdefault("model", "yolov8n.pt")
-        args.setdefault("data", "coco128.yaml")
-        args.setdefault("device", "")
+    def __init__(self, experiment: Experiment, cfg=None, parameters: dict = None):
+        args = dict(
+            task=cfg.task,
+            model=cfg.model or "yolov8n.pt",
+            data=cfg.data or "coco128.yaml",  # or yolo.ClassificationDataset("mnist")
+            device=cfg.device if cfg.device is not None else "",
+            epochs=cfg.epochs,
+            batch=cfg.batch,
+            imgsz=cfg.imgsz,
+            save_period=cfg.save_period,
+            project=cfg.project,
+            patience=cfg.patience,
+        )
+        cfg_dict = vars(cfg)
+        for parameter_key in parameters.keys():
+            if parameter_key in cfg_dict:
+                parameter_type = type(cfg_dict[parameter_key])
+                args[parameter_key] = parameter_type(parameters[parameter_key])
+
         super().__init__(overrides=args)
         self.experiment = experiment
         self.cwd = cfg.cwd
@@ -49,11 +61,12 @@ class PicselliaDetectionTrainer(DetectionTrainer):
                 )
 
     def _log_metric(self, name: str, value: float, retry: int):
-        try:
-            self.experiment.log(name=name, type=LogType.LINE, data=value)
-        except Exception as e:
-            logging.exception(f"couldn't log {name}")
-            logging.warning(e)
-            if retry > 0:
-                logging.info(f"retrying log {name}")
-                self._log_metric(name, value, retry - 1)
+        if not isnan(value):
+            try:
+                self.experiment.log(name=name, type=LogType.LINE, data=value)
+            except Exception as e:
+                logging.exception(f"couldn't log {name}")
+                logging.warning(e)
+                if retry > 0:
+                    logging.info(f"retrying log {name}")
+                    self._log_metric(name, value, retry - 1)
