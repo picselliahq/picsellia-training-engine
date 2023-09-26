@@ -12,6 +12,7 @@ from picsellia import Experiment
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import LogType
+from picsellia.sdk.asset import Asset
 
 SIZE = 640
 
@@ -24,7 +25,7 @@ def get_classes_from_mask_dataset(experiment: Experiment) -> list[str]:
 
 
 def download_image_mask_assets(
-        experiment: Experiment, image_path: str, mask_path: str
+    experiment: Experiment, image_path: str, mask_path: str
 ) -> tuple[list[str], list[str]]:
     image_assets, mask_assets = get_image_mask_assets(
         experiment, experiment.list_attached_dataset_versions()
@@ -38,7 +39,7 @@ def download_image_mask_assets(
 
 
 def get_image_mask_assets(
-        experiment: Experiment, dataset_list: list
+    experiment: Experiment, dataset_list: list
 ) -> tuple[DatasetVersion, DatasetVersion]:
     attached_dataset_names = [
         dataset_version.version for dataset_version in dataset_list
@@ -66,24 +67,29 @@ def get_image_mask_assets(
 
 
 def split_train_test_val_filenames(
-        image_files: list[str], seed: int
+    image_files: list[str], seed: int
 ) -> tuple[list[str], list[str], list[str]]:
     random.Random(seed).shuffle(image_files)
     nbr_images = len(image_files)
-    train_image_filenames, test_images_filenames, eval_images_filenames = np.split(
-        image_files, [int(nbr_images * 0.8), int(nbr_images * 0.9)]
-    )
+    # train_image_filenames, test_images_filenames, eval_images_filenames = np.split(
+    #     image_files, [int(nbr_images * 0.8), int(nbr_images * 0.9)]
+    # )
+    train_length = int(nbr_images * 0.8)
+    test_length = (nbr_images - train_length) // 2
+    train_image_filenames = image_files[:train_length]
+    test_images_filenames = image_files[train_length : train_length + test_length]
+    eval_images_filenames = image_files[train_length + test_length :]
 
     return train_image_filenames, test_images_filenames, eval_images_filenames
 
 
 def makedirs_images_masks(
-        x_train_dir: str,
-        y_train_dir: str,
-        x_test_dir: str,
-        y_test_dir: str,
-        x_eval_dir: str,
-        y_eval_dir: str,
+    x_train_dir: str,
+    y_train_dir: str,
+    x_test_dir: str,
+    y_test_dir: str,
+    x_eval_dir: str,
+    y_eval_dir: str,
 ) -> None:
     os.makedirs(name=x_train_dir)
     os.makedirs(name=y_train_dir)
@@ -96,12 +102,12 @@ def makedirs_images_masks(
 
 
 def move_images_and_masks_to_directories(
-        image_path: str,
-        mask_path: str,
-        image_list: list[str],
-        mask_list: list[str],
-        dest_image_dir: str,
-        dest_mask_dir: str,
+    image_path: str,
+    mask_path: str,
+    image_list: list[str],
+    mask_list: list[str],
+    dest_image_dir: str,
+    dest_mask_dir: str,
 ):
     for image_filename in tqdm.tqdm(image_list):
         try:
@@ -115,7 +121,7 @@ def move_images_and_masks_to_directories(
         mask_dest = os.path.join(
             dest_mask_dir,
             _change_mask_filename_to_match_image(
-                mask_prefix="", image_prefix="", old_mask_filename=mask_filename
+                mask_prefix="mask", image_prefix="orig", old_mask_filename=mask_filename
             ),
         )
 
@@ -127,29 +133,31 @@ def move_images_and_masks_to_directories(
 
 
 def _find_mask_by_image(image_filename: str, mask_files: list[str]) -> str:
-    base_filename = image_filename.split(".")[0]
+    # base_filename = image_filename.split(".")[0]
+    base_filename = image_filename.split("- ")[1].split(".")[0]
     for mask_file in mask_files:
-        if base_filename == mask_file.split(".")[0]:
+        if base_filename in mask_file:
+            # if base_filename == mask_file.split(".")[0]:
             return mask_file
     raise ValueError(f"No mask found for image {image_filename}")
 
 
 def _change_mask_filename_to_match_image(
-        mask_prefix: str, image_prefix: str, old_mask_filename: str
+    mask_prefix: str, image_prefix: str, old_mask_filename: str
 ) -> str:
-    new_mask_filename = image_prefix + old_mask_filename[len(mask_prefix):]
+    new_mask_filename = image_prefix + old_mask_filename[len(mask_prefix) :]
 
     return new_mask_filename
 
 
 class Dataset:
     def __init__(
-            self,
-            images_dir,
-            masks_dir,
-            classes=None,
-            augmentation=None,
-            preprocessing=None,
+        self,
+        images_dir,
+        masks_dir,
+        classes=None,
+        augmentation=None,
+        preprocessing=None,
     ):
         self.ids = os.listdir(images_dir)
         self.images_filenames = [
@@ -168,7 +176,7 @@ class Dataset:
         self.augmentation = augmentation
         self.preprocessing = preprocessing
 
-    def __getitem__(self, i) -> tuple[np.ndarray, np.ndarray]:
+    def __getitem__(self, i) -> tuple[np.ndarray, np.ndarray, str]:
         image = cv2.imread(self.images_filenames[i])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mask = cv2.imread(self.masks_filenames[i], 0)
@@ -188,7 +196,7 @@ class Dataset:
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample["image"], sample["mask"]
 
-        return image, mask
+        return image, mask, images_filenames[i]
 
     def __len__(self) -> int:
         return len(self.ids)
@@ -307,7 +315,7 @@ def save_training_sample_file(**images):
 
 
 def log_image_to_picsellia(
-        file_path_to_log: str, experiment: Experiment, log_name: str
+    file_path_to_log: str, experiment: Experiment, log_name: str
 ):
     experiment.log(log_name, type=LogType.IMAGE, data=file_path_to_log)
 
@@ -323,3 +331,46 @@ def log_training_sample_to_picsellia(dataset: Dataset, experiment: Experiment):
         experiment=experiment,
         log_name=f"sample-{str(image_index_to_log)}",
     )
+
+
+def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | None:
+    asset_filename = _get_filename_from_fullpath(image_path)
+    try:
+        asset = dataset.find_asset(filename=asset_filename)
+        return asset
+    except Exception as e:
+        print(e)
+        return None
+
+
+def _get_filename_from_fullpath(full_path: str) -> str:
+    return full_path.split("/")[-1]
+
+
+def shift_x_and_y_coordinates(polygon: np.ndarray) -> np.ndarray:
+    shifted_contours = np.zeros_like(polygon)
+    shifted_contours[:, 0] = polygon[:, 1]
+    shifted_contours[:, 1] = polygon[:, 0]
+    return shifted_contours
+
+
+def format_polygons(polygons: list[np.ndarray]) -> list[list[int]]:
+    formatted_polygons = list(
+        map(lambda polygon: list(polygon.ravel().astype(int)), polygons)
+    )
+    return formatted_polygons
+
+
+def move_files_for_polygon_creation(label_name: str, input_folder_path: str):
+    new_folder_path = os.path.join(input_folder_path, label_name)
+    os.makedirs(new_folder_path)
+    files_to_move = [
+        f
+        for f in os.listdir(input_folder_path)
+        if os.path.isfile(os.path.join(input_folder_path, f))
+    ]
+    for file_name in files_to_move:
+        source_path = os.path.join(input_folder_path, file_name)
+        destination_path = os.path.join(new_folder_path, file_name)
+
+        shutil.move(source_path, destination_path)
