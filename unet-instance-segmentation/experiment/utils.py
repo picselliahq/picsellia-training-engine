@@ -10,9 +10,9 @@ import numpy as np
 import tqdm
 from picsellia import Experiment
 from picsellia.exceptions import ResourceNotFoundError
+from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import LogType
-from picsellia.sdk.asset import Asset
 
 SIZE = 640
 
@@ -196,7 +196,7 @@ class Dataset:
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample["image"], sample["mask"]
 
-        return image, mask, images_filenames[i]
+        return image, mask, self.images_filenames[i]
 
     def __len__(self) -> int:
         return len(self.ids)
@@ -322,19 +322,19 @@ def log_image_to_picsellia(
 
 def log_training_sample_to_picsellia(dataset: Dataset, experiment: Experiment):
     image_index_to_log = 0
-    image_to_log, mask_to_log = dataset[image_index_to_log]
+    (image_to_log, mask_to_log, image_filename) = dataset[image_index_to_log]
     output_path = save_training_sample_file(
         image=image_to_log, mask=mask_to_log[..., 0].squeeze()
     )
     log_image_to_picsellia(
         file_path_to_log=output_path,
         experiment=experiment,
-        log_name=f"sample-{str(image_index_to_log)}",
+        log_name=f"sample-{str(os.path.basename(image_filename))}",
     )
 
 
 def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | None:
-    asset_filename = _get_filename_from_fullpath(image_path)
+    asset_filename = get_filename_from_fullpath(image_path)
     try:
         asset = dataset.find_asset(filename=asset_filename)
         return asset
@@ -343,7 +343,7 @@ def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | No
         return None
 
 
-def _get_filename_from_fullpath(full_path: str) -> str:
+def get_filename_from_fullpath(full_path: str) -> str:
     return full_path.split("/")[-1]
 
 
@@ -354,9 +354,12 @@ def shift_x_and_y_coordinates(polygon: np.ndarray) -> np.ndarray:
     return shifted_contours
 
 
-def format_polygons(polygons: list[np.ndarray]) -> list[list[int]]:
+def format_polygons(polygons: list[np.ndarray]) -> list[list[list[int]]]:
     formatted_polygons = list(
-        map(lambda polygon: list(polygon.ravel().astype(int)), polygons)
+        map(
+            lambda polygon: list([int(coord[0]), int(coord[1])] for coord in polygon),
+            polygons,
+        )
     )
     return formatted_polygons
 
@@ -373,4 +376,4 @@ def move_files_for_polygon_creation(label_name: str, input_folder_path: str):
         source_path = os.path.join(input_folder_path, file_name)
         destination_path = os.path.join(new_folder_path, file_name)
 
-        shutil.move(source_path, destination_path)
+        shutil.copyfile(source_path, destination_path)
