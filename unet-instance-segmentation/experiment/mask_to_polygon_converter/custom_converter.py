@@ -2,7 +2,7 @@ import glob
 import os
 from typing import List
 
-from abstract_converter import AbstractConverter
+from .abstract_converter import AbstractConverter
 
 
 class CustomConverter(AbstractConverter):

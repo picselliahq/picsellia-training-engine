@@ -8,8 +8,8 @@ from skimage.io import imread
 from skimage.measure import approximate_polygon, find_contours
 from skimage.transform import resize
 
-from coco_annotations import COCOAnnotation
-from utils import (
+from .coco_annotations import COCOAnnotation
+from .utils import (
     find_most_similar_string,
     find_similar_string,
     format_polygons,

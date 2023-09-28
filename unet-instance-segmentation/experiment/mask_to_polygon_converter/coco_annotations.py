@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Dict, List
 
-from utils import save_dict_as_json_file
+from .utils import save_dict_as_json_file
 
 
 class COCOAnnotation(ABC):
