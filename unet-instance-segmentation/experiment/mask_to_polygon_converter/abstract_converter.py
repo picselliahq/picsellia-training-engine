@@ -3,10 +3,10 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict
 
 import numpy as np
+from skimage.color import rgb2gray
 from skimage.io import imread
 from skimage.measure import approximate_polygon, find_contours
 from skimage.transform import resize
-from skimage.color import rgb2gray
 
 from coco_annotations import COCOAnnotation
 from utils import (
@@ -62,7 +62,11 @@ class AbstractConverter(ABC):
         self.min_contour_points = min_contour_points
 
     def update_coco_annotations(self):
-        labels_images_directories = os.listdir(self._images_dir)
+        labels_images_directories = [
+            item
+            for item in os.listdir(self._images_dir)
+            if os.path.isdir(os.path.join(self._images_dir, item))
+        ]
         labels_masks_directories = os.listdir(self._masks_dir)
 
         for label_img_dir in labels_images_directories:
