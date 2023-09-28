@@ -176,7 +176,7 @@ class Dataset:
         self.augmentation = augmentation
         self.preprocessing = preprocessing
 
-    def __getitem__(self, i) -> tuple[np.ndarray, np.ndarray, str]:
+    def __getitem__(self, i) -> tuple[np.ndarray, np.ndarray]:
         image = cv2.imread(self.images_filenames[i])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mask = cv2.imread(self.masks_filenames[i], 0)
@@ -195,8 +195,10 @@ class Dataset:
         if self.preprocessing:
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample["image"], sample["mask"]
+        return image, mask
 
-        return image, mask, self.images_filenames[i]
+    def get_image_filepath(self, i) -> str:
+        return self.images_filenames[i]
 
     def __len__(self) -> int:
         return len(self.ids)
@@ -322,7 +324,8 @@ def log_image_to_picsellia(
 
 def log_training_sample_to_picsellia(dataset: Dataset, experiment: Experiment):
     image_index_to_log = 0
-    (image_to_log, mask_to_log, image_filename) = dataset[image_index_to_log]
+    image_to_log, mask_to_log = dataset[image_index_to_log]
+    image_filename = dataset.get_image_filepath(image_index_to_log)
     output_path = save_training_sample_file(
         image=image_to_log, mask=mask_to_log[..., 0].squeeze()
     )
