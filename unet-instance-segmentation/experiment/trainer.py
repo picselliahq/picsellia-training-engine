@@ -1,17 +1,16 @@
+import logging
 import os
-import shutil
+
 import keras
 import numpy as np
 import segmentation_models as sm
-from skimage.measure import approximate_polygon, find_contours
-
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
-
+from skimage.measure import approximate_polygon, find_contours
+from skimage.transform import resize
 
 from abstract_trainer.trainer import AbstractTrainer
 from mask_to_polygon_converter.custom_converter import CustomConverter
-
 from utils import (
     split_train_test_val_filenames,
     makedirs_images_masks,
@@ -21,7 +20,6 @@ from utils import (
     get_preprocessing,
     get_validation_augmentation,
     Dataloader,
-    format_and_log_eval_metrics,
     download_image_mask_assets,
     get_classes_from_mask_dataset,
     log_training_sample_to_picsellia,
@@ -29,6 +27,8 @@ from utils import (
     format_polygons,
     shift_x_and_y_coordinates,
     move_files_for_polygon_creation,
+    get_filename_from_fullpath,
+    format_and_log_eval_metrics,
 )
 
 
@@ -36,6 +36,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
     def __init__(self):
         super().__init__()
 
+        self.label = None
         self.eval_dataset_version = None
         self.mask_files = None
         self.image_files = None
@@ -78,8 +79,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
             ),
             keras.callbacks.ReduceLROnPlateau(),
         ]
-        self.conversion_tolerance = 0.2
-        self.min_contour_points = 5
+        self.conversion_tolerance = 0.9
+        self.min_contour_points = 20
 
     def prepare_data_for_training(self):
         self._download_data()
@@ -146,7 +147,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
             augmentation=get_validation_augmentation(),
             preprocessing=get_preprocessing(self.preprocess_input),
         )
-        self.label = self.eval_dataset_version.list_labels()[0]
+
         log_training_sample_to_picsellia(
             dataset=train_dataset,
             experiment=self.experiment,
@@ -237,13 +238,16 @@ class UnetSegmentationTrainer(AbstractTrainer):
         return total_loss
 
     def eval(self):
-        self.eval_dataset_version = self.experiment.get_dataset(name="masks")
+        self.eval_dataset_version = self.experiment.get_dataset(name="original")
+        self.label = self.eval_dataset_version.list_labels()[0]
+        self.labelmap = {"0": self.label.name}
         self.model.load_weights(self.best_model_path)
         scores = self.model.evaluate(self.eval_dataloader)
         format_and_log_eval_metrics(self.experiment, self.metrics, scores)
         self.setup_files_for_evaluation()
         self.draw_ground_truth_polygons_from_masks()
         self._run_evaluations()
+        self.experiment.compute_evaluations_metrics(InferenceType.SEGMENTATION)
 
     def setup_files_for_evaluation(self):
         for filepath in [self.x_eval_dir, self.y_eval_dir]:
@@ -257,9 +261,9 @@ class UnetSegmentationTrainer(AbstractTrainer):
         converter = CustomConverter(
             images_dir=self.x_eval_dir,
             masks_dir=self.y_eval_dir,
-            labelmap={str(i): label.name for i, label in enumerate(self.label)},
-            conversion_tolerance=0.2,
-            min_contour_points=10,
+            labelmap=self.labelmap,
+            conversion_tolerance=0.9,
+            min_contour_points=20,
         )
         coco_annotations_object = converter.update_coco_annotations()
         coco_annotations_path = "coco_annotations.json"
@@ -275,16 +279,24 @@ class UnetSegmentationTrainer(AbstractTrainer):
     def _run_evaluations(self):
         for i in range(self.eval_dataset.__len__()):
             image, ground_truth_mask, image_filepath = self.eval_dataset[i]
-            image = np.expand_dims(image, axis=0)
-            predicted_mask = self.model.predict(image)
-            polygons = self._convert_mask_to_polygons(predicted_mask)
-            formatted_polygons = format_polygons(polygons=polygons)
             asset = find_asset_from_path(
                 image_path=image_filepath, dataset=self.eval_dataset_version
             )
+            image = np.expand_dims(image, axis=0)
+            predicted_mask = self.model.predict(image)
+            predicted_mask = resize(predicted_mask, (1, asset.height, asset.width, 1))
+            polygons = self._convert_mask_to_polygons(predicted_mask)
+            formatted_polygons = format_polygons(polygons=polygons)
+
+            to_send = [
+                (formatted_polygon, self.label, 0.8)
+                for formatted_polygon in formatted_polygons
+            ]
             if asset is not None:
-                self.experiment.add_evaluation(
-                    asset=asset, polygons=[formatted_polygons, self.label, 0.8]
+                self.experiment.add_evaluation(asset=asset, polygons=to_send)
+                print(f"Asset: {get_filename_from_fullpath(image_filepath)} evaluated.")
+                logging.info(
+                    f"Asset: {get_filename_from_fullpath(image_filepath)} evaluated."
                 )
 
     def _convert_mask_to_polygons(self, mask: np.ndarray) -> list[np.ndarray]:
