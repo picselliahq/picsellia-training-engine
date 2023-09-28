@@ -278,7 +278,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
     def _run_evaluations(self):
         for i in range(self.eval_dataset.__len__()):
-            image, ground_truth_mask, image_filepath = self.eval_dataset[i]
+            image, ground_truth_mask = self.eval_dataset[i]
+            image_filepath = self.eval_dataset.get_image_filepath(i=i)
             asset = find_asset_from_path(
                 image_path=image_filepath, dataset=self.eval_dataset_version
             )
