@@ -29,6 +29,7 @@ from utils import (
     move_files_for_polygon_creation,
     get_filename_from_fullpath,
     format_and_log_eval_metrics,
+    predict_and_log_mask,
 )
 
 
@@ -244,6 +245,9 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.model.load_weights(self.best_model_path)
         scores = self.model.evaluate(self.eval_dataloader)
         format_and_log_eval_metrics(self.experiment, self.metrics, scores)
+        predict_and_log_mask(
+            dataset=self.eval_dataset, experiment=self.experiment, model=self.model
+        )
         self.setup_files_for_evaluation()
         self.draw_ground_truth_polygons_from_masks()
         self._run_evaluations()
@@ -266,7 +270,9 @@ class UnetSegmentationTrainer(AbstractTrainer):
             min_contour_points=20,
         )
         coco_annotations_object = converter.update_coco_annotations()
-        coco_annotations_path = "coco_annotations.json"
+        coco_annotations_path = os.path.join(
+            self.experiment.png_dir, "coco_annotations.json"
+        )
         coco_annotations_object.save_coco_annotations_as_json(
             json_path=coco_annotations_path
         )

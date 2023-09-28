@@ -71,9 +71,6 @@ def split_train_test_val_filenames(
 ) -> tuple[list[str], list[str], list[str]]:
     random.Random(seed).shuffle(image_files)
     nbr_images = len(image_files)
-    # train_image_filenames, test_images_filenames, eval_images_filenames = np.split(
-    #     image_files, [int(nbr_images * 0.8), int(nbr_images * 0.9)]
-    # )
     train_length = int(nbr_images * 0.8)
     test_length = (nbr_images - train_length) // 2
     train_image_filenames = image_files[:train_length]
@@ -302,7 +299,49 @@ def format_and_log_eval_metrics(experiment: Experiment, metrics: list, scores: l
     experiment.log(name="eval-results", type=LogType.TABLE, data=eval_metrics)
 
 
-def save_training_sample_file(**images):
+def log_training_sample_to_picsellia(dataset: Dataset, experiment: Experiment):
+    image_index_to_log = 0
+    image_to_log, mask_to_log = dataset[image_index_to_log]
+    image_filename = dataset.get_image_filepath(image_index_to_log)
+    output_path = save_sample_file(
+        output_path=os.path.join(experiment.png_dir, "output_image.jpg"),
+        image=image_to_log,
+        mask=mask_to_log[..., 0].squeeze(),
+    )
+    log_image_to_picsellia(
+        file_path_to_log=output_path,
+        experiment=experiment,
+        log_name=f"sample-ground-truth-{str(os.path.basename(image_filename))}",
+    )
+
+
+def predict_and_log_mask(
+    dataset: Dataset,
+    experiment: Experiment,
+    model,
+):
+    n = 2
+    ids = np.random.choice(np.arange(len(dataset)), size=n)
+    for i in ids:
+        image, gt_mask = dataset[i]
+        image_filename = dataset.get_image_filepath(i)
+        image = np.expand_dims(image, axis=0)
+        pr_mask = model.predict(image)
+
+        output_path = save_sample_file(
+            output_path=os.path.join(experiment.png_dir, "output_image_pred.jpg"),
+            image=denormalize(image.squeeze()),
+            gt_mask=gt_mask.squeeze(),
+            pr_mask=pr_mask.squeeze(),
+        )
+        log_image_to_picsellia(
+            file_path_to_log=output_path,
+            experiment=experiment,
+            log_name=f"sample-prediction-{str(os.path.basename(image_filename))}",
+        )
+
+
+def save_sample_file(output_path: str, **images):
     n = len(images)
     plt.figure(figsize=(16, 5))
     for i, (name, image) in enumerate(images.items()):
@@ -311,29 +350,23 @@ def save_training_sample_file(**images):
         plt.yticks([])
         plt.title(" ".join(name.split("_")).title())
         plt.imshow(image)
-    output_path = "fig.jpg"
     plt.savefig(output_path)
     return output_path
+
+
+def denormalize(x):
+    """Scale image to range 0..1 for correct plot"""
+    x_max = np.percentile(x, 98)
+    x_min = np.percentile(x, 2)
+    x = (x - x_min) / (x_max - x_min)
+    x = x.clip(0, 1)
+    return x
 
 
 def log_image_to_picsellia(
     file_path_to_log: str, experiment: Experiment, log_name: str
 ):
     experiment.log(log_name, type=LogType.IMAGE, data=file_path_to_log)
-
-
-def log_training_sample_to_picsellia(dataset: Dataset, experiment: Experiment):
-    image_index_to_log = 0
-    image_to_log, mask_to_log = dataset[image_index_to_log]
-    image_filename = dataset.get_image_filepath(image_index_to_log)
-    output_path = save_training_sample_file(
-        image=image_to_log, mask=mask_to_log[..., 0].squeeze()
-    )
-    log_image_to_picsellia(
-        file_path_to_log=output_path,
-        experiment=experiment,
-        log_name=f"sample-{str(os.path.basename(image_filename))}",
-    )
 
 
 def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | None:
