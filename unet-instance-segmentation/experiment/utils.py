@@ -6,6 +6,7 @@ import albumentations as A
 import cv2
 import keras
 import matplotlib.pyplot as plt
+from skimage.transform import resize
 import numpy as np
 import tqdm
 from picsellia import Experiment
@@ -413,3 +414,19 @@ def move_files_for_polygon_creation(label_name: str, input_folder_path: str):
         destination_path = os.path.join(new_folder_path, file_name)
 
         shutil.copyfile(source_path, destination_path)
+
+
+def find_asset_by_dataset_index(
+    dataset: Dataset, dataset_version: DatasetVersion, i: int
+) -> tuple[str, Asset]:
+    image_filepath = dataset.get_image_filepath(i=i)
+    asset = find_asset_from_path(image_path=image_filepath, dataset=dataset_version)
+    return image_filepath, asset
+
+
+def predict_mask_from_image(image: np.ndarray, model, asset: Asset) -> np.ndarray:
+    image = np.expand_dims(image, axis=0)
+    predicted_mask = model.predict(image)
+    predicted_mask = resize(predicted_mask, (1, asset.height, asset.width, 1))
+
+    return predicted_mask

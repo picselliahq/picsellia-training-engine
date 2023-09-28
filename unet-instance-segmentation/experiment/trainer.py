@@ -7,7 +7,6 @@ import segmentation_models as sm
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
 from skimage.measure import approximate_polygon, find_contours
-from skimage.transform import resize
 
 from abstract_trainer.trainer import AbstractTrainer
 from mask_to_polygon_converter.custom_converter import CustomConverter
@@ -23,13 +22,14 @@ from utils import (
     download_image_mask_assets,
     get_classes_from_mask_dataset,
     log_training_sample_to_picsellia,
-    find_asset_from_path,
     format_polygons,
     shift_x_and_y_coordinates,
     move_files_for_polygon_creation,
     get_filename_from_fullpath,
     format_and_log_eval_metrics,
     predict_and_log_mask,
+    find_asset_by_dataset_index,
+    predict_mask_from_image,
 )
 
 
@@ -284,24 +284,24 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
     def _run_evaluations(self):
         for i in range(self.eval_dataset.__len__()):
-            image, ground_truth_mask = self.eval_dataset[i]
-            image_filepath = self.eval_dataset.get_image_filepath(i=i)
-            asset = find_asset_from_path(
-                image_path=image_filepath, dataset=self.eval_dataset_version
+            image_filepath, asset = find_asset_by_dataset_index(
+                dataset=self.eval_dataset,
+                dataset_version=self.eval_dataset_version,
+                i=i,
             )
-            image = np.expand_dims(image, axis=0)
-            predicted_mask = self.model.predict(image)
-            predicted_mask = resize(predicted_mask, (1, asset.height, asset.width, 1))
-            polygons = self._convert_mask_to_polygons(predicted_mask)
-            formatted_polygons = format_polygons(polygons=polygons)
-
-            to_send = [
-                (formatted_polygon, self.label, 0.8)
-                for formatted_polygon in formatted_polygons
-            ]
             if asset is not None:
+                image, ground_truth_mask = self.eval_dataset[i]
+                predicted_mask = predict_mask_from_image(
+                    image=image, model=self.model, asset=asset
+                )
+                polygons = self._convert_mask_to_polygons(predicted_mask)
+                formatted_polygons = format_polygons(polygons=polygons)
+
+                to_send = [
+                    (formatted_polygon, self.label, 0.0)
+                    for formatted_polygon in formatted_polygons
+                ]
                 self.experiment.add_evaluation(asset=asset, polygons=to_send)
-                print(f"Asset: {get_filename_from_fullpath(image_filepath)} evaluated.")
                 logging.info(
                     f"Asset: {get_filename_from_fullpath(image_filepath)} evaluated."
                 )
