@@ -55,6 +55,9 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
         self.backbone = "efficientnetb1"
         self.parameters = self.experiment.get_log("parameters").data
+        self.mask_prefix = str(self.parameters.get("mask_filename_prefix", ""))
+        self.image_prefix = str(self.parameters.get("image_filename_prefix", ""))
+
         self.preprocess_input = sm.get_preprocessing(self.backbone)
         self.classes = get_classes_from_mask_dataset(self.experiment)
         self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
@@ -124,6 +127,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
                 mask_list=self.mask_files,
                 dest_image_dir=dest_image_dir,
                 dest_mask_dir=dest_mask_dir,
+                mask_prefix=self.mask_prefix,
+                image_prefix=self.image_prefix,
             )
 
     def _create_train_test_eval_dataloaders(self):

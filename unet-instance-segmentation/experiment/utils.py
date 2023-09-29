@@ -6,7 +6,6 @@ import albumentations as A
 import cv2
 import keras
 import matplotlib.pyplot as plt
-from skimage.transform import resize
 import numpy as np
 import tqdm
 from picsellia import Experiment
@@ -14,6 +13,7 @@ from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import LogType
+from skimage.transform import resize
 
 SIZE = 640
 
@@ -106,11 +106,16 @@ def move_images_and_masks_to_directories(
     mask_list: list[str],
     dest_image_dir: str,
     dest_mask_dir: str,
+    image_prefix: str,
+    mask_prefix: str,
 ):
     for image_filename in tqdm.tqdm(image_list):
         try:
             mask_filename = _find_mask_by_image(
-                image_filename=image_filename, mask_files=mask_list
+                image_filename=image_filename,
+                mask_files=mask_list,
+                mask_prefix=mask_prefix,
+                image_prefix=image_prefix,
             )
         except ValueError:
             continue
@@ -119,7 +124,9 @@ def move_images_and_masks_to_directories(
         mask_dest = os.path.join(
             dest_mask_dir,
             _change_mask_filename_to_match_image(
-                mask_prefix="mask", image_prefix="orig", old_mask_filename=mask_filename
+                mask_prefix=mask_prefix.rstrip(),
+                image_prefix=image_prefix.rstrip(),
+                old_mask_filename=mask_filename,
             ),
         )
 
@@ -130,12 +137,12 @@ def move_images_and_masks_to_directories(
         shutil.copy(mask_file_path, mask_dest)
 
 
-def _find_mask_by_image(image_filename: str, mask_files: list[str]) -> str:
-    # base_filename = image_filename.split(".")[0]
-    base_filename = image_filename.split("- ")[1].split(".")[0]
+def _find_mask_by_image(
+    image_filename: str, image_prefix: str, mask_files: list[str], mask_prefix: str
+) -> str:
+    base_filename = image_filename.split(".")[0].split(image_prefix)[1]
     for mask_file in mask_files:
-        if base_filename in mask_file:
-            # if base_filename == mask_file.split(".")[0]:
+        if base_filename == mask_file.split(".")[0].split(mask_prefix)[1]:
             return mask_file
     raise ValueError(f"No mask found for image {image_filename}")
 
