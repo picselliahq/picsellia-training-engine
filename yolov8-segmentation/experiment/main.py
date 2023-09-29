@@ -152,7 +152,7 @@ cfg = yolo.setup_hyp(
 )
 print(cfg.task)
 trainer = segmentation_trainer.PicselliaSegmentationTrainer(
-    experiment=experiment, cfg=cfg
+    experiment=experiment, cfg=cfg, parameters=parameters
 )
 trainer.train()
 

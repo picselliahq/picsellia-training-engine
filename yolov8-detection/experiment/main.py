@@ -139,7 +139,9 @@ cfg = yolo.setup_hyp(
     task="detect",
 )
 
-trainer = detection_trainer.PicselliaDetectionTrainer(experiment=experiment, cfg=cfg)
+trainer = detection_trainer.PicselliaDetectionTrainer(
+    experiment=experiment, cfg=cfg, parameters=parameters
+)
 trainer.train()
 
 processing.send_run_to_picsellia(experiment, current_dir, trainer.save_dir)
