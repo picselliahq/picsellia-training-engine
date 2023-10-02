@@ -7,8 +7,8 @@ import time
 from datetime import datetime
 from typing import TextIO, Generator, Any
 
-from picsellia import Client, Experiment, Job, Project
-from picsellia.types.enums import ExperimentStatus, JobRunStatus
+from picsellia import Client, Job
+from picsellia.types.enums import JobRunStatus
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
@@ -55,54 +55,6 @@ def get_picsellia_job(client: Client) -> Job:
         return job
 
     return None
-
-
-def get_picsellia_project(client: Client) -> Project:
-    """
-    Retrieved, if possible, the desired project.
-
-    Args:
-        client: A Picsellia's client instance.
-
-    Returns:
-        A Project instance if a project token or a project name is provided, else raises a RuntimeError.
-
-    Raises:
-        RuntimeError: If neither project_token nor project_name are provided as environment variables, as one of them is necessary to retrieve the Project instance.
-    """
-    if project_token := os.environ.get("project_token"):
-        return client.get_project_by_id(project_token)
-    elif project_name := os.environ.get("project_name"):
-        return client.get_project(project_name)
-    else:
-        raise RuntimeError(
-            "Cannot retrieve the Project. Either project_token or project_name must be specified."
-        )
-
-
-def get_picsellia_experiment(client: Client) -> Experiment:
-    """
-    Retrieved, if possible, the desired experiment.
-
-    Args:
-        client: A Picsellia's client instance.
-
-    Returns:
-        An Experiment instance if experiment_name or experiment_id is provided, else raises a RuntimeError.
-
-    Raises:
-        RuntimeError: If experiment_name or experiment_id is not available as an environment variable.
-    """
-
-    if experiment_name := os.environ.get("experiment_name"):
-        picsellia_project = get_picsellia_project(client)
-        return picsellia_project.get_experiment(experiment_name)
-    elif experiment_id := os.environ.get("experiment_id"):
-        return client.get_experiment_by_id(experiment_id)
-    else:
-        raise RuntimeError(
-            "Cannot retrieve the Experiment, environment variable experiment_name or experiment_id must be specified."
-        )
 
 
 def is_string_valid(line: str) -> bool:
@@ -173,9 +125,8 @@ def start_log_monitoring(client: Client, log_file_path: str):
 
     """
     job = get_picsellia_job(client)
-    experiment = get_picsellia_experiment(client)
 
-    section_header = "--#--Set up training"
+    section_header = "--#--Start job"
     replace_log = False
     start_buffer = False
 
@@ -183,7 +134,7 @@ def start_log_monitoring(client: Client, log_file_path: str):
     buffer_length = 0
 
     try:
-        experiment.send_logging(section_header, section_header)
+        job.send_logging(section_header, section_header)
     except Exception:
         pass
 
@@ -195,14 +146,12 @@ def start_log_monitoring(client: Client, log_file_path: str):
             exit_match = re.search(r"--ec-- ([0-9]+)", line)
 
             if exit_match:
-                exit_code = int(exit_match.group(1))
                 end_log_monitoring(
                     job=job,
-                    experiment=experiment,
                     logs=logs,
                     buffer=buffer,
                     section_header=section_header,
-                    exit_code=exit_code,
+                    exit_code=int(exit_match.group(1)),
                 )
                 break
 
@@ -213,7 +162,7 @@ def start_log_monitoring(client: Client, log_file_path: str):
                 }
 
             if line.startswith("-----"):
-                progress_line_nb = experiment.line_nb
+                progress_line_nb = job.line_nb
                 replace_log = True
 
             if line.startswith("--*--"):
@@ -226,9 +175,9 @@ def start_log_monitoring(client: Client, log_file_path: str):
             if re.match("---[0-9]---", line[:8]):
                 start_buffer = False
                 try:
-                    experiment.send_logging(
+                    job.send_logging(
                         buffer, section_header, special="buffer")
-                    experiment.line_nb += len(buffer) - 1
+                    job.line_nb += len(buffer) - 1
                 except Exception:
                     pass
                 buffer = []
@@ -236,36 +185,34 @@ def start_log_monitoring(client: Client, log_file_path: str):
             if start_buffer:
                 buffer.append(line)
                 logs[section_header]["logs"][
-                    str(experiment.line_nb + len(buffer))
+                    str(job.line_nb + len(buffer))
                 ] = line
                 if len(buffer) == buffer_length:
                     try:
-                        experiment.send_logging(
+                        job.send_logging(
                             buffer, section_header, special="buffer"
                         )
-                        experiment.line_nb += buffer_length - 1
+                        job.line_nb += buffer_length - 1
                     except Exception:
                         pass
                     buffer = []
             else:
                 if not replace_log:
                     try:
-                        experiment.send_logging(line, section_header)
+                        job.send_logging(line, section_header)
                         logs[section_header]["logs"][str(
-                            experiment.line_nb)] = line
+                            job.line_nb)] = line
                     except Exception:
                         pass
                 else:
                     try:
-                        experiment.line_nb = progress_line_nb
-                        experiment.send_logging(line, section_header)
+                        job.line_nb = progress_line_nb
+                        job.send_logging(line, section_header)
                     except Exception:
                         pass
 
-
 def end_log_monitoring(
     job: Job,
-    experiment: Experiment,
     logs: dict,
     buffer: list,
     section_header: str,
@@ -285,12 +232,12 @@ def end_log_monitoring(
     Returns:
 
     """
-    with open("{}-logs.json".format(experiment.id), "w") as json_log_file:
+    with open("{}-logs.json".format(job.id), "w") as json_log_file:
         if buffer:
             for i, line in enumerate(buffer):
                 logs[section_header]["logs"][str(
-                    experiment.line_nb + i)] = line
-            experiment.send_logging(buffer, section_header, special="buffer")
+                    job.line_nb + i)] = line
+            job.send_logging(buffer, section_header, special="buffer")
 
         logs["exit_code"] = {
             "exit_code": exit_code,
@@ -298,19 +245,20 @@ def end_log_monitoring(
         }
         json.dump(logs, json_log_file)
 
-    experiment.send_logging(
+    job.send_logging(
         str(exit_code), section_header, special="exit_code")
-    experiment.store_logging_file("{}-logs.json".format(experiment.id))
+    job.store_logging_file("{}-logs.json".format(job.id))
+
+    job.end_logging_buffer()
 
     if exit_code == 0:
-        experiment.update(status=ExperimentStatus.SUCCESS)
+        job.update(status=JobRunStatus.SUCCESS)
         if job:
             job.update_job_run_with_status(JobRunStatus.SUCCEEDED)
     else:
-        experiment.update(status=ExperimentStatus.FAILED)
+        job.update(status=JobRunStatus.FAILED)
         if job:
             job.update_job_run_with_status(JobRunStatus.FAILED)
-
 
 def start(log_file_path):
     picsellia_client = get_picsellia_client()
