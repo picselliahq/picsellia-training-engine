@@ -2,11 +2,14 @@ import logging
 import os
 
 import keras
+import matplotlib.image
 import numpy as np
 import segmentation_models as sm
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
 from skimage.measure import approximate_polygon, find_contours
+from picsellia.types.enums import AnnotationFileType
+from pycocotools.coco import COCO
 
 from abstract_trainer.trainer import AbstractTrainer
 from mask_to_polygon_converter.custom_converter import CustomConverter
@@ -22,6 +25,9 @@ from utils import (
     download_image_mask_assets,
     get_classes_from_mask_dataset,
     log_training_sample_to_picsellia,
+    get_image_annotations,
+    get_mask_from_annotations,
+    convert_mask_to_binary,
     format_polygons,
     shift_x_and_y_coordinates,
     move_files_for_polygon_creation,
@@ -39,6 +45,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
         self.label = None
         self.eval_dataset_version = None
+        self.annotated_dataset = None
+        self.annotation_file_path = None
         self.mask_files = None
         self.image_files = None
         self.image_path = os.path.join(self.experiment.png_dir, "original")
@@ -61,7 +69,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.preprocess_input = sm.get_preprocessing(self.backbone)
         self.classes = get_classes_from_mask_dataset(self.experiment)
         self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
-        self.batch_size = int(self.parameters.get("batch_size", 8))
+        self.batch_size = int(self.parameters.get("batch_size", 4))
         self.best_model_path = os.path.join(
             self.experiment.checkpoint_dir, "best_model.h5"
         )
@@ -87,9 +95,51 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.min_contour_points = 20
 
     def prepare_data_for_training(self):
-        self._download_data()
+        if bool(self.parameters["segmentation_dataset"]):
+            self.download_segmentation_data_into_masks()
+        else:
+            self._download_data()
         self._split_and_move_data()
         self._create_train_test_eval_dataloaders()
+
+    def download_segmentation_data_into_masks(self):
+        self._download_annotated_dataset()
+        self.import_annotations_from_segmentation_dataset()
+        self.convert_all_images_polygons_to_masks()
+
+    def import_annotations_from_segmentation_dataset(self):
+        self.annotation_file_path = self.annotated_dataset.export_annotation_file(
+            annotation_file_type=AnnotationFileType.COCO
+        )
+
+    def _download_annotated_dataset(self):
+        self.annotated_dataset = self.experiment.get_dataset(name="annotated")
+        self.annotated_dataset.download(target_path=self.image_path)
+        self.image_files = os.listdir(path=self.image_path)
+
+    def convert_all_images_polygons_to_masks(self):
+        coco = COCO(self.annotation_file_path)
+        os.makedirs(self.mask_path)
+        for image_id in coco.getImgIds():
+            self.convert_image_polygons_to_mask(coco=coco, image_id=image_id)
+        self.mask_files = os.listdir(self.mask_path)
+
+    def convert_image_polygons_to_mask(self, coco: COCO, image_id: int):
+        img = coco.imgs[image_id]
+        img_filename_without_extension = os.path.splitext(img["file_name"])[0]
+        image_annotations = get_image_annotations(coco, img)
+        mask = get_mask_from_annotations(coco=coco, image_annotations=image_annotations)
+        binary_mask = convert_mask_to_binary(mask)
+        self.save_binary_mask(filename=img_filename_without_extension, mask=binary_mask)
+
+    def save_binary_mask(self, filename: str, mask: np.ndarray):
+        filename = filename + ".png"
+        matplotlib.image.imsave(
+            os.path.join(self.mask_path, filename),
+            mask,
+            cmap="Greys",
+            format="png",
+        )
 
     def _download_data(self):
         self.image_files, self.mask_files = download_image_mask_assets(
@@ -198,8 +248,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
             steps_per_epoch=len(self.train_dataloader),
             epochs=epochs,
             callbacks=self.callbacks,
-            validation_data=self.test_dataloader,
-            validation_steps=len(self.test_dataloader),
+            validation_data=self.eval_dataloader,
+            validation_steps=len(self.eval_dataloader),
         )
         self.experiment.store("finetuned_model_weights", self.best_model_path)
 

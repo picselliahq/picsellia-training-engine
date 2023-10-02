@@ -8,6 +8,8 @@ import keras
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
+from pycocotools.coco import COCO
+
 from picsellia import Experiment
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import Asset
@@ -19,7 +21,11 @@ SIZE = 640
 
 
 def get_classes_from_mask_dataset(experiment: Experiment) -> list[str]:
-    mask_dataset = experiment.get_dataset(name="masks")
+    try:
+        mask_dataset = experiment.get_dataset(name="masks")
+    except ResourceNotFoundError:
+        mask_dataset = experiment.get_dataset(name="annotated")
+
     labels = mask_dataset.list_labels()
 
     return [label.name for label in labels]
@@ -437,3 +443,30 @@ def predict_mask_from_image(image: np.ndarray, model, asset: Asset) -> np.ndarra
     predicted_mask = resize(predicted_mask, (1, asset.height, asset.width, 1))
 
     return predicted_mask
+
+
+def download_annotated_dataset(annotated_dataset: DatasetVersion, dest_path: str):
+    annotated_dataset.download(target_path=dest_path)
+
+
+def get_image_annotations(coco, image: dict) -> list:
+    category_ids = coco.getCatIds()
+    annotation_ids = coco.getAnnIds(
+        imgIds=image["id"], catIds=category_ids, iscrowd=None
+    )
+    annotation_list = coco.loadAnns(annotation_ids)
+
+    return annotation_list
+
+
+def get_mask_from_annotations(coco: COCO, image_annotations: list) -> np.ndarray:
+    mask = coco.annToMask(image_annotations[0])
+    for i in range(len(image_annotations)):
+        mask += coco.annToMask(image_annotations[i])
+    return mask
+
+
+def convert_mask_to_binary(mask: np.ndarray) -> np.ndarray:
+    unique_values = np.unique(mask[mask != 0])
+    converted_mask = np.where(np.isin(mask, unique_values), 255, 0)
+    return converted_mask
