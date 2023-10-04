@@ -1,4 +1,4 @@
-FROM soniagrh/cuda:11.7.1-cudnn8-ubuntu20.04
+FROM picsellia/cuda:11.7.1-cudnn8-ubuntu20.04
 
 COPY ./yolov8-classification/requirements.txt .
 
