@@ -8,23 +8,22 @@ import keras
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
-from pycocotools.coco import COCO
-
 from picsellia import Experiment
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import LogType
+from pycocotools.coco import COCO
 from skimage.transform import resize
 
 SIZE = 640
 
 
-def get_classes_from_mask_dataset(experiment: Experiment) -> list[str]:
-    try:
+def get_classes(experiment: Experiment, has_segmentation_dataset: bool) -> list[str]:
+    if has_segmentation_dataset:
+        mask_dataset = experiment.get_dataset(name="full")
+    else:
         mask_dataset = experiment.get_dataset(name="masks")
-    except ResourceNotFoundError:
-        mask_dataset = experiment.get_dataset(name="annotated")
 
     labels = mask_dataset.list_labels()
 
@@ -52,22 +51,19 @@ def get_image_mask_assets(
         dataset_version.version for dataset_version in dataset_list
     ]
     if len(attached_dataset_names) != 2:
-        raise Exception(
-            "You must have exactly two datasets, 'original' for the original images, and 'masks' for the masks "
-        )
-
+        raise Exception("You must have two datasets, 'images' and 'masks' ")
     try:
-        image_assets = experiment.get_dataset(name="original")
+        image_assets = experiment.get_dataset(name="images")
     except Exception:
         raise ResourceNotFoundError(
-            "Can't find 'original' datasetversion. Expecting 'original' and 'masks', as attached datasets"
+            "Can't find 'images' datasetversion. Expecting 'images' and 'masks', as attached datasets"
         )
 
     try:
         mask_assets = experiment.get_dataset(name="masks")
     except Exception:
         raise ResourceNotFoundError(
-            "Can't find 'masks' datasetversion. Expecting 'original' and 'masks', as attached datasets"
+            "Can't find 'masks' datasetversion. Expecting 'images' and 'masks', as attached datasets"
         )
 
     return image_assets, mask_assets
@@ -146,9 +142,9 @@ def move_images_and_masks_to_directories(
 def _find_mask_by_image(
     image_filename: str, image_prefix: str, mask_files: list[str], mask_prefix: str
 ) -> str:
-    base_filename = image_filename.split(".")[0].split(image_prefix)[1]
+    base_filename = image_filename.split(".")[0][len(image_prefix) :]
     for mask_file in mask_files:
-        if base_filename == mask_file.split(".")[0].split(mask_prefix)[1]:
+        if base_filename == mask_file.split(".")[0][len(mask_prefix) :]:
             return mask_file
     raise ValueError(f"No mask found for image {image_filename}")
 
@@ -383,16 +379,6 @@ def log_image_to_picsellia(
     experiment.log(log_name, type=LogType.IMAGE, data=file_path_to_log)
 
 
-def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | None:
-    asset_filename = get_filename_from_fullpath(image_path)
-    try:
-        asset = dataset.find_asset(filename=asset_filename)
-        return asset
-    except Exception as e:
-        print(e)
-        return None
-
-
 def get_filename_from_fullpath(full_path: str) -> str:
     return full_path.split("/")[-1]
 
@@ -437,16 +423,22 @@ def find_asset_by_dataset_index(
     return image_filepath, asset
 
 
+def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | None:
+    asset_filename = get_filename_from_fullpath(image_path)
+    try:
+        asset = dataset.find_asset(filename=asset_filename)
+        return asset
+    except Exception as e:
+        print(e)
+        return None
+
+
 def predict_mask_from_image(image: np.ndarray, model, asset: Asset) -> np.ndarray:
     image = np.expand_dims(image, axis=0)
     predicted_mask = model.predict(image)
     predicted_mask = resize(predicted_mask, (1, asset.height, asset.width, 1))
 
     return predicted_mask
-
-
-def download_annotated_dataset(annotated_dataset: DatasetVersion, dest_path: str):
-    annotated_dataset.download(target_path=dest_path)
 
 
 def get_image_annotations(coco, image: dict) -> list:

@@ -6,10 +6,10 @@ import matplotlib.image
 import numpy as np
 import segmentation_models as sm
 from picsellia.exceptions import ResourceNotFoundError
-from picsellia.types.enums import InferenceType
-from skimage.measure import approximate_polygon, find_contours
 from picsellia.types.enums import AnnotationFileType
+from picsellia.types.enums import InferenceType
 from pycocotools.coco import COCO
+from skimage.measure import approximate_polygon, find_contours
 
 from abstract_trainer.trainer import AbstractTrainer
 from mask_to_polygon_converter.custom_converter import CustomConverter
@@ -23,7 +23,6 @@ from utils import (
     get_validation_augmentation,
     Dataloader,
     download_image_mask_assets,
-    get_classes_from_mask_dataset,
     log_training_sample_to_picsellia,
     get_image_annotations,
     get_mask_from_annotations,
@@ -36,6 +35,7 @@ from utils import (
     predict_and_log_mask,
     find_asset_by_dataset_index,
     predict_mask_from_image,
+    get_classes,
 )
 
 
@@ -43,6 +43,10 @@ class UnetSegmentationTrainer(AbstractTrainer):
     def __init__(self):
         super().__init__()
 
+        self.n_classes = None
+        self.classes = None
+        self.has_segmentation_dataset = None
+        self.image_dataset_name = "images"
         self.label = None
         self.eval_dataset_version = None
         self.annotated_dataset = None
@@ -67,8 +71,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.image_prefix = str(self.parameters.get("image_filename_prefix", ""))
 
         self.preprocess_input = sm.get_preprocessing(self.backbone)
-        self.classes = get_classes_from_mask_dataset(self.experiment)
-        self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
+
         self.batch_size = int(self.parameters.get("batch_size", 4))
         self.best_model_path = os.path.join(
             self.experiment.checkpoint_dir, "best_model.h5"
@@ -95,27 +98,50 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.min_contour_points = 20
 
     def prepare_data_for_training(self):
-        if bool(self.parameters["segmentation_dataset"]):
+        self.has_segmentation_dataset = self.check_mask_or_segmentation_dataset()
+        if self.has_segmentation_dataset:
+            self.image_dataset_name = "full"
             self.download_segmentation_data_into_masks()
         else:
             self._download_data()
+        self.classes = get_classes(
+            self.experiment, has_segmentation_dataset=self.has_segmentation_dataset
+        )
         self._split_and_move_data()
         self._create_train_test_eval_dataloaders()
+
+    def check_mask_or_segmentation_dataset(self) -> bool | None:
+        try:
+            self.experiment.get_dataset(name="full")
+            self.has_segmentation_dataset = True
+        except ResourceNotFoundError:
+            try:
+                self.experiment.get_dataset(name="masks")
+                self.experiment.get_dataset(name="images")
+                self.has_segmentation_dataset = False
+            except ResourceNotFoundError:
+                logging.error(
+                    "You need to have either 'full' containing the annotated images, or 'masks' and 'original' to train with 'masks'"
+                )
+
+        return self.has_segmentation_dataset
 
     def download_segmentation_data_into_masks(self):
         self._download_annotated_dataset()
         self.import_annotations_from_segmentation_dataset()
         self.convert_all_images_polygons_to_masks()
 
+    def _download_annotated_dataset(self):
+        self.annotated_dataset = self.experiment.get_dataset(
+            name=self.image_dataset_name
+        )
+        self.annotated_dataset.download(target_path=self.image_path)
+        self.image_files = os.listdir(path=self.image_path)
+
     def import_annotations_from_segmentation_dataset(self):
         self.annotation_file_path = self.annotated_dataset.export_annotation_file(
             annotation_file_type=AnnotationFileType.COCO
         )
-
-    def _download_annotated_dataset(self):
-        self.annotated_dataset = self.experiment.get_dataset(name="annotated")
-        self.annotated_dataset.download(target_path=self.image_path)
-        self.image_files = os.listdir(path=self.image_path)
 
     def convert_all_images_polygons_to_masks(self):
         coco = COCO(self.annotation_file_path)
@@ -219,6 +245,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
     def train(self):
         epochs = int(self.parameters.get("epochs", 1))
         learning_rate = self.parameters.get("learning_rate", 5e-4)
+        self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
         activation = "sigmoid" if self.n_classes == 1 else "softmax"
 
         (
@@ -294,7 +321,9 @@ class UnetSegmentationTrainer(AbstractTrainer):
         return total_loss
 
     def eval(self):
-        self.eval_dataset_version = self.experiment.get_dataset(name="original")
+        self.eval_dataset_version = self.experiment.get_dataset(
+            name=self.image_dataset_name
+        )
         self.label = self.eval_dataset_version.list_labels()[0]
         self.labelmap = {"0": self.label.name}
         self.model.load_weights(self.best_model_path)
@@ -315,7 +344,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
             )
 
     def draw_ground_truth_polygons_from_masks(self):
-        dataset = self.experiment.get_dataset("original")
+        dataset = self.experiment.get_dataset(self.image_dataset_name)
         dataset.set_type(InferenceType.SEGMENTATION)
         converter = CustomConverter(
             images_dir=self.x_eval_dir,
