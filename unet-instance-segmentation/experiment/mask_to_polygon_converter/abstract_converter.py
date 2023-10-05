@@ -108,7 +108,10 @@ class AbstractConverter(ABC):
         self, mask_filepath: str, img_shape: Tuple[int, int]
     ) -> List:
         mask = imread(mask_filepath)
-        mask = rgb2gray(mask[:, :, :3])
+        try:
+            mask = rgb2gray(mask)
+        except ValueError:
+            mask = rgb2gray(mask[:, :, :3])
         mask = resize(mask, img_shape)
         polygons = self._convert_mask_to_polygons(mask)
         formatted_polygons = format_polygons(polygons=polygons)
