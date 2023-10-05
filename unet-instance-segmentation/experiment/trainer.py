@@ -128,7 +128,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
     def download_segmentation_data_into_masks(self):
         self._download_annotated_dataset()
-        self.import_annotations_from_segmentation_dataset()
+        self.export_annotations_from_segmentation_dataset()
         self.convert_all_images_polygons_to_masks()
 
     def _download_annotated_dataset(self):
@@ -138,9 +138,10 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.annotated_dataset.download(target_path=self.image_path)
         self.image_files = os.listdir(path=self.image_path)
 
-    def import_annotations_from_segmentation_dataset(self):
+    def export_annotations_from_segmentation_dataset(self):
         self.annotation_file_path = self.annotated_dataset.export_annotation_file(
-            annotation_file_type=AnnotationFileType.COCO
+            target_path=self.experiment.base_dir,
+            annotation_file_type=AnnotationFileType.COCO,
         )
 
     def convert_all_images_polygons_to_masks(self):
