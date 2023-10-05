@@ -1,12 +1,16 @@
 import os
 import shutil
-import unittest
-from picsellia import Client
-from datetime import date
 import time
+import unittest
+from datetime import date
+
 import numpy as np
+from picsellia import Client
+from picsellia.sdk.dataset import DatasetVersion
+
+from trainer import UnetSegmentationTrainer
 from utils import (
-    get_classes_from_mask_dataset,
+    get_classes,
     download_image_mask_assets,
     get_image_mask_assets,
     split_train_test_val_filenames,
@@ -18,11 +22,10 @@ from utils import (
     Dataset,
     Dataloader,
 )
-from trainer import UnetSegmentationTrainer
-from picsellia.sdk.dataset import DatasetVersion
 
 TOKEN = os.environ["api_token"]
 ORGA_NAME = os.environ["TEST_ORGA"]
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 class TestUnetSegmentation(unittest.TestCase):
@@ -54,7 +57,7 @@ class TestUnetSegmentation(unittest.TestCase):
         )
 
         cls.experiment.attach_dataset(
-            name="original", dataset_version=cls.dataset.get_version("original")
+            name="images", dataset_version=cls.dataset.get_version("original")
         )
         cls.experiment.attach_dataset(
             name="masks", dataset_version=cls.dataset.get_version("masks")
@@ -63,7 +66,13 @@ class TestUnetSegmentation(unittest.TestCase):
             "018a703e-80fc-7d8f-9983-1430e5f7a427"
         )
         cls.experiment.log_parameters(
-            {"epochs": 1, "batch_size": 2, "learning_rate": 0.0001}
+            {
+                "epochs": 1,
+                "batch_size": 2,
+                "learning_rate": 0.0001,
+                "mask_filename_prefix": "mask",
+                "image_filename_prefix": "orig",
+            }
         )
         cls.experiment.attach_model_version(
             model_version=cls.model_version, do_attach_base_parameters=False
@@ -81,6 +90,10 @@ class TestUnetSegmentation(unittest.TestCase):
         cls.x_eval_dir = os.path.join(cls.experiment.png_dir, "eval-images")
         cls.y_eval_dir = os.path.join(cls.experiment.png_dir, "eval-masks")
 
+        cls.parameters = cls.experiment.get_log("parameters").data
+        cls.mask_prefix = cls.parameters["mask_filename_prefix"]
+        cls.image_prefix = cls.parameters["image_filename_prefix"]
+
         os.environ["experiment_id"] = str(cls.experiment.id)
         cls.training_pipeline = UnetSegmentationTrainer()
 
@@ -90,9 +103,9 @@ class TestUnetSegmentation(unittest.TestCase):
         if os.path.isdir(cls.experiment.name):
             shutil.rmtree(cls.experiment.name)
 
-    def test_get_classes_from_mask_dataset(self):
+    def test_get_classes(self):
         expected_results = ["car"]
-        results = get_classes_from_mask_dataset(self.experiment)
+        results = get_classes(self.experiment, False)
         self.assertEqual(expected_results, results)
 
     def test_download_image_mask_assets(self):
@@ -169,7 +182,10 @@ class TestUnetSegmentation(unittest.TestCase):
             "mask - DS982.png",
         ]
         resulting_mask_file = _find_mask_by_image(
-            image_filename="orig - DS1238.jpg", mask_files=mask_files
+            image_filename="orig - DS1238.jpg",
+            mask_files=mask_files,
+            image_prefix=self.image_prefix,
+            mask_prefix=self.mask_prefix,
         )
         expected_mask_file = "mask - DS1238.png"
         self.assertEqual(expected_mask_file, resulting_mask_file)
@@ -182,7 +198,12 @@ class TestUnetSegmentation(unittest.TestCase):
         ]
         image_filename = "orig - DS1238.jpg"
         with self.assertRaises(ValueError) as context:
-            _find_mask_by_image(image_filename, mask_files)
+            _find_mask_by_image(
+                image_filename=image_filename,
+                mask_files=mask_files,
+                image_prefix=self.image_prefix,
+                mask_prefix=self.mask_prefix,
+            )
 
         self.assertIn("No mask found for image", str(context.exception))
 
