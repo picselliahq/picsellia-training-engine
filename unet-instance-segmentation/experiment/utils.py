@@ -126,8 +126,8 @@ def move_images_and_masks_to_directories(
         mask_dest = os.path.join(
             dest_mask_dir,
             _change_mask_filename_to_match_image(
-                mask_prefix=mask_prefix.rstrip(),
-                image_prefix=image_prefix.rstrip(),
+                mask_prefix=mask_prefix.strip(),
+                image_prefix=image_prefix.strip(),
                 old_mask_filename=mask_filename,
             ),
         )
