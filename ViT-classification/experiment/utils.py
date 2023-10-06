@@ -13,8 +13,8 @@ def get_predicted_label_confidence(predictions):
     scores = []
     classes = []
     for pred in predictions:
-        scores.append(pred['score'])
-        classes.append(pred['label'])
+        scores.append(pred["score"])
+        classes.append(pred["label"])
 
     max_conf = max(scores)
 
@@ -24,7 +24,6 @@ def get_predicted_label_confidence(predictions):
 
 
 def compute_metrics(eval_pred):
-
     accuracy = evaluate.load("accuracy")
     predictions, labels = eval_pred
     predictions = np.argmax(predictions, axis=1)
@@ -32,16 +31,23 @@ def compute_metrics(eval_pred):
     return accuracy.compute(predictions=predictions, references=labels)
 
 
-def prepare_datasets_with_annotation(experiment: Experiment, train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion):
-    coco_train, coco_test, coco_val = _create_coco_objects(
-        train_set, test_set, val_set)
+def prepare_datasets_with_annotation(
+    experiment: Experiment,
+    train_set: DatasetVersion,
+    test_set: DatasetVersion,
+    val_set: DatasetVersion,
+):
+    coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
 
     move_files_in_class_directories(
-        coco_train, os.path.join(experiment.base_dir, "data/train"))
+        coco_train, os.path.join(experiment.base_dir, "data/train")
+    )
     move_files_in_class_directories(
-        coco_test, os.path.join(experiment.base_dir, "data/test"))
+        coco_test, os.path.join(experiment.base_dir, "data/test")
+    )
     move_files_in_class_directories(
-        coco_val, os.path.join(experiment.base_dir, "data/val"))
+        coco_val, os.path.join(experiment.base_dir, "data/val")
+    )
 
     evaluation_ds = val_set
     evaluation_assets = evaluation_ds.list_assets()
@@ -49,17 +55,16 @@ def prepare_datasets_with_annotation(experiment: Experiment, train_set: DatasetV
     return evaluation_ds, evaluation_assets
 
 
-def _create_coco_objects(train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion):
-    train_annotation_path = train_set.export_annotation_file(
-        AnnotationFileType.COCO)
+def _create_coco_objects(
+    train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion
+):
+    train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
     coco_train = COCO(train_annotation_path)
 
-    test_annotation_path = test_set.export_annotation_file(
-        AnnotationFileType.COCO)
+    test_annotation_path = test_set.export_annotation_file(AnnotationFileType.COCO)
     coco_test = COCO(test_annotation_path)
 
-    val_annotation_path = val_set.export_annotation_file(
-        AnnotationFileType.COCO)
+    val_annotation_path = val_set.export_annotation_file(AnnotationFileType.COCO)
     coco_val = COCO(val_annotation_path)
 
     return coco_train, coco_test, coco_val
@@ -81,9 +86,9 @@ def move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None:
         if len(ann) > 1:
             print(f"{im['file_name']} has more than one class. Skipping")
         ann = ann[0]
-        cat = coco.loadCats(ann['category_id'])[0]
-        fpath = os.path.join(base_imdir, im['file_name'])
-        new_fpath = os.path.join(base_imdir, cat['name'], im['file_name'])
+        cat = coco.loadCats(ann["category_id"])[0]
+        fpath = os.path.join(base_imdir, im["file_name"])
+        new_fpath = os.path.join(base_imdir, cat["name"], im["file_name"])
         try:
             shutil.move(fpath, new_fpath)
             pass
