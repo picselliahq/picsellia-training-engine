@@ -5,8 +5,8 @@ from typing import Match, Optional, List
 
 from picsellia.types.enums import JobRunStatus
 
-from log_tailer import LogTailer
-from picsellia_utils import get_picsellia_job, get_picsellia_client
+from .log_tailer import LogTailer
+from .picsellia_utils import get_picsellia_job, get_picsellia_client
 
 
 def starts_buffer(line: str) -> Match[str] | None:
