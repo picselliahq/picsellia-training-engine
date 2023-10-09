@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 
-from base.common.utils.log_monitor import LogMonitor
+from common_utils.log_monitor import LogMonitor
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
@@ -10,7 +10,6 @@ os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ["PICSELLIA_SDK_SECTION_HANDLER"] = "1"
 
 logging.getLogger("picsellia").setLevel(logging.INFO)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
