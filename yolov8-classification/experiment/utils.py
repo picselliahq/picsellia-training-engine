@@ -18,31 +18,28 @@ from ultralytics.yolo.engine.model import YOLO
 
 def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
-) -> tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]:
+) -> (
+    tuple[bool, DatasetVersion, DatasetVersion, DatasetVersion]
+    | tuple[bool, None, None, None]
+):
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
-    has_three_datasets, has_two_datasets = False, False
+    has_three_datasets = False
     if number_of_attached_datasets == 3:
         has_three_datasets = True
         train_set, test_set, eval_set = _get_three_attached_datasets(experiment)
-    elif number_of_attached_datasets == 2:
-        has_two_datasets = True
-        train_set, test_set, eval_set = _transform_two_attached_datasets_to_three(
-            experiment
-        )
     elif number_of_attached_datasets == 1:
         logging.info(
-            "We only found one dataset inside your experiment, the train/test/split will be performed automatically."
+            "We only found one dataset inside your experiment. The train/test/split will be performed automatically."
         )
         train_set: DatasetVersion = experiment.list_attached_dataset_versions()[0]
         test_set = None
         eval_set = None
 
     else:
-        logging.info(
-            "We need at least 1 and at most 3 datasets attached to this experiment "
-        )
+        logging.info("We need either 1 or 3 datasets attached to this experiment ")
+        train_set, test_set, eval_set = None, None, None
 
-    return has_two_datasets, has_three_datasets, train_set, test_set, eval_set
+    return has_three_datasets, train_set, test_set, eval_set
 
 
 def _get_three_attached_datasets(
@@ -68,20 +65,6 @@ def _get_three_attached_datasets(
         raise ResourceNotFoundError(
             "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
                                                 expecting 'train', 'test', 'eval')"
-        )
-    return train_set, test_set, eval_set
-
-
-def _transform_two_attached_datasets_to_three(
-    experiment: Experiment,
-) -> tuple[DatasetVersion, DatasetVersion, DatasetVersion]:
-    try:
-        train_set = experiment.get_dataset("train")
-        test_set = experiment.get_dataset("test")
-        eval_set = experiment.get_dataset("test")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 2 attached datasets, expecting 'train' and 'test' "
         )
     return train_set, test_set, eval_set
 
