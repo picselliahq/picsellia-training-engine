@@ -35,6 +35,10 @@ def format_line(line: str) -> str:
     return line.rstrip("\n").rstrip(chr(8)) + "\n"
 
 
+def is_progress_line(line: str) -> bool:
+    return "%" in line and "<" in line and "[" in line and "]" in line
+
+
 class LogTailer:
     SLEEP_INTERVAL = 0.04
 
@@ -42,42 +46,34 @@ class LogTailer:
         self.log_file = log_file
         self.progress_bar = []
 
-    def _process_line(self, line: str) -> Tuple[str, bool, bool]:
-        """
-        Process a line from the log file.
-
-        Args:
-            line (str): The line to process.
-
-        Returns:
-            A tuple containing the processed line, a boolean indicating whether the line should replace the previous
-        """
+    def _process_line(
+        self, line: str, wait_for_done: bool
+    ) -> Tuple[str, bool, bool, bool]:
         replace_log = False
         is_first_line = False
         line = format_line(line)
 
-        if "it" in line and "%" in line and "<" in line:
+        if is_progress_line(line):
             replace_log = True
+            if not ("100%" in line) and wait_for_done:
+                self.progress_bar = []
+                wait_for_done = False
             if not self.progress_bar:
                 is_first_line = True
             else:
                 self.progress_bar[-1] += "\r"
             self.progress_bar.append(line)
             line = "".join(self.progress_bar)
-            if "100%" in line:
-                self.progress_bar = []
 
-        return line, replace_log, is_first_line
+            if "100%" in line:
+                wait_for_done = True
+
+        return line, replace_log, is_first_line, wait_for_done
 
     def tail(self) -> Generator[Tuple[str, bool, bool], Any, None]:
-        """
-        Stream the content of the provided file_path
-        Args:
-
-        Returns:
-            A generator that yields newly added lines from the log_file as they are written.
-        """
         self.log_file.seek(0, os.SEEK_END)
+
+        wait_for_done = False
 
         while True:
             line = self.log_file.readline()
@@ -85,4 +81,8 @@ class LogTailer:
                 time.sleep(self.SLEEP_INTERVAL)
                 continue
 
-            yield self._process_line(line)
+            line, replace_log, is_first_line, wait_for_done = self._process_line(
+                line, wait_for_done
+            )
+
+            yield line, replace_log, is_first_line
