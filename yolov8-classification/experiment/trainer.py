@@ -32,7 +32,6 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
 
     def prepare_data_for_training(self):
         (
-            has_two_datasets,
             has_three_datasets,
             train_set,
             test_set,
@@ -44,14 +43,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             self.evaluation_ds = eval_set
             self.evaluation_assets = self.evaluation_ds.list_assets()
 
-        elif has_two_datasets:
-            download_triple_dataset(train_set, test_set, eval_set)
-            (
-                self.evaluation_ds,
-                self.evaluation_assets,
-            ) = prepare_datasets_with_annotation(train_set, test_set, eval_set)
-
-        elif not has_two_datasets and not has_three_datasets:
+        else:
             train_set.download("images")
             (
                 train_assets,
