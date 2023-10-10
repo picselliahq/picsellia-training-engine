@@ -3,10 +3,14 @@ import re
 from datetime import datetime
 from typing import Match, Optional, List
 
-from picsellia.types.enums import JobRunStatus
+from picsellia.types.enums import JobRunStatus, ExperimentStatus
 
 from .log_tailer import LogTailer
-from .picsellia_utils import get_picsellia_job, get_picsellia_client
+from .picsellia_utils import (
+    get_picsellia_job,
+    get_picsellia_client,
+    get_picsellia_experiment,
+)
 
 
 def starts_buffer(line: str) -> Match[str] | None:
@@ -24,6 +28,7 @@ class LogMonitor:
         self.log_file_path = log_file_path
 
         self.client = get_picsellia_client()
+        self.experiment = get_picsellia_experiment(self.client)
         self.job = get_picsellia_job(self.client)
 
         self.logs = {}
@@ -41,7 +46,7 @@ class LogMonitor:
             self.end_log_monitoring(int(exit_match.group(1)), "--#--End job")
 
     def process_line(
-        self, line: str, section_header: str, replace_log: bool, is_first_line: bool
+            self, line: str, section_header: str, replace_log: bool, is_first_line: bool
     ):
         """Process a line from the log file."""
         self.handle_exit_code(line)
@@ -104,7 +109,7 @@ class LogMonitor:
         self.send_logging(line, section_header)
 
     def send_logging(
-        self, content: str | List, section_header: str, special: Optional[str] = False
+            self, content: str | List, section_header: str, special: Optional[str] = False
     ) -> None:
         """Send logging to job and update logs."""
         try:
@@ -136,16 +141,22 @@ class LogMonitor:
             }
             json.dump(self.logs, json_log_file)
 
-        self.job.send_logging(str(exit_code), section_header, special="exit_code")
         self.job.store_logging_file("{}-logs.json".format(self.job.id))
 
         if exit_code == 0:
             self.job.update_job_run_with_status(JobRunStatus.SUCCEEDED)
+            if self.experiment:
+                self.experiment.update(status=ExperimentStatus.SUCCESS)
         else:
             self.job.update_job_run_with_status(JobRunStatus.FAILED)
+            if self.experiment:
+                self.experiment.update(status=ExperimentStatus.FAILED)
 
     def start_monitoring(self):
-        section_header = "--#--Start job"
+        if self.experiment:
+            section_header = "--#--Set up training"
+        else:
+            section_header = "--#--Start job"
         self.job.send_logging(section_header, section_header)
         self.logs = {
             section_header: {"datetime": str(datetime.now().isoformat()), "logs": {}}
