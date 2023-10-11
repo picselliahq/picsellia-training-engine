@@ -6,13 +6,10 @@ from datetime import date
 
 import numpy as np
 from picsellia import Client
-from picsellia.sdk.dataset import DatasetVersion
 
 from trainer import UnetSegmentationTrainer
 from utils import (
     get_classes,
-    download_image_mask_assets,
-    get_image_mask_assets,
     split_train_test_val_filenames,
     makedirs_images_masks,
     _find_mask_by_image,
@@ -107,26 +104,6 @@ class TestUnetSegmentation(unittest.TestCase):
         expected_results = ["car"]
         results = get_classes(self.experiment, False)
         self.assertEqual(expected_results, results)
-
-    def test_download_image_mask_assets(self):
-        image_files, mask_files = download_image_mask_assets(
-            experiment=self.experiment,
-            image_path=self.image_path,
-            mask_path=self.mask_path,
-        )
-        self.assertNotEquals((image_files, mask_files), ([], []))
-        self.assertTrue(os.path.exists(self.image_path))
-        self.assertTrue(os.path.exists(self.mask_path))
-
-    def test_get_image_mask_assets(self):
-        image_assets, mask_assets = get_image_mask_assets(
-            experiment=self.experiment,
-            dataset_list=self.experiment.list_attached_dataset_versions(),
-        )
-
-        self.assertEqual(
-            (type(image_assets), type(mask_assets)), (DatasetVersion, DatasetVersion)
-        )
 
     def test_split_train_test_val_filenames(self):
         image_files = [
