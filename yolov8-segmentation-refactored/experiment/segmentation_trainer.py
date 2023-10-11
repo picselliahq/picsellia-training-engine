@@ -29,7 +29,6 @@ class PicselliaSegmentationTrainer(SegmentationTrainer):
                 parameter_type = type(cfg_dict[parameter_key])
                 args[parameter_key] = parameter_type(parameters[parameter_key])
 
-        print("here are args ", args)
         super().__init__(overrides=args)
         self.experiment = experiment
         self.cwd = cfg.cwd
