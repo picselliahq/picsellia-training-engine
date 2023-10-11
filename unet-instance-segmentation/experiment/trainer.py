@@ -6,6 +6,7 @@ import matplotlib.image
 import numpy as np
 import segmentation_models as sm
 from picsellia.exceptions import ResourceNotFoundError
+from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import AnnotationFileType
 from picsellia.types.enums import InferenceType
 from pycocotools.coco import COCO
@@ -22,7 +23,6 @@ from utils import (
     get_preprocessing,
     get_validation_augmentation,
     Dataloader,
-    download_image_mask_assets,
     log_training_sample_to_picsellia,
     get_image_annotations,
     get_mask_from_annotations,
@@ -43,6 +43,9 @@ class UnetSegmentationTrainer(AbstractTrainer):
     def __init__(self):
         super().__init__()
 
+        self.image_dataset = None
+        self.mask_dataset = None
+        self.segmentation_dataset = None
         self.n_classes = None
         self.classes = None
         self.has_segmentation_dataset = None
@@ -98,48 +101,56 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.min_contour_points = 20
 
     def prepare_data_for_training(self):
-        self.has_segmentation_dataset = self.check_mask_or_segmentation_dataset()
-        if self.has_segmentation_dataset:
-            self.image_dataset_name = "full"
+        self.segmentation_dataset = self.get_segmentation_dataset()
+        if self.segmentation_dataset is not None:
             self.download_segmentation_data_into_masks()
         else:
-            self._download_data()
+            self.mask_dataset, self.image_dataset = self.get_mask_image_datasets()
+            if self.mask_dataset is not None and self.image_dataset is not None:
+                self._download_mask_image_datasets()
+                self._get_mask_image_filenames()
+
         self.classes = get_classes(
             self.experiment, has_segmentation_dataset=self.has_segmentation_dataset
         )
         self._split_and_move_data()
         self._create_train_test_eval_dataloaders()
 
-    def check_mask_or_segmentation_dataset(self) -> bool | None:
+    def get_segmentation_dataset(self) -> DatasetVersion | None:
         try:
-            self.experiment.get_dataset(name="full")
+            segmentation_dataset = self.experiment.get_dataset(name="full")
+            self.image_dataset_name = "full"
             self.has_segmentation_dataset = True
         except ResourceNotFoundError:
-            try:
-                self.experiment.get_dataset(name="masks")
-                self.experiment.get_dataset(name="images")
-                self.has_segmentation_dataset = False
-            except ResourceNotFoundError:
-                logging.error(
-                    "You need to have either 'full' containing the annotated images, or 'masks' and 'original' to train with 'masks'"
-                )
-
-        return self.has_segmentation_dataset
+            self.has_segmentation_dataset = False
+            segmentation_dataset = None
+        return segmentation_dataset
 
     def download_segmentation_data_into_masks(self):
-        self._download_annotated_dataset()
+        self._download_segmentation_dataset()
         self.export_annotations_from_segmentation_dataset()
         self.convert_all_images_polygons_to_masks()
 
-    def _download_annotated_dataset(self):
-        self.annotated_dataset = self.experiment.get_dataset(
-            name=self.image_dataset_name
-        )
-        self.annotated_dataset.download(target_path=self.image_path)
+    def get_mask_image_datasets(
+        self,
+    ) -> tuple[DatasetVersion, DatasetVersion] | tuple[None, None]:
+        mask_dataset, image_dataset = None, None
+        try:
+            mask_dataset = self.experiment.get_dataset(name="masks")
+            image_dataset = self.experiment.get_dataset(name="images")
+            self.has_segmentation_dataset = False
+        except ResourceNotFoundError:
+            logging.error(
+                "You need to have either 'full' containing the annotated images (segmentation dataset), or 'masks' and 'images' to train with 'masks'"
+            )
+        return mask_dataset, image_dataset
+
+    def _download_segmentation_dataset(self):
+        self.segmentation_dataset.download(target_path=self.image_path)
         self.image_files = os.listdir(path=self.image_path)
 
     def export_annotations_from_segmentation_dataset(self):
-        self.annotation_file_path = self.annotated_dataset.export_annotation_file(
+        self.annotation_file_path = self.segmentation_dataset.export_annotation_file(
             target_path=self.experiment.base_dir,
             annotation_file_type=AnnotationFileType.COCO,
         )
@@ -168,10 +179,13 @@ class UnetSegmentationTrainer(AbstractTrainer):
             format="png",
         )
 
-    def _download_data(self):
-        self.image_files, self.mask_files = download_image_mask_assets(
-            self.experiment, self.image_path, self.mask_path
-        )
+    def _download_mask_image_datasets(self):
+        self.mask_dataset.download(target_path=self.mask_path)
+        self.image_dataset.download(target_path=self.image_path)
+
+    def _get_mask_image_filenames(self):
+        self.image_files = os.listdir(path=self.image_path)
+        self.mask_files = os.listdir(path=self.mask_path)
 
     def _split_and_move_data(self):
         (

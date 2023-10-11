@@ -30,45 +30,6 @@ def get_classes(experiment: Experiment, has_segmentation_dataset: bool) -> list[
     return [label.name for label in labels]
 
 
-def download_image_mask_assets(
-    experiment: Experiment, image_path: str, mask_path: str
-) -> tuple[list[str], list[str]]:
-    image_assets, mask_assets = get_image_mask_assets(
-        experiment, experiment.list_attached_dataset_versions()
-    )
-    image_assets.download(target_path=image_path)
-    mask_assets.download(target_path=mask_path)
-    image_files = os.listdir(path=image_path)
-    mask_files = os.listdir(path=mask_path)
-
-    return image_files, mask_files
-
-
-def get_image_mask_assets(
-    experiment: Experiment, dataset_list: list
-) -> tuple[DatasetVersion, DatasetVersion]:
-    attached_dataset_names = [
-        dataset_version.version for dataset_version in dataset_list
-    ]
-    if len(attached_dataset_names) != 2:
-        raise Exception("You must have two datasets, 'images' and 'masks' ")
-    try:
-        image_assets = experiment.get_dataset(name="images")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Can't find 'images' datasetversion. Expecting 'images' and 'masks', as attached datasets"
-        )
-
-    try:
-        mask_assets = experiment.get_dataset(name="masks")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Can't find 'masks' datasetversion. Expecting 'images' and 'masks', as attached datasets"
-        )
-
-    return image_assets, mask_assets
-
-
 def split_train_test_val_filenames(
     image_files: list[str], seed: int
 ) -> tuple[list[str], list[str], list[str]]:
