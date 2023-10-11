@@ -31,6 +31,7 @@ class Yolov8SegmentationTrainer(AbstractTrainer):
         self.annotations_path = "annotations.json"
 
     def prepare_data_for_training(self):
+        self.experiment.download_artifacts(with_tree=True)
         (
             has_three_datasets,
             train_set,
@@ -47,7 +48,7 @@ class Yolov8SegmentationTrainer(AbstractTrainer):
             for data_type, dataset in {
                 "train": train_set,
                 "test": test_set,
-                "eval": eval_set,
+                "val": eval_set,
             }.items():
                 self._prepare_annotations_label(data_type=data_type, dataset=dataset)
             self.evaluation_ds = test_set
@@ -61,6 +62,7 @@ class Yolov8SegmentationTrainer(AbstractTrainer):
             annotations_dict=self.annotations_dict,
             annotations_path=self.annotations_path,
         )
+        self.annotations_coco = COCO(self.annotations_path)
         prop = get_prop_parameter(parameters=self.parameters)
         (
             train_assets,
