@@ -39,7 +39,7 @@ class Yolov8SegmentationTrainer(AbstractTrainer):
             eval_set,
         ) = get_train_test_eval_datasets_from_experiment(self.experiment)
 
-        if train_set is not None:
+        if train_set:
             labels = train_set.list_labels()
             self.label_names = [label.name for label in labels]
             self.labelmap = {str(i): label.name for i, label in enumerate(labels)}
@@ -143,7 +143,6 @@ class Yolov8SegmentationTrainer(AbstractTrainer):
             experiment=self.experiment,
             data_yaml_path=data_yaml_path,
             params=self.parameters,
-            label_map=self.labelmap,
             cwd=self.current_dir,
             task="segment",
         )

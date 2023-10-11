@@ -1,16 +1,17 @@
 import json
 import logging
 import os
-import yaml
-import torch
 from collections import OrderedDict
-from ultralytics import YOLO
-
+from typing import Optional, Tuple
 import numpy as np
+import torch
+import yaml
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.experiment import Experiment
 from picsellia.types.enums import LogType
+from pycocotools.coco import COCO
+from ultralytics import YOLO
 
 
 def get_train_test_eval_datasets_from_experiment(
@@ -72,9 +73,13 @@ def write_annotation_file(annotations_dict: dict, annotations_path: str):
 
 
 def create_yolo_segmentation_label(
-    exp, data_type, annotations_dict, annotations_coco, label_names
+    experiment: Experiment,
+    data_type: str,
+    annotations_dict: dict,
+    annotations_coco: COCO,
+    label_names: list,
 ):
-    dataset_path = os.path.join(exp.png_dir, data_type)
+    dataset_path = os.path.join(experiment.png_dir, data_type)
     image_filenames = os.listdir(os.path.join(dataset_path, "images"))
 
     labels_path = os.path.join(dataset_path, "labels")
@@ -90,12 +95,14 @@ def create_yolo_segmentation_label(
             )
 
 
-def create_img_label_segmentation(img, annotations_coco, labels_path, label_names):
+def create_img_label_segmentation(
+    image: dict, annotations_coco: COCO, labels_path: str, label_names: list
+):
     result = []
-    img_id = img["id"]
-    img_filename = img["file_name"]
-    w = img["width"]
-    h = img["height"]
+    img_id = image["id"]
+    img_filename = image["file_name"]
+    w = image["width"]
+    h = image["height"]
     txt_name = os.path.splitext(img_filename)[0] + ".txt"
     annotation_ids = annotations_coco.getAnnIds(imgIds=img_id)
     anns = annotations_coco.loadAnns(annotation_ids)
@@ -110,7 +117,7 @@ def create_img_label_segmentation(img, annotations_coco, labels_path, label_name
         f.write("\n".join(result))
 
 
-def coco_to_yolo_segmentation(ann, image_w, image_h):
+def coco_to_yolo_segmentation(ann: list, image_w: int, image_h: int) -> list:
     pair_index = np.arange(0, len(ann[0]), 2)
     impair_index = np.arange(1, len(ann[0]), 2)
     Xs = list(map(ann[0].__getitem__, pair_index))
@@ -162,7 +169,7 @@ def order_repartition_according_labelmap(labelmap: dict, repartition: dict) -> d
     return ordered_rep
 
 
-def generate_data_yaml(experiment: Experiment, labelmap: dict, config_path: str):
+def generate_data_yaml(experiment: Experiment, labelmap: dict, config_path: str) -> str:
     cwd = os.getcwd()
 
     if not os.path.exists(config_path):
@@ -183,49 +190,32 @@ def generate_data_yaml(experiment: Experiment, labelmap: dict, config_path: str)
     return data_config_path
 
 
-def send_run_to_picsellia(experiment, cwd, save_dir=None, imgsz=640):
-    if save_dir is not None:
-        final_run_path = save_dir
-    else:
-        final_run_path = find_final_run(cwd)
-    best_weigths, hyp_yaml = get_weights_and_config(final_run_path)
+def send_run_to_picsellia(
+    experiment: Experiment, cwd: str, save_dir: str = None, imgsz: int = 640
+):
+    final_run_path = save_dir if save_dir is not None else find_final_run(cwd)
+    best_weights, hyp_yaml = get_weights_and_config(final_run_path)
+    model_latest_path = find_model_latest_path(final_run_path, imgsz)
 
-    model_latest_path = os.path.join(final_run_path, "weights", "best.onnx")
-    model_dir = os.path.join(final_run_path, "weights")
-    if os.path.isfile(os.path.join(model_dir, "best.onnx")):
-        model_latest_path = os.path.join(model_dir, "best.onnx")
-    elif os.path.isfile(os.path.join(model_dir, "last.onnx")):
-        model_latest_path = os.path.join(model_dir, "last.onnx")
-    elif os.path.isfile(os.path.join(model_dir, "best.pt")):
-        checkpoint_path = os.path.join(model_dir, "best.pt")
-        model = YOLO(checkpoint_path)
-        model.export(format="onnx", imgsz=imgsz, task="segment")
-        model_latest_path = os.path.join(final_run_path, "weights", "best.onnx")
-    elif not os.path.isfile(os.path.join(model_dir, "last.pt")):
-        checkpoint_path = os.path.join(model_dir, "last.pt")
-        model = YOLO(checkpoint_path)
-        model.export(format="onnx", imgsz=imgsz, task="segment")
-        model_latest_path = os.path.join(final_run_path, "weights", "last.onnx")
-    else:
-        logging.warning("Can't find last checkpoints to be uploaded")
-        model_latest_path = None
-    if model_latest_path is not None:
+    if model_latest_path:
         experiment.store("model-latest", model_latest_path)
-    if best_weigths is not None:
-        experiment.store("checkpoint-index-latest", best_weigths)
-    if hyp_yaml is not None:
+    if best_weights:
+        experiment.store("checkpoint-index-latest", best_weights)
+    if hyp_yaml:
         experiment.store("checkpoint-data-latest", hyp_yaml)
+
     for curve in get_metrics_curves(final_run_path):
-        if curve is not None:
-            name = curve.split("/")[-1].split(".")[0]
+        if curve:
+            name = extract_file_name(curve)
             experiment.log(name, curve, LogType.IMAGE)
+
     for batch in get_batch_mosaics(final_run_path):
-        if batch is not None:
-            name = batch.split("/")[-1].split(".")[0]
+        if batch:
+            name = extract_file_name(batch)
             experiment.log(name, batch, LogType.IMAGE)
 
 
-def find_final_run(cwd):
+def find_final_run(cwd: str) -> str:
     runs_path = os.path.join(cwd, "runs", "train")
     dirs = os.listdir(runs_path)
     dirs.sort()
@@ -239,64 +229,100 @@ def find_final_run(cwd):
     return os.path.join(runs_path, base + last_run_nb)
 
 
-def get_weights_and_config(final_run_path):
+def get_weights_and_config(final_run_path: str) -> tuple[str | None, str | None]:
     best_weights = None
     hyp_yaml = None
-    if os.path.isfile(os.path.join(final_run_path, "weights", "best.pt")):
-        best_weights = os.path.join(final_run_path, "weights", "best.pt")
-    if os.path.isfile(os.path.join(final_run_path, "hyp.yaml")):
-        hyp_yaml = os.path.join(final_run_path, "hyp.yaml")
-    if os.path.isfile(os.path.join(final_run_path, "args.yaml")):
-        hyp_yaml = os.path.join(final_run_path, "args.yaml")
+    best_weights_path = os.path.join(final_run_path, "weights", "best.pt")
+    hyp_yaml_path = os.path.join(final_run_path, "hyp.yaml")
+    args_yaml_path = os.path.join(final_run_path, "args.yaml")
+
+    if os.path.isfile(best_weights_path):
+        best_weights = best_weights_path
+    elif os.path.isfile(hyp_yaml_path):
+        hyp_yaml = hyp_yaml_path
+    elif os.path.isfile(args_yaml_path):
+        hyp_yaml = args_yaml_path
+
     return best_weights, hyp_yaml
 
 
-def get_metrics_curves(final_run_path):
-    confusion_matrix = None
-    F1_curve = None
-    labels_correlogram = None
-    labels = None
-    P_curve = None
-    PR_curve = None
-    R_curve = None
-    BoxF1_curve = None
-    BoxP_curve = None
-    BoxPR_curve = None
-    BoxR_curve = None
-    MaskF1_curve = None
-    MaskP_curve = None
-    MaskPR_curve = None
-    MaskR_curve = None
-    if os.path.isfile(os.path.join(final_run_path, "confusion_matrix.png")):
-        confusion_matrix = os.path.join(final_run_path, "confusion_matrix.png")
-    if os.path.isfile(os.path.join(final_run_path, "F1_curve.png")):
-        F1_curve = os.path.join(final_run_path, "F1_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "labels_correlogram.jpg")):
-        labels_correlogram = os.path.join(final_run_path, "labels_correlogram.jpg")
-    if os.path.isfile(os.path.join(final_run_path, "labels.jpg")):
-        labels = os.path.join(final_run_path, "labels.jpg")
-    if os.path.isfile(os.path.join(final_run_path, "P_curve.png")):
-        P_curve = os.path.join(final_run_path, "P_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "PR_curve.png")):
-        PR_curve = os.path.join(final_run_path, "PR_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "R_curve.png")):
-        R_curve = os.path.join(final_run_path, "R_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "BoxF1_curve.png")):
-        BoxF1_curve = os.path.join(final_run_path, "BoxF1_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "BoxP_curve.png")):
-        BoxP_curve = os.path.join(final_run_path, "BoxP_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "BoxPR_curve.png")):
-        BoxPR_curve = os.path.join(final_run_path, "BoxPR_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "BoxR_curve.png")):
-        BoxR_curve = os.path.join(final_run_path, "BoxR_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "MaskF1_curve.png")):
-        MaskF1_curve = os.path.join(final_run_path, "MaskF1_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "MaskP_curve.png")):
-        MaskP_curve = os.path.join(final_run_path, "MaskP_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "MaskPR_curve.png")):
-        MaskPR_curve = os.path.join(final_run_path, "MaskPR_curve.png")
-    if os.path.isfile(os.path.join(final_run_path, "MaskR_curve.png")):
-        MaskR_curve = os.path.join(final_run_path, "MaskR_curve.png")
+def find_model_latest_path(final_run_path: str, imgsz: int) -> str | None:
+    model_dir = os.path.join(final_run_path, "weights")
+    model_paths = [
+        os.path.join(model_dir, "best.onnx"),
+        os.path.join(model_dir, "last.onnx"),
+        os.path.join(model_dir, "best.pt"),
+        os.path.join(model_dir, "last.pt"),
+    ]
+
+    for model_path in model_paths:
+        if os.path.isfile(model_path):
+            if model_path.endswith(".pt"):
+                checkpoint_path = model_path
+                model = YOLO(checkpoint_path)
+                model.export(format="onnx", imgsz=imgsz, task="segment")
+                return os.path.join(final_run_path, "weights", "best.onnx")
+            return model_path
+
+    logging.warning("Can't find last checkpoints to be uploaded")
+    return None
+
+
+def get_metrics_curves(
+    final_run_path: str,
+) -> tuple[
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+]:
+    confusion_matrix_path = os.path.join(final_run_path, "confusion_matrix.png")
+    F1_curve_path = os.path.join(final_run_path, "F1_curve.png")
+    labels_correlogram_path = os.path.join(final_run_path, "labels_correlogram.jpg")
+    labels_path = os.path.join(final_run_path, "labels.jpg")
+    P_curve_path = os.path.join(final_run_path, "P_curve.png")
+    PR_curve_path = os.path.join(final_run_path, "PR_curve.png")
+    R_curve_path = os.path.join(final_run_path, "R_curve.png")
+    BoxF1_curve_path = os.path.join(final_run_path, "BoxF1_curve.png")
+    BoxP_curve_path = os.path.join(final_run_path, "BoxP_curve.png")
+    BoxPR_curve_path = os.path.join(final_run_path, "BoxPR_curve.png")
+    BoxR_curve_path = os.path.join(final_run_path, "BoxR_curve.png")
+    MaskF1_curve_path = os.path.join(final_run_path, "MaskF1_curve.png")
+    MaskP_curve_path = os.path.join(final_run_path, "MaskP_curve.png")
+    MaskPR_curve_path = os.path.join(final_run_path, "MaskPR_curve.png")
+    MaskR_curve_path = os.path.join(final_run_path, "MaskR_curve.png")
+
+    confusion_matrix = (
+        confusion_matrix_path if os.path.isfile(confusion_matrix_path) else None
+    )
+    F1_curve = F1_curve_path if os.path.isfile(F1_curve_path) else None
+    labels_correlogram = (
+        labels_correlogram_path if os.path.isfile(labels_correlogram_path) else None
+    )
+    labels = labels_path if os.path.isfile(labels_path) else None
+    P_curve = P_curve_path if os.path.isfile(P_curve_path) else None
+    PR_curve = PR_curve_path if os.path.isfile(PR_curve_path) else None
+    R_curve = R_curve_path if os.path.isfile(R_curve_path) else None
+    BoxF1_curve = BoxF1_curve_path if os.path.isfile(BoxF1_curve_path) else None
+    BoxP_curve = BoxP_curve_path if os.path.isfile(BoxP_curve_path) else None
+    BoxPR_curve = BoxPR_curve_path if os.path.isfile(BoxPR_curve_path) else None
+    BoxR_curve = BoxR_curve_path if os.path.isfile(BoxR_curve_path) else None
+    MaskF1_curve = MaskF1_curve_path if os.path.isfile(MaskF1_curve_path) else None
+    MaskP_curve = MaskP_curve_path if os.path.isfile(MaskP_curve_path) else None
+    MaskPR_curve = MaskPR_curve_path if os.path.isfile(MaskPR_curve_path) else None
+    MaskR_curve = MaskR_curve_path if os.path.isfile(MaskR_curve_path) else None
+
     return (
         confusion_matrix,
         F1_curve,
@@ -316,25 +342,40 @@ def get_metrics_curves(final_run_path):
     )
 
 
-def get_batch_mosaics(final_run_path):
+def extract_file_name(file_path: str) -> str:
+    return os.path.splitext(os.path.basename(file_path))[0]
+
+
+def get_batch_mosaics(
+    final_run_path: str,
+) -> tuple[str | None, str | None, str | None, str | None, str | None, str | None]:
     val_batch0_labels = None
     val_batch0_pred = None
     val_batch1_labels = None
     val_batch1_pred = None
     val_batch2_labels = None
     val_batch2_pred = None
-    if os.path.isfile(os.path.join(final_run_path, "val_batch0_labels.jpg")):
-        val_batch0_labels = os.path.join(final_run_path, "val_batch0_labels.jpg")
-    if os.path.isfile(os.path.join(final_run_path, "val_batch0_pred.jpg")):
-        val_batch0_pred = os.path.join(final_run_path, "val_batch0_pred.jpg")
-    if os.path.isfile(os.path.join(final_run_path, "val_batch1_labels.jpg")):
-        val_batch1_labels = os.path.join(final_run_path, "val_batch1_labels.jpg")
-    if os.path.isfile(os.path.join(final_run_path, "val_batch1_pred.jpg")):
-        val_batch1_pred = os.path.join(final_run_path, "val_batch1_pred.jpg")
-    if os.path.isfile(os.path.join(final_run_path, "val_batch2_labels.jpg")):
-        val_batch2_labels = os.path.join(final_run_path, "val_batch2_labels.jpg")
-    if os.path.isfile(os.path.join(final_run_path, "val_batch2_pred.jpg")):
-        val_batch2_pred = os.path.join(final_run_path, "val_batch2_pred.jpg")
+
+    val_batch0_labels_path = os.path.join(final_run_path, "val_batch0_labels.jpg")
+    val_batch0_pred_path = os.path.join(final_run_path, "val_batch0_pred.jpg")
+    val_batch1_labels_path = os.path.join(final_run_path, "val_batch1_labels.jpg")
+    val_batch1_pred_path = os.path.join(final_run_path, "val_batch1_pred.jpg")
+    val_batch2_labels_path = os.path.join(final_run_path, "val_batch2_labels.jpg")
+    val_batch2_pred_path = os.path.join(final_run_path, "val_batch2_pred.jpg")
+
+    if os.path.isfile(val_batch0_labels_path):
+        val_batch0_labels = val_batch0_labels_path
+    if os.path.isfile(val_batch0_pred_path):
+        val_batch0_pred = val_batch0_pred_path
+    if os.path.isfile(val_batch1_labels_path):
+        val_batch1_labels = val_batch1_labels_path
+    if os.path.isfile(val_batch1_pred_path):
+        val_batch1_pred = val_batch1_pred_path
+    if os.path.isfile(val_batch2_labels_path):
+        val_batch2_labels = val_batch2_labels_path
+    if os.path.isfile(val_batch2_pred_path):
+        val_batch2_pred = val_batch2_pred_path
+
     return (
         val_batch0_labels,
         val_batch0_pred,
@@ -346,14 +387,14 @@ def get_batch_mosaics(final_run_path):
 
 
 def setup_hyp(
-    experiment=None,
-    data_yaml_path=None,
-    config_path=None,
-    params={},
-    label_map=[],
-    cwd=None,
-    task="detect",
+    experiment: Experiment = None,
+    data_yaml_path: str = None,
+    params: dict = None,
+    cwd: str = None,
+    task: str = "detect",
 ):
+    if params is None:
+        params = {}
     tmp = os.listdir(experiment.checkpoint_dir)
 
     for f in tmp:
