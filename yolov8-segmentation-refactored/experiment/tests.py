@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from utils import extract_file_name, get_metrics_curves, get_weights_and_config
+from utils import extract_file_name, get_metrics_curves, get_weights_and_config, interleave_lists
 
 
 class TestYolov8Segmentation(unittest.TestCase):
@@ -65,6 +65,19 @@ class TestYolov8Segmentation(unittest.TestCase):
         expected = (best_weights_path, None)
         self.assertEqual(result, expected)
 
+    def test_interleave_lists(self):
+        xs = [10, 20, 30]
+        ys = [5, 15, 25]
+        result = interleave_lists(xs, ys)
+        expected = [10, 5, 20, 15, 30, 25]
+        self.assertEqual(result, expected)
+
+    def test_interleave_lists_empty(self):
+        xs = []
+        ys = []
+        result = interleave_lists(xs, ys)
+        expected = []
+        self.assertEqual(result, expected)
 
 if __name__ == "__main__":
     unittest.main()
