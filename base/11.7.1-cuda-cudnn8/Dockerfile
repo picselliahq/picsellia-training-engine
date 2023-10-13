@@ -16,7 +16,7 @@ RUN python3.10 -m pip install -U setuptools
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda-11.6/targets/x86_64-linux/lib:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/lib/x86_64-linux-gnu
 
-COPY ./base/common /experiment
+COPY ./base /experiment
 
 RUN ln -s /experiment/run.sh /usr/bin/run
 

@@ -15,7 +15,7 @@ RUN pip3 install -U setuptools
 ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib:/usr/local/cuda/lib64
 
-COPY ./base/common /experiment
+COPY ./base /experiment
 
 RUN ln -s /experiment/run.sh /usr/bin/run
 
