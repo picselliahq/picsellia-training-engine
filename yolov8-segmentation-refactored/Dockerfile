@@ -13,5 +13,6 @@ WORKDIR /experiment
 COPY ./yolov8-segmentation-refactored/experiment ./
 COPY ./evaluator ./evaluator
 COPY ./abstract_trainer ./abstract_trainer
+COPY ./core_utils ./core_utils
 
 ENTRYPOINT ["run", "main.py"]
