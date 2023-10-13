@@ -36,7 +36,7 @@ fi
 log_file_path="/experiment/training.log"
 python_cmd=$(get_python)
 
-$python_cmd logs_handler.py --log_file_path "$log_file_path" &
+$python_cmd logs/handler.py --log_file_path "$log_file_path" &
 LOG_HANDLER_PID=$!
 
 $python_cmd "$1" > "$log_file_path" 2>&1
