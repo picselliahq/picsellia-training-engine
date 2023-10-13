@@ -5,22 +5,26 @@ from typing import Match, Optional, List
 
 from picsellia.types.enums import JobRunStatus, ExperimentStatus
 
-from .log_tailer import LogTailer
-from .picsellia_utils import (
+from tailer import LogTailer
+from utils.picsellia import (
     get_picsellia_job,
     get_picsellia_client,
     get_picsellia_experiment,
 )
 
+BUFFER_START_PATTERN = re.compile(r"--[0-9]--")
+BUFFER_END_PATTERN = re.compile(r"---[0-9]---")
+EXIT_CODE_PATTERN = re.compile(r"--ec-- ([0-9]+)")
 
-def starts_buffer(line: str) -> Match[str] | None:
+
+def does_buffer_start(line: str) -> Match[str] | None:
     """Check if line starts a buffer."""
-    return re.match("--[0-9]--", line[:6])
+    return BUFFER_START_PATTERN.match(line[:6])
 
 
-def ends_buffer(line: str) -> Match[str] | None:
+def does_buffer_end(line: str) -> Match[str] | None:
     """Check if line ends a buffer."""
-    return re.match("---[0-9]---", line[:8])
+    return BUFFER_END_PATTERN.match(line[:8])
 
 
 class LogMonitor:
@@ -41,7 +45,7 @@ class LogMonitor:
 
     def handle_exit_code(self, line: str) -> None:
         """Handles the exit code in the line."""
-        exit_match = re.search(r"--ec-- ([0-9]+)", line)
+        exit_match = EXIT_CODE_PATTERN.search(line)
         if exit_match:
             self.end_log_monitoring(int(exit_match.group(1)), "--#--End job")
 
@@ -80,10 +84,10 @@ class LogMonitor:
 
     def process_buffers(self, line: str, section_header: str):
         """Process line buffers."""
-        if starts_buffer(line):
+        if does_buffer_start(line):
             self.start_buffer = True
             self.buffer_length = int(line[2])
-        elif ends_buffer(line):
+        elif does_buffer_end(line):
             self.send_and_reset_buffer(section_header)
 
     def send_and_reset_buffer(self, section_header: str):

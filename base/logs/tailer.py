@@ -36,7 +36,8 @@ def format_line(line: str) -> str:
 
 
 def is_progress_line(line: str) -> bool:
-    return "%" in line and "<" in line and "[" in line and "]" in line
+    symbols = ["%", "<", "[", "]"]
+    return all(symbol in line for symbol in symbols)
 
 
 class LogTailer:
