@@ -102,8 +102,11 @@ def log_split_dataset_repartition_to_experiment(
 
 def order_repartition_according_labelmap(labelmap: dict, repartition: dict) -> dict:
     ordered_rep = {"x": list(labelmap.values()), "y": []}
-    for name in ordered_rep["x"]:
-        ordered_rep["y"].append(repartition["y"][repartition["x"].index(name)])
+    for name in labelmap.values():
+        if name in repartition["x"]:
+            ordered_rep["y"].append(repartition["y"][repartition["x"].index(name)])
+        else:
+            ordered_rep["y"].append(0)
     return ordered_rep
 
 
