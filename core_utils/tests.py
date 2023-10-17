@@ -21,6 +21,7 @@ from yolov8 import (
     make_annotation_dict_by_dataset,
     setup_hyp,
     get_metrics_curves,
+    get_batch_mosaics,
 )
 
 TOKEN = os.environ["TEST_TOKEN"]
@@ -257,6 +258,31 @@ class TestYoloUtils(unittest.TestCase):
 
         result = get_metrics_curves(self.final_run_path)
         self.assertEqual(result, expected_result)
+
+    @patch("os.path.isfile")
+    def test_get_batch_mosaics_with_existing_files(self, mock_isfile):
+        mock_isfile.return_value = True
+        final_run_path = "/path/to/final_run_directory"  # Replace with a valid path
+
+        expected_result = (
+            f"{final_run_path}/val_batch0_labels.jpg",
+            f"{final_run_path}/val_batch0_pred.jpg",
+            f"{final_run_path}/val_batch1_labels.jpg",
+            f"{final_run_path}/val_batch1_pred.jpg",
+            f"{final_run_path}/val_batch2_labels.jpg",
+            f"{final_run_path}/val_batch2_pred.jpg",
+        )
+
+        result = get_batch_mosaics(final_run_path)
+        self.assertEqual(expected_result, result)
+
+    @patch("os.path.isfile", return_value=False)
+    def test_get_batch_mosaics_with_missing_files(self, mock_isfile):
+        mock_isfile.return_value = False
+        expected_result = tuple(None for _ in range(6))
+
+        result = get_batch_mosaics(self.final_run_path)
+        self.assertEqual(expected_result, result)
 
     def test_setup_hyp(self):
         data_yaml_path = generate_data_yaml(
