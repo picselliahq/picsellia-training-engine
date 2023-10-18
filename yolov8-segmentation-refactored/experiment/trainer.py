@@ -1,5 +1,4 @@
 import os
-
 from picsellia.sdk.asset import MultiAsset
 
 import segmentation_trainer
@@ -16,8 +15,9 @@ from utils import create_yolo_segmentation_label
 class Yolov8SegmentationTrainer(Yolov8Trainer):
     def __init__(self):
         super().__init__()
+        self.final_run_path = None
 
-    def _download_data_with_label(self, assets: MultiAsset, data_type: str):
+    def download_data_with_label(self, assets: MultiAsset, data_type: str):
         assets.download(
             target_path=os.path.join(self.experiment.png_dir, data_type, "images"),
             max_workers=8,
