@@ -1,10 +1,16 @@
 import os
+from picsellia.sdk.experiment import Experiment
+from pycocotools.coco import COCO
 
 
 def create_yolo_detection_label(
-    exp, data_type, annotations_dict, annotations_coco, label_names
+    experiment: Experiment,
+    data_type: str,
+    annotations_dict: dict,
+    annotations_coco: COCO,
+    label_names: list,
 ):
-    dataset_path = os.path.join(exp.png_dir, data_type)
+    dataset_path = os.path.join(experiment.png_dir, data_type)
     image_filenames = os.listdir(os.path.join(dataset_path, "images"))
 
     labels_path = os.path.join(dataset_path, "labels")
@@ -18,12 +24,14 @@ def create_yolo_detection_label(
             create_img_label_detection(img, annotations_coco, labels_path, label_names)
 
 
-def create_img_label_detection(img, annotations_coco, labels_path, label_names):
+def create_img_label_detection(
+    image: dict, annotations_coco: COCO, labels_path: str, label_names: list
+):
     result = []
-    img_id = img["id"]
-    img_filename = img["file_name"]
-    w = img["width"]
-    h = img["height"]
+    img_id = image["id"]
+    img_filename = image["file_name"]
+    w = image["width"]
+    h = image["height"]
     txt_name = os.path.splitext(img_filename)[0] + ".txt"
     annotation_ids = annotations_coco.getAnnIds(imgIds=img_id)
     anns = annotations_coco.loadAnns(annotation_ids)
@@ -39,7 +47,9 @@ def create_img_label_detection(img, annotations_coco, labels_path, label_names):
         f.write("\n".join(result))
 
 
-def coco_to_yolo_detection(x1, y1, w, h, image_w, image_h):
+def coco_to_yolo_detection(
+    x1: int, y1: int, w: int, h: int, image_w: int, image_h: int
+) -> list[float]:
     return [
         ((2 * x1 + w) / (2 * image_w)),
         ((2 * y1 + h) / (2 * image_h)),
