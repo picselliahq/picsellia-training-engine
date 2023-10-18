@@ -1,10 +1,11 @@
 import os
-
 from picsellia.sdk.asset import MultiAsset
-
 import detection_trainer
 from abstract_trainer.yolov8_trainer import Yolov8Trainer
-from core_utils.yolov8 import generate_data_yaml, setup_hyp
+from core_utils.yolov8 import (
+    generate_data_yaml,
+    setup_hyp,
+)
 from evaluator.yolo_evaluator import DetectionYOLOEvaluator
 from utils import create_yolo_detection_label
 
@@ -12,8 +13,9 @@ from utils import create_yolo_detection_label
 class Yolov8DetectionTrainer(Yolov8Trainer):
     def __init__(self):
         super().__init__()
+        self.final_run_path = None
 
-    def _download_data_with_label(self, assets: MultiAsset, data_type: str):
+    def download_data_with_label(self, assets: MultiAsset, data_type: str):
         assets.download(
             target_path=os.path.join(self.experiment.png_dir, data_type, "images"),
             max_workers=8,
