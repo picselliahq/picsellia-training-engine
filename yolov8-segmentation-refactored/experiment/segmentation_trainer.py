@@ -5,7 +5,8 @@ from picsellia import Experiment
 from picsellia.types.enums import LogType
 from ultralytics import YOLO
 from ultralytics.yolo.v8.segment.train import SegmentationTrainer
-from core_utils.yolov8 import send_run_to_picsellia
+
+from core_utils.yolov8 import store_model_files
 
 
 class PicselliaSegmentationTrainer(SegmentationTrainer):
@@ -31,7 +32,7 @@ class PicselliaSegmentationTrainer(SegmentationTrainer):
 
         super().__init__(overrides=args)
         self.experiment = experiment
-        self.cwd = cfg.cwd
+        # self.cwd = cfg.cwd
 
     def save_metrics(self, metrics):
         super().save_metrics(metrics)
@@ -39,6 +40,13 @@ class PicselliaSegmentationTrainer(SegmentationTrainer):
         for name, value in metrics.items():
             log_name = str(name).replace("/", "_")
             self._log_metric(log_name, float(value), retry=1)
+        if self.epoch == self.epochs - 1:
+            store_model_files(
+                experiment=self.experiment,
+                save_dir=self.save_dir,
+                task="segment",
+            )
+
         if (
             (self.epoch > 1)
             and (self.save_period > 0)
@@ -56,10 +64,10 @@ class PicselliaSegmentationTrainer(SegmentationTrainer):
                     logging.warning(e)
             if model:
                 model.export(format="onnx", imgsz=self.args.imgsz, task="segment")
-                send_run_to_picsellia(
+                store_model_files(
                     experiment=self.experiment,
-                    cwd=self.cwd,
                     save_dir=self.save_dir,
+                    task="segment",
                 )
 
     def _log_metric(self, name: str, value: float, retry: int):

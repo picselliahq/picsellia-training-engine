@@ -6,7 +6,8 @@ from picsellia import Experiment
 from picsellia.types.enums import LogType
 from ultralytics import YOLO
 from ultralytics.yolo.v8.detect.train import DetectionTrainer
-from core_utils.yolov8 import send_run_to_picsellia
+
+from core_utils.yolov8 import store_model_files
 
 
 class PicselliaDetectionTrainer(DetectionTrainer):
@@ -32,6 +33,7 @@ class PicselliaDetectionTrainer(DetectionTrainer):
         super().__init__(overrides=args)
         self.experiment = experiment
         self.cwd = cfg.cwd
+        self.epochs = cfg.epochs
 
     def save_metrics(self, metrics):
         super().save_metrics(metrics)
@@ -39,6 +41,12 @@ class PicselliaDetectionTrainer(DetectionTrainer):
         for name, value in metrics.items():
             log_name = str(name).replace("/", "_")
             self._log_metric(log_name, float(value), retry=1)
+        if self.epoch == self.epochs - 1:
+            store_model_files(
+                experiment=self.experiment,
+                save_dir=self.save_dir,
+                task="detect",
+            )
         if (
             (self.epoch > 1)
             and (self.save_period > 0)
@@ -56,8 +64,10 @@ class PicselliaDetectionTrainer(DetectionTrainer):
                     logging.warning(e)
             if model:
                 model.export(format="onnx", imgsz=self.args.imgsz, task="detect")
-                send_run_to_picsellia(
-                    experiment=self.experiment, cwd=self.cwd, save_dir=self.save_dir
+                store_model_files(
+                    experiment=self.experiment,
+                    save_dir=self.save_dir,
+                    task="detect",
                 )
 
     def _log_metric(self, name: str, value: float, retry: int):
