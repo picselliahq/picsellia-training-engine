@@ -4,11 +4,10 @@ import os
 from collections import OrderedDict
 import torch
 import yaml
+from ultralytics import YOLO
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.experiment import Experiment
-from picsellia.types.enums import LogType
-from ultralytics import YOLO
 
 
 def get_train_test_eval_datasets_from_experiment(
@@ -131,31 +130,6 @@ def generate_data_yaml(experiment: Experiment, labelmap: dict, config_path: str)
     return data_config_path
 
 
-def send_run_to_picsellia(
-    experiment: Experiment, cwd: str, save_dir: str = None, imgsz: int = 640
-):
-    final_run_path = save_dir if save_dir is not None else find_final_run(cwd)
-    best_weights, hyp_yaml = get_weights_and_config(final_run_path)
-    model_latest_path = find_model_latest_path(final_run_path, imgsz)
-
-    if model_latest_path:
-        experiment.store("model-latest", model_latest_path)
-    if best_weights:
-        experiment.store("checkpoint-index-latest", best_weights)
-    if hyp_yaml:
-        experiment.store("checkpoint-data-latest", hyp_yaml)
-
-    for curve in get_metrics_curves(final_run_path):
-        if curve:
-            name = extract_file_name(curve)
-            experiment.log(name, curve, LogType.IMAGE)
-
-    for batch in get_batch_mosaics(final_run_path):
-        if batch:
-            name = extract_file_name(batch)
-            experiment.log(name, batch, LogType.IMAGE)
-
-
 def find_final_run(cwd: str) -> str:
     runs_path = os.path.join(cwd, "runs", "train")
     dirs = os.listdir(runs_path)
@@ -179,34 +153,12 @@ def get_weights_and_config(final_run_path: str) -> tuple[str | None, str | None]
 
     if os.path.isfile(best_weights_path):
         best_weights = best_weights_path
-    elif os.path.isfile(hyp_yaml_path):
+    if os.path.isfile(hyp_yaml_path):
         hyp_yaml = hyp_yaml_path
-    elif os.path.isfile(args_yaml_path):
+    if os.path.isfile(args_yaml_path):
         hyp_yaml = args_yaml_path
 
     return best_weights, hyp_yaml
-
-
-def find_model_latest_path(final_run_path: str, imgsz: int) -> str | None:
-    model_dir = os.path.join(final_run_path, "weights")
-    model_paths = [
-        os.path.join(model_dir, "best.onnx"),
-        os.path.join(model_dir, "last.onnx"),
-        os.path.join(model_dir, "best.pt"),
-        os.path.join(model_dir, "last.pt"),
-    ]
-
-    for model_path in model_paths:
-        if os.path.isfile(model_path):
-            if model_path.endswith(".pt"):
-                checkpoint_path = model_path
-                model = YOLO(checkpoint_path)
-                model.export(format="onnx", imgsz=imgsz, task="segment")
-                return os.path.join(final_run_path, "weights", "best.onnx")
-            return model_path
-
-    logging.warning("Can't find last checkpoints to be uploaded")
-    return None
 
 
 def get_metrics_curves(
@@ -532,3 +484,50 @@ def setup_hyp(
 
 class Opt:
     pass
+
+
+def store_model_files(
+    experiment: Experiment,
+    save_dir: str | None,
+    task: str,
+    imgsz: int = 640,
+):
+    final_run_path = save_dir
+    best_weights, hyp_yaml = get_weights_and_config(final_run_path)
+    model_latest_path = find_model_latest_path(final_run_path, task, imgsz)
+    if model_latest_path:
+        experiment.store("model-latest", model_latest_path)
+    if best_weights:
+        experiment.store("checkpoint-index-latest", best_weights)
+    if hyp_yaml:
+        experiment.store("checkpoint-data-latest", hyp_yaml)
+
+
+def find_model_latest_path(final_run_path: str, task: str, imgsz: int) -> str | None:
+    model_dir = os.path.join(final_run_path, "weights")
+    model_paths = [
+        os.path.join(model_dir, "best.onnx"),
+        os.path.join(model_dir, "last.onnx"),
+        os.path.join(model_dir, "best.pt"),
+        os.path.join(model_dir, "last.pt"),
+    ]
+
+    for model_path in model_paths:
+        if os.path.isfile(model_path):
+            if model_path.endswith(".pt"):
+                return process_pt_file(
+                    pt_file_path=model_path,
+                    final_run_path=final_run_path,
+                    task=task,
+                    imgsz=imgsz,
+                )
+            return model_path
+
+    logging.warning("Can't find last checkpoints to be uploaded")
+    return None
+
+
+def process_pt_file(pt_file_path: str, final_run_path: str, task: str, imgsz: int):
+    model = YOLO(pt_file_path)
+    model.export(format="onnx", imgsz=imgsz, task=task)
+    return os.path.join(final_run_path, "weights", "best.onnx")
