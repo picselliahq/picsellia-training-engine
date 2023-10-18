@@ -35,7 +35,8 @@ from utils import (
     predict_and_log_mask,
     find_asset_by_dataset_index,
     predict_mask_from_image,
-    get_classes,
+    get_classes_segmentation_dataset,
+    get_classes_mask_dataset,
 )
 
 
@@ -48,7 +49,6 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.segmentation_dataset = None
         self.n_classes = None
         self.classes = None
-        self.has_segmentation_dataset = None
         self.image_dataset_name = "images"
         self.label = None
         self.eval_dataset_version = None
@@ -104,15 +104,15 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.segmentation_dataset = self.get_segmentation_dataset()
         if self.segmentation_dataset is not None:
             self.download_segmentation_data_into_masks()
+            self.classes = get_classes_segmentation_dataset(
+                segmentation_dataset=self.segmentation_dataset
+            )
         else:
             self.mask_dataset, self.image_dataset = self.get_mask_image_datasets()
-            if self.mask_dataset is not None and self.image_dataset is not None:
-                self._download_mask_image_datasets()
-                self._get_mask_image_filenames()
+            self._download_mask_image_datasets()
+            self._get_mask_image_filenames()
+            self.classes = get_classes_mask_dataset(mask_dataset=self.mask_dataset)
 
-        self.classes = get_classes(
-            self.experiment, has_segmentation_dataset=self.has_segmentation_dataset
-        )
         self._split_and_move_data()
         self._create_train_test_eval_dataloaders()
 
@@ -120,9 +120,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         try:
             segmentation_dataset = self.experiment.get_dataset(name="full")
             self.image_dataset_name = "full"
-            self.has_segmentation_dataset = True
         except ResourceNotFoundError:
-            self.has_segmentation_dataset = False
             segmentation_dataset = None
         return segmentation_dataset
 
@@ -133,17 +131,15 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
     def get_mask_image_datasets(
         self,
-    ) -> tuple[DatasetVersion, DatasetVersion] | tuple[None, None]:
-        mask_dataset, image_dataset = None, None
+    ) -> tuple[DatasetVersion, DatasetVersion]:
         try:
             mask_dataset = self.experiment.get_dataset(name="masks")
             image_dataset = self.experiment.get_dataset(name="images")
-            self.has_segmentation_dataset = False
+            return mask_dataset, image_dataset
         except ResourceNotFoundError:
-            logging.error(
+            raise Exception(
                 "You need to have either 'full' containing the annotated images (segmentation dataset), or 'masks' and 'images' to train with 'masks'"
             )
-        return mask_dataset, image_dataset
 
     def _download_segmentation_dataset(self):
         self.segmentation_dataset.download(target_path=self.image_path)

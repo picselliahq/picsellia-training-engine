@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 from picsellia import Experiment
-from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import LogType
@@ -19,14 +18,13 @@ from skimage.transform import resize
 SIZE = 640
 
 
-def get_classes(experiment: Experiment, has_segmentation_dataset: bool) -> list[str]:
-    if has_segmentation_dataset:
-        mask_dataset = experiment.get_dataset(name="full")
-    else:
-        mask_dataset = experiment.get_dataset(name="masks")
+def get_classes_segmentation_dataset(segmentation_dataset: DatasetVersion) -> list[str]:
+    labels = segmentation_dataset.list_labels()
+    return [label.name for label in labels]
 
+
+def get_classes_mask_dataset(mask_dataset: DatasetVersion) -> list[str]:
     labels = mask_dataset.list_labels()
-
     return [label.name for label in labels]
 
 
