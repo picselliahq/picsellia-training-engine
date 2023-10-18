@@ -4,7 +4,7 @@ from abc import abstractmethod
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.dataset import DatasetVersion
 from pycocotools.coco import COCO
-
+from picsellia.types.enums import LogType
 from abstract_trainer.trainer import AbstractTrainer
 from core_utils.yolov8 import (
     get_train_test_eval_datasets_from_experiment,
@@ -12,7 +12,9 @@ from core_utils.yolov8 import (
     get_prop_parameter,
     log_split_dataset_repartition_to_experiment,
     make_annotation_dict_by_dataset,
-    send_run_to_picsellia,
+    get_metrics_curves,
+    extract_file_name,
+    get_batch_mosaics,
 )
 
 
@@ -80,7 +82,7 @@ class Yolov8Trainer(AbstractTrainer):
             "val": eval_assets,
             "test": test_assets,
         }.items():
-            self._download_data_with_label(assets=assets, data_type=data_type)
+            self.download_data_with_label(assets=assets, data_type=data_type)
         self.evaluation_ds = train_set
         self.evaluation_assets = test_assets
         log_split_dataset_repartition_to_experiment(
@@ -100,12 +102,10 @@ class Yolov8Trainer(AbstractTrainer):
             annotations_path=self.annotations_path,
         )
         self.annotations_coco = COCO(self.annotations_path)
-        self._download_data_with_label(
-            assets=dataset.list_assets(), data_type=data_type
-        )
+        self.download_data_with_label(assets=dataset.list_assets(), data_type=data_type)
 
     @abstractmethod
-    def _download_data_with_label(self, assets: MultiAsset, data_type: str):
+    def download_data_with_label(self, assets: MultiAsset, data_type: str):
         pass
 
     def train(self):
@@ -118,7 +118,19 @@ class Yolov8Trainer(AbstractTrainer):
 
     def launch_trainer(self):
         self.trainer.train()
-        send_run_to_picsellia(self.experiment, self.current_dir, self.trainer.save_dir)
+        self.send_run_to_picsellia()
+
+    def send_run_to_picsellia(self):
+        final_run_path = self.trainer.save_dir
+        for curve in get_metrics_curves(final_run_path):
+            if curve:
+                name = extract_file_name(curve)
+                self.experiment.log(name, curve, LogType.IMAGE)
+
+        for batch in get_batch_mosaics(final_run_path):
+            if batch:
+                name = extract_file_name(batch)
+                self.experiment.log(name, batch, LogType.IMAGE)
 
     @abstractmethod
     def eval(self):
