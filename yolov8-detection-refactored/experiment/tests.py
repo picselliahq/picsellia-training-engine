@@ -8,18 +8,14 @@ from datetime import date
 from picsellia import Client
 from pycocotools.coco import COCO
 
-from trainer import Yolov8SegmentationTrainer
-from utils import (
-    interleave_lists,
-    create_img_label_segmentation,
-    coco_to_yolo_segmentation,
-)
+from trainer import Yolov8DetectionTrainer
+from utils import create_img_label_detection, coco_to_yolo_detection
 
 TOKEN = os.environ["TEST_TOKEN"]
 ORGA_NAME = os.environ["TEST_ORGA"]
 
 
-class TestYolov8Segmentation(unittest.TestCase):
+class TestYolov8Detection(unittest.TestCase):
     test_folder = None
     model_version = None
     checkpoint_path = None
@@ -43,10 +39,12 @@ class TestYolov8Segmentation(unittest.TestCase):
         cls.project = cls.client.create_project(
             name=f"test_yolo-utils{str(date.today())}-{str(time.time())}"
         )
-        cls.experiment = cls.project.create_experiment(name="yolo-single-dataset")
+        cls.experiment = cls.project.create_experiment(
+            name="yolo-detection-single-dataset"
+        )
         os.environ["experiment_id"] = str(cls.experiment.id)
         cls.model_version = cls.client.get_model_version_by_id(
-            "01894a7f-d4b6-7bd7-be36-13398579329f"
+            "01894a82-a59d-7d38-8eb0-a017329d8030"
         )
 
         cls.experiment.attach_model_version(
@@ -63,9 +61,9 @@ class TestYolov8Segmentation(unittest.TestCase):
         )
 
         cls.dataset = cls.client.get_dataset_by_id(
-            "01892b85-3c3b-72c8-943d-8a780c46a82d"
-        )  # segmentation dataset
-        cls.train_set = cls.dataset.get_version("eval")
+            "01892b88-63ec-767f-91f9-0765e68d0f78"
+        )
+        cls.train_set = cls.dataset.get_version("single-class-test")
         cls.experiment.attach_dataset(name="full", dataset_version=cls.train_set)
         cls.asset_train_path = os.path.join(cls.experiment.png_dir, "train", "images")
         cls.asset_test_path = os.path.join(cls.experiment.png_dir, "test", "images")
@@ -80,6 +78,7 @@ class TestYolov8Segmentation(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
+        pass
         cls.project.delete()
         if os.path.isfile("annotations.json"):
             os.remove("annotations.json")
@@ -88,22 +87,23 @@ class TestYolov8Segmentation(unittest.TestCase):
         if os.path.exists("saved_model"):
             shutil.rmtree("saved_model")
 
-    def test_create_img_label_segmentation(self):
+    def test_create_img_label_detection(self):
         with open(self.annotations_path_test) as json_file:
             annotations_dict = json.load(json_file)
         image = annotations_dict["images"][0]
-        create_img_label_segmentation(
+        create_img_label_detection(
             image=image,
             annotations_coco=COCO(self.annotations_path_test),
             labels_path="test_files",
-            label_names=["banana"],
+            label_names=["car"],
         )
         txt_name = os.path.splitext(image["file_name"])[0] + ".txt"
         txt_file_path = os.path.join(self.test_folder, txt_name)
 
         self.assertTrue(txt_file_path)
+
         self.assertEqual(
-            2, self.get_number_lines_text_file(txt_file_path=txt_file_path)
+            16, self.get_number_lines_text_file(txt_file_path=txt_file_path)
         )
         os.remove(txt_file_path)
 
@@ -112,43 +112,23 @@ class TestYolov8Segmentation(unittest.TestCase):
         with open(txt_file_path, "r") as fp:
             return len(fp.readlines())
 
-    def test_coco_to_yolo_segmentation(self):
-        ann = [
-            [50, 60, 70, 60, 70, 80, 50, 80],
-        ]
-        expected_results = [
-            0.4166666666666667,
-            0.5,
-            0.5833333333333334,
-            0.5,
-            0.5833333333333334,
-            0.6666666666666666,
-            0.4166666666666667,
-            0.6666666666666666,
-        ]
-        results = coco_to_yolo_segmentation(ann=ann, image_h=120, image_w=120)
+    def test_coco_to_yolo_detection(self):
+        x1 = 342
+        y1 = 946
+        w = 366
+        h = 133
+        results = coco_to_yolo_detection(
+            x1=x1, y1=y1, w=w, h=h, image_w=1920, image_h=1000
+        )
+        expected_results = [0.2734375, 1.0125, 0.190625, 0.133]
         self.assertEqual(expected_results, results)
 
-    def test_interleave_lists(self):
-        xs = [10, 20, 30]
-        ys = [5, 15, 25]
-        result = interleave_lists(xs, ys)
-        expected = [10, 5, 20, 15, 30, 25]
-        self.assertEqual(result, expected)
-
-    def test_interleave_lists_empty(self):
-        xs = []
-        ys = []
-        result = interleave_lists(xs, ys)
-        expected = []
-        self.assertEqual(result, expected)
-
-    def test_yolov8_segmentation_trainer(self):
-        yolov8_trainer = Yolov8SegmentationTrainer()
+    def test_yolov8_detection_trainer(self):
+        yolov8_trainer = Yolov8DetectionTrainer()
         self.assertNotEqual(None, yolov8_trainer)
 
         yolov8_trainer.prepare_data_for_training()
-        self.assertTrue(os.path.isfile("annotations.json"))
+        self.assertTrue(os.path.isfile("test_files/annotations.json"))
         self.assert_model_files_downloaded()
         self.assert_assets_downloaded()
         self.assert_label_txt_files_created()
@@ -174,13 +154,14 @@ class TestYolov8Segmentation(unittest.TestCase):
     def assert_model_files_downloaded(self):
         for filepath in [
             os.path.join(self.checkpoint_path, "default.yaml"),
-            os.path.join(self.checkpoint_path, "yolov8m-seg.pt"),
-            os.path.join(
-                self.experiment.base_dir, "exported_model", "yolov8m-seg.onnx"
-            ),
-            os.path.join(self.experiment.config_dir, "yolov8m-seg.yaml"),
+            os.path.join(self.checkpoint_path, "yolov8m.pt"),
+            os.path.join(self.experiment.base_dir, "exported_model", "yolov8m.onnx"),
+            os.path.join(self.experiment.config_dir, "yolov8m.yaml"),
         ]:
-            self.assertTrue(os.path.isfile(filepath))
+            self.assertTrue(
+                os.path.isfile(filepath),
+                f"file path '{filepath}' does not exist",
+            )
 
     def assert_assets_downloaded(self):
         for directory_path in [
@@ -198,6 +179,13 @@ class TestYolov8Segmentation(unittest.TestCase):
             self.label_eval_path,
         ]:
             self.assert_directory_exists_and_not_empty(directory_path=directory_path)
+
+    def assert_directory_exists_and_not_empty(self, directory_path: str):
+        self.assertTrue(
+            os.path.exists(directory_path),
+            f"Folder path '{directory_path}' does not exist",
+        )
+        self.assertTrue(len(os.listdir(directory_path)) > 0)
 
     def assert_all_label_files_created(self):
         image_to_text_file_dict = {
@@ -222,13 +210,6 @@ class TestYolov8Segmentation(unittest.TestCase):
         if os.path.isfile(val_batch0_labels_path):
             retrieved_log = self.experiment.get_log(name="val_batch0_labels")
             self.assertFalse(None, retrieved_log)
-
-    def assert_directory_exists_and_not_empty(self, directory_path: str):
-        self.assertTrue(
-            os.path.exists(directory_path),
-            f"Folder path '{directory_path}' does not exist",
-        )
-        self.assertTrue(len(os.listdir(directory_path)) > 0)
 
 
 if __name__ == "__main__":
