@@ -23,6 +23,7 @@ class PicselliaDetectionTrainer(DetectionTrainer):
             save_period=cfg.save_period,
             project=cfg.project,
             patience=cfg.patience,
+            name=cfg.name,
         )
         cfg_dict = vars(cfg)
         for parameter_key in parameters.keys():

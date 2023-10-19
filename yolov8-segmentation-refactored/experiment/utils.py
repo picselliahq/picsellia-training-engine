@@ -1,6 +1,6 @@
 import os
-import numpy as np
 
+import numpy as np
 from picsellia.sdk.experiment import Experiment
 from pycocotools.coco import COCO
 
