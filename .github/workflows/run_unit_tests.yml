@@ -1,0 +1,20 @@
+name: Run Unit Tests
+on: push
+jobs:
+  unit-testing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name : Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+
+      - name: Install Dependencies
+        run: pip install -r picsellia-training-engine/yolov8-segmentation-refactored/requirements.txt
+
+      - name: Run Unit Tests yolov8 Segmentation
+        run: python -m unittest picsellia-training-engine/yolov8-segmentation-refactored/experiment/tests.py
