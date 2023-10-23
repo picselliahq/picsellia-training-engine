@@ -30,9 +30,12 @@ jobs:
           pip install --upgrade pip
           pip install picsellia
       - name: Run core_utils Unit Tests
+        env:
+          CORE_UTILS_PATH: "core_utils"
         run: |
-          pip install -r "core_utils/requirements.txt"
-          python -m unittest discover -s "core_utils/experiment" -p 'tests.py'
+          echo "Running tests in $CORE_UTILS_PATH"
+          pip install -r "CORE_UTILS_PATH/requirements.txt"
+          python -m unittest discover -s "CORE_UTILS_PATH" -p 'tests.py'
 
       - name: Run all Unit Tests
         run:  |
