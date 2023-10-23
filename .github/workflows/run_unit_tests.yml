@@ -28,7 +28,11 @@ jobs:
       - name: Install Picsellia Package
         run: |
           pip install --upgrade pip
-          pip install picsellia 
+          pip install picsellia
+      - name: Run core_utils Unit Tests
+        run: |
+          pip install -r "core_utils/requirements.txt"
+          python -m unittest discover -s "core_utils/experiment" -p 'tests.py'
 
       - name: Run all Unit Tests
         run:  |
