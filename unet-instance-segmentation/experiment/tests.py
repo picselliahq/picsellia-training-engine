@@ -47,7 +47,7 @@ class TestUnetSegmentation(unittest.TestCase):
             name=f"test_unet{str(date.today())}-{str(time.time())}"
         )
         cls.model_version = cls.client.get_model_version_by_id(
-            "018a703e-80fc-7d8f-9983-1430e5f7a427"
+            "018a99a0-0b68-772e-a04d-47e0c7096e66"
         )
 
         cls.experiment = cls.project.create_experiment(name="car-segmentation-unet")
