@@ -29,17 +29,13 @@ jobs:
           pip install --upgrade pip
           pip install picsellia 
 
-      - name: Run Unit Tests
+      - name: Run all Unit Tests
         run:  |
-          # Specify the name of the folder you want to run tests for
-          folder_name="yolov8-segmentation-refactored/"
-          
-          # Check if the folder exists and contains a requirements.txt file
-          if [ -d "$folder_name" ] && [ -f "$folder_name/requirements.txt" ]; then
-            # Install dependencies from the requirements.txt file
-            pip install -r "$folder_name/requirements.txt"
-            # Run the unit tests in the tests.py file in the specified folder
-            python -m unittest discover -s "$folder_name/experiment" -p 'tests.py'
-          else
-            echo "Folder or requirements.txt not found in $folder_name"
-          fi
+          # List all subdirectories in the repository root
+          for folder in */; do
+            if [ -f "$folder/requirements.txt" ] && [ -f "$folder/experiment/tests.py" ]; then
+              echo "Running tests in $folder"
+              pip install -r "$folder/requirements.txt"
+              python -m unittest discover -s "$folder/experiment" -p 'tests.py'
+            fi
+          done
