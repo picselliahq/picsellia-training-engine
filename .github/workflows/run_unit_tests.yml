@@ -13,6 +13,7 @@ jobs:
       TEST_ORGA: test-account
       api_token: ${{ secrets.API_TOKEN }}
       TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
+      SM_FRAMEWORK: "tf.keras"
 
 
     steps:

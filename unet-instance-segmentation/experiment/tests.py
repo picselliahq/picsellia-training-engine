@@ -39,7 +39,9 @@ class TestUnetSegmentation(unittest.TestCase):
         cls.token = TOKEN
         cls.organization_name = ORGA_NAME
         cls.client = Client(
-            api_token=cls.token, organization_name=cls.organization_name
+            api_token=cls.token,
+            organization_name=cls.organization_name,
+            host="https://staging.picsellia.com/",
         )
         cls.project = cls.client.create_project(
             name=f"test_unet{str(date.today())}-{str(time.time())}"
