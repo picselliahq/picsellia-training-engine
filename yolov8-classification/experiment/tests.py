@@ -41,17 +41,25 @@ class TestYoloClassificationUtils(unittest.TestCase):
         cls.token = TOKEN
         cls.organization_name = ORGA_NAME
         cls.client = Client(
-            api_token=cls.token, organization_name=cls.organization_name
+            api_token=cls.token,
+            organization_name=cls.organization_name,
+            host="https://staging.picsellia.com/",
         )
         cls.project = cls.client.create_project(
             name=f"test_yolo_classif-utils{str(date.today())}-{str(time.time())}"
         )
-        cls.model_version = cls.client.get_public_model(
-            "yolov8-classification"
-        ).get_version(0)
+        cls.model_version = cls.client.get_model_version_by_id(
+            "01894a84-42f1-7e0f-87a0-28d78d29ba81"
+        )
+        # cls.model_version = cls.client.get_public_model(
+        #     "yolov8-classification"
+        # ).get_version(0)
         cls.experiment = cls.project.create_experiment(name="yolo-triple-dataset")
+        # cls.dataset = cls.client.get_dataset_by_id(
+        #     "01888c1b-cfb6-768b-83dd-2e1c460e79cf"
+        # )
         cls.dataset = cls.client.get_dataset_by_id(
-            "01888c1b-cfb6-768b-83dd-2e1c460e79cf"
+            "01892b88-e0bf-7fce-8f51-0dbab83eb094"
         )
         cls.experiment.attach_dataset(
             name="train", dataset_version=cls.dataset.get_version("train")
@@ -60,7 +68,7 @@ class TestYoloClassificationUtils(unittest.TestCase):
             name="test", dataset_version=cls.dataset.get_version("test")
         )
         cls.experiment.attach_dataset(
-            name="eval", dataset_version=cls.dataset.get_version("val")
+            name="eval", dataset_version=cls.dataset.get_version("eval")
         )
         cls.train_set, cls.test_set, cls.eval_set = _get_three_attached_datasets(
             cls.experiment
