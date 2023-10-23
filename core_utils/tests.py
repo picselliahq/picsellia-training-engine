@@ -300,3 +300,7 @@ class TestYoloUtils(unittest.TestCase):
         )
         self.assertEqual(config.task, "segment")
         self.assertEqual(config.mode, "train")
+
+
+if __name__ == "__main__":
+    unittest.main()
