@@ -34,7 +34,7 @@ jobs:
         run:  |
           # List all subdirectories in the repository root
           for folder in */; do
-            if [ "$folder" != "unet-instance-segmentation/"] && [ "$folder" != "ViT-detection/" ] && [ -f "$folder/requirements.txt" ] && [ -f "$folder/experiment/tests.py" ]; then
+            if [ "$folder" != "unet-instance-segmentation/" ] && [ "$folder" != "ViT-detection/" ] && [ -f "$folder/requirements.txt" ] && [ -f "$folder/experiment/tests.py" ]; then
               echo "Running tests in $folder"
               pip install -r "$folder/requirements.txt"
               python -m unittest discover -s "$folder/experiment" -p 'tests.py'
