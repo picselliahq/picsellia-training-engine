@@ -34,8 +34,8 @@ jobs:
           CORE_UTILS_PATH: "core_utils"
         run: |
           echo "Running tests in $CORE_UTILS_PATH"
-          pip install -r "CORE_UTILS_PATH/requirements.txt"
-          python -m unittest discover -s "CORE_UTILS_PATH" -p 'tests.py'
+          pip install -r "$CORE_UTILS_PATH/requirements.txt"
+          python -m unittest discover -s "$CORE_UTILS_PATH" -p 'tests.py'
 
       - name: Run all Unit Tests
         run:  |
