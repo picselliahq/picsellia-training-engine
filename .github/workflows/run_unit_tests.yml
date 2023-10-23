@@ -16,8 +16,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Upgrade pip
-        run: pip install --upgrade pip
+      - name: Install Picsellia Package
+        run: |
+          pip install --upgrade pip
+          pip install picsellia 
 
       - name: Run Unit Tests in Folders
         run:  |
