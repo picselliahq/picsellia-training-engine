@@ -10,7 +10,7 @@ jobs:
     env:
       host: "https://staging.picsellia.com/"
       organization_id: "0189266d-64f5-79b4-9b80-6fcf8a3b498b"
-      TEST-ORGA: test-account
+      TEST_ORGA: test-account
       api_token: ${{ secrets.API_TOKEN }}
       TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
 
@@ -29,7 +29,7 @@ jobs:
           pip install --upgrade pip
           pip install picsellia 
 
-      - name: Run Unit Tests in Folders
+      - name: Run Unit Tests
         run:  |
           # Specify the name of the folder you want to run tests for
           folder_name="yolov8-segmentation-refactored/"
