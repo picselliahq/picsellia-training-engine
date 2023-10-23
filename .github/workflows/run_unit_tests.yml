@@ -16,8 +16,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Dependencies
-        run: pip install -r picsellia-training-engine/yolov8-segmentation-refactored/requirements.txt
+      - name: Upgrade pip
+        run: pip install --upgrade pip
 
-      - name: Run Unit Tests yolov8 Segmentation
-        run: python -m unittest picsellia-training-engine/yolov8-segmentation-refactored/experiment/tests.py
+      - name: Run Unit Tests in Folders
+        run:  |
+          # Specify the name of the folder you want to run tests for
+          folder_name="yolov8-segmentation-refactored/"
+          
+          # Check if the folder exists and contains a requirements.txt file
+          if [ -d "$folder_name" ] && [ -f "$folder_name/requirements.txt" ]; then
+            # Install dependencies from the requirements.txt file
+            pip install -r "$folder_name/requirements.txt"
+            # Run the unit tests in the tests.py file in the specified folder
+            python -m unittest discover -s "$folder_name/experiment" -p 'tests.py'
+          else
+            echo "Folder or requirements.txt not found in $folder_name"
+          fi
