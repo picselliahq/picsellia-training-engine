@@ -73,7 +73,7 @@ class TestYolov8Detection(unittest.TestCase):
         cls.label_test_path = os.path.join(cls.experiment.png_dir, "test", "labels")
         cls.label_eval_path = os.path.join(cls.experiment.png_dir, "val", "labels")
         cls.checkpoint_path = os.path.join(cls.experiment.checkpoint_dir)
-        cls.test_folder = "test_files"
+        cls.test_folder = os.path.join(os.getcwd(), "test_files")
         cls.annotations_path_test = os.path.join(cls.test_folder, "annotations.json")
 
     @classmethod
