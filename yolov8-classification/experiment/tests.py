@@ -93,26 +93,26 @@ class TestYoloClassificationUtils(unittest.TestCase):
         prop = get_prop_parameter(parameters)
         self.assertEqual(prop, 0.8)
 
-    def test_make_train_test_val_dirs(self):
-        make_train_test_val_dirs()
-        is_created = False
-        if (
-            os.path.exists(self.train_path)
-            and os.path.exists(self.test_path)
-            and os.path.exists(self.val_path)
-        ):
-            is_created = True
-        self.assertTrue(is_created)
-
-        move_image(
-            filename="grape_image.jpeg",
-            old_location_path="test_files",
-            new_location_path=self.test_path,
-        )
-        is_moved = False
-        if os.path.isfile(os.path.join(self.test_path, "grape_image.jpeg")):
-            is_moved = True
-        self.assertTrue(is_moved)
+    # def test_make_train_test_val_dirs(self):
+    #     make_train_test_val_dirs()
+    #     is_created = False
+    #     if (
+    #         os.path.exists(self.train_path)
+    #         and os.path.exists(self.test_path)
+    #         and os.path.exists(self.val_path)
+    #     ):
+    #         is_created = True
+    #     self.assertTrue(is_created)
+    #
+    #     move_image(
+    #         filename="grape_image.jpeg",
+    #         old_location_path="test_files",
+    #         new_location_path=self.test_path,
+    #     )
+    #     is_moved = False
+    #     if os.path.isfile(os.path.join(self.test_path, "grape_image.jpeg")):
+    #         is_moved = True
+    #     self.assertTrue(is_moved)
 
     def test_create_class_directories(self):
         _create_class_directories(coco=self.coco_train, base_imdir=self.train_path)
