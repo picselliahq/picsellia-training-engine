@@ -148,11 +148,14 @@ def get_weights_and_config(final_run_path: str) -> tuple[str | None, str | None]
     best_weights = None
     hyp_yaml = None
     best_weights_path = os.path.join(final_run_path, "weights", "best.pt")
+    last_weights_path = os.path.join(final_run_path, "weights", "last.pt")
     hyp_yaml_path = os.path.join(final_run_path, "hyp.yaml")
     args_yaml_path = os.path.join(final_run_path, "args.yaml")
 
     if os.path.isfile(best_weights_path):
         best_weights = best_weights_path
+    elif os.path.isfile(last_weights_path):
+        best_weights = last_weights_path
     if os.path.isfile(hyp_yaml_path):
         hyp_yaml = hyp_yaml_path
     if os.path.isfile(args_yaml_path):

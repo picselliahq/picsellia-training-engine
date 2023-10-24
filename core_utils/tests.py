@@ -162,6 +162,7 @@ class TestYoloUtils(unittest.TestCase):
         self.test_dir = self.cwd
         self.weights_path = os.path.join(self.test_dir, "weights")
         self.best_path = os.path.join(self.weights_path, "best.pt")
+        self.last_path = os.path.join(self.weights_path, "last.pt")
         self.yaml_hyp_path = os.path.join(self.test_dir, "hyp.yaml")
         self.args_path = os.path.join(self.test_dir, "args.yaml")
         self.final_run_path = self.test_dir
@@ -185,6 +186,8 @@ class TestYoloUtils(unittest.TestCase):
             os.makedirs(self.weights_path)
         with open(self.best_path, "w") as f:
             f.write("dummy best.pt content")
+        with open(self.last_path, "w") as f:
+            f.write("dummy last.pt content")
         with open(self.yaml_hyp_path, "w") as f:
             f.write("dummy hyp.yaml content")
         with open(self.args_path, "w") as f:
@@ -193,26 +196,28 @@ class TestYoloUtils(unittest.TestCase):
     def test_get_weights_and_config_with_best_weights(self):
         result = get_weights_and_config(self.final_run_path)
         self.assertEqual(
-            (os.path.join(self.final_run_path, "weights", "best.pt"), None), result
+            (os.path.join(self.final_run_path, "weights", "best.pt"), self.args_path),
+            result,
         )
 
-    def test_get_weights_and_config_with_hyp_yaml(self):
+    def test_get_weights_and_config_with_last(self):
         os.remove(self.best_path)
         result = get_weights_and_config(self.final_run_path)
-        self.assertEqual((None, self.yaml_hyp_path), result)
+        self.assertEqual((self.last_path, self.args_path), result)
 
     def test_get_weights_and_config_with_args_yaml(self):
         final_run_path = self.test_dir
         os.remove(self.best_path)
         os.remove(self.yaml_hyp_path)
         result = get_weights_and_config(final_run_path)
-        self.assertEqual((None, self.args_path), result)
+        self.assertEqual((self.last_path, self.args_path), result)
 
     def test_get_weights_and_config_with_no_files(self):
         final_run_path = self.test_dir
         os.remove(self.best_path)
         os.remove(self.args_path)
         os.remove(self.yaml_hyp_path)
+        os.remove(self.last_path)
         result = get_weights_and_config(final_run_path)
         self.assertEqual((None, None), result)
 
