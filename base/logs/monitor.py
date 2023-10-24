@@ -137,7 +137,7 @@ class LogMonitor:
             if self.buffer:
                 for i, line in enumerate(self.buffer):
                     self.logs[section_header]["logs"][str(self.job.line_nb + i)] = line
-                self.job.send_logging(self.buffer, section_header, special="buffer")
+                self.send_logging(self.buffer, section_header, special="buffer")
 
             self.logs["exit_code"] = {
                 "exit_code": exit_code,
@@ -161,7 +161,7 @@ class LogMonitor:
             section_header = "--#--Set up training"
         else:
             section_header = "--#--Start job"
-        self.job.send_logging(section_header, section_header)
+        self.send_logging(section_header, section_header)
         self.logs = {
             section_header: {"datetime": str(datetime.now().isoformat()), "logs": {}}
         }
