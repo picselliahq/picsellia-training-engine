@@ -73,8 +73,13 @@ class TestYolov8Detection(unittest.TestCase):
         cls.label_test_path = os.path.join(cls.experiment.png_dir, "test", "labels")
         cls.label_eval_path = os.path.join(cls.experiment.png_dir, "val", "labels")
         cls.checkpoint_path = os.path.join(cls.experiment.checkpoint_dir)
-        cls.test_folder = os.path.join(os.getcwd(), "test_files")
-        cls.annotations_path_test = os.path.join(cls.test_folder, "annotations.json")
+        cls.test_folder = os.path.join(
+            os.getcwd(), "yolov8-detection-refactored", "experiment", "test_files"
+        )
+        cls.annotations_path_test = os.path.join(
+            cls.test_folder,
+            "annotations.json",
+        )
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -94,7 +99,7 @@ class TestYolov8Detection(unittest.TestCase):
         create_img_label_detection(
             image=image,
             annotations_coco=COCO(self.annotations_path_test),
-            labels_path="test_files",
+            labels_path=self.test_folder,
             label_names=["car"],
         )
         txt_name = os.path.splitext(image["file_name"])[0] + ".txt"
@@ -128,7 +133,7 @@ class TestYolov8Detection(unittest.TestCase):
         self.assertNotEqual(None, yolov8_trainer)
 
         yolov8_trainer.prepare_data_for_training()
-        self.assertTrue(os.path.isfile("test_files/annotations.json"))
+        self.assertTrue(os.path.isfile(self.annotations_path_test))
         self.assert_model_files_downloaded()
         self.assert_assets_downloaded()
         self.assert_label_txt_files_created()
