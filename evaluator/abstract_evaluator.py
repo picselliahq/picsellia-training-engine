@@ -6,8 +6,7 @@ from typing import List, Type, Union
 
 import numpy as np
 import tqdm
-from picsellia.exceptions import (InsufficientResourcesError,
-                                  ResourceNotFoundError)
+from picsellia.exceptions import InsufficientResourcesError, ResourceNotFoundError
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.sdk.experiment import Experiment
@@ -36,12 +35,12 @@ class AbstractEvaluator(ABC):
     framework_formatter: Type[FrameworkFormatter]
 
     def __init__(
-            self,
-            experiment: Experiment,
-            dataset: DatasetVersion,
-            asset_list: List[Asset] = None,
-            confidence_threshold: float = 0.1,
-            weights_path: str = None
+        self,
+        experiment: Experiment,
+        dataset: DatasetVersion,
+        asset_list: List[Asset] = None,
+        confidence_threshold: float = 0.1,
+        weights_path: str = None,
     ) -> None:
         self._experiment = experiment
         self._dataset = dataset
@@ -148,11 +147,17 @@ class AbstractEvaluator(ABC):
 
         for i in tqdm.tqdm(range(total_batch_number)):
             asset_list = self._asset_list[
-                         i * self._batch_size: (i + 1) * self._batch_size
-                         ]
+                i * self._batch_size : (i + 1) * self._batch_size
+            ]
             self._evaluate_asset_list(asset_list)
-        if self._dataset.type in [InferenceType.OBJECT_DETECTION, InferenceType.SEGMENTATION, InferenceType.CLASSIFICATION]:
-            self._experiment.compute_evaluations_metrics(inference_type=self._dataset.type)
+        if self._dataset.type in [
+            InferenceType.OBJECT_DETECTION,
+            InferenceType.SEGMENTATION,
+            InferenceType.CLASSIFICATION,
+        ]:
+            self._experiment.compute_evaluations_metrics(
+                inference_type=self._dataset.type
+            )
 
     def _evaluate_asset_list(self, asset_list: List[Asset]) -> None:
         inputs = self._preprocess_images(asset_list)
@@ -171,14 +176,16 @@ class AbstractEvaluator(ABC):
     # def _preprocess_image(self, asset: Asset) -> np.ndarray:
     #     pass
 
-    def _format_prediction_to_evaluations(self, asset: Asset, prediction: Union[List, dict]) -> List:
+    def _format_prediction_to_evaluations(
+        self, asset: Asset, prediction: Union[List, dict]
+    ) -> List:
         picsellia_predictions = self._type_formatter.format_prediction(
             asset=asset, prediction=prediction
         )
 
         evaluations = []
         for i in range(
-                min(self._nb_object_limit, len(picsellia_predictions["confidences"]))
+            min(self._nb_object_limit, len(picsellia_predictions["confidences"]))
         ):
             if picsellia_predictions["confidences"][i] >= self._confidence_threshold:
                 picsellia_prediction = {
@@ -193,10 +200,14 @@ class AbstractEvaluator(ABC):
 
     def _send_evaluations_to_platform(self, asset: Asset, evaluations: List) -> None:
         shapes = {self._type_formatter.get_shape_type(): evaluations}
-
-        self._experiment.add_evaluation(asset=asset, **shapes)
-        print(f"Asset: {asset.filename} evaluated.")
-        logging.info(f"Asset: {asset.filename} evaluated.")
+        try:
+            self._experiment.add_evaluation(asset=asset, **shapes)
+            print(f"Asset: {asset.filename} evaluated.")
+            logging.info(f"Asset: {asset.filename} evaluated.")
+        except Exception:
+            logging.info(
+                f"Something went wrong with evaluating {asset.filename}. Skipping.."
+            )
 
     def _get_model_artifact_filename(self) -> str:
         pass
