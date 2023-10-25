@@ -27,6 +27,8 @@ ORGA_NAME = os.environ["TEST_ORGA"]
 
 
 class TestYoloClassificationUtils(unittest.TestCase):
+    base_path = None
+    test_file_path = None
     eval_set = None
     test_set = None
     train_set = None
@@ -72,16 +74,19 @@ class TestYoloClassificationUtils(unittest.TestCase):
         cls.coco_train, cls.coco_test, cls.coco_val = _create_coco_objects(
             cls.train_set, cls.test_set, cls.eval_set
         )
-        cls.train_path = "data/train"
-        cls.test_path = "data/test"
-        cls.val_path = "data/val"
+        cls.base_path = os.path.join(os.getcwd(), "yolov8-classification", "experiment")
+        cls.train_path = os.path.join(cls.base_path, "data/train")
+        cls.test_path = os.path.join(cls.base_path, "data/test")
+        cls.val_path = os.path.join(cls.base_path, "data/val")
+
+        cls.test_file_path = os.path.join(cls.base_path, "test_files")
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.project.delete()
-        sample_file_path = "data/test/grape_image.jpeg"
+        sample_file_path = os.path.join(cls.base_path, "data/test/grape_image.jpeg")
         if os.path.isfile(sample_file_path):
-            shutil.move(sample_file_path, "test_files")
+            shutil.move(sample_file_path, cls.test_file_path)
 
     def test_get_prop_parameters(self):
         parameters = {"epochs": 100, "patience": 500, "image_size": 640}
@@ -93,26 +98,26 @@ class TestYoloClassificationUtils(unittest.TestCase):
         prop = get_prop_parameter(parameters)
         self.assertEqual(prop, 0.8)
 
-    # def test_make_train_test_val_dirs(self):
-    #     make_train_test_val_dirs()
-    #     is_created = False
-    #     if (
-    #         os.path.exists(self.train_path)
-    #         and os.path.exists(self.test_path)
-    #         and os.path.exists(self.val_path)
-    #     ):
-    #         is_created = True
-    #     self.assertTrue(is_created)
-    #
-    #     move_image(
-    #         filename="grape_image.jpeg",
-    #         old_location_path="test_files",
-    #         new_location_path=self.test_path,
-    #     )
-    #     is_moved = False
-    #     if os.path.isfile(os.path.join(self.test_path, "grape_image.jpeg")):
-    #         is_moved = True
-    #     self.assertTrue(is_moved)
+    def test_make_train_test_val_dirs(self):
+        make_train_test_val_dirs()
+        is_created = False
+        if (
+            os.path.exists(self.train_path)
+            and os.path.exists(self.test_path)
+            and os.path.exists(self.val_path)
+        ):
+            is_created = True
+        self.assertTrue(is_created)
+
+        move_image(
+            filename="grape_image.jpeg",
+            old_location_path=self.test_file_path,
+            new_location_path=self.test_path,
+        )
+        is_moved = False
+        if os.path.isfile(os.path.join(self.test_path, "grape_image.jpeg")):
+            is_moved = True
+        self.assertTrue(is_moved)
 
     def test_create_class_directories(self):
         _create_class_directories(coco=self.coco_train, base_imdir=self.train_path)
