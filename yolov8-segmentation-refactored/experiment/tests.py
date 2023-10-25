@@ -101,7 +101,7 @@ class TestYolov8Segmentation(unittest.TestCase):
         create_img_label_segmentation(
             image=image,
             annotations_coco=COCO(self.annotations_path_test),
-            labels_path="test_files",
+            labels_path=self.test_folder,
             label_names=["banana"],
         )
         txt_name = os.path.splitext(image["file_name"])[0] + ".txt"
