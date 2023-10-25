@@ -37,13 +37,20 @@ jobs:
           pip install -r "$CORE_UTILS_PATH/requirements.txt"
           python -m unittest discover -s "$CORE_UTILS_PATH" -p 'tests.py'
 
-      - name: Run all Unit Tests
-        run:  |
-          # List all subdirectories in the repository root
-          for folder in */; do
-            if [ "$folder" != "unet-instance-segmentation/" ] && [ "$folder" != "ViT-detection/" ] && [ -f "$folder/requirements.txt" ] && [ -f "$folder/experiment/tests.py" ]; then
-              echo "Running tests in $folder"
-              pip install -r "$folder/requirements.txt"
-              python -m unittest discover -s "$folder/experiment" -p 'tests.py'
-            fi
-          done
+      - name: Run yolov8 Classification Unit Tests
+        run: |
+          folder="yolov8-classification"
+          pip install -r "$folder/requirements.txt"
+          python -m unittest discover -v -s "$folder/experiment" -p 'tests.py'
+
+      - name: Run yolov8 Detection Unit Tests
+        run: |
+          folder="yolov8-detection-refactored"
+          pip install -r "$folder/requirements.txt"
+          python -m unittest discover -v -s "$folder/experiment" -p 'tests.py'
+
+      - name: Run yolov8 Segmentation Unit Tests
+        run: |
+          folder="yolov8-segmentation-refactored"
+          pip install -r "$folder/requirements.txt"
+          python -m unittest discover -v -s "$folder/experiment" -p 'tests.py'
