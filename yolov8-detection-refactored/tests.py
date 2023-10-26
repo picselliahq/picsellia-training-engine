@@ -20,13 +20,21 @@ class TestYolov8DetectionUtils(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        print(os.getcwd())
         cls.test_folder = os.path.join(
             os.getcwd(), "yolov8-detection-refactored", "test_files"
         )
+        print(os.listdir(os.path.join(
+            os.getcwd(), "yolov8-detection-refactored"
+        )))
+        print(os.listdir(os.path.join(
+            os.getcwd(), "yolov8-detection-refactored", "test_files"
+        )))
         cls.annotations_path_test = os.path.join(
             cls.test_folder,
             "annotations.json",
         )
+        print(cls.annotations_path_test)
 
     @classmethod
     def tearDownClass(cls) -> None:
