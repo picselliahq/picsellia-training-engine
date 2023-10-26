@@ -47,7 +47,7 @@ jobs:
         run: |
           folder="yolov8-detection-refactored"
           pip install -r "$folder/requirements.txt"
-          python -m unittest -v yolov8-detection-refactored/tests.py TestYolov8DetectionUtils
+          python -m unittest -v yolov8-detection-refactored/tests.py -k "TestYolov8DetectionUtils"
 
 #      - name: Run yolov8 Segmentation Unit Tests
 #        run: |

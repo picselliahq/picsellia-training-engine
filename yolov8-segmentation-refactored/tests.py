@@ -8,8 +8,8 @@ from datetime import date
 from picsellia import Client
 from pycocotools.coco import COCO
 
-from .trainer import Yolov8SegmentationTrainer
-from .utils import (
+from .experiment.trainer import Yolov8SegmentationTrainer
+from .experiment.utils import (
     interleave_lists,
     create_img_label_segmentation,
     coco_to_yolo_segmentation,
@@ -35,8 +35,9 @@ class TestYolov8SegmentationUtils(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        if os.path.isfile("annotations.json"):
-            os.remove("annotations.json")
+        pass
+        # if os.path.isfile("annotations.json"):
+        #     os.remove("annotations.json")
 
     def test_create_img_label_segmentation(self):
         with open(self.annotations_path_test) as json_file:
@@ -162,8 +163,8 @@ class TestYolov8SegmentationTrainer(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.project.delete()
-        if os.path.isfile("annotations.json"):
-            os.remove("annotations.json")
+        # if os.path.isfile("annotations.json"):
+        #     os.remove("annotations.json")
         if os.path.exists(os.path.join(cls.experiment.base_dir)):
             shutil.rmtree(os.path.join(cls.experiment.base_dir))
         if os.path.exists("saved_model"):
