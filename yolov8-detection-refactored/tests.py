@@ -8,6 +8,8 @@ import sys
 
 # sys.path.append(f"{os.getcwd()}/yolov8-detection-refactored")
 # print(sys.path)
+# os.chdir(f"{os.getcwd()}/yolov8-detection-refactored")
+# print(os.getcwd())
 from picsellia import Client
 from pycocotools.coco import COCO
 
