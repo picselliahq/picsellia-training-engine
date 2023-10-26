@@ -13,40 +13,40 @@ if [ "$1" = "yolov8" ]
 then
   echo "Running tests for YOLOV8 Object Detecton.."
   pip install -r "yolov8-detection-refactored/requirements.txt"
-  python -m unittest -v "yolov8-detection-refactored/experiment/tests.py"
+  python -m unittest -v "yolov8-detection-refactored/tests.py"
 
   echo "Running tests for YOLOV8 Classification.."
   pip install -r "yolov8-classification/requirements.txt"
-  python -m unittest -v "yolov8-classification/experiment/tests.py"
+  python -m unittest -v "yolov8-classification/tests.py"
 
   echo "Running tests for YOLOV8 Segmentation.."
   pip install -r "yolov8-segmentation-refactored/requirements.txt"
-  python -m unittest -v "yolov8-segmentation-refactored/experiment/tests.py"
+  python -m unittest -v "yolov8-segmentation-refactored/tests.py"
 
 elif [ "$1" = "yolov8-detection" ]
 then
   echo "Running tests for YOLOV8 Object Detecton.."
   pip install -r "yolov8-detection-refactored/requirements.txt"
-  python -m unittest -v "yolov8-detection-refactored/experiment/tests.py"
+  python -m unittest -v "yolov8-detection-refactored/tests.py"
 
 elif [ "$1" = "yolov8-segmentation" ]
 then
   echo "Running tests for YOLOV8 Segmentation.."
   pip install -r "yolov8-segmentation-refactored/requirements.txt"
-  python -m unittest -v "yolov8-segmentation-refactored/experiment/tests.py"
+  python -m unittest -v "yolov8-segmentation-refactored/tests.py"
 
 elif [ "$1" = "yolov8-classification" ]
 then
   echo "Running tests for YOLOV8 classification.."
   pip install -r "yolov8-classification/requirements.txt"
-  python -m unittest -v "yolov8-classification/experiment/tests.py"
+  python -m unittest -v "yolov8-classification/tests.py"
 
 elif [ "$1" = "unet" ]
 then
   echo "Running tests for UNET.."
   export SM_FRAMEWORK="tf.keras"
   pip install -r "unet-instance-segmentation/requirements.txt"
-  python -m unittest -v "unet-instance-segmentation/experiment/tests.py"
+  python -m unittest -v "unet-instance-segmentation/tests.py"
 
 elif [ "$1" = "utils" ]
 then
@@ -67,9 +67,9 @@ then
     fi
   done
   python -m unittest -v "core_utils/tests.py"
-  python -m unittest -v "yolov8-classification/experiment/tests.py"
-  python -m unittest -v "yolov8-detection-refactored/experiment/tests.py"
-  python -m unittest -v "yolov8-segmentation-refactored/experiment/tests.py"
-  python -m unittest -v "unet-instance-segmentation/experiment/tests.py"
+  python -m unittest -v "yolov8-classification/tests.py"
+  python -m unittest -v "yolov8-detection-refactored/tests.py"
+  python -m unittest -v "yolov8-segmentation-refactored/tests.py"
+  python -m unittest -v "unet-instance-segmentation/tests.py"
 
 fi

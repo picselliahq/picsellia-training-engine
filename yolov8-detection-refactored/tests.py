@@ -16,6 +16,7 @@ ORGA_ID = os.environ["organization_id"]
 
 
 class TestYolov8DetectionUtils(unittest.TestCase):
+    annotations_path_test = None
     test_folder = None
 
     @classmethod
@@ -24,12 +25,6 @@ class TestYolov8DetectionUtils(unittest.TestCase):
         cls.test_folder = os.path.join(
             os.getcwd(), "yolov8-detection-refactored", "test_files"
         )
-        print(os.listdir(os.path.join(
-            os.getcwd(), "yolov8-detection-refactored"
-        )))
-        print(os.listdir(os.path.join(
-            os.getcwd(), "yolov8-detection-refactored", "test_files"
-        )))
         cls.annotations_path_test = os.path.join(
             cls.test_folder,
             "annotations.json",
