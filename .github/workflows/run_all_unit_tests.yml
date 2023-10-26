@@ -44,6 +44,7 @@ jobs:
       #          python -m unittest discover -v -s "$folder/experiment" -p 'tests.py'
 
       - name: Run yolov8 Detection Unit Tests
+        working-directory: ./yolov8-detection-refactored
         run: |
           folder="yolov8-detection-refactored"
           pip install -r "$folder/requirements.txt"
