@@ -27,7 +27,6 @@ class TestYolov8SegmentationUtils(unittest.TestCase):
         cls.test_folder = os.path.join(
             os.getcwd(),
             "yolov8-segmentation-refactored",
-            "experiment",
             "test_files",
         )
 
@@ -154,7 +153,6 @@ class TestYolov8SegmentationTrainer(unittest.TestCase):
         cls.test_folder = os.path.join(
             os.getcwd(),
             "yolov8-segmentation-refactored",
-            "experiment",
             "test_files",
         )
 
