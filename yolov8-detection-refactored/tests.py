@@ -4,17 +4,12 @@ import shutil
 import time
 import unittest
 from datetime import date
-import sys
 
-# sys.path.append(f"{os.getcwd()}/yolov8-detection-refactored")
-# print(sys.path)
-# os.chdir(f"{os.getcwd()}/yolov8-detection-refactored")
-# print(os.getcwd())
 from picsellia import Client
 from pycocotools.coco import COCO
 
-from experiment.trainer import Yolov8DetectionTrainer
-from experiment.utils import create_img_label_detection, coco_to_yolo_detection
+from .experiment.trainer import Yolov8DetectionTrainer
+from .experiment.utils import create_img_label_detection, coco_to_yolo_detection
 
 TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]
@@ -26,7 +21,7 @@ class TestYolov8DetectionUtils(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.test_folder = os.path.join(
-            os.getcwd(), "test_files"
+            os.getcwd(), "yolov8-detection-refactored", "test_files"
         )
         cls.annotations_path_test = os.path.join(
             cls.test_folder,
@@ -133,7 +128,7 @@ class TestYolov8DetectionTrainer(unittest.TestCase):
         cls.label_eval_path = os.path.join(cls.experiment.png_dir, "val", "labels")
         cls.checkpoint_path = os.path.join(cls.experiment.checkpoint_dir)
         cls.test_folder = os.path.join(
-            os.getcwd(), "yolov8-detection-refactored", "experiment", "test_files"
+            os.getcwd(), "yolov8-detection-refactored", "test_files"
         )
         cls.annotations_path_test = os.path.join(
             cls.test_folder,
