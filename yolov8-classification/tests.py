@@ -74,7 +74,7 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         cls.coco_train, cls.coco_test, cls.coco_val = _create_coco_objects(
             cls.train_set, cls.test_set, cls.eval_set
         )
-        cls.base_path = os.path.join(os.getcwd(), "yolov8-classification", "experiment")
+        cls.base_path = os.path.join(os.getcwd(), "yolov8-classification")
         cls.train_path = os.path.join(cls.base_path, "data/train")
         cls.test_path = os.path.join(cls.base_path, "data/test")
         cls.val_path = os.path.join(cls.base_path, "data/val")
