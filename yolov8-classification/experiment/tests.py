@@ -232,7 +232,6 @@ class TestYoloClassificationTrainer(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        pass
         cls.project.delete()
         shutil.rmtree("data")
         shutil.rmtree("images")
