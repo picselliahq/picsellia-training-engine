@@ -4,7 +4,10 @@ import shutil
 import time
 import unittest
 from datetime import date
+import sys
 
+# sys.path.append(f"{os.getcwd()}/yolov8-detection-refactored")
+# print(sys.path)
 from picsellia import Client
 from pycocotools.coco import COCO
 
