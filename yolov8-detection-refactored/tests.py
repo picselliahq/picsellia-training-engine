@@ -8,8 +8,8 @@ from datetime import date
 from picsellia import Client
 from pycocotools.coco import COCO
 
-from .trainer import Yolov8DetectionTrainer
-from .utils import create_img_label_detection, coco_to_yolo_detection
+from experiment.trainer import Yolov8DetectionTrainer
+from experiment.utils import create_img_label_detection, coco_to_yolo_detection
 
 TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]
@@ -21,7 +21,7 @@ class TestYolov8DetectionUtils(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.test_folder = os.path.join(
-            os.getcwd(), "yolov8-detection-refactored", "experiment", "test_files"
+            os.getcwd(), "test_files"
         )
         cls.annotations_path_test = os.path.join(
             cls.test_folder,
