@@ -45,12 +45,10 @@ jobs:
 
       - name: Run yolov8 Detection Unit Tests
         run: |
-          folder="yolov8-detection-refactored"
-          pip install -r "$folder/requirements.txt"
+          pip install -r yolov8-detection-refactored/requirements.txt
           python -m unittest -v yolov8-detection-refactored/tests.py -k "TestYolov8DetectionUtils"
 
-#      - name: Run yolov8 Segmentation Unit Tests
-#        run: |
-#          folder="yolov8-segmentation-refactored"
-#          pip install -r "$folder/requirements.txt"
-#          python -m unittest discover -v -s "$folder/experiment" -p 'tests.py'
+      - name: Run yolov8 Segmentation Unit Tests
+        run: |
+          pip install -r yolov8-segmentation-refactored/requirements.txt
+          python -m unittest -v yolov8-segmentation-refactored/tests.py -k "TestYolov8SegmentationUtils"
