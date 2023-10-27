@@ -2,6 +2,7 @@ import os
 import shutil
 import time
 import unittest
+import tempfile
 from datetime import date
 
 import numpy as np
@@ -19,7 +20,6 @@ from .experiment.utils import (
     format_confusion_matrix,
     order_repartition_according_labelmap,
     move_image,
-    make_train_test_val_dirs,
 )
 
 TOKEN = os.environ["api_token"]
@@ -27,6 +27,7 @@ ORGA_ID = os.environ["organization_id"]
 
 
 class TestYolov8ClassificationUtils(unittest.TestCase):
+    temp_dir = None
     organization_id = None
     base_path = None
     test_file_path = None
@@ -39,6 +40,9 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
     client = None
     token: str
     labelmap = {"0": "covid", "1": "normal", "2": "pneumonia"}
+
+    def __init__(self, methodName: str = ...):
+        super().__init__(methodName)
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -80,6 +84,7 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         cls.val_path = os.path.join(cls.base_path, "data/val")
 
         cls.test_file_path = os.path.join(cls.base_path, "test_files")
+        cls.temp_dir = tempfile.mkdtemp()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -87,6 +92,9 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         sample_file_path = os.path.join(cls.base_path, "data/test/grape_image.jpeg")
         if os.path.isfile(sample_file_path):
             shutil.move(sample_file_path, cls.test_file_path)
+        if os.path.exists(os.path.join(cls.base_path, "data")):
+            shutil.rmtree(os.path.join(cls.base_path, "data"))
+        shutil.rmtree(cls.temp_dir)
 
     def test_get_prop_parameters(self):
         parameters = {"epochs": 100, "patience": 500, "image_size": 640}
@@ -98,26 +106,20 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         prop = get_prop_parameter(parameters)
         self.assertEqual(prop, 0.8)
 
-    def test_make_train_test_val_dirs(self):
-        make_train_test_val_dirs()
-        is_created = False
-        if (
-            os.path.exists(self.train_path)
-            and os.path.exists(self.test_path)
-            and os.path.exists(self.val_path)
-        ):
-            is_created = True
-        self.assertTrue(is_created)
+    def test_move_file(self):
+        filename = "sample.txt"
+        old_location_path = self.temp_dir
+        new_location_path = os.path.join(self.temp_dir, "new_location")
+        os.makedirs(new_location_path, exist_ok=True)
+        old_path = os.path.join(old_location_path, filename)
+        new_path = os.path.join(new_location_path, filename)
+        with open(old_path, "w") as file:
+            file.write("Sample content")
 
-        move_image(
-            filename="grape_image.jpeg",
-            old_location_path=self.test_file_path,
-            new_location_path=self.test_path,
-        )
-        is_moved = False
-        if os.path.isfile(os.path.join(self.test_path, "grape_image.jpeg")):
-            is_moved = True
-        self.assertTrue(is_moved)
+        move_image(filename, old_location_path, new_location_path)
+
+        self.assertFalse(os.path.exists(old_path))
+        self.assertTrue(os.path.exists(new_path))
 
     def test_create_class_directories(self):
         _create_class_directories(coco=self.coco_train, base_imdir=self.train_path)
