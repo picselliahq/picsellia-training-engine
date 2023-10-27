@@ -1,5 +1,5 @@
 name: Run Unit Tests
-on: push
+on: pull_request
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,26 +28,7 @@ jobs:
       - name: Install Picsellia Package
         run: |
           pip install --upgrade pip
-          pip install picsellia --upgrade
-      - name: Run core_utils Unit Tests
-        env:
-          CORE_UTILS_PATH: "core_utils"
-        run: |
-          echo "Running tests in $CORE_UTILS_PATH"
-          pip install -r "$CORE_UTILS_PATH/requirements.txt"
-          python -m unittest discover -s "$CORE_UTILS_PATH" -p 'tests.py'
-
-      - name: Run yolov8 Classification Unit Tests
-        run: |
-          folder="yolov8-classification"
-          pip install -r "$folder/requirements.txt"
-          python -m unittest discover -v -s "$folder/experiment" -p 'tests.py'
-
-      - name: Run yolov8 Detection Unit Tests
-        run: |
-          folder="yolov8-detection-refactored"
-          pip install -r "$folder/requirements.txt"
-          python -m unittest discover -v -s "$folder/experiment" -p 'tests.py'
+          pip install picsellia
 
       - name: Run yolov8 Segmentation Unit Tests
         run: |

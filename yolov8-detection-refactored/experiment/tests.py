@@ -15,7 +15,61 @@ TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]
 
 
-class TestYolov8Detection(unittest.TestCase):
+class TestYolov8DetectionUtils(unittest.TestCase):
+    test_folder = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.test_folder = os.path.join(
+            os.getcwd(), "yolov8-detection-refactored", "experiment", "test_files"
+        )
+        cls.annotations_path_test = os.path.join(
+            cls.test_folder,
+            "annotations.json",
+        )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        pass
+
+    def test_create_img_label_detection(self):
+        with open(self.annotations_path_test) as json_file:
+            annotations_dict = json.load(json_file)
+        image = annotations_dict["images"][0]
+        create_img_label_detection(
+            image=image,
+            annotations_coco=COCO(self.annotations_path_test),
+            labels_path=self.test_folder,
+            label_names=["car"],
+        )
+        txt_name = os.path.splitext(image["file_name"])[0] + ".txt"
+        txt_file_path = os.path.join(self.test_folder, txt_name)
+
+        self.assertTrue(txt_file_path)
+
+        self.assertEqual(
+            16, self.get_number_lines_text_file(txt_file_path=txt_file_path)
+        )
+        os.remove(txt_file_path)
+
+    @staticmethod
+    def get_number_lines_text_file(txt_file_path: str) -> int:
+        with open(txt_file_path, "r") as fp:
+            return len(fp.readlines())
+
+    def test_coco_to_yolo_detection(self):
+        x1 = 342
+        y1 = 946
+        w = 366
+        h = 133
+        results = coco_to_yolo_detection(
+            x1=x1, y1=y1, w=w, h=h, image_w=1920, image_h=1000
+        )
+        expected_results = [0.2734375, 1.0125, 0.190625, 0.133]
+        self.assertEqual(expected_results, results)
+
+
+class TestYolov8DetectionTrainer(unittest.TestCase):
     organization_id = None
     test_folder = None
     model_version = None
@@ -76,7 +130,6 @@ class TestYolov8Detection(unittest.TestCase):
         cls.test_folder = os.path.join(
             os.getcwd(), "yolov8-detection-refactored", "experiment", "test_files"
         )
-        # cls.test_folder = "test_files"
         cls.annotations_path_test = os.path.join(
             cls.test_folder,
             "annotations.json",
@@ -84,7 +137,6 @@ class TestYolov8Detection(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        pass
         cls.project.delete()
         if os.path.isfile("annotations.json"):
             os.remove("annotations.json")
@@ -92,42 +144,6 @@ class TestYolov8Detection(unittest.TestCase):
             shutil.rmtree(os.path.join(cls.experiment.base_dir))
         if os.path.exists("saved_model"):
             shutil.rmtree("saved_model")
-
-    def test_create_img_label_detection(self):
-        with open(self.annotations_path_test) as json_file:
-            annotations_dict = json.load(json_file)
-        image = annotations_dict["images"][0]
-        create_img_label_detection(
-            image=image,
-            annotations_coco=COCO(self.annotations_path_test),
-            labels_path=self.test_folder,
-            label_names=["car"],
-        )
-        txt_name = os.path.splitext(image["file_name"])[0] + ".txt"
-        txt_file_path = os.path.join(self.test_folder, txt_name)
-
-        self.assertTrue(txt_file_path)
-
-        self.assertEqual(
-            16, self.get_number_lines_text_file(txt_file_path=txt_file_path)
-        )
-        os.remove(txt_file_path)
-
-    @staticmethod
-    def get_number_lines_text_file(txt_file_path: str) -> int:
-        with open(txt_file_path, "r") as fp:
-            return len(fp.readlines())
-
-    def test_coco_to_yolo_detection(self):
-        x1 = 342
-        y1 = 946
-        w = 366
-        h = 133
-        results = coco_to_yolo_detection(
-            x1=x1, y1=y1, w=w, h=h, image_w=1920, image_h=1000
-        )
-        expected_results = [0.2734375, 1.0125, 0.190625, 0.133]
-        self.assertEqual(expected_results, results)
 
     def test_yolov8_detection_trainer(self):
         yolov8_trainer = Yolov8DetectionTrainer()

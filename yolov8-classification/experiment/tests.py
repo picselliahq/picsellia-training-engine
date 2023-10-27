@@ -18,13 +18,15 @@ from .utils import (
     get_train_test_eval_datasets_from_experiment,
     format_confusion_matrix,
     order_repartition_according_labelmap,
+    move_image,
+    make_train_test_val_dirs,
 )
 
 TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]
 
 
-class TestYoloClassificationUtils(unittest.TestCase):
+class TestYolov8ClassificationUtils(unittest.TestCase):
     organization_id = None
     base_path = None
     test_file_path = None
@@ -96,26 +98,26 @@ class TestYoloClassificationUtils(unittest.TestCase):
         prop = get_prop_parameter(parameters)
         self.assertEqual(prop, 0.8)
 
-    # def test_make_train_test_val_dirs(self):
-    #     make_train_test_val_dirs()
-    #     is_created = False
-    #     if (
-    #         os.path.exists(self.train_path)
-    #         and os.path.exists(self.test_path)
-    #         and os.path.exists(self.val_path)
-    #     ):
-    #         is_created = True
-    #     self.assertTrue(is_created)
-    #
-    #     move_image(
-    #         filename="grape_image.jpeg",
-    #         old_location_path=self.test_file_path,
-    #         new_location_path=self.test_path,
-    #     )
-    #     is_moved = False
-    #     if os.path.isfile(os.path.join(self.test_path, "grape_image.jpeg")):
-    #         is_moved = True
-    #     self.assertTrue(is_moved)
+    def test_make_train_test_val_dirs(self):
+        make_train_test_val_dirs()
+        is_created = False
+        if (
+            os.path.exists(self.train_path)
+            and os.path.exists(self.test_path)
+            and os.path.exists(self.val_path)
+        ):
+            is_created = True
+        self.assertTrue(is_created)
+
+        move_image(
+            filename="grape_image.jpeg",
+            old_location_path=self.test_file_path,
+            new_location_path=self.test_path,
+        )
+        is_moved = False
+        if os.path.isfile(os.path.join(self.test_path, "grape_image.jpeg")):
+            is_moved = True
+        self.assertTrue(is_moved)
 
     def test_create_class_directories(self):
         _create_class_directories(coco=self.coco_train, base_imdir=self.train_path)
@@ -188,7 +190,7 @@ class TestYoloClassificationUtils(unittest.TestCase):
         self.assertEqual(expected_results, ordered_repartition)
 
 
-class TestYoloClassificationHelpers(unittest.TestCase):
+class TestYoloClassificationTrainer(unittest.TestCase):
     organization_id = None
     model_version = None
     dataset = None
