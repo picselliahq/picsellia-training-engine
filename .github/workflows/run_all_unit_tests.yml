@@ -10,9 +10,7 @@ jobs:
     env:
       host: "https://staging.picsellia.com/"
       organization_id: "0189266d-64f5-79b4-9b80-6fcf8a3b498b"
-      TEST_ORGA: test-account
       api_token: ${{ secrets.API_TOKEN }}
-      TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
       SM_FRAMEWORK: "tf.keras"
 
 
@@ -51,3 +49,10 @@ jobs:
         run: |
           pip install -r yolov8-segmentation-refactored/requirements.txt
           python -m unittest -v yolov8-segmentation-refactored/tests.py -k "TestYolov8SegmentationUtils"
+
+      - name: Run UNet Segmentation Unit Tests
+        run: | 
+          pip install -r unet-instance-segmentation/requirements.txt 
+          python -m unittest -v unet-instance-segmentation/tests.py -k "TestUnetSegmentationUtils" 
+          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataset" 
+          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataloader"
