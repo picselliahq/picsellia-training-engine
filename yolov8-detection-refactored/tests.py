@@ -29,7 +29,6 @@ class TestYolov8DetectionUtils(unittest.TestCase):
             cls.test_folder,
             "annotations.json",
         )
-        print(cls.annotations_path_test)
 
     @classmethod
     def tearDownClass(cls) -> None:
