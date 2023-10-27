@@ -7,9 +7,10 @@ from datetime import date
 import numpy as np
 from picsellia import Client
 
-from trainer import UnetSegmentationTrainer
 from utils import (
-    get_classes,
+    get_classes_from_mask_dataset,
+    download_image_mask_assets,
+    get_image_mask_assets,
     split_train_test_val_filenames,
     makedirs_images_masks,
     _find_mask_by_image,
@@ -19,28 +20,30 @@ from utils import (
     Dataset,
     Dataloader,
 )
+from trainer import UnetSegmentationTrainer
+from picsellia.sdk.dataset import DatasetVersion
 
 TOKEN = os.environ["api_token"]
-ORGA_NAME = os.environ["TEST_ORGA"]
+ORGA_ID = os.environ["organization_id"]
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 class TestUnetSegmentation(unittest.TestCase):
+    organization_id = None
     model_version = None
     dataset = None
     experiment = None
     project = None
     client = None
-    organization_name: str
     token: str
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.token = TOKEN
-        cls.organization_name = ORGA_NAME
+        cls.organization_id = ORGA_ID
         cls.client = Client(
             api_token=cls.token,
-            organization_name=cls.organization_name,
+            organization_id=cls.organization_id,
             host="https://staging.picsellia.com/",
         )
         cls.project = cls.client.create_project(
@@ -56,7 +59,7 @@ class TestUnetSegmentation(unittest.TestCase):
         )
 
         cls.experiment.attach_dataset(
-            name="images", dataset_version=cls.dataset.get_version("original")
+            name="images", dataset_version=cls.dataset.get_version("images")
         )
         cls.experiment.attach_dataset(
             name="masks", dataset_version=cls.dataset.get_version("masks")
@@ -102,10 +105,30 @@ class TestUnetSegmentation(unittest.TestCase):
         if os.path.isdir(cls.experiment.name):
             shutil.rmtree(cls.experiment.name)
 
-    def test_get_classes(self):
+    def test_get_classes_from_mask_dataset(self):
         expected_results = ["car"]
-        results = get_classes(self.experiment, False)
+        results = get_classes_from_mask_dataset(self.experiment)
         self.assertEqual(expected_results, results)
+
+    def test_download_image_mask_assets(self):
+        image_files, mask_files = download_image_mask_assets(
+            experiment=self.experiment,
+            image_path=self.image_path,
+            mask_path=self.mask_path,
+        )
+        self.assertNotEquals((image_files, mask_files), ([], []))
+        self.assertTrue(os.path.exists(self.image_path))
+        self.assertTrue(os.path.exists(self.mask_path))
+
+    def test_get_image_mask_assets(self):
+        image_assets, mask_assets = get_image_mask_assets(
+            experiment=self.experiment,
+            dataset_list=self.experiment.list_attached_dataset_versions(),
+        )
+
+        self.assertEqual(
+            (type(image_assets), type(mask_assets)), (DatasetVersion, DatasetVersion)
+        )
 
     def test_split_train_test_val_filenames(self):
         image_files = [

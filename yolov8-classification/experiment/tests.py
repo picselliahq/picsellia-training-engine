@@ -7,11 +7,9 @@ from datetime import date
 import numpy as np
 from picsellia import Client
 
-from trainer import Yolov8ClassificationTrainer
-from utils import (
+from .trainer import Yolov8ClassificationTrainer
+from .utils import (
     get_prop_parameter,
-    make_train_test_val_dirs,
-    move_image,
     _get_three_attached_datasets,
     _create_coco_objects,
     _create_class_directories,
@@ -22,11 +20,12 @@ from utils import (
     order_repartition_according_labelmap,
 )
 
-TOKEN = os.environ["TEST_TOKEN"]
-ORGA_NAME = os.environ["TEST_ORGA"]
+TOKEN = os.environ["api_token"]
+ORGA_ID = os.environ["organization_id"]
 
 
 class TestYoloClassificationUtils(unittest.TestCase):
+    organization_id = None
     base_path = None
     test_file_path = None
     eval_set = None
@@ -36,17 +35,16 @@ class TestYoloClassificationUtils(unittest.TestCase):
     experiment = None
     project = None
     client = None
-    organization_name: str
     token: str
     labelmap = {"0": "covid", "1": "normal", "2": "pneumonia"}
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.token = TOKEN
-        cls.organization_name = ORGA_NAME
+        cls.organization_id = ORGA_ID
         cls.client = Client(
             api_token=cls.token,
-            organization_name=cls.organization_name,
+            organization_id=cls.organization_id,
             host="https://staging.picsellia.com/",
         )
         cls.project = cls.client.create_project(
@@ -191,9 +189,9 @@ class TestYoloClassificationUtils(unittest.TestCase):
 
 
 class TestYoloClassificationHelpers(unittest.TestCase):
+    organization_id = None
     model_version = None
     dataset = None
-    organization_name: str
     token: str
     experiment = None
     client = None
@@ -202,10 +200,10 @@ class TestYoloClassificationHelpers(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.token = TOKEN
-        cls.organization_name = ORGA_NAME
+        cls.organization_id = ORGA_ID
         cls.client = Client(
             api_token=cls.token,
-            organization_name=cls.organization_name,
+            organization_id=cls.organization_id,
             host="https://staging.picsellia.com/",
         )
         cls.project = cls.client.create_project(

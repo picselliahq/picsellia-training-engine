@@ -1,15 +1,15 @@
 import os
+
 from picsellia.sdk.asset import MultiAsset
 
-import segmentation_trainer
+from abstract_trainer.yolov8_trainer import Yolov8Trainer
 from core_utils.yolov8 import (
     generate_data_yaml,
     setup_hyp,
 )
 from evaluator.yolo_evaluator import SegmentationYOLOEvaluator
-from abstract_trainer.yolov8_trainer import Yolov8Trainer
-
-from utils import create_yolo_segmentation_label
+from .segmentation_trainer import PicselliaSegmentationTrainer
+from .utils import create_yolo_segmentation_label
 
 
 class Yolov8SegmentationTrainer(Yolov8Trainer):
@@ -44,7 +44,7 @@ class Yolov8SegmentationTrainer(Yolov8Trainer):
             task="segment",
         )
 
-        self.trainer = segmentation_trainer.PicselliaSegmentationTrainer(
+        self.trainer = PicselliaSegmentationTrainer(
             experiment=self.experiment, cfg=config, parameters=self.parameters
         )
 
