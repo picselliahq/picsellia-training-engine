@@ -24,11 +24,12 @@ from yolov8 import (
     get_batch_mosaics,
 )
 
-TOKEN = os.environ["TEST_TOKEN"]
-ORGA_NAME = os.environ["TEST_ORGA"]
+TOKEN = os.environ["api_token"]
+ORGA_ID = os.environ["organization_id"]
 
 
 class TestYoloUtils(unittest.TestCase):
+    organization_id = None
     labels = None
     checkpoint_path = None
     train_set = None
@@ -36,7 +37,6 @@ class TestYoloUtils(unittest.TestCase):
     experiment = None
     project = None
     client = None
-    organization_name: str
     token: str
     annotations_path = "test_annotations.json"
     labelmap = {0: "classA", 1: "classB", 2: "classC"}
@@ -45,10 +45,10 @@ class TestYoloUtils(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.token = TOKEN
-        cls.organization_name = ORGA_NAME
+        cls.organization_id = ORGA_ID
         cls.client = Client(
             api_token=cls.token,
-            organization_name=cls.organization_name,
+            organization_id=cls.organization_id,
             host="https://staging.picsellia.com/",
         )
         cls.project = cls.client.create_project(

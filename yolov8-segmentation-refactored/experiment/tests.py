@@ -1,25 +1,26 @@
 import json
 import os
+import shutil
 import time
 import unittest
-import shutil
 from datetime import date
 
 from picsellia import Client
 from pycocotools.coco import COCO
 
-from trainer import Yolov8SegmentationTrainer
-from utils import (
+from .trainer import Yolov8SegmentationTrainer
+from .utils import (
     interleave_lists,
     create_img_label_segmentation,
     coco_to_yolo_segmentation,
 )
 
-TOKEN = os.environ["TEST_TOKEN"]
-ORGA_NAME = os.environ["TEST_ORGA"]
+TOKEN = os.environ["api_token"]
+ORGA_ID = os.environ["organization_id"]
 
 
 class TestYolov8Segmentation(unittest.TestCase):
+    organization_id = None
     test_folder = None
     model_version = None
     checkpoint_path = None
@@ -28,16 +29,15 @@ class TestYolov8Segmentation(unittest.TestCase):
     experiment = None
     project = None
     client = None
-    organization_name: str
     token: str
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.token = TOKEN
-        cls.organization_name = ORGA_NAME
+        cls.organization_id = ORGA_ID
         cls.client = Client(
             api_token=cls.token,
-            organization_name=cls.organization_name,
+            organization_id=cls.organization_id,
             host="https://staging.picsellia.com/",
         )
         cls.project = cls.client.create_project(

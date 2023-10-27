@@ -1,13 +1,15 @@
 import os
+
 from picsellia.sdk.asset import MultiAsset
-import detection_trainer
+
 from abstract_trainer.yolov8_trainer import Yolov8Trainer
 from core_utils.yolov8 import (
     generate_data_yaml,
     setup_hyp,
 )
 from evaluator.yolo_evaluator import DetectionYOLOEvaluator
-from utils import create_yolo_detection_label
+from .detection_trainer import PicselliaDetectionTrainer
+from .utils import create_yolo_detection_label
 
 
 class Yolov8DetectionTrainer(Yolov8Trainer):
@@ -42,7 +44,7 @@ class Yolov8DetectionTrainer(Yolov8Trainer):
             task="detect",
         )
 
-        self.trainer = detection_trainer.PicselliaDetectionTrainer(
+        self.trainer = PicselliaDetectionTrainer(
             experiment=self.experiment, cfg=config, parameters=self.parameters
         )
 
