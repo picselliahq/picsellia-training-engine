@@ -6,8 +6,10 @@ from datetime import date
 
 import numpy as np
 from picsellia import Client
+from picsellia.sdk.dataset import DatasetVersion
 
-from utils import (
+from .trainer import UnetSegmentationTrainer
+from .utils import (
     get_classes_from_mask_dataset,
     download_image_mask_assets,
     get_image_mask_assets,
@@ -20,8 +22,6 @@ from utils import (
     Dataset,
     Dataloader,
 )
-from trainer import UnetSegmentationTrainer
-from picsellia.sdk.dataset import DatasetVersion
 
 TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]
@@ -97,7 +97,6 @@ class TestUnetSegmentation(unittest.TestCase):
         cls.image_prefix = cls.parameters["image_filename_prefix"]
 
         os.environ["experiment_id"] = str(cls.experiment.id)
-        cls.training_pipeline = UnetSegmentationTrainer()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -231,31 +230,6 @@ class TestUnetSegmentation(unittest.TestCase):
 
         self.assertIsNone(np.testing.assert_array_equal(expected_result, result))
 
-    def test_launch_training_pipeline(self):
-        self.training_pipeline.prepare_data_for_training()
-        directories_to_check = [
-            self.training_pipeline.x_train_dir,
-            self.training_pipeline.y_train_dir,
-            self.training_pipeline.x_test_dir,
-            self.training_pipeline.y_test_dir,
-            self.training_pipeline.x_eval_dir,
-            self.training_pipeline.y_eval_dir,
-        ]
-        for directory in directories_to_check:
-            self.assertGreaterEqual(len(os.listdir(directory)), 1)
-        self.assertNotEquals(self.training_pipeline.train_dataloader, None)
-        self.assertNotEquals(self.training_pipeline.test_dataloader, None)
-        self.assertNotEquals(self.training_pipeline.eval_dataloader, None)
-
-        self.training_pipeline.train()
-        self.assertTrue(os.path.isfile(self.training_pipeline.best_model_path))
-
-        self.training_pipeline.eval()
-        self.assertNotEquals(
-            type(self.training_pipeline.experiment.get_log(name="eval-results").data),
-            None,
-        )
-
 
 class TestDataset(unittest.TestCase):
     preprocessing = None
@@ -346,6 +320,80 @@ class TestDataloader(unittest.TestCase):
         actual_length = len(dataloader)
 
         self.assertEqual(expected_length, actual_length)
+
+
+class TestUnetTrainer(unittest.TestCase):
+    model_version = None
+    dataset = None
+    experiment = None
+    project = None
+    client = None
+    organization_id = None
+    token = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.token = TOKEN
+        cls.organization_id = ORGA_ID
+        cls.client = Client(
+            api_token=cls.token,
+            organization_id=cls.organization_id,
+            host="https://staging.picsellia.com/",
+        )
+        cls.project = cls.client.create_project(
+            name=f"test_unet{str(date.today())}-{str(time.time())}"
+        )
+        cls.model_version = cls.client.get_model_version_by_id(
+            "018a99a0-0b68-772e-a04d-47e0c7096e66"
+        )
+
+        cls.experiment = cls.project.create_experiment(name="car-segmentation-unet")
+        cls.dataset = cls.client.get_dataset_by_id(
+            "018a89c6-0bc8-7de8-8ba2-487fd24567ad"
+        )
+
+        cls.experiment.attach_dataset(
+            name="original", dataset_version=cls.dataset.get_version("original")
+        )
+        cls.experiment.attach_dataset(
+            name="masks", dataset_version=cls.dataset.get_version("masks")
+        )
+        cls.model_version = cls.client.get_model_version_by_id(
+            "018a703e-80fc-7d8f-9983-1430e5f7a427"
+        )
+        cls.experiment.log_parameters(
+            {"epochs": 1, "batch_size": 2, "learning_rate": 0.0001}
+        )
+        cls.experiment.attach_model_version(
+            model_version=cls.model_version, do_attach_base_parameters=False
+        )
+        os.environ["experiment_id"] = str(cls.experiment.id)
+        cls.training_pipeline = UnetSegmentationTrainer()
+
+    def test_launch_training_pipeline(self):
+        self.training_pipeline.prepare_data_for_training()
+        directories_to_check = [
+            self.training_pipeline.x_train_dir,
+            self.training_pipeline.y_train_dir,
+            self.training_pipeline.x_test_dir,
+            self.training_pipeline.y_test_dir,
+            self.training_pipeline.x_eval_dir,
+            self.training_pipeline.y_eval_dir,
+        ]
+        for directory in directories_to_check:
+            self.assertGreaterEqual(len(os.listdir(directory)), 1)
+        self.assertNotEquals(self.training_pipeline.train_dataloader, None)
+        self.assertNotEquals(self.training_pipeline.test_dataloader, None)
+        self.assertNotEquals(self.training_pipeline.eval_dataloader, None)
+
+        self.training_pipeline.train()
+        self.assertTrue(os.path.isfile(self.training_pipeline.best_model_path))
+
+        self.training_pipeline.eval()
+        self.assertNotEquals(
+            type(self.training_pipeline.experiment.get_log(name="eval-results").data),
+            None,
+        )
 
 
 if __name__ == "__main__":

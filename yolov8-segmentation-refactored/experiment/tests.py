@@ -19,7 +19,82 @@ TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]
 
 
-class TestYolov8Segmentation(unittest.TestCase):
+class TestYolov8SegmentationUtils(unittest.TestCase):
+    test_folder = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.test_folder = os.path.join(
+            os.getcwd(),
+            "yolov8-segmentation-refactored",
+            "experiment",
+            "test_files",
+        )
+
+        cls.annotations_path_test = os.path.join(cls.test_folder, "annotations.json")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        if os.path.isfile("annotations.json"):
+            os.remove("annotations.json")
+
+    def test_create_img_label_segmentation(self):
+        with open(self.annotations_path_test) as json_file:
+            annotations_dict = json.load(json_file)
+        image = annotations_dict["images"][0]
+        create_img_label_segmentation(
+            image=image,
+            annotations_coco=COCO(self.annotations_path_test),
+            labels_path=self.test_folder,
+            label_names=["banana"],
+        )
+        txt_name = os.path.splitext(image["file_name"])[0] + ".txt"
+        txt_file_path = os.path.join(self.test_folder, txt_name)
+
+        self.assertTrue(txt_file_path)
+        self.assertEqual(
+            2, self.get_number_lines_text_file(txt_file_path=txt_file_path)
+        )
+        os.remove(txt_file_path)
+
+    @staticmethod
+    def get_number_lines_text_file(txt_file_path: str) -> int:
+        with open(txt_file_path, "r") as fp:
+            return len(fp.readlines())
+
+    def test_coco_to_yolo_segmentation(self):
+        ann = [
+            [50, 60, 70, 60, 70, 80, 50, 80],
+        ]
+        expected_results = [
+            0.4166666666666667,
+            0.5,
+            0.5833333333333334,
+            0.5,
+            0.5833333333333334,
+            0.6666666666666666,
+            0.4166666666666667,
+            0.6666666666666666,
+        ]
+        results = coco_to_yolo_segmentation(ann=ann, image_h=120, image_w=120)
+        self.assertEqual(expected_results, results)
+
+    def test_interleave_lists(self):
+        xs = [10, 20, 30]
+        ys = [5, 15, 25]
+        result = interleave_lists(xs, ys)
+        expected = [10, 5, 20, 15, 30, 25]
+        self.assertEqual(result, expected)
+
+    def test_interleave_lists_empty(self):
+        xs = []
+        ys = []
+        result = interleave_lists(xs, ys)
+        expected = []
+        self.assertEqual(result, expected)
+
+
+class TestYolov8SegmentationTrainer(unittest.TestCase):
     organization_id = None
     test_folder = None
     model_version = None
@@ -93,61 +168,6 @@ class TestYolov8Segmentation(unittest.TestCase):
             shutil.rmtree(os.path.join(cls.experiment.base_dir))
         if os.path.exists("saved_model"):
             shutil.rmtree("saved_model")
-
-    def test_create_img_label_segmentation(self):
-        with open(self.annotations_path_test) as json_file:
-            annotations_dict = json.load(json_file)
-        image = annotations_dict["images"][0]
-        create_img_label_segmentation(
-            image=image,
-            annotations_coco=COCO(self.annotations_path_test),
-            labels_path=self.test_folder,
-            label_names=["banana"],
-        )
-        txt_name = os.path.splitext(image["file_name"])[0] + ".txt"
-        txt_file_path = os.path.join(self.test_folder, txt_name)
-
-        self.assertTrue(txt_file_path)
-        self.assertEqual(
-            2, self.get_number_lines_text_file(txt_file_path=txt_file_path)
-        )
-        os.remove(txt_file_path)
-
-    @staticmethod
-    def get_number_lines_text_file(txt_file_path: str) -> int:
-        with open(txt_file_path, "r") as fp:
-            return len(fp.readlines())
-
-    def test_coco_to_yolo_segmentation(self):
-        ann = [
-            [50, 60, 70, 60, 70, 80, 50, 80],
-        ]
-        expected_results = [
-            0.4166666666666667,
-            0.5,
-            0.5833333333333334,
-            0.5,
-            0.5833333333333334,
-            0.6666666666666666,
-            0.4166666666666667,
-            0.6666666666666666,
-        ]
-        results = coco_to_yolo_segmentation(ann=ann, image_h=120, image_w=120)
-        self.assertEqual(expected_results, results)
-
-    def test_interleave_lists(self):
-        xs = [10, 20, 30]
-        ys = [5, 15, 25]
-        result = interleave_lists(xs, ys)
-        expected = [10, 5, 20, 15, 30, 25]
-        self.assertEqual(result, expected)
-
-    def test_interleave_lists_empty(self):
-        xs = []
-        ys = []
-        result = interleave_lists(xs, ys)
-        expected = []
-        self.assertEqual(result, expected)
 
     def test_yolov8_segmentation_trainer(self):
         yolov8_trainer = Yolov8SegmentationTrainer()
