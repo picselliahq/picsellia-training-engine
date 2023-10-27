@@ -9,7 +9,7 @@ from unittest.mock import patch
 import yaml
 from picsellia import Client
 
-from yolov8 import (
+from .yolov8 import (
     get_train_test_eval_datasets_from_experiment,
     write_annotation_file,
     get_prop_parameter,
