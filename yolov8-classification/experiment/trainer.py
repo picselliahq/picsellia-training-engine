@@ -66,10 +66,6 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             )
             self.evaluation_ds = train_set
             self.evaluation_assets = eval_assets
-        else:
-            raise Exception(
-                "You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, eval)"
-            )
         self.labelmap = create_and_log_labelmap(experiment=self.experiment)
 
     def train(self):

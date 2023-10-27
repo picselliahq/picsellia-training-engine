@@ -1,8 +1,8 @@
 import os
 import shutil
+import tempfile
 import time
 import unittest
-import tempfile
 from datetime import date
 
 import numpy as np
@@ -15,7 +15,6 @@ from .experiment.utils import (
     _create_coco_objects,
     _create_class_directories,
     get_image_annotation,
-    _transform_two_attached_datasets_to_three,
     get_train_test_eval_datasets_from_experiment,
     format_confusion_matrix,
     order_repartition_according_labelmap,
@@ -156,18 +155,9 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
             (train_set, test_set, eval_test),
         )
 
-    def test_transform_two_attached_datasets_to_three(self):
-        train_set, test_set, eval_set = _transform_two_attached_datasets_to_three(
-            experiment=self.experiment
-        )
-        self.assertEqual(
-            (self.train_set, self.test_set, self.test_set),
-            (train_set, test_set, eval_set),
-        )
-
     def test_get_train_eval_datasets_from_experiment(self):
         results = get_train_test_eval_datasets_from_experiment(self.experiment)
-        expected_results = (False, True, self.train_set, self.test_set, self.eval_set)
+        expected_results = (True, self.train_set, self.test_set, self.eval_set)
         self.assertEqual(expected_results, results)
 
     def test_format_confusion_matrix(self):
