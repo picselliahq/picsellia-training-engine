@@ -9,62 +9,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 from picsellia import Experiment
-from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import LogType
+from pycocotools.coco import COCO
 from skimage.transform import resize
 
 SIZE = 640
 
 
-def get_classes_from_mask_dataset(experiment: Experiment) -> list[str]:
-    mask_dataset = experiment.get_dataset(name="masks")
-    labels = mask_dataset.list_labels()
-
+def get_classes_segmentation_dataset(segmentation_dataset: DatasetVersion) -> list[str]:
+    labels = segmentation_dataset.list_labels()
     return [label.name for label in labels]
 
 
-def download_image_mask_assets(
-    experiment: Experiment, image_path: str, mask_path: str
-) -> tuple[list[str], list[str]]:
-    image_assets, mask_assets = get_image_mask_assets(
-        experiment, experiment.list_attached_dataset_versions()
-    )
-    image_assets.download(target_path=image_path)
-    mask_assets.download(target_path=mask_path)
-    image_files = os.listdir(path=image_path)
-    mask_files = os.listdir(path=mask_path)
-
-    return image_files, mask_files
-
-
-def get_image_mask_assets(
-    experiment: Experiment, dataset_list: list
-) -> tuple[DatasetVersion, DatasetVersion]:
-    attached_dataset_names = [
-        dataset_version.version for dataset_version in dataset_list
-    ]
-    if len(attached_dataset_names) != 2:
-        raise Exception(
-            "You must have exactly two datasets, 'original' for the original images, and 'masks' for the masks "
-        )
-
-    try:
-        image_assets = experiment.get_dataset(name="original")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Can't find 'original' datasetversion. Expecting 'original' and 'masks', as attached datasets"
-        )
-
-    try:
-        mask_assets = experiment.get_dataset(name="masks")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Can't find 'masks' datasetversion. Expecting 'original' and 'masks', as attached datasets"
-        )
-
-    return image_assets, mask_assets
+def get_classes_mask_dataset(mask_dataset: DatasetVersion) -> list[str]:
+    labels = mask_dataset.list_labels()
+    return [label.name for label in labels]
 
 
 def split_train_test_val_filenames(
@@ -124,8 +85,8 @@ def move_images_and_masks_to_directories(
         mask_dest = os.path.join(
             dest_mask_dir,
             _change_mask_filename_to_match_image(
-                mask_prefix=mask_prefix.rstrip(),
-                image_prefix=image_prefix.rstrip(),
+                mask_prefix=mask_prefix.strip(),
+                image_prefix=image_prefix.strip(),
                 old_mask_filename=mask_filename,
             ),
         )
@@ -140,9 +101,9 @@ def move_images_and_masks_to_directories(
 def _find_mask_by_image(
     image_filename: str, image_prefix: str, mask_files: list[str], mask_prefix: str
 ) -> str:
-    base_filename = image_filename.split(".")[0].split(image_prefix)[1]
+    base_filename = image_filename.split(".")[0][len(image_prefix) :]
     for mask_file in mask_files:
-        if base_filename == mask_file.split(".")[0].split(mask_prefix)[1]:
+        if base_filename == mask_file.split(".")[0][len(mask_prefix) :]:
             return mask_file
     raise ValueError(f"No mask found for image {image_filename}")
 
@@ -377,16 +338,6 @@ def log_image_to_picsellia(
     experiment.log(log_name, type=LogType.IMAGE, data=file_path_to_log)
 
 
-def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | None:
-    asset_filename = get_filename_from_fullpath(image_path)
-    try:
-        asset = dataset.find_asset(filename=asset_filename)
-        return asset
-    except Exception as e:
-        print(e)
-        return None
-
-
 def get_filename_from_fullpath(full_path: str) -> str:
     return full_path.split("/")[-1]
 
@@ -431,9 +382,42 @@ def find_asset_by_dataset_index(
     return image_filepath, asset
 
 
+def find_asset_from_path(image_path: str, dataset: DatasetVersion) -> Asset | None:
+    asset_filename = get_filename_from_fullpath(image_path)
+    try:
+        asset = dataset.find_asset(filename=asset_filename)
+        return asset
+    except Exception as e:
+        print(e)
+        return None
+
+
 def predict_mask_from_image(image: np.ndarray, model, asset: Asset) -> np.ndarray:
     image = np.expand_dims(image, axis=0)
     predicted_mask = model.predict(image)
     predicted_mask = resize(predicted_mask, (1, asset.height, asset.width, 1))
 
     return predicted_mask
+
+
+def get_image_annotations(coco, image: dict) -> list:
+    category_ids = coco.getCatIds()
+    annotation_ids = coco.getAnnIds(
+        imgIds=image["id"], catIds=category_ids, iscrowd=None
+    )
+    annotation_list = coco.loadAnns(annotation_ids)
+
+    return annotation_list
+
+
+def get_mask_from_annotations(coco: COCO, image_annotations: list) -> np.ndarray:
+    mask = coco.annToMask(image_annotations[0])
+    for i in range(len(image_annotations)):
+        mask += coco.annToMask(image_annotations[i])
+    return mask
+
+
+def convert_mask_to_binary(mask: np.ndarray) -> np.ndarray:
+    unique_values = np.unique(mask[mask != 0])
+    converted_mask = np.where(np.isin(mask, unique_values), 255, 0)
+    return converted_mask

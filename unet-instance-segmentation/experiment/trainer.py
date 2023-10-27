@@ -2,10 +2,14 @@ import logging
 import os
 
 import keras
+import matplotlib.image
 import numpy as np
 import segmentation_models as sm
 from picsellia.exceptions import ResourceNotFoundError
+from picsellia.sdk.dataset import DatasetVersion
+from picsellia.types.enums import AnnotationFileType
 from picsellia.types.enums import InferenceType
+from pycocotools.coco import COCO
 from skimage.measure import approximate_polygon, find_contours
 
 from abstract_trainer.trainer import AbstractTrainer
@@ -19,9 +23,10 @@ from utils import (
     get_preprocessing,
     get_validation_augmentation,
     Dataloader,
-    download_image_mask_assets,
-    get_classes_from_mask_dataset,
     log_training_sample_to_picsellia,
+    get_image_annotations,
+    get_mask_from_annotations,
+    convert_mask_to_binary,
     format_polygons,
     shift_x_and_y_coordinates,
     move_files_for_polygon_creation,
@@ -30,6 +35,8 @@ from utils import (
     predict_and_log_mask,
     find_asset_by_dataset_index,
     predict_mask_from_image,
+    get_classes_segmentation_dataset,
+    get_classes_mask_dataset,
 )
 
 
@@ -37,8 +44,16 @@ class UnetSegmentationTrainer(AbstractTrainer):
     def __init__(self):
         super().__init__()
 
+        self.image_dataset = None
+        self.mask_dataset = None
+        self.segmentation_dataset = None
+        self.n_classes = None
+        self.classes = None
+        self.image_dataset_name = "images"
         self.label = None
         self.eval_dataset_version = None
+        self.annotated_dataset = None
+        self.annotation_file_path = None
         self.mask_files = None
         self.image_files = None
         self.image_path = os.path.join(self.experiment.png_dir, "original")
@@ -59,9 +74,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.image_prefix = str(self.parameters.get("image_filename_prefix", ""))
 
         self.preprocess_input = sm.get_preprocessing(self.backbone)
-        self.classes = get_classes_from_mask_dataset(self.experiment)
-        self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
-        self.batch_size = int(self.parameters.get("batch_size", 8))
+
+        self.batch_size = int(self.parameters.get("batch_size", 4))
         self.best_model_path = os.path.join(
             self.experiment.checkpoint_dir, "best_model.h5"
         )
@@ -87,14 +101,87 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.min_contour_points = 20
 
     def prepare_data_for_training(self):
-        self._download_data()
+        self.segmentation_dataset = self.get_segmentation_dataset()
+        if self.segmentation_dataset is not None:
+            self.download_segmentation_data_into_masks()
+            self.classes = get_classes_segmentation_dataset(
+                segmentation_dataset=self.segmentation_dataset
+            )
+        else:
+            self.mask_dataset, self.image_dataset = self.get_mask_image_datasets()
+            self._download_mask_image_datasets()
+            self._get_mask_image_filenames()
+            self.classes = get_classes_mask_dataset(mask_dataset=self.mask_dataset)
+
         self._split_and_move_data()
         self._create_train_test_eval_dataloaders()
 
-    def _download_data(self):
-        self.image_files, self.mask_files = download_image_mask_assets(
-            self.experiment, self.image_path, self.mask_path
+    def get_segmentation_dataset(self) -> DatasetVersion | None:
+        try:
+            segmentation_dataset = self.experiment.get_dataset(name="full")
+            self.image_dataset_name = "full"
+        except ResourceNotFoundError:
+            segmentation_dataset = None
+        return segmentation_dataset
+
+    def download_segmentation_data_into_masks(self):
+        self._download_segmentation_dataset()
+        self.export_annotations_from_segmentation_dataset()
+        self.convert_all_images_polygons_to_masks()
+
+    def get_mask_image_datasets(
+        self,
+    ) -> tuple[DatasetVersion, DatasetVersion]:
+        try:
+            mask_dataset = self.experiment.get_dataset(name="masks")
+            image_dataset = self.experiment.get_dataset(name="images")
+            return mask_dataset, image_dataset
+        except ResourceNotFoundError:
+            raise Exception(
+                "You need to have either 'full' containing the annotated images (segmentation dataset), or 'masks' and 'images' to train with 'masks'"
+            )
+
+    def _download_segmentation_dataset(self):
+        self.segmentation_dataset.download(target_path=self.image_path)
+        self.image_files = os.listdir(path=self.image_path)
+
+    def export_annotations_from_segmentation_dataset(self):
+        self.annotation_file_path = self.segmentation_dataset.export_annotation_file(
+            target_path=self.experiment.base_dir,
+            annotation_file_type=AnnotationFileType.COCO,
         )
+
+    def convert_all_images_polygons_to_masks(self):
+        coco = COCO(self.annotation_file_path)
+        os.makedirs(self.mask_path)
+        for image_id in coco.getImgIds():
+            self.convert_image_polygons_to_mask(coco=coco, image_id=image_id)
+        self.mask_files = os.listdir(self.mask_path)
+
+    def convert_image_polygons_to_mask(self, coco: COCO, image_id: int):
+        img = coco.imgs[image_id]
+        img_filename_without_extension = os.path.splitext(img["file_name"])[0]
+        image_annotations = get_image_annotations(coco, img)
+        mask = get_mask_from_annotations(coco=coco, image_annotations=image_annotations)
+        binary_mask = convert_mask_to_binary(mask)
+        self.save_binary_mask(filename=img_filename_without_extension, mask=binary_mask)
+
+    def save_binary_mask(self, filename: str, mask: np.ndarray):
+        filename = filename + ".png"
+        matplotlib.image.imsave(
+            os.path.join(self.mask_path, filename),
+            mask,
+            cmap="Greys",
+            format="png",
+        )
+
+    def _download_mask_image_datasets(self):
+        self.mask_dataset.download(target_path=self.mask_path)
+        self.image_dataset.download(target_path=self.image_path)
+
+    def _get_mask_image_filenames(self):
+        self.image_files = os.listdir(path=self.image_path)
+        self.mask_files = os.listdir(path=self.mask_path)
 
     def _split_and_move_data(self):
         (
@@ -169,6 +256,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
     def train(self):
         epochs = int(self.parameters.get("epochs", 1))
         learning_rate = self.parameters.get("learning_rate", 5e-4)
+        self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
         activation = "sigmoid" if self.n_classes == 1 else "softmax"
 
         (
@@ -198,8 +286,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
             steps_per_epoch=len(self.train_dataloader),
             epochs=epochs,
             callbacks=self.callbacks,
-            validation_data=self.test_dataloader,
-            validation_steps=len(self.test_dataloader),
+            validation_data=self.eval_dataloader,
+            validation_steps=len(self.eval_dataloader),
         )
         self.experiment.store("finetuned_model_weights", self.best_model_path)
 
@@ -244,7 +332,9 @@ class UnetSegmentationTrainer(AbstractTrainer):
         return total_loss
 
     def eval(self):
-        self.eval_dataset_version = self.experiment.get_dataset(name="original")
+        self.eval_dataset_version = self.experiment.get_dataset(
+            name=self.image_dataset_name
+        )
         self.label = self.eval_dataset_version.list_labels()[0]
         self.labelmap = {"0": self.label.name}
         self.model.load_weights(self.best_model_path)
@@ -265,7 +355,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
             )
 
     def draw_ground_truth_polygons_from_masks(self):
-        dataset = self.experiment.get_dataset("original")
+        dataset = self.experiment.get_dataset(self.image_dataset_name)
         dataset.set_type(InferenceType.SEGMENTATION)
         converter = CustomConverter(
             images_dir=self.x_eval_dir,
