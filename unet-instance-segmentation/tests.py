@@ -6,13 +6,10 @@ from datetime import date
 
 import numpy as np
 from picsellia import Client
-from picsellia.sdk.dataset import DatasetVersion
 
-from .trainer import UnetSegmentationTrainer
-from .utils import (
-    get_classes_from_mask_dataset,
-    download_image_mask_assets,
-    get_image_mask_assets,
+from .experiment.trainer import UnetSegmentationTrainer
+from .experiment.utils import (
+    get_classes_mask_dataset,
     split_train_test_val_filenames,
     makedirs_images_masks,
     _find_mask_by_image,
@@ -28,7 +25,7 @@ ORGA_ID = os.environ["organization_id"]
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
-class TestUnetSegmentation(unittest.TestCase):
+class TestUnetSegmentationUtils(unittest.TestCase):
     organization_id = None
     model_version = None
     dataset = None
@@ -55,9 +52,8 @@ class TestUnetSegmentation(unittest.TestCase):
 
         cls.experiment = cls.project.create_experiment(name="car-segmentation-unet")
         cls.dataset = cls.client.get_dataset_by_id(
-            "018a89c6-0bc8-7de8-8ba2-487fd24567ad"
+            "018b5d2e-188f-71e9-8cb2-ec2bd124121b"
         )
-
         cls.experiment.attach_dataset(
             name="images", dataset_version=cls.dataset.get_version("images")
         )
@@ -65,7 +61,7 @@ class TestUnetSegmentation(unittest.TestCase):
             name="masks", dataset_version=cls.dataset.get_version("masks")
         )
         cls.model_version = cls.client.get_model_version_by_id(
-            "018a703e-80fc-7d8f-9983-1430e5f7a427"
+            "018a99a0-0b68-772e-a04d-47e0c7096e66"
         )
         cls.experiment.log_parameters(
             {
@@ -96,6 +92,8 @@ class TestUnetSegmentation(unittest.TestCase):
         cls.mask_prefix = cls.parameters["mask_filename_prefix"]
         cls.image_prefix = cls.parameters["image_filename_prefix"]
 
+        cls.mask_dataset = cls.experiment.get_dataset(name="masks")
+
         os.environ["experiment_id"] = str(cls.experiment.id)
 
     @classmethod
@@ -106,28 +104,8 @@ class TestUnetSegmentation(unittest.TestCase):
 
     def test_get_classes_from_mask_dataset(self):
         expected_results = ["car"]
-        results = get_classes_from_mask_dataset(self.experiment)
+        results = get_classes_mask_dataset(self.mask_dataset)
         self.assertEqual(expected_results, results)
-
-    def test_download_image_mask_assets(self):
-        image_files, mask_files = download_image_mask_assets(
-            experiment=self.experiment,
-            image_path=self.image_path,
-            mask_path=self.mask_path,
-        )
-        self.assertNotEquals((image_files, mask_files), ([], []))
-        self.assertTrue(os.path.exists(self.image_path))
-        self.assertTrue(os.path.exists(self.mask_path))
-
-    def test_get_image_mask_assets(self):
-        image_assets, mask_assets = get_image_mask_assets(
-            experiment=self.experiment,
-            dataset_list=self.experiment.list_attached_dataset_versions(),
-        )
-
-        self.assertEqual(
-            (type(image_assets), type(mask_assets)), (DatasetVersion, DatasetVersion)
-        )
 
     def test_split_train_test_val_filenames(self):
         image_files = [
@@ -232,6 +210,7 @@ class TestUnetSegmentation(unittest.TestCase):
 
 
 class TestDataset(unittest.TestCase):
+    base_dir = None
     preprocessing = None
     augmentation = None
     masks_dir = None
@@ -239,8 +218,11 @@ class TestDataset(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.images_dir = "test_files/images"
-        cls.masks_dir = "test_files/masks"
+        cls.base_dir = os.path.join(
+            os.getcwd(), "unet-instance-segmentation", "test_files"
+        )
+        cls.images_dir = os.path.join(cls.base_dir, "images")
+        cls.masks_dir = os.path.join(cls.base_dir, "masks")
         classes = ["class1"]
         cls.dataset = Dataset(
             cls.images_dir,
@@ -291,12 +273,21 @@ class TestDataset(unittest.TestCase):
 
 
 class TestDataloader(unittest.TestCase):
+    masks_dir = None
+    images_dir = None
+    base_dir = None
     batch_size = 4
     shuffle = True
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.dataset = Dataset("../test_files/images", "../test_files/masks", ["class1"])
+        cls.base_dir = os.path.join(
+            os.getcwd(), "unet-instance-segmentation", "test_files"
+        )
+        cls.images_dir = os.path.join(cls.base_dir, "images")
+        cls.masks_dir = os.path.join(cls.base_dir, "masks")
+        classes = ["class1"]
+        cls.dataset = Dataset(cls.images_dir, cls.masks_dir, classes)
 
     def test_dataloader_constructor(self, batch_size=None, shuffle=True):
         dataloader = Dataloader(self.dataset, batch_size=batch_size, shuffle=shuffle)
@@ -349,26 +340,37 @@ class TestUnetTrainer(unittest.TestCase):
 
         cls.experiment = cls.project.create_experiment(name="car-segmentation-unet")
         cls.dataset = cls.client.get_dataset_by_id(
-            "018a89c6-0bc8-7de8-8ba2-487fd24567ad"
+            "018b5d2e-188f-71e9-8cb2-ec2bd124121b"
         )
-
         cls.experiment.attach_dataset(
-            name="original", dataset_version=cls.dataset.get_version("original")
+            name="images", dataset_version=cls.dataset.get_version("images")
         )
         cls.experiment.attach_dataset(
             name="masks", dataset_version=cls.dataset.get_version("masks")
         )
         cls.model_version = cls.client.get_model_version_by_id(
-            "018a703e-80fc-7d8f-9983-1430e5f7a427"
+            "018a99a0-0b68-772e-a04d-47e0c7096e66"
         )
         cls.experiment.log_parameters(
-            {"epochs": 1, "batch_size": 2, "learning_rate": 0.0001}
+            {
+                "epochs": 1,
+                "batch_size": 2,
+                "learning_rate": 0.0001,
+                "mask_filename_prefix": "mask",
+                "image_filename_prefix": "orig",
+            }
         )
         cls.experiment.attach_model_version(
             model_version=cls.model_version, do_attach_base_parameters=False
         )
         os.environ["experiment_id"] = str(cls.experiment.id)
         cls.training_pipeline = UnetSegmentationTrainer()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.project.delete()
+        if os.path.isdir(cls.experiment.name):
+            shutil.rmtree(cls.experiment.name)
 
     def test_launch_training_pipeline(self):
         self.training_pipeline.prepare_data_for_training()
@@ -390,7 +392,7 @@ class TestUnetTrainer(unittest.TestCase):
         self.assertTrue(os.path.isfile(self.training_pipeline.best_model_path))
 
         self.training_pipeline.eval()
-        self.assertNotEquals(
+        self.assertNotEqual(
             type(self.training_pipeline.experiment.get_log(name="eval-results").data),
             None,
         )
