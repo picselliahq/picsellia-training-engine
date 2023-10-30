@@ -1,4 +1,7 @@
 import os
+import sys
+
+sys.path.append(os.path.join(os.getcwd(), "yolov8-detection-refactored", "experiment"))
 
 from picsellia.sdk.asset import MultiAsset
 

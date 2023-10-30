@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import shutil
 import time
 import unittest
@@ -8,8 +9,10 @@ from datetime import date
 from picsellia import Client
 from pycocotools.coco import COCO
 
-from .experiment.trainer import Yolov8DetectionTrainer
-from .experiment.utils import create_img_label_detection, coco_to_yolo_detection
+sys.path.append(os.path.join(os.getcwd(), "yolov8-detection-refactored"))
+
+from experiment.trainer import Yolov8DetectionTrainer
+from experiment.utils import create_img_label_detection, coco_to_yolo_detection
 
 TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]
