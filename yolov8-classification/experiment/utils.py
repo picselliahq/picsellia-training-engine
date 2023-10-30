@@ -19,7 +19,7 @@ def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
 ) -> (
     tuple[bool, DatasetVersion, DatasetVersion, DatasetVersion]
-    | tuple[bool, None, None, None]
+    | tuple[bool, DatasetVersion, None, None]
 ):
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
     has_three_datasets = False
