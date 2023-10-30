@@ -59,17 +59,17 @@ class LogMonitor:
         """Process a line from the log file.
         Returns: True if script is ended and need to break the log handler"""
         end_execution = self.handle_exit_code(line)
+        if not end_execution:
+            if replace_log and is_first_line:
+                self.progress_line_nb = self.job.line_nb
 
-        if replace_log and is_first_line:
-            self.progress_line_nb = self.job.line_nb
+            replace_log = self.process_line_prefixes(line, replace_log)
+            self.process_buffers(line, section_header)
 
-        replace_log = self.process_line_prefixes(line, replace_log)
-        self.process_buffers(line, section_header)
-
-        if self.start_buffer:
-            self.append_to_buffer(line, section_header)
-        else:
-            self.handle_log(line, section_header, replace_log)
+            if self.start_buffer:
+                self.append_to_buffer(line, section_header)
+            else:
+                self.handle_log(line, section_header, replace_log)
         return end_execution
 
     def process_line_prefixes(self, line: str, replace_log: bool):
