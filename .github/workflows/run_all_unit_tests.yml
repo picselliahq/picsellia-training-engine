@@ -13,7 +13,6 @@ jobs:
       api_token: ${{ secrets.API_TOKEN }}
       SM_FRAMEWORK: "tf.keras"
 
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -47,14 +46,14 @@ jobs:
           python -m unittest -v yolov8-classification/tests.py -k "TestYolov8ClassificationUtils"
 
 
-#      - name: Run yolov8 Segmentation Unit Tests
-#        run: |
-#          pip install -r yolov8-segmentation-refactored/requirements.txt
-#          python -m unittest -v yolov8-segmentation-refactored/tests.py -k "TestYolov8SegmentationUtils"
-#
-#      - name: Run UNet Segmentation Unit Tests
-#        run: |
-#          pip install -r unet-instance-segmentation/requirements.txt
-#          python -m unittest -v unet-instance-segmentation/tests.py -k "TestUnetSegmentationUtils"
-#          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataset"
-#          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataloader"
+      - name: Run yolov8 Segmentation Unit Tests
+        run: |
+          pip install -r yolov8-segmentation-refactored/requirements.txt
+          python -m unittest -v yolov8-segmentation-refactored/tests.py -k "TestYolov8SegmentationUtils"
+
+      - name: Run UNet Segmentation Unit Tests
+        run: |
+          pip install -r unet-instance-segmentation/requirements.txt
+          python -m unittest -v unet-instance-segmentation/tests.py -k "TestUnetSegmentationUtils"
+          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataset"
+          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataloader"

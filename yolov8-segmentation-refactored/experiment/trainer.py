@@ -1,11 +1,15 @@
 import os
-
+import sys
 from picsellia.sdk.asset import MultiAsset
 
 from abstract_trainer.yolov8_trainer import Yolov8Trainer
 from core_utils.yolov8 import (
     generate_data_yaml,
     setup_hyp,
+)
+
+sys.path.append(
+    os.path.join(os.getcwd(), "yolov8-segmentation-refactored", "experiment")
 )
 from evaluator.yolo_evaluator import SegmentationYOLOEvaluator
 from segmentation_trainer import PicselliaSegmentationTrainer

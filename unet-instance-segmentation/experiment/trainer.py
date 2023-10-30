@@ -1,6 +1,6 @@
 import logging
 import os
-
+import sys
 import keras
 import matplotlib.image
 import numpy as np
@@ -11,6 +11,8 @@ from picsellia.types.enums import AnnotationFileType
 from picsellia.types.enums import InferenceType
 from pycocotools.coco import COCO
 from skimage.measure import approximate_polygon, find_contours
+
+sys.path.append(os.path.join(os.getcwd(), "unet-instance-segmentation", "experiment"))
 
 from abstract_trainer.trainer import AbstractTrainer
 from mask_to_polygon_converter.custom_converter import CustomConverter
