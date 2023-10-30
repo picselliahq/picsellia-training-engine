@@ -66,7 +66,7 @@ class LogMonitor:
             if replace_log and is_first_line:
                 self.progress_line_nb = self.job.line_nb
 
-            replace_log = self.process_line_prefixes(line, replace_log)
+            self.process_line_prefixes(line, replace_log)
             self.process_buffers(line, section_header)
 
             if self.start_buffer:
@@ -79,13 +79,6 @@ class LogMonitor:
         """Process line prefixes and updates logs."""
         if line.startswith("--#--"):
             self.initialize_log_section(line)
-        elif line.startswith("-----"):
-            self.progress_line_nb = self.job.line_nb
-            replace_log = True
-            line += "\r"
-        elif line.startswith("--*--"):
-            replace_log = False
-        return replace_log
 
     def initialize_log_section(self, line: str):
         """Initialize a new log section."""
@@ -119,17 +112,20 @@ class LogMonitor:
         """Handle the replacement log."""
         if replace_log:
             self.job.line_nb = self.progress_line_nb
-        self.send_logging(line, section_header)
+        self.send_logging(line, section_header, replace_log=replace_log)
 
     def send_logging(
         self,
         content: Union[str, List],
         section_header: str,
         special: Optional[str] = False,
+        replace_log: bool = False,
     ) -> None:
         """Send logging to job and update logs."""
         try:
             self.job.send_logging(content, section_header, special=special)
+            if replace_log:
+                content = content.split("\r")[-1]
             self.logs[section_header]["logs"][str(self.job.line_nb)] = content
         except Exception as e:
             pass
@@ -158,6 +154,8 @@ class LogMonitor:
             json.dump(self.logs, json_log_file)
 
         self.job.store_logging_file("{}-logs.json".format(self.job.id))
+        if self.experiment:
+            self.experiment.store_logging_file("{}-logs.json".format(self.job.id))
         self.job.send_logging(str(exit_code), section_header, special="exit_code")
         if exit_code == 0:
             if not os.environ.get("DEBUG"):
