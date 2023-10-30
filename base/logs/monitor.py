@@ -43,28 +43,34 @@ class LogMonitor:
 
         self.progress_line_nb = 0
 
-    def handle_exit_code(self, line: str) -> None:
-        """Handles the exit code in the line."""
+    def handle_exit_code(self, line: str) -> bool:
+        """Handles the exit code in the line.
+         Returns: True if script is ended and need to break the log handler
+        """
         exit_match = EXIT_CODE_PATTERN.search(line)
         if exit_match:
             self.end_log_monitoring(int(exit_match.group(1)), "--#--End job")
+            return True
+        return False
 
     def process_line(
             self, line: str, section_header: str, replace_log: bool, is_first_line: bool
     ):
-        """Process a line from the log file."""
-        self.handle_exit_code(line)
+        """Process a line from the log file.
+        Returns: True if script is ended and need to break the log handler"""
+        end_execution = self.handle_exit_code(line)
+        if not end_execution:
+            if replace_log and is_first_line:
+                self.progress_line_nb = self.job.line_nb
 
-        if replace_log and is_first_line:
-            self.progress_line_nb = self.job.line_nb
+            replace_log = self.process_line_prefixes(line, replace_log)
+            self.process_buffers(line, section_header)
 
-        replace_log = self.process_line_prefixes(line, replace_log)
-        self.process_buffers(line, section_header)
-
-        if self.start_buffer:
-            self.append_to_buffer(line, section_header)
-        else:
-            self.handle_log(line, section_header, replace_log)
+            if self.start_buffer:
+                self.append_to_buffer(line, section_header)
+            else:
+                self.handle_log(line, section_header, replace_log)
+        return end_execution
 
     def process_line_prefixes(self, line: str, replace_log: bool):
         """Process line prefixes and updates logs."""
@@ -146,7 +152,7 @@ class LogMonitor:
             json.dump(self.logs, json_log_file)
 
         self.job.store_logging_file("{}-logs.json".format(self.job.id))
-
+        self.job.send_logging(str(exit_code), section_header, special="exit_code")
         if exit_code == 0:
             self.job.update_job_run_with_status(JobRunStatus.SUCCEEDED)
             if self.experiment:
@@ -169,4 +175,6 @@ class LogMonitor:
         with open(self.log_file_path, "r") as log_file:
             log_tailer = LogTailer(log_file)
             for line, replace_log, is_first_line in log_tailer.tail():
-                self.process_line(line, section_header, replace_log, is_first_line)
+                end_execution = self.process_line(line, section_header, replace_log, is_first_line)
+                if end_execution:
+                    break
