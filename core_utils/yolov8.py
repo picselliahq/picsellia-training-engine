@@ -15,7 +15,7 @@ def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
 ) -> (
     tuple[bool, DatasetVersion, DatasetVersion, DatasetVersion]
-    | tuple[bool, None, None, None]
+    | tuple[bool, DatasetVersion, None, None]
 ):
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
     has_three_datasets = False
@@ -31,8 +31,7 @@ def get_train_test_eval_datasets_from_experiment(
         eval_set = None
 
     else:
-        logging.info("We need either 1 or 2 datasets attached to this experiment ")
-        train_set, test_set, eval_set = None, None, None
+        raise Exception("We need either 1 or 2 datasets attached to this experiment")
 
     return has_three_datasets, train_set, test_set, eval_set
 

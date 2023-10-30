@@ -8,8 +8,8 @@ from datetime import date
 import numpy as np
 from picsellia import Client
 
-from .experiment.trainer import Yolov8ClassificationTrainer
-from .experiment.utils import (
+from experiment.trainer import Yolov8ClassificationTrainer
+from experiment.utils import (
     get_prop_parameter,
     _get_three_attached_datasets,
     _create_coco_objects,
