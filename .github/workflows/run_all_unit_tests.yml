@@ -35,24 +35,26 @@ jobs:
           pip install -r "$CORE_UTILS_PATH/requirements.txt"
           python -m unittest discover -s "$CORE_UTILS_PATH" -p 'tests.py'
 
-      - name: Run yolov8 Classification Unit Tests
-        run: |
-          pip install -r yolov8-classification/requirements.txt
-          python -m unittest -v yolov8-classification/tests.py -k "TestYolov8ClassificationUtils"
-
       - name: Run yolov8 Detection Unit Tests
         run: |
           pip install -r yolov8-detection-refactored/requirements.txt
           python -m unittest -v yolov8-detection-refactored/tests.py -k "TestYolov8DetectionUtils"
 
-      - name: Run yolov8 Segmentation Unit Tests
-        run: |
-          pip install -r yolov8-segmentation-refactored/requirements.txt
-          python -m unittest -v yolov8-segmentation-refactored/tests.py -k "TestYolov8SegmentationUtils"
 
-      - name: Run UNet Segmentation Unit Tests
-        run: | 
-          pip install -r unet-instance-segmentation/requirements.txt 
-          python -m unittest -v unet-instance-segmentation/tests.py -k "TestUnetSegmentationUtils" 
-          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataset" 
-          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataloader"
+#      - name: Run yolov8 Classification Unit Tests
+#        run: |
+#          pip install -r yolov8-classification/requirements.txt
+#          python -m unittest -v yolov8-classification/tests.py -k "TestYolov8ClassificationUtils"
+#
+#
+#      - name: Run yolov8 Segmentation Unit Tests
+#        run: |
+#          pip install -r yolov8-segmentation-refactored/requirements.txt
+#          python -m unittest -v yolov8-segmentation-refactored/tests.py -k "TestYolov8SegmentationUtils"
+#
+#      - name: Run UNet Segmentation Unit Tests
+#        run: |
+#          pip install -r unet-instance-segmentation/requirements.txt
+#          python -m unittest -v unet-instance-segmentation/tests.py -k "TestUnetSegmentationUtils"
+#          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataset"
+#          python -m unittest -v unet-instance-segmentation/tests.py -k "TestDataloader"

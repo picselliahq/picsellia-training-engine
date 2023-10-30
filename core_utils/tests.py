@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import shutil
 import time
 import unittest
@@ -8,6 +9,8 @@ from unittest.mock import patch
 
 import yaml
 from picsellia import Client
+
+sys.path.append(os.path.join(os.getcwd(), "core_utils"))
 
 from yolov8 import (
     get_train_test_eval_datasets_from_experiment,
