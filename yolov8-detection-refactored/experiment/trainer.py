@@ -7,9 +7,9 @@ from core_utils.yolov8 import (
     generate_data_yaml,
     setup_hyp,
 )
+from detection_trainer import PicselliaDetectionTrainer
 from evaluator.yolo_evaluator import DetectionYOLOEvaluator
-from .detection_trainer import PicselliaDetectionTrainer
-from .utils import create_yolo_detection_label
+from utils import create_yolo_detection_label
 
 
 class Yolov8DetectionTrainer(Yolov8Trainer):

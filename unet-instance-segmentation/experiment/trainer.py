@@ -13,8 +13,8 @@ from pycocotools.coco import COCO
 from skimage.measure import approximate_polygon, find_contours
 
 from abstract_trainer.trainer import AbstractTrainer
-from .mask_to_polygon_converter.custom_converter import CustomConverter
-from .utils import (
+from mask_to_polygon_converter.custom_converter import CustomConverter
+from utils import (
     split_train_test_val_filenames,
     makedirs_images_masks,
     move_images_and_masks_to_directories,

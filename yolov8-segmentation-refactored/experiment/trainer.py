@@ -8,8 +8,8 @@ from core_utils.yolov8 import (
     setup_hyp,
 )
 from evaluator.yolo_evaluator import SegmentationYOLOEvaluator
-from .segmentation_trainer import PicselliaSegmentationTrainer
-from .utils import create_yolo_segmentation_label
+from segmentation_trainer import PicselliaSegmentationTrainer
+from utils import create_yolo_segmentation_label
 
 
 class Yolov8SegmentationTrainer(Yolov8Trainer):
