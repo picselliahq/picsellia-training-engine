@@ -41,12 +41,12 @@ jobs:
           python -m unittest -v yolov8-detection-refactored/tests.py -k "TestYolov8DetectionUtils"
 
 
-#      - name: Run yolov8 Classification Unit Tests
-#        run: |
-#          pip install -r yolov8-classification/requirements.txt
-#          python -m unittest -v yolov8-classification/tests.py -k "TestYolov8ClassificationUtils"
-#
-#
+      - name: Run yolov8 Classification Unit Tests
+        run: |
+          pip install -r yolov8-classification/requirements.txt
+          python -m unittest -v yolov8-classification/tests.py -k "TestYolov8ClassificationUtils"
+
+
 #      - name: Run yolov8 Segmentation Unit Tests
 #        run: |
 #          pip install -r yolov8-segmentation-refactored/requirements.txt

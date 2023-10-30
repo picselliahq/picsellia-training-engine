@@ -1,5 +1,7 @@
 import os
+import sys
 
+sys.path.append(os.path.join(os.getcwd(), "yolov8-classification", "experiment"))
 from sklearn.metrics import classification_report, confusion_matrix
 from ultralytics import YOLO
 

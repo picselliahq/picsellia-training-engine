@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import tempfile
 import time
 import unittest
@@ -7,6 +8,8 @@ from datetime import date
 
 import numpy as np
 from picsellia import Client
+
+sys.path.append(os.path.join(os.getcwd(), "yolov8-classification"))
 
 from experiment.trainer import Yolov8ClassificationTrainer
 from experiment.utils import (
