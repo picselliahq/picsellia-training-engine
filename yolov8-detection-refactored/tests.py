@@ -146,6 +146,8 @@ class TestYolov8DetectionTrainer(unittest.TestCase):
             shutil.rmtree(os.path.join(cls.experiment.base_dir))
         if os.path.exists("saved_model"):
             shutil.rmtree("saved_model")
+        if os.path.exists("runs"):
+            shutil.rmtree("runs")
 
     def test_yolov8_detection_trainer(self):
         yolov8_trainer = Yolov8DetectionTrainer()
