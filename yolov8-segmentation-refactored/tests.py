@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import shutil
 import time
 import unittest
@@ -8,8 +9,9 @@ from datetime import date
 from picsellia import Client
 from pycocotools.coco import COCO
 
-from .experiment.trainer import Yolov8SegmentationTrainer
-from .experiment.utils import (
+sys.path.append(os.path.join(os.getcwd(), "yolov8-segmentation-refactored"))
+from experiment.trainer import Yolov8SegmentationTrainer
+from experiment.utils import (
     interleave_lists,
     create_img_label_segmentation,
     coco_to_yolo_segmentation,

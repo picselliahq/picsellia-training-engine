@@ -97,7 +97,8 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         if os.path.exists(os.path.join(cls.base_path, "data")):
             shutil.rmtree(os.path.join(cls.base_path, "data"))
         shutil.rmtree(cls.temp_dir)
-        os.remove("yolov8n.pt")
+        if os.path.isfile("yolov8n.pt"):
+            os.remove("yolov8n.pt")
         if os.path.exists("runs"):
             shutil.rmtree("runs")
 
