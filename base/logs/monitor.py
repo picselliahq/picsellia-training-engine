@@ -157,11 +157,13 @@ class LogMonitor:
         self.job.store_logging_file("{}-logs.json".format(self.job.id))
         self.job.send_logging(str(exit_code), section_header, special="exit_code")
         if exit_code == 0:
-            self.job.update_job_run_with_status(JobRunStatus.SUCCEEDED)
+            if not os.environ.get("DEBUG"):
+                self.job.update_job_run_with_status(JobRunStatus.SUCCEEDED)
             if self.experiment:
                 self.experiment.update(status=ExperimentStatus.SUCCESS)
         else:
-            self.job.update_job_run_with_status(JobRunStatus.FAILED)
+            if not os.environ.get("DEBUG"):
+                self.job.update_job_run_with_status(JobRunStatus.FAILED)
             if self.experiment:
                 self.experiment.update(status=ExperimentStatus.FAILED)
 
