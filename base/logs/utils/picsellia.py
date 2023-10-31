@@ -80,5 +80,7 @@ def get_picsellia_job(client: Client) -> Job | None:
         job = client.get_job_by_id(job_id)
         job.update_job_run_with_status(JobRunStatus.RUNNING)
         return job
-
-    return None
+    else:
+        raise RuntimeError(
+            "No Job found on Picsellia. Set DEBUG env to use Experiment instead."
+        )
