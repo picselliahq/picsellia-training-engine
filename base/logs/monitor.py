@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from datetime import datetime
 from typing import Match, Optional, List
@@ -33,8 +34,10 @@ class LogMonitor:
 
         self.client = get_picsellia_client()
         self.experiment = get_picsellia_experiment(self.client)
-        self.job = get_picsellia_job(self.client)
-
+        if os.environ.get("DEBUG"):
+            self.job = self.experiment
+        else:
+            self.job = get_picsellia_job(self.client)
         self.logs = {}
 
         self.buffer = []
