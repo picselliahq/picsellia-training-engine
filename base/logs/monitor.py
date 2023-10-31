@@ -66,7 +66,7 @@ class LogMonitor:
             if replace_log and is_first_line:
                 self.progress_line_nb = self.job.line_nb
 
-            self.process_line_prefixes(line, replace_log)
+            self.process_line_prefixes(line)
             self.process_buffers(line, section_header)
 
             if self.start_buffer:
@@ -75,7 +75,7 @@ class LogMonitor:
                 self.handle_log(line, section_header, replace_log)
         return end_execution
 
-    def process_line_prefixes(self, line: str, replace_log: bool):
+    def process_line_prefixes(self, line: str):
         """Process line prefixes and updates logs."""
         if line.startswith("--#--"):
             self.initialize_log_section(line)
@@ -112,20 +112,17 @@ class LogMonitor:
         """Handle the replacement log."""
         if replace_log:
             self.job.line_nb = self.progress_line_nb
-        self.send_logging(line, section_header, replace_log=replace_log)
+        self.send_logging(line, section_header)
 
     def send_logging(
         self,
         content: Union[str, List],
         section_header: str,
         special: Optional[str] = False,
-        replace_log: bool = False,
     ) -> None:
         """Send logging to job and update logs."""
         try:
             self.job.send_logging(content, section_header, special=special)
-            if replace_log:
-                content = content.split("\r")[-1]
             self.logs[section_header]["logs"][str(self.job.line_nb)] = content
         except Exception as e:
             pass
