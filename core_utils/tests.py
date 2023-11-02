@@ -86,6 +86,7 @@ class TestYoloUtils(unittest.TestCase):
     def test_get_train_test_eval_datasets_from_experiment(self):
         (
             has_three_datasets,
+            has_two_datasets,
             train_set,
             test_set,
             eval_set,
