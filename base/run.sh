@@ -1,14 +1,11 @@
 #!/bin/bash
 
-# This script starts a log handler and a training script.
-# The log handler monitors a log file and sends data to a server,
-# and the training script populates the log file.
-
 usage() {
   echo "Usage: $0 <training_script>.py"
   exit 1
 }
 
+# Depending on the model to train, choose to either use python3.8 or python3.10
 get_python_command() {
   if command -v python3.10 &> /dev/null; then
     echo "python3.10"
@@ -73,5 +70,5 @@ training_exit_code=$?
 # Training script has finished, now we can kill the log handler monitor
 kill "$monitor_pid" 2>/dev/null
 
-# Exit with the exit code of the training script
+# Exit with the training script's same exit code
 exit "$training_exit_code"
