@@ -1,78 +1,77 @@
 #!/bin/bash
 
-# Function to print the usage information for the script
+# This script starts a log handler and a training script.
+# The log handler monitors a log file and sends data to a server,
+# and the training script populates the log file.
+
 usage() {
-  echo "Usage: $0 filename"
+  echo "Usage: $0 <training_script>.py"
   exit 1
 }
 
-# Function to find the appropriate Python version to use, depending on the chosen model version to train
-get_python() {
+get_python_command() {
   if command -v python3.10 &> /dev/null; then
     echo "python3.10"
   elif command -v python3.8 &> /dev/null; then
     echo "python3.8"
   else
-    echo "Neither Python 3.10 nor Python 3.8 is available on the system."
+    echo "Error: Neither Python 3.10 nor Python 3.8 is available on the system."
     exit 1
   fi
 }
 
-# Function to monitor the log_handler process
+# Function to monitor log handler process
 monitor_log_handler() {
-  while :
-  do
-    # If log_handler has stopped, stop the training script and exit
-    if ! kill -0 "$log_handler_pid" 2> /dev/null; then
-      echo -e "\e[31mError:\e[0m Log handler has terminated unexpectedly. The training script has been stopped to prevent data loss. Please check the provided environment variables."
-      kill "$training_script_pid" 2> /dev/null
-      wait "$training_script_pid" 2> /dev/null
+  local log_handler_pid=$1
+  local training_script_pid=$2
+
+  while :; do
+    if ! kill -0 "$log_handler_pid" 2>/dev/null; then
+      kill -9 "$training_script_pid"
+      echo -e "\e[31mError:\e[0m The log handler has terminated unexpectedly. The training script has been stopped to prevent sata loss. Please check the log file or the environment variables provided.\e[0m"
       exit 1
     fi
     sleep 1
   done
 }
 
-# Validate the input arguments
-if [ $# -eq 0 ]; then
-  echo "Error: A filename must be provided."
-  usage
-fi
-
-if [ ! -e "$1" ]; then
-  echo "Error: The provided filename $1 does not exist."
+# Validate input arguments
+if [ $# -ne 1 ]; then
+  echo "Error: Exactly one argument is required."
   usage
 fi
 
 if [ "${1: -3}" != ".py" ]; then
-  echo "Error: $1 must be a Python file."
+  echo "Error: The argument must be a Python file (.py)."
+  usage
+fi
+
+if [ ! -f "$1" ]; then
+  echo "Error: The file $1 does not exist."
   usage
 fi
 
 log_file_path="/experiment/training.log"
-python_cmd=$(get_python)
+python_cmd=$(get_python_command)
 
-# Start the log_handler
+# 1. Start the log handler script in the background
 $python_cmd logs/handler.py --log_file_path "$log_file_path" &
 log_handler_pid=$!
 
-# Start the log_handler monitoring in the background
-monitor_log_handler &
-log_handler_monitor_pid=$!
-
-# Start the training script
+# 2. Start the training script in the background and redirect output to log file
 $python_cmd "$1" > "$log_file_path" 2>&1 &
 training_script_pid=$!
 
-wait "$training_script_pid"
-training_script_exit_code=$?
+# 3. Start the monitor in the background
+monitor_log_handler "$log_handler_pid" "$training_script_pid" &
+monitor_pid=$!
 
-# Stop the monitor as the training script has finished and wait for the log_handler
-kill "$log_handler_monitor_pid" 2> /dev/null
-wait "$log_handler_pid" 2> /dev/null
+# Wait for the training script to finish
+wait "$training_script_pid" 2>/dev/null
+training_exit_code=$?
 
-# Append the exit code of the training script to the log file
-echo "--ec-- $training_script_exit_code" >> "$log_file_path"
+# Training script has finished, now we can kill the log handler monitor
+kill "$monitor_pid" 2>/dev/null
 
 # Exit with the exit code of the training script
-exit $training_script_exit_code
+exit "$training_exit_code"
