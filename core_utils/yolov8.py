@@ -14,11 +14,12 @@ from ultralytics import YOLO
 def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
 ) -> (
-    tuple[bool, DatasetVersion, DatasetVersion, DatasetVersion]
-    | tuple[bool, DatasetVersion, None, None]
+    tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]
+    | tuple[bool, bool, DatasetVersion, None, None]
 ):
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
     has_three_datasets = False
+    has_two_datasets = False
     if number_of_attached_datasets == 3:
         has_three_datasets = True
         train_set, test_set, eval_set = _get_three_attached_datasets(experiment)
@@ -30,10 +31,18 @@ def get_train_test_eval_datasets_from_experiment(
         test_set = None
         eval_set = None
 
+    elif number_of_attached_datasets == 2:
+        logging.info(
+            "We found two datasets inside your experiment. The train/test split will be performed to the train "
+            "dataset, and the eval dataset will be used in the Evaluations tab"
+        )
+        has_two_datasets = True
+        train_set, test_set = _get_two_attached_datasets(experiment)
+        eval_set = None
     else:
-        raise Exception("We need either 1 or 2 datasets attached to this experiment")
+        raise Exception("We need either 1, 2 or 3 datasets attached to this experiment")
 
-    return has_three_datasets, train_set, test_set, eval_set
+    return has_three_datasets, has_two_datasets, train_set, test_set, eval_set
 
 
 def _get_three_attached_datasets(
@@ -61,6 +70,26 @@ def _get_three_attached_datasets(
                                                 expecting 'train', 'test', 'eval')"
         )
     return train_set, test_set, eval_set
+
+
+def _get_two_attached_datasets(
+    experiment: Experiment,
+) -> tuple[DatasetVersion, DatasetVersion]:
+    try:
+        train_set = experiment.get_dataset(name="train")
+    except Exception:
+        raise ResourceNotFoundError(
+            "Found 2 attached datasets, but can't find any 'train' dataset.\n \
+                                            expecting 'train', 'eval')"
+        )
+    try:
+        eval_set = experiment.get_dataset(name="eval")
+    except Exception:
+        raise ResourceNotFoundError(
+            "Found 2 attached datasets, but can't find any 'eval' dataset.\n \
+                                                expecting 'train', 'eval')"
+        )
+    return train_set, eval_set
 
 
 def write_annotation_file(annotations_dict: dict, annotations_path: str):

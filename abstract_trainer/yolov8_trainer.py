@@ -3,8 +3,9 @@ from abc import abstractmethod
 
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.dataset import DatasetVersion
-from pycocotools.coco import COCO
 from picsellia.types.enums import LogType
+from pycocotools.coco import COCO
+
 from abstract_trainer.trainer import AbstractTrainer
 from core_utils.yolov8 import (
     get_train_test_eval_datasets_from_experiment,
@@ -34,38 +35,61 @@ class Yolov8Trainer(AbstractTrainer):
         self.experiment.download_artifacts(with_tree=True)
         (
             has_three_datasets,
-            train_set,
-            test_set,
-            eval_set,
+            has_two_datasets,
+            self.train_set,
+            self.test_set,
+            self.eval_set,
         ) = get_train_test_eval_datasets_from_experiment(self.experiment)
 
-        if train_set:
-            labels = train_set.list_labels()
+        if self.train_set:
+            labels = self.train_set.list_labels()
             self.label_names = [label.name for label in labels]
             self.labelmap = {str(i): label.name for i, label in enumerate(labels)}
             self.experiment.log("labelmap", self.labelmap, "labelmap", replace=True)
         if has_three_datasets:
-            for data_type, dataset in {
-                "train": train_set,
-                "test": test_set,
-                "val": eval_set,
-            }.items():
-                self._prepare_annotations_label(data_type=data_type, dataset=dataset)
-            self.evaluation_ds = test_set
-            self.evaluation_assets = self.evaluation_ds.list_assets()
-        else:
-            self._process_single_dataset(train_set=train_set)
+            self._process_triple_dataset()
+        if has_two_datasets:  # self.eval_set is NONE
+            self._process_double_dataset()
 
-    def _process_single_dataset(self, train_set: DatasetVersion):
-        self.annotations_dict = make_annotation_dict_by_dataset(
-            dataset=train_set, label_names=self.label_names
-        )
-        write_annotation_file(
-            annotations_dict=self.annotations_dict,
-            annotations_path=self.annotations_path,
-        )
-        self.annotations_coco = COCO(self.annotations_path)
+        elif not has_three_datasets and not has_two_datasets:
+            self._process_single_dataset()
 
+    def _process_triple_dataset(self):
+        for data_type, dataset in {
+            "train": self.train_set,
+            "test": self.test_set,
+            "val": self.eval_set,
+        }.items():
+            self._prepare_coco_annotations(dataset=dataset)
+            self.download_data_with_label(
+                assets=dataset.list_assets(), data_type=data_type
+            )
+        self.evaluation_ds = self.test_set
+        self.evaluation_assets = self.evaluation_ds.list_assets()
+
+    def _process_double_dataset(self):
+        self._prepare_coco_annotations(dataset=self.train_set)
+        (
+            train_assets,
+            eval_assets,
+            _,
+            _,
+            labels,
+        ) = self.train_set.train_test_split(prop=0.8)
+
+        test_assets = self.test_set.list_assets()
+        for data_type, assets in {
+            "train": train_assets,
+            "val": eval_assets,
+            "test": test_assets,
+        }.items():
+            self.download_data_with_label(assets=assets, data_type=data_type)
+
+        self.evaluation_ds = self.test_set
+        self.evaluation_assets = self.evaluation_ds.list_assets()
+
+    def _process_single_dataset(self):
+        self._prepare_coco_annotations(dataset=self.train_set)
         prop = get_prop_parameter(parameters=self.parameters)
         (
             train_assets,
@@ -75,7 +99,9 @@ class Yolov8Trainer(AbstractTrainer):
             test_rep,
             val_rep,
             labels,
-        ) = train_set.train_test_val_split(([prop, (1 - prop) / 2, (1 - prop) / 2]))
+        ) = self.train_set.train_test_val_split(
+            ([prop, (1 - prop) / 2, (1 - prop) / 2])
+        )
 
         for data_type, assets in {
             "train": train_assets,
@@ -83,7 +109,7 @@ class Yolov8Trainer(AbstractTrainer):
             "test": test_assets,
         }.items():
             self.download_data_with_label(assets=assets, data_type=data_type)
-        self.evaluation_ds = train_set
+        self.evaluation_ds = self.train_set
         self.evaluation_assets = test_assets
         log_split_dataset_repartition_to_experiment(
             experiment=self.experiment,
@@ -93,7 +119,7 @@ class Yolov8Trainer(AbstractTrainer):
             val_rep=val_rep,
         )
 
-    def _prepare_annotations_label(self, data_type: str, dataset: DatasetVersion):
+    def _prepare_coco_annotations(self, dataset: DatasetVersion):
         self.annotations_dict = make_annotation_dict_by_dataset(
             dataset=dataset, label_names=self.label_names
         )
@@ -102,7 +128,6 @@ class Yolov8Trainer(AbstractTrainer):
             annotations_path=self.annotations_path,
         )
         self.annotations_coco = COCO(self.annotations_path)
-        self.download_data_with_label(assets=dataset.list_assets(), data_type=data_type)
 
     @abstractmethod
     def download_data_with_label(self, assets: MultiAsset, data_type: str):
