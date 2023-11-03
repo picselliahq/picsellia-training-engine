@@ -9,16 +9,19 @@ from datetime import date
 import numpy as np
 from picsellia import Client
 
+from core_utils.yolov8 import (
+    _get_three_attached_datasets,
+    get_train_test_eval_datasets_from_experiment,
+)
+
 sys.path.append(os.path.join(os.getcwd(), "yolov8-classification"))
 
 from experiment.trainer import Yolov8ClassificationTrainer
 from experiment.utils import (
     get_prop_parameter,
-    _get_three_attached_datasets,
     _create_coco_objects,
     _create_class_directories,
     get_image_annotation,
-    get_train_test_eval_datasets_from_experiment,
     format_confusion_matrix,
     order_repartition_according_labelmap,
     move_image,
