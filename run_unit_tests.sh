@@ -12,28 +12,28 @@ fi
 if [ "$1" = "yolov8" ]
 then
   echo "Running tests for YOLOV8 Object Detecton.."
-  pip install -r "yolov8-detection-refactored/requirements.txt"
-  python -m unittest -v "yolov8-detection-refactored/tests.py"
+  pip install -r "yolov8-detection/requirements.txt"
+  python -m unittest -v "yolov8-detection/tests.py"
 
   echo "Running tests for YOLOV8 Classification.."
   pip install -r "yolov8-classification/requirements.txt"
   python -m unittest -v "yolov8-classification/tests.py"
 
   echo "Running tests for YOLOV8 Segmentation.."
-  pip install -r "yolov8-segmentation-refactored/requirements.txt"
-  python -m unittest -v "yolov8-segmentation-refactored/tests.py"
+  pip install -r "yolov8-segmentation/requirements.txt"
+  python -m unittest -v "yolov8-segmentation/tests.py"
 
 elif [ "$1" = "yolov8-detection" ]
 then
   echo "Running tests for YOLOV8 Object Detecton.."
-  pip install -r "yolov8-detection-refactored/requirements.txt"
-  python -m unittest -v "yolov8-detection-refactored/tests.py"
+  pip install -r "yolov8-detection/requirements.txt"
+  python -m unittest -v "yolov8-detection/tests.py"
 
 elif [ "$1" = "yolov8-segmentation" ]
 then
   echo "Running tests for YOLOV8 Segmentation.."
-  pip install -r "yolov8-segmentation-refactored/requirements.txt"
-  python -m unittest -v "yolov8-segmentation-refactored/tests.py"
+  pip install -r "yolov8-segmentation/requirements.txt"
+  python -m unittest -v "yolov8-segmentation/tests.py"
 
 elif [ "$1" = "yolov8-classification" ]
 then
@@ -57,7 +57,7 @@ then
 elif [ "$1" = "all" ]
 then
   echo "Running all unit tests.."
-  requirements=("core_utils/requirements.txt" "yolov8-classification/requirements.txt" "yolov8-detection-refactored/requirements.txt" "yolov8-segmentation-refactored/requirements.txt" "unet-instance-segmentation/requirements.txt" "ViT-classification-refactored/requirements.txt")
+  requirements=("core_utils/requirements.txt" "yolov8-classification/requirements.txt" "yolov8-detection/requirements.txt" "yolov8-segmentation/requirements.txt" "unet-instance-segmentation/requirements.txt")
   for requirement_file in "${requirements[@]}"; do
     if [ -f "$requirement_file" ]; then
       echo "Installing packages from $requirement_file"
@@ -68,8 +68,8 @@ then
   done
   python -m unittest -v "core_utils/tests.py"
   python -m unittest -v "yolov8-classification/tests.py"
-  python -m unittest -v "yolov8-detection-refactored/tests.py"
-  python -m unittest -v "yolov8-segmentation-refactored/tests.py"
+  python -m unittest -v "yolov8-detection/tests.py"
+  python -m unittest -v "yolov8-segmentation/tests.py"
   python -m unittest -v "unet-instance-segmentation/tests.py"
 
 fi

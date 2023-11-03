@@ -36,8 +36,8 @@ jobs:
 
       - name: Run yolov8 Detection Unit Tests
         run: |
-          pip install -r yolov8-detection-refactored/requirements.txt
-          python -m unittest -v yolov8-detection-refactored/tests.py -k "TestYolov8DetectionUtils"
+          pip install -r yolov8-detection/requirements.txt
+          python -m unittest -v yolov8-detection/tests.py -k "TestYolov8DetectionUtils"
 
 
       - name: Run yolov8 Classification Unit Tests
@@ -48,8 +48,8 @@ jobs:
 
       - name: Run yolov8 Segmentation Unit Tests
         run: |
-          pip install -r yolov8-segmentation-refactored/requirements.txt
-          python -m unittest -v yolov8-segmentation-refactored/tests.py -k "TestYolov8SegmentationUtils"
+          pip install -r yolov8-segmentation/requirements.txt
+          python -m unittest -v yolov8-segmentation/tests.py -k "TestYolov8SegmentationUtils"
 
       - name: Run UNet Segmentation Unit Tests
         run: |

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "yolov8-segmentation-refactored"
+name = "yolov8-segmentation"
 version = "0.1.0"
 description = ""
 authors = ["hajer <hajer.essefi@picsellia.com>"]

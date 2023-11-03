@@ -7,7 +7,7 @@ fi
 
 picsellia_version="$1"
 
-folders=("yolov8-classification" "yolov8-segmentation-refactored" "yolov8-detection-refactored" "unet-instance-segmentation")
+folders=("yolov8-classification" "yolov8-segmentation" "yolov8-detection" "unet-instance-segmentation")
 
 for script_dir in "${folders[@]}"; do
   if [ -f "$script_dir/requirements.txt" ]; then

@@ -8,9 +8,7 @@ from core_utils.yolov8 import (
     setup_hyp,
 )
 
-sys.path.append(
-    os.path.join(os.getcwd(), "yolov8-segmentation-refactored", "experiment")
-)
+sys.path.append(os.path.join(os.getcwd(), "yolov8-segmentation", "experiment"))
 from evaluator.yolo_evaluator import SegmentationYOLOEvaluator
 from segmentation_trainer import PicselliaSegmentationTrainer
 from utils import create_yolo_segmentation_label

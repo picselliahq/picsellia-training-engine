@@ -35,9 +35,7 @@ def get_train_test_eval_datasets_from_experiment(
         eval_set = None
 
     else:
-        raise Exception(
-            "We need either 1 or 3 datasets attached to this experiment"
-        )
+        raise Exception("We need either 1 or 3 datasets attached to this experiment")
 
     return has_three_datasets, train_set, test_set, eval_set
 

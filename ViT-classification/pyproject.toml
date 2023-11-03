@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "vit-classification-refactored"
+name = "vit-classification"
 version = "0.1.0"
 description = ""
 authors = ["hajeressef <hajer.essefi@picsellia.com>"]
 readme = "README.md"
-packages = [{include = "vit_classification_refactored"}]
+packages = [{include = "vit_classification"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
