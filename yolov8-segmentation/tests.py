@@ -1,7 +1,7 @@
 import json
 import os
-import sys
 import shutil
+import sys
 import time
 import unittest
 from datetime import date
@@ -37,8 +37,6 @@ class TestYolov8SegmentationUtils(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         pass
-        # if os.path.isfile("annotations.json"):
-        #     os.remove("annotations.json")
 
     def test_create_img_label_segmentation(self):
         with open(self.annotations_path_test) as json_file:
@@ -163,8 +161,7 @@ class TestYolov8SegmentationTrainer(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.project.delete()
-        # if os.path.isfile("annotations.json"):
-        #     os.remove("annotations.json")
+
         if os.path.exists(os.path.join(cls.experiment.base_dir)):
             shutil.rmtree(os.path.join(cls.experiment.base_dir))
         if os.path.exists("saved_model"):

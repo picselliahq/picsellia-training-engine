@@ -139,8 +139,6 @@ class TestYolov8DetectionTrainer(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.project.delete()
-        if os.path.isfile("annotations.json"):
-            os.remove("annotations.json")
         if os.path.exists(os.path.join(cls.experiment.base_dir)):
             shutil.rmtree(os.path.join(cls.experiment.base_dir))
         if os.path.exists("saved_model"):
