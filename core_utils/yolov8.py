@@ -22,7 +22,7 @@ def get_train_test_eval_datasets_from_experiment(
     has_two_datasets = False
     if number_of_attached_datasets == 3:
         has_three_datasets = True
-        train_set, test_set, eval_set = _get_three_attached_datasets(experiment)
+        train_set, test_set, eval_set = get_three_attached_datasets(experiment)
     elif number_of_attached_datasets == 1:
         logging.info(
             "We only found one dataset inside your experiment, the train/test/split will be performed automatically."
@@ -45,7 +45,7 @@ def get_train_test_eval_datasets_from_experiment(
     return has_three_datasets, has_two_datasets, train_set, test_set, eval_set
 
 
-def _get_three_attached_datasets(
+def get_three_attached_datasets(
     experiment: Experiment,
 ) -> tuple[DatasetVersion, DatasetVersion, DatasetVersion]:
     try:

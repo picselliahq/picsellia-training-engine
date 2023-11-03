@@ -5,7 +5,6 @@ import shutil
 import numpy
 import numpy as np
 from PIL import Image
-from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.experiment import Experiment
@@ -25,7 +24,7 @@ def create_and_log_labelmap(experiment: Experiment) -> dict:
 def prepare_datasets_with_annotation(
     train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion
 ) -> tuple[DatasetVersion, MultiAsset]:
-    coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
+    coco_train, coco_test, coco_val = create_coco_objects(train_set, test_set, val_set)
 
     move_files_in_class_directories(coco_train, "data/train")
     move_files_in_class_directories(coco_test, "data/test")
@@ -37,7 +36,7 @@ def prepare_datasets_with_annotation(
     return evaluation_ds, evaluation_assets
 
 
-def _create_coco_objects(
+def create_coco_objects(
     train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion
 ) -> tuple[COCO, COCO, COCO]:
     train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
@@ -62,7 +61,7 @@ def _move_all_files_in_class_directories(train_set: DatasetVersion) -> None:
 
 def move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None | str:
     fnames = os.listdir(base_imdir)
-    _create_class_directories(coco=coco, base_imdir=base_imdir)
+    create_class_directories(coco=coco, base_imdir=base_imdir)
     for i in coco.imgs:
         image = coco.imgs[i]
         cat = get_image_annotation(coco=coco, fnames=fnames, image=image)
@@ -77,7 +76,7 @@ def move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None 
     return base_imdir
 
 
-def _create_class_directories(coco: COCO, base_imdir: str = None) -> None:
+def create_class_directories(coco: COCO, base_imdir: str = None) -> None:
     for i in coco.cats:
         cat = coco.cats[i]
         class_folder = os.path.join(base_imdir, cat["name"])

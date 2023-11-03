@@ -10,7 +10,7 @@ import numpy as np
 from picsellia import Client
 
 from core_utils.yolov8 import (
-    _get_three_attached_datasets,
+    get_three_attached_datasets,
     get_train_test_eval_datasets_from_experiment,
 )
 
@@ -19,8 +19,8 @@ sys.path.append(os.path.join(os.getcwd(), "yolov8-classification"))
 from experiment.trainer import Yolov8ClassificationTrainer
 from experiment.utils import (
     get_prop_parameter,
-    _create_coco_objects,
-    _create_class_directories,
+    create_coco_objects,
+    create_class_directories,
     get_image_annotation,
     format_confusion_matrix,
     order_repartition_according_labelmap,
@@ -45,9 +45,6 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
     client = None
     token: str
     labelmap = {"0": "covid", "1": "normal", "2": "pneumonia"}
-
-    def __init__(self, methodName: str = ...):
-        super().__init__(methodName)
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -77,10 +74,10 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         cls.experiment.attach_dataset(
             name="eval", dataset_version=cls.dataset.get_version("eval")
         )
-        cls.train_set, cls.test_set, cls.eval_set = _get_three_attached_datasets(
+        cls.train_set, cls.test_set, cls.eval_set = get_three_attached_datasets(
             cls.experiment
         )
-        cls.coco_train, cls.coco_test, cls.coco_val = _create_coco_objects(
+        cls.coco_train, cls.coco_test, cls.coco_val = create_coco_objects(
             cls.train_set, cls.test_set, cls.eval_set
         )
         cls.base_path = os.path.join(os.getcwd(), "yolov8-classification")
@@ -131,7 +128,7 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         self.assertTrue(os.path.exists(new_path))
 
     def test_create_class_directories(self):
-        _create_class_directories(coco=self.coco_train, base_imdir=self.train_path)
+        create_class_directories(coco=self.coco_train, base_imdir=self.train_path)
         is_created = False
         if (
             os.path.exists(os.path.join(self.train_path, "covid"))
@@ -157,13 +154,6 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         expected_cat = {"id": 0, "name": "covid", "supercategory": None}
 
         self.assertEqual(expected_cat, cat)
-
-    def test_get_three_attached_datasets(self):
-        train_set, test_set, eval_test = _get_three_attached_datasets(self.experiment)
-        self.assertEqual(
-            (self.train_set, self.test_set, self.eval_set),
-            (train_set, test_set, eval_test),
-        )
 
     def test_get_train_eval_datasets_from_experiment(self):
         results = get_train_test_eval_datasets_from_experiment(self.experiment)
