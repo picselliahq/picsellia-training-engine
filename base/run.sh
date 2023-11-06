@@ -67,6 +67,9 @@ monitor_pid=$!
 wait "$training_script_pid" 2>/dev/null
 training_exit_code=$?
 
+echo "--ec-- $training_exit_code"
+echo "--ec-- $training_exit_code" >> "$log_file_path"
+wait "$log_handler_pid"
 # Training script has finished, now we can kill the log handler monitor
 kill "$monitor_pid" 2>/dev/null
 
