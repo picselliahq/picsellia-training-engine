@@ -12,10 +12,10 @@ from ultralytics import YOLO
 
 
 def get_train_test_eval_datasets_from_experiment(
-        experiment: Experiment,
+    experiment: Experiment,
 ) -> (
-        tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]
-        | tuple[bool, bool, DatasetVersion, None, None]
+    tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]
+    | tuple[bool, bool, DatasetVersion, None, None]
 ):
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
     has_three_datasets = False
@@ -46,7 +46,7 @@ def get_train_test_eval_datasets_from_experiment(
 
 
 def _get_three_attached_datasets(
-        experiment: Experiment,
+    experiment: Experiment,
 ) -> tuple[DatasetVersion, DatasetVersion, DatasetVersion]:
     try:
         train_set = experiment.get_dataset(name="train")
@@ -73,7 +73,7 @@ def _get_three_attached_datasets(
 
 
 def _get_two_attached_datasets(
-        experiment: Experiment,
+    experiment: Experiment,
 ) -> tuple[DatasetVersion, DatasetVersion]:
     try:
         train_set = experiment.get_dataset(name="train")
@@ -102,11 +102,11 @@ def get_prop_parameter(parameters: dict) -> float:
 
 
 def log_split_dataset_repartition_to_experiment(
-        experiment: Experiment,
-        labelmap: dict,
-        train_rep: dict[str, list],
-        test_rep: dict[str, list],
-        val_rep: dict[str, list],
+    experiment: Experiment,
+    labelmap: dict,
+    train_rep: dict[str, list],
+    test_rep: dict[str, list],
+    val_rep: dict[str, list],
 ) -> None:
     experiment.log(
         "train-split",
@@ -166,7 +166,7 @@ def find_final_run(cwd: str) -> str:
     if len(dirs) == 1:
         return os.path.join(runs_path, dirs[0])
     base = dirs[0][:7]
-    truncate_dirs = [n[len(base) - 1:] for n in dirs]
+    truncate_dirs = [n[len(base) - 1 :] for n in dirs]
     last_run_nb = max(truncate_dirs)[-1]
     if last_run_nb == "p":
         last_run_nb = ""
@@ -194,7 +194,7 @@ def get_weights_and_config(final_run_path: str) -> tuple[str | None, str | None]
 
 
 def get_metrics_curves(
-        final_run_path: str,
+    final_run_path: str,
 ) -> tuple[
     str | None,
     str | None,
@@ -272,7 +272,7 @@ def extract_file_name(file_path: str) -> str:
 
 
 def get_batch_mosaics(
-        final_run_path: str,
+    final_run_path: str,
 ) -> tuple[str | None, str | None, str | None, str | None, str | None, str | None]:
     val_batch0_labels = None
     val_batch0_pred = None
@@ -330,11 +330,11 @@ def make_annotation_dict_by_dataset(dataset: DatasetVersion, label_names: list) 
 
 
 def setup_hyp(
-        experiment: Experiment = None,
-        data_yaml_path: str = None,
-        params: dict = None,
-        cwd: str = None,
-        task: str = "detect",
+    experiment: Experiment = None,
+    data_yaml_path: str = None,
+    params: dict = None,
+    cwd: str = None,
+    task: str = "detect",
 ):
     if params is None:
         params = {}
@@ -519,10 +519,10 @@ class Opt:
 
 
 def store_model_files(
-        experiment: Experiment,
-        save_dir: str | None,
-        task: str,
-        imgsz: int = 640,
+    experiment: Experiment,
+    save_dir: str | None,
+    task: str,
+    imgsz: int = 640,
 ):
     final_run_path = save_dir
     best_weights, hyp_yaml = get_weights_and_config(final_run_path)
