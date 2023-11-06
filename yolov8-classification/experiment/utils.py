@@ -5,7 +5,6 @@ import shutil
 import numpy
 import numpy as np
 from PIL import Image
-from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.experiment import Experiment
@@ -13,58 +12,6 @@ from picsellia.sdk.label import Label
 from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
 from ultralytics.yolo.engine.model import YOLO
-
-
-def get_train_test_eval_datasets_from_experiment(
-    experiment: Experiment,
-) -> (
-    tuple[bool, DatasetVersion, DatasetVersion, DatasetVersion]
-    | tuple[bool, DatasetVersion, None, None]
-):
-    number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
-    has_three_datasets = False
-    if number_of_attached_datasets == 3:
-        has_three_datasets = True
-        train_set, test_set, eval_set = _get_three_attached_datasets(experiment)
-    elif number_of_attached_datasets == 1:
-        logging.info(
-            "We only found one dataset inside your experiment. The train/test/split will be performed automatically."
-        )
-        train_set: DatasetVersion = experiment.list_attached_dataset_versions()[0]
-        test_set = None
-        eval_set = None
-
-    else:
-        raise Exception("We need either 1 or 3 datasets attached to this experiment")
-
-    return has_three_datasets, train_set, test_set, eval_set
-
-
-def _get_three_attached_datasets(
-    experiment: Experiment,
-) -> tuple[DatasetVersion, DatasetVersion, DatasetVersion]:
-    try:
-        train_set = experiment.get_dataset(name="train")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                            expecting 'train', 'test', 'eval')"
-        )
-    try:
-        test_set = experiment.get_dataset(name="test")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                            expecting 'train', 'test', 'eval')"
-        )
-    try:
-        eval_set = experiment.get_dataset(name="eval")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                expecting 'train', 'test', 'eval')"
-        )
-    return train_set, test_set, eval_set
 
 
 def create_and_log_labelmap(experiment: Experiment) -> dict:
@@ -79,9 +26,9 @@ def prepare_datasets_with_annotation(
 ) -> tuple[DatasetVersion, MultiAsset]:
     coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
 
-    _move_files_in_class_directories(coco_train, "data/train")
-    _move_files_in_class_directories(coco_test, "data/test")
-    _move_files_in_class_directories(coco_val, "data/val")
+    move_files_in_class_directories(coco_train, "data/train")
+    move_files_in_class_directories(coco_test, "data/test")
+    move_files_in_class_directories(coco_val, "data/val")
 
     evaluation_ds = test_set
     evaluation_assets = evaluation_ds.list_assets()
@@ -107,12 +54,12 @@ def _create_coco_objects(
 def _move_all_files_in_class_directories(train_set: DatasetVersion) -> None:
     train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
     coco_train = COCO(train_annotation_path)
-    _move_files_in_class_directories(coco_train, "data/train")
-    _move_files_in_class_directories(coco_train, "data/test")
-    _move_files_in_class_directories(coco_train, "data/val")
+    move_files_in_class_directories(coco_train, "data/train")
+    move_files_in_class_directories(coco_train, "data/test")
+    move_files_in_class_directories(coco_train, "data/val")
 
 
-def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None | str:
+def move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None | str:
     fnames = os.listdir(base_imdir)
     _create_class_directories(coco=coco, base_imdir=base_imdir)
     for i in coco.imgs:
@@ -208,6 +155,21 @@ def move_images_in_train_test_val_folders(
             new_location_path="data/test",
         )
 
+    for asset in eval_assets:
+        move_image(
+            filename=asset.filename,
+            old_location_path="images",
+            new_location_path="data/val",
+        )
+
+
+def move_images_in_train_val_folders(train_assets: MultiAsset, eval_assets: MultiAsset):
+    for asset in train_assets:
+        move_image(
+            filename=asset.filename,
+            old_location_path="images",
+            new_location_path="data/train",
+        )
     for asset in eval_assets:
         move_image(
             filename=asset.filename,
