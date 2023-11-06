@@ -1,17 +1,16 @@
 import logging
-import numpy
-import shutil
-from PIL import Image
-import numpy as np
 import os
+import shutil
 
-from picsellia.sdk.experiment import Experiment
-from picsellia.sdk.dataset_version import DatasetVersion
-from picsellia.types.enums import AnnotationFileType
+import numpy
+import numpy as np
+from PIL import Image
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
+from picsellia.sdk.dataset_version import DatasetVersion
+from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.label import Label
-
+from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
 from ultralytics.yolo.engine.model import YOLO
 
@@ -36,9 +35,7 @@ def get_train_test_eval_datasets_from_experiment(
         eval_set = None
 
     else:
-        raise Exception(
-            "We need either 1 or 3 datasets attached to this experiment"
-        )
+        raise Exception("We need either 1 or 3 datasets attached to this experiment")
 
     return has_three_datasets, train_set, test_set, eval_set
 

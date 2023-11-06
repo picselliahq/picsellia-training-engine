@@ -4,13 +4,11 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Type, Union
 
-import numpy as np
 import tqdm
 from picsellia.exceptions import InsufficientResourcesError, ResourceNotFoundError
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.sdk.experiment import Experiment
-from picsellia.sdk.label import Label
 from picsellia.types.enums import InferenceType
 
 from evaluator.framework_formatter import FrameworkFormatter

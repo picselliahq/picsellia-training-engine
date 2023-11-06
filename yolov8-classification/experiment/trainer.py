@@ -1,9 +1,12 @@
 import os
-from ultralytics import YOLO
-from sklearn.metrics import classification_report, confusion_matrix
-from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
-from abstract_trainer.trainer import AbstractTrainer
+import sys
 
+sys.path.append(os.path.join(os.getcwd(), "yolov8-classification", "experiment"))
+from sklearn.metrics import classification_report, confusion_matrix
+from ultralytics import YOLO
+
+from abstract_trainer.trainer import AbstractTrainer
+from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
 from utils import (
     get_train_test_eval_datasets_from_experiment,
     download_triple_dataset,
