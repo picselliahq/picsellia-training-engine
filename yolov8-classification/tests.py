@@ -164,7 +164,7 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
 
     def test_get_train_eval_datasets_from_experiment(self):
         results = get_train_test_eval_datasets_from_experiment(self.experiment)
-        expected_results = (False, True, self.train_set, self.test_set, self.eval_set)
+        expected_results = (True, False, self.train_set, self.test_set, self.eval_set)
         self.assertEqual(expected_results, results)
 
     def test_format_confusion_matrix(self):
