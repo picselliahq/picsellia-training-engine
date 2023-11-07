@@ -19,7 +19,6 @@ jobs:
       host: "https://staging.picsellia.com/"
       organization_id: "0189266d-64f5-79b4-9b80-6fcf8a3b498b"
       api_token: ${{ secrets.API_TOKEN }}
-      SM_FRAMEWORK: "tf.keras"
 
     steps:
       - name: Checkout Repository
