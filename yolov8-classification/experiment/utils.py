@@ -51,7 +51,7 @@ def _create_coco_objects(
     return coco_train, coco_test, coco_val
 
 
-def _move_all_files_in_class_directories(train_set: DatasetVersion) -> None:
+def move_all_files_in_class_directories(train_set: DatasetVersion) -> None:
     train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
     coco_train = COCO(train_annotation_path)
     move_files_in_class_directories(coco_train, "data/train")

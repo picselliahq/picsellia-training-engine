@@ -13,7 +13,7 @@ from utils import (
     move_files_in_class_directories,
     prepare_datasets_with_annotation,
     split_single_dataset,
-    _move_all_files_in_class_directories,
+    move_all_files_in_class_directories,
     log_split_dataset_repartition_to_experiment,
     predict_evaluation_images,
     log_confusion_to_experiment,
@@ -105,7 +105,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             val_rep,
             labels,
         ) = split_single_dataset(experiment=self.experiment, train_set=self.train_set)
-        _move_all_files_in_class_directories(train_set=self.train_set)
+        move_all_files_in_class_directories(train_set=self.train_set)
         log_split_dataset_repartition_to_experiment(
             experiment=self.experiment,
             labelmap=self.labelmap,
