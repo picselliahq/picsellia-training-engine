@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 from picsellia import Client, Job, Project, Experiment
 from picsellia.types.enums import JobRunStatus
@@ -47,7 +48,7 @@ def get_picsellia_project(client: Client) -> Project:
         )
 
 
-def get_picsellia_experiment(client: Client) -> Experiment | None:
+def get_picsellia_experiment(client: Client) -> Union[Experiment, None]:
     """
     Get the experiment associated with the provided client.
 
@@ -66,7 +67,7 @@ def get_picsellia_experiment(client: Client) -> Experiment | None:
     return None
 
 
-def get_picsellia_job(client: Client) -> Job | None:
+def get_picsellia_job(client: Client) -> Union[Job, None]:
     """
     Get the job associated with the provided client.
 
