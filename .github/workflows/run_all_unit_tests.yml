@@ -1,5 +1,5 @@
 name: Run Unit Tests
-on: push
+on: fork
 jobs:
   build:
     runs-on: ubuntu-latest

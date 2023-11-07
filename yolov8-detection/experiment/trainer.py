@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(os.path.join(os.getcwd(), "yolov8-detection", "experiment"))
 
+
 from picsellia.sdk.asset import MultiAsset
 
 from abstract_trainer.yolov8_trainer import Yolov8Trainer

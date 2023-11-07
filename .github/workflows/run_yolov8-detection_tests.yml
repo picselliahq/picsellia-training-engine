@@ -1,0 +1,32 @@
+name: Run YOLOV8 Object Detection Unit Tests
+on:
+  push:
+      paths:
+        - 'yolov8-detection/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.10" ]
+
+    env:
+      host: "https://staging.picsellia.com/"
+      organization_id: "0189266d-64f5-79b4-9b80-6fcf8a3b498b"
+      api_token: ${{ secrets.API_TOKEN }}
+      SM_FRAMEWORK: "tf.keras"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run yolov8 Detection Unit Tests
+        run: |
+          pip install -r yolov8-detection/requirements.txt
+          python -m unittest -v yolov8-detection/tests.py -k "TestYolov8DetectionUtils"
