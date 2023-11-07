@@ -2,7 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
-from typing import Match, Optional, List
+from typing import Match, Optional, List, Union
 
 from picsellia.types.enums import JobRunStatus, ExperimentStatus
 
@@ -18,12 +18,12 @@ BUFFER_END_PATTERN = re.compile(r"---[0-9]---")
 EXIT_CODE_PATTERN = re.compile(r"--ec-- ([0-9]+)")
 
 
-def does_buffer_start(line: str) -> Match[str] | None:
+def does_buffer_start(line: str) -> Union[Match[str], None]:
     """Check if line starts a buffer."""
     return BUFFER_START_PATTERN.match(line[:6])
 
 
-def does_buffer_end(line: str) -> Match[str] | None:
+def does_buffer_end(line: str) -> Union[Match[str], None]:
     """Check if line ends a buffer."""
     return BUFFER_END_PATTERN.match(line[:8])
 
@@ -48,7 +48,7 @@ class LogMonitor:
 
     def handle_exit_code(self, line: str) -> bool:
         """Handles the exit code in the line.
-         Returns: True if script is ended and need to break the log handler
+        Returns: True if script is ended and need to break the log handler
         """
         exit_match = EXIT_CODE_PATTERN.search(line)
         if exit_match:
@@ -57,7 +57,7 @@ class LogMonitor:
         return False
 
     def process_line(
-            self, line: str, section_header: str, replace_log: bool, is_first_line: bool
+        self, line: str, section_header: str, replace_log: bool, is_first_line: bool
     ):
         """Process a line from the log file.
         Returns: True if script is ended and need to break the log handler"""
@@ -122,7 +122,10 @@ class LogMonitor:
         self.send_logging(line, section_header)
 
     def send_logging(
-            self, content: str | List, section_header: str, special: Optional[str] = False
+        self,
+        content: Union[str, List],
+        section_header: str,
+        special: Optional[str] = False,
     ) -> None:
         """Send logging to job and update logs."""
         try:
@@ -180,6 +183,8 @@ class LogMonitor:
         with open(self.log_file_path, "r") as log_file:
             log_tailer = LogTailer(log_file)
             for line, replace_log, is_first_line in log_tailer.tail():
-                end_execution = self.process_line(line, section_header, replace_log, is_first_line)
+                end_execution = self.process_line(
+                    line, section_header, replace_log, is_first_line
+                )
                 if end_execution:
                     break
