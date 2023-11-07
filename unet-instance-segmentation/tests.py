@@ -9,7 +9,6 @@ import numpy as np
 from picsellia import Client
 
 sys.path.append(os.path.join(os.getcwd(), "unet-instance-segmentation"))
-
 from experiment.trainer import UnetSegmentationTrainer
 from experiment.utils import (
     get_classes_mask_dataset,
