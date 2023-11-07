@@ -69,6 +69,7 @@ class TestYoloUtils(unittest.TestCase):
         cls.label_names = [label.name for label in cls.labels]
         cls.checkpoint_path = os.path.join(cls.experiment.checkpoint_dir, "test.pt")
         os.makedirs(cls.experiment.checkpoint_dir, exist_ok=True)
+
         with open(cls.checkpoint_path, "w") as f:
             f.write("dummy content")
 
