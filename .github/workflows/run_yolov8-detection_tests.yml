@@ -1,8 +1,12 @@
 name: Run YOLOV8 Object Detection Unit Tests
 on:
-  push:
-      paths:
-        - 'yolov8-detection/**'
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+    paths:
+      - 'yolov8-detection/**'
 
 jobs:
   build:
