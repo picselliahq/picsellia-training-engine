@@ -19,7 +19,7 @@ for script_dir in "${folders[@]}"; do
       echo "Version $picsellia_version is already in $script_dir/requirements.txt"
       exit 1
     else
-      git checkout master
+      git checkout feat/ci-workflow
       git pull
 
       # check if the branch exists
