@@ -1,8 +1,5 @@
 name: Run YOLOV8 Segmentation Unit Tests
 on:
-  pull_request:
-    types:
-      - opened
   push:
     paths:
       - 'yolov8-segmentation/**'

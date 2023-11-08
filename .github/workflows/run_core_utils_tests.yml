@@ -1,9 +1,9 @@
 name: Run Core Utils Unit Tests
 on:
-  pull_request:
-    types:
-      - opened
   push:
+    branches:
+      - 'picsellia-CI-v/**'
+
     paths:
       - 'core_utils/**'
 

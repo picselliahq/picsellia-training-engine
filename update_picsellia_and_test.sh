@@ -36,11 +36,13 @@ for script_dir in "${folders[@]}"; do
       sed -i "s/picsellia==.*/picsellia==$picsellia_version/" "$script_dir/requirements.txt"
       # commit the changes
       git add "$script_dir/requirements.txt"
-      git commit -m "Update Picsellia to version $picsellia_version in $script_dir"
 
     fi
   else
     echo "Requirements file not found in $script_dir"
   fi
+
+git commit -m "Update Picsellia to version $picsellia_version"
 git push origin "$branch_name"
+
 done
