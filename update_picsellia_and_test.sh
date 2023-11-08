@@ -6,8 +6,7 @@ if [ -z "$1" ]; then
 fi
 
 picsellia_version="$1"
-branch_name="picsellia-update/$picsellia_version"
-requirements_modified=false
+branch_name="picsellia-CI-v/$picsellia_version"
 
 folders=("yolov8-classification" "yolov8-segmentation" "yolov8-detection" "unet-instance-segmentation")
 
@@ -35,17 +34,13 @@ for script_dir in "${folders[@]}"; do
       # Update picsellia version in the requirements file
       echo "Updating picsellia version in $script_dir's requirements file from $current_version to $picsellia_version.."
       sed -i "s/picsellia==.*/picsellia==$picsellia_version/" "$script_dir/requirements.txt"
-      requirements_modified=true
       # commit the changes
       git add "$script_dir/requirements.txt"
       git commit -m "Update Picsellia to version $picsellia_version in $script_dir"
-      git push origin "$branch_name"
+
     fi
   else
     echo "Requirements file not found in $script_dir"
   fi
+git push origin "$branch_name"
 done
-
-if [ "$requirements_modified" = true ]; then
-  git tag -a "picselliaCI-$picsellia_version" -m "Tagging version $picsellia_version"
-fi
