@@ -1,0 +1,16 @@
+name: Build Picsellia Latest Docker Images
+on:
+  push:
+    tags:
+      - 'picsellia-v*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build and Push Images
+        run: |
+          chmod +x rebuild_latest.sh
+          ./rebuild_latest.sh

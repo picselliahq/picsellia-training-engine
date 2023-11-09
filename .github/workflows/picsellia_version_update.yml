@@ -16,4 +16,5 @@ jobs:
 
     - name: Build Test Docker Images
       run: |
+        chmod +x rebuild_test.sh
         ./rebuild_test.sh
