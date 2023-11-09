@@ -3,9 +3,15 @@ on:
   push:
     branches:
       - 'picsellia-CI-v/**'
-
     paths:
       - 'yolov8-segmentation/**'
+
+  pull_request:
+    branches:
+      - ci-workflow
+    paths:
+      - 'yolov8-segmentation/**'
+
 
 jobs:
   build:
