@@ -13,4 +13,5 @@ training_pipeline = Yolov8SegmentationTrainer()
 
 training_pipeline.prepare_data_for_training()
 training_pipeline.train()
+
 training_pipeline.eval()
