@@ -3,10 +3,14 @@ on:
   push:
     branches:
       - 'picsellia-CI-v/**'
-
     paths:
       - 'core_utils/**'
 
+  pull_request:
+    branches:
+      - 'feat/ci-workflow'
+    paths:
+      - 'core_utils/**'
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -3,7 +3,12 @@ on:
   push:
     branches:
       - 'picsellia-CI-v/**'
+    paths:
+      - 'yolov8-detection/**'
 
+  pull_request:
+    branches:
+      - 'feat/ci-workflow'
     paths:
       - 'yolov8-detection/**'
 
