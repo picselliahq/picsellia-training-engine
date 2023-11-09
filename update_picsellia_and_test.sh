@@ -41,9 +41,8 @@ for script_dir in "${folders[@]}"; do
   else
     echo "Requirements file not found in $script_dir"
   fi
-
+done
 git add "$changed_requirements"
 git commit -m "Update Picsellia to version $picsellia_version"
 git push origin "$branch_name"
 
-done
