@@ -3,4 +3,4 @@ ultralytics==8.0.67
 onnx==1.13.1
 scikit-learn==1.2.2
 coverage==7.3.0
-picsellia==6.10.3
+picsellia==6.9.0
