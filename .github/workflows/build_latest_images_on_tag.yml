@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - 'picsellia-v*'
+    branches:
+      - master
 jobs:
   build:
     runs-on: ubuntu-latest
