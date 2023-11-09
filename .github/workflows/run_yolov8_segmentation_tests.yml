@@ -1,6 +1,9 @@
 name: Run YOLOV8 Segmentation Unit Tests
 on:
   push:
+    branches:
+      - 'picsellia-CI-v/**'
+
     paths:
       - 'yolov8-segmentation/**'
 

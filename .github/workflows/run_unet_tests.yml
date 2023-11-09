@@ -1,6 +1,9 @@
 name: Run UNet Segmentation Unit Tests
 on:
   push:
+    branches:
+      - 'picsellia-CI-v/**'
+
     paths:
       - 'unet-instance-segmentation/**'
 
