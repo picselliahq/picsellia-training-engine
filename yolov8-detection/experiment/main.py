@@ -1,5 +1,6 @@
 import logging
 import os
+
 from trainer import Yolov8DetectionTrainer
 
 os.environ["PYTHONUNBUFFERED"] = "1"
@@ -10,5 +11,6 @@ logging.getLogger("picsellia").setLevel(logging.INFO)
 
 training_pipeline = Yolov8DetectionTrainer()
 training_pipeline.prepare_data_for_training()
+
 training_pipeline.train()
 training_pipeline.eval()
