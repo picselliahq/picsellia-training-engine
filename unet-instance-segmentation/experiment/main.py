@@ -25,5 +25,6 @@ class LogTrainingMetrics(keras.callbacks.Callback):
 
 
 training_pipeline.callbacks.append(LogTrainingMetrics())
+
 training_pipeline.train()
 training_pipeline.eval()
