@@ -7,6 +7,8 @@ on:
       - 'yolov8-detection/**'
 
   pull_request:
+    types:
+      - opened
     branches:
       - 'feat/ci-workflow'
     paths:
