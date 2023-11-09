@@ -1,5 +1,6 @@
 import os
 import sys
+
 from picsellia.sdk.asset import MultiAsset
 
 from abstract_trainer.yolov8_trainer import Yolov8Trainer
