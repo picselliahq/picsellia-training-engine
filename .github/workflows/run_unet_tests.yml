@@ -7,8 +7,7 @@ on:
       - 'unet-instance-segmentation/**'
 
   pull_request:
-    types:
-      - opened
+    types: [opened, ready_for_review]
     branches:
       - 'feat/ci-workflow'
     paths:
