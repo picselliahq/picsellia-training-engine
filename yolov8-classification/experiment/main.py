@@ -8,6 +8,7 @@ os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 logging.getLogger("picsellia").setLevel(logging.INFO)
 
 training_pipeline = Yolov8ClassificationTrainer()
+
 training_pipeline.prepare_data_for_training()
 experiment = training_pipeline.experiment
 
