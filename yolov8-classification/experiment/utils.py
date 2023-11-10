@@ -2,7 +2,7 @@ import logging
 import os
 import shutil
 
-import numpy
+
 import numpy as np
 from PIL import Image
 from picsellia.exceptions import ResourceNotFoundError
