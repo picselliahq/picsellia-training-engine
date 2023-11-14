@@ -2,8 +2,8 @@ import os
 
 from datasets import load_dataset
 from picsellia.exceptions import ResourceNotFoundError
-from picsellia.types.enums import InferenceType
 from picsellia.sdk.dataset_version import DatasetVersion
+from picsellia.types.enums import InferenceType
 from torchvision.transforms import RandomResizedCrop, Compose, Normalize, ToTensor
 from transformers import (
     pipeline,
@@ -24,6 +24,7 @@ from utils import (
     get_asset_filename_from_path,
     find_asset_by_filename,
     get_predicted_label_confidence,
+    log_labelmap,
 )
 
 
@@ -159,6 +160,8 @@ class VitClassificationTrainer(AbstractTrainer):
     def init_train(self):
         data_collator = DefaultDataCollator()
         label2id, id2label = self._get_label2id_id2label()
+        log_labelmap(id2label=id2label, experiment=self.experiment)
+
         self.model = AutoModelForImageClassification.from_pretrained(
             self.checkpoint,
             num_labels=len(self.labels),

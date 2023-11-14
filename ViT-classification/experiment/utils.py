@@ -261,3 +261,8 @@ def find_asset_by_filename(filename: str, dataset: DatasetVersion):
     except Exception as e:
         print(e)
         return None
+
+
+def log_labelmap(id2label: dict, experiment: Experiment):
+    labelmap = {str(k): v for k, v in id2label.items()}
+    experiment.log("labelmap", labelmap, "labelmap", replace=True)
