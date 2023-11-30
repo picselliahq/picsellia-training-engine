@@ -12,6 +12,7 @@ RUN python3.10 -m pip install picsellia --upgrade
 
 RUN pip3 install -U accelerate
 RUN pip3 install -U transformers
+RUN pip3 install optimum[onnxruntime]
 
 WORKDIR /experiment
 COPY ./ViT-classification/experiment ./
