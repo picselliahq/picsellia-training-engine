@@ -1,0 +1,41 @@
+name: Run YOLOV8 Segmentation Unit Tests
+on:
+  push:
+    branches:
+      - 'picsellia-CI-v/**'
+    paths:
+      - 'yolov8-segmentation/**'
+
+  pull_request:
+    types: [opened, ready_for_review]
+    branches:
+      - 'master'
+    paths:
+      - 'yolov8-segmentation/**'
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.10" ]
+
+    env:
+      host: "https://staging.picsellia.com/"
+      organization_id: "0189266d-64f5-79b4-9b80-6fcf8a3b498b"
+      api_token: ${{ secrets.API_TOKEN }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run yolov8 Segmentation Unit Tests
+        run: |
+          pip install -r yolov8-segmentation/requirements.txt
+          python -m unittest -v yolov8-segmentation/tests.py -k "TestYolov8SegmentationUtils"
