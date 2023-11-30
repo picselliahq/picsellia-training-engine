@@ -9,6 +9,7 @@ WORKDIR /experiment
 
 COPY ./yolov8-classification/experiment ./
 COPY ./abstract_trainer ./abstract_trainer
+COPY ./core_utils ./core_utils
 COPY ./evaluator ./evaluator
 
 ENTRYPOINT ["run", "main.py"]

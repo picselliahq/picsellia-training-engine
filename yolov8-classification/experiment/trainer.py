@@ -3,21 +3,25 @@ import sys
 
 sys.path.append(os.path.join(os.getcwd(), "yolov8-classification", "experiment"))
 from sklearn.metrics import classification_report, confusion_matrix
+from pycocotools.coco import COCO
 from ultralytics import YOLO
-
+from picsellia.types.enums import AnnotationFileType
 from abstract_trainer.trainer import AbstractTrainer
 from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
 from utils import (
-    get_train_test_eval_datasets_from_experiment,
     download_triple_dataset,
+    move_files_in_class_directories,
     prepare_datasets_with_annotation,
     split_single_dataset,
-    _move_all_files_in_class_directories,
+    move_all_files_in_class_directories,
     log_split_dataset_repartition_to_experiment,
     predict_evaluation_images,
     log_confusion_to_experiment,
     create_and_log_labelmap,
+    make_train_test_val_dirs,
+    move_images_in_train_val_folders,
 )
+from core_utils.yolov8 import get_train_test_eval_datasets_from_experiment
 
 
 class Yolov8ClassificationTrainer(AbstractTrainer):
@@ -36,40 +40,81 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
     def prepare_data_for_training(self):
         (
             has_three_datasets,
-            train_set,
-            test_set,
-            eval_set,
+            has_two_datasets,
+            self.train_set,
+            self.test_set,
+            self.eval_set,
         ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
         if has_three_datasets:
-            download_triple_dataset(train_set, test_set, eval_set)
-            _, _ = prepare_datasets_with_annotation(train_set, test_set, eval_set)
-            self.evaluation_ds = eval_set
-            self.evaluation_assets = self.evaluation_ds.list_assets()
+            self._process_triple_dataset()
 
+        if has_two_datasets:
+            self._process_double_dataset()
         else:
-            train_set.download("images")
-            (
-                train_assets,
-                test_assets,
-                eval_assets,
-                train_rep,
-                test_rep,
-                val_rep,
-                labels,
-            ) = split_single_dataset(experiment=self.experiment, train_set=train_set)
-            _move_all_files_in_class_directories(train_set=train_set)
-            self.labelmap = create_and_log_labelmap(experiment=self.experiment)
-            log_split_dataset_repartition_to_experiment(
-                experiment=self.experiment,
-                labelmap=self.labelmap,
-                train_rep=train_rep,
-                test_rep=test_rep,
-                val_rep=val_rep,
-            )
-            self.evaluation_ds = train_set
-            self.evaluation_assets = eval_assets
+            self._process_single_dataset()
 
         self.labelmap = create_and_log_labelmap(experiment=self.experiment)
+
+    def _process_triple_dataset(self):
+        download_triple_dataset(self.train_set, self.test_set, self.eval_set)
+        _, _ = prepare_datasets_with_annotation(
+            self.train_set, self.test_set, self.eval_set
+        )
+        self.evaluation_ds = self.eval_set
+        self.evaluation_assets = self.evaluation_ds.list_assets()
+
+    def _process_double_dataset(self):
+        self.train_set.download("images")
+        self.test_set.download(target_path=os.path.join("data", "test"), max_workers=8)
+        (
+            train_assets,
+            eval_assets,
+            _,
+            _,
+            labels,
+        ) = self.train_set.train_test_split(prop=0.8)
+
+        make_train_test_val_dirs()
+        move_images_in_train_val_folders(train_assets, eval_assets)
+
+        self._move_files_in_class_directories_double()
+        self.evaluation_ds = self.test_set
+        self.evaluation_assets = self.evaluation_ds.list_assets()
+
+    def _move_files_in_class_directories_double(self) -> None:
+        train_annotation_path = self.train_set.export_annotation_file(
+            AnnotationFileType.COCO
+        )
+        eval_annotation_path = self.test_set.export_annotation_file(
+            AnnotationFileType.COCO
+        )
+        coco_train = COCO(train_annotation_path)
+        coco_eval = COCO(eval_annotation_path)
+        move_files_in_class_directories(coco_train, "data/train")
+        move_files_in_class_directories(coco_train, "data/val")
+        move_files_in_class_directories(coco_eval, "data/test")
+
+    def _process_single_dataset(self):
+        self.train_set.download("images")
+        (
+            train_assets,
+            test_assets,
+            eval_assets,
+            train_rep,
+            test_rep,
+            val_rep,
+            labels,
+        ) = split_single_dataset(experiment=self.experiment, train_set=self.train_set)
+        move_all_files_in_class_directories(train_set=self.train_set)
+        log_split_dataset_repartition_to_experiment(
+            experiment=self.experiment,
+            labelmap=self.labelmap,
+            train_rep=train_rep,
+            test_rep=test_rep,
+            val_rep=val_rep,
+        )
+        self.evaluation_ds = self.train_set
+        self.evaluation_assets = eval_assets
 
     def train(self):
         self.model.train(
