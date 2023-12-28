@@ -8,7 +8,6 @@ import yaml
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.experiment import Experiment
-from ultralytics import YOLO
 
 
 def get_train_test_eval_datasets_from_experiment(
@@ -560,6 +559,8 @@ def find_model_latest_path(final_run_path: str, task: str, imgsz: int) -> str | 
 
 
 def process_pt_file(pt_file_path: str, final_run_path: str, task: str, imgsz: int):
+    from ultralytics import YOLO
+
     model = YOLO(pt_file_path)
     best_or_last = os.path.split(pt_file_path)[-1].split(".")[0]
     model.export(format="onnx", imgsz=imgsz, task=task)

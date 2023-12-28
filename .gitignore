@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 test-sonia/
+YOLOX_outputs/
 # C extensions
 *.so
 
