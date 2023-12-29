@@ -11,7 +11,7 @@ from pycocotools.coco import COCO
 
 sys.path.append(os.path.join(os.getcwd(), "yolov8-detection"))
 
-from experiment.trainer import YoloxDetectionTrainer
+from experiment.trainer import Yolov8DetectionTrainer
 from experiment.utils import create_img_label_detection, coco_to_yolo_detection
 
 TOKEN = os.environ["api_token"]
@@ -147,7 +147,7 @@ class TestYolov8DetectionTrainer(unittest.TestCase):
             shutil.rmtree("runs")
 
     def test_yolov8_detection_trainer(self):
-        yolov8_trainer = YoloxDetectionTrainer()
+        yolov8_trainer = Yolov8DetectionTrainer()
         self.assertNotEqual(None, yolov8_trainer)
 
         yolov8_trainer.prepare_data_for_training()
