@@ -7,11 +7,11 @@ import os
 import sys
 
 
-def get_exp_by_file(exp_file):
+def get_exp_by_file(exp_file, args):
     try:
         sys.path.append(os.path.dirname(exp_file))
         current_exp = importlib.import_module(os.path.basename(exp_file).split(".")[0])
-        exp = current_exp.Exp()
+        exp = current_exp.Exp(args)
     except Exception:
         raise ImportError("{} doesn't contains class named 'Exp'".format(exp_file))
     return exp
@@ -38,6 +38,6 @@ def get_exp(exp_file=None, exp_name=None, args=None):
         exp_file is not None or exp_name is not None
     ), "plz provide exp file or exp name."
     if exp_file is not None:
-        return get_exp_by_file(exp_file)
+        return get_exp_by_file(exp_file, args)
     else:
         return get_exp_by_name(args)

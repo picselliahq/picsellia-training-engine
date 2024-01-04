@@ -9,7 +9,6 @@ WORKDIR /experiment
 
 COPY ./yolox-detection/experiment ./
 COPY ./evaluator ./evaluator
-COPY ./yolox-detection/YOLOX ./YOLOX
 
 
 ENTRYPOINT ["run", "main.py"]

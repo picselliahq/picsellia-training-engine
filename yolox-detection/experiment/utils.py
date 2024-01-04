@@ -30,14 +30,15 @@ class YOLOV8StyleOutput:
     def __init__(self, yolox_output: list, img_info: dict):
         self.img_width = img_info.get("width", 1)
         self.img_height = img_info.get("height", 1)
+        self.ratio = img_info.get("ratio", 1)
 
         # Extract and normalize boxes
         boxes = yolox_output[:, 0:4]
         normalized_boxes = torch.zeros_like(boxes)
-        normalized_boxes[:, 0] = boxes[:, 0] * self.img_width
-        normalized_boxes[:, 1] = boxes[:, 1] * self.img_height
-        normalized_boxes[:, 2] = boxes[:, 2] * self.img_width
-        normalized_boxes[:, 3] = boxes[:, 3] * self.img_height
+        normalized_boxes[:, 0] = boxes[:, 0] / self.img_width
+        normalized_boxes[:, 1] = boxes[:, 1] / self.img_height
+        normalized_boxes[:, 2] = boxes[:, 2] / self.img_width
+        normalized_boxes[:, 3] = boxes[:, 3] / self.img_height
 
         # Extract confidences and classes
         conf = yolox_output[:, 4] * yolox_output[:, 5]

@@ -15,7 +15,7 @@ os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
 os.environ["api_token"] = "6ccfdfbfc3e1393408b684e4df5c0c89f292fe3b"
 os.environ["organization_id"] = "2856a16a-8d44-4c11-b24f-692cc2276afa"
-os.environ["experiment_id"] = "018cd4a3-6290-739d-a103-9aaa0cfe5906"
+os.environ["experiment_id"] = "018cd4da-06f9-7016-83ad-8f175fc6edfe"
 
 logging.getLogger("picsellia").setLevel(logging.INFO)
 
@@ -58,7 +58,7 @@ if len(attached_datasets) == 3:
 
     labels = train_ds.list_labels()
     label_names = [label.name for label in labels]
-    labelmap = {str(i): label.name for i, label in enumerate(labels)}
+    labelmap = {i: label for i, label in enumerate(labels)}
 
     for data_type, dataset in {
         "train": train_ds,
@@ -117,7 +117,8 @@ else:
         )
 
 # 3 - Log the labelmap
-experiment.log("labelmap", labelmap, "labelmap", replace=True)
+logged_labelmap = {str(i): label.name for i, label in enumerate(labels)}
+experiment.log("labelmap", logged_labelmap, "labelmap", replace=True)
 cwd = os.getcwd()
 
 # 4 - Prepare the dataset structures
@@ -154,7 +155,7 @@ epochs = parameters.get("epochs", 100)
 image_size = int(parameters.get("image_size", 640))
 
 # 6 - Launch the training
-from YOLOX.tools.train import main, make_parser
+from YOLOX.tools.train import make_parser
 from YOLOX.yolox.exp import check_exp_value
 from YOLOX.yolox.utils import configure_module, get_num_devices
 from YOLOX.yolox.exp.build import get_exp_by_name
@@ -192,35 +193,20 @@ num_gpu = get_num_devices() if args.devices is None else args.devices
 assert num_gpu <= get_num_devices()
 
 # 6C - Launch training
-main(exp, args)
+# main(exp, args)
 
-# 7 - Artifact storing
-
+# 7 - Prepare the model for inference and export
 model = exp.get_model()
+model.eval()
 
 file_name = os.path.join(exp.output_dir, args.experiment_name)
 ckpt_file = os.path.join(file_name, "best_ckpt.pth")
+
 ckpt = torch.load(ckpt_file, map_location="cpu")
-
-model.eval()
 model.load_state_dict(ckpt["model"])
-model = model.to("cpu")
-model = replace_module(model, torch.nn.SiLU, SiLU)
-model.head.decode_in_inference = False
-
-dummy_input = torch.randn(1, 3, image_size, image_size)
-
-model_path = os.path.join(exp.output_dir, args.experiment_name, "best.onnx")
-
-torch.onnx.export(
-    model,
-    dummy_input,
-    model_path,
-)
-experiment.store("model-latest", model_path)
 
 # 8 - Run the evaluation
-framework_formatter = YoloFormatter(labelmap=label_names)
+framework_formatter = YoloFormatter(labelmap=labelmap)
 type_formatter = DetectionFormatter(framework_formatter=framework_formatter)
 yolox_predictor = Predictor(model=model, exp=exp, cls_names=label_names)
 
@@ -232,3 +218,16 @@ compute_metrics_job = evaluate_model(
     asset_list=test_ds.list_assets(),
 )
 compute_metrics_job.wait_for_done()
+
+# 9 - Export the model to ONNX
+model = replace_module(model, torch.nn.SiLU, SiLU)
+model.head.decode_in_inference = False
+dummy_input = torch.randn(1, 3, image_size, image_size)
+model_path = os.path.join(exp.output_dir, args.experiment_name, "best.onnx")
+
+torch.onnx.export(
+    model,
+    dummy_input,
+    model_path,
+)
+experiment.store("model-latest", model_path)
