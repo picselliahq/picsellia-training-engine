@@ -8,6 +8,7 @@ RUN python3.10 -m pip install -r requirements.txt --no-cache-dir
 WORKDIR /experiment
 
 COPY ./yolox-detection/experiment ./
+COPY ./evaluator ./evaluator
 COPY ./yolox-detection/YOLOX ./YOLOX
 
 

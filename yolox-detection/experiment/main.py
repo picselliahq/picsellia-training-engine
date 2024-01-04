@@ -1,53 +1,28 @@
+import json
 import logging
 import os
 
 import torch
+from picsellia.exceptions import ResourceNotFoundError
+from pycocotools.coco import COCO
+
+from YOLOX.tools.demo import Predictor
+from evaluator.framework_formatter import YoloFormatter
+from evaluator.type_formatter import DetectionFormatter
+from utils import create_yolo_detection_label, get_experiment, evaluate_model
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
+os.environ["api_token"] = "6ccfdfbfc3e1393408b684e4df5c0c89f292fe3b"
+os.environ["organization_id"] = "2856a16a-8d44-4c11-b24f-692cc2276afa"
+os.environ["experiment_id"] = "018cd4a3-6290-739d-a103-9aaa0cfe5906"
+
 logging.getLogger("picsellia").setLevel(logging.INFO)
 
-import picsellia
-from picsellia import Experiment
-
-
 # 1 - Get Experiment
-def get_experiment() -> Experiment:
-    if "api_token" not in os.environ:
-        raise Exception("You must set an api_token to run this image")
-    api_token = os.environ["api_token"]
-
-    if "host" not in os.environ:
-        host = "https://app.picsellia.com"
-    else:
-        host = os.environ["host"]
-
-    if "organization_id" not in os.environ:
-        organization_id = None
-    else:
-        organization_id = os.environ["organization_id"]
-
-    client = picsellia.Client(
-        api_token=api_token, host=host, organization_id=organization_id
-    )
-
-    if "experiment_id" in os.environ:
-        experiment_id = os.environ["experiment_id"]
-
-        experiment = client.get_experiment_by_id(experiment_id)
-    else:
-        raise Exception("You must set the experiment_id")
-    return experiment
-
-
 experiment = get_experiment()
 
 # 2 - Get the artifacts
-from pycocotools.coco import COCO
-import json
-from picsellia.exceptions import ResourceNotFoundError
-from utils import create_yolo_detection_label
-
 experiment.download_artifacts(with_tree=True)
 current_dir = os.path.join(os.getcwd(), experiment.base_dir)
 base_imgdir = experiment.png_dir
@@ -101,9 +76,9 @@ if len(attached_datasets) == 3:
 
         annotations_coco = COCO(annotations_path)
 
-        dataset.list_assets().download(
-            target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
-        )
+        # dataset.list_assets().download(
+        #     target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
+        # )
 
 else:
     dataset = experiment.list_attached_dataset_versions()[0]
@@ -220,12 +195,11 @@ assert num_gpu <= get_num_devices()
 main(exp, args)
 
 # 7 - Artifact storing
+
 model = exp.get_model()
 
 file_name = os.path.join(exp.output_dir, args.experiment_name)
 ckpt_file = os.path.join(file_name, "best_ckpt.pth")
-
-# load the model state dict
 ckpt = torch.load(ckpt_file, map_location="cpu")
 
 model.eval()
@@ -244,3 +218,17 @@ torch.onnx.export(
     model_path,
 )
 experiment.store("model-latest", model_path)
+
+# 8 - Run the evaluation
+framework_formatter = YoloFormatter(labelmap=label_names)
+type_formatter = DetectionFormatter(framework_formatter=framework_formatter)
+yolox_predictor = Predictor(model=model, exp=exp, cls_names=label_names)
+
+compute_metrics_job = evaluate_model(
+    yolox_predictor=yolox_predictor,
+    type_formatter=type_formatter,
+    experiment=experiment,
+    dataset=test_ds,
+    asset_list=test_ds.list_assets(),
+)
+compute_metrics_job.wait_for_done()
