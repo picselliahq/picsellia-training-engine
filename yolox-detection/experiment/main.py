@@ -10,13 +10,23 @@ from pycocotools.coco import COCO
 from YOLOX.tools.demo import Predictor
 from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import DetectionFormatter
-from utils import create_yolo_detection_label, get_experiment, evaluate_model
+from utils import get_experiment, evaluate_model
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
-os.environ["api_token"] = "6ccfdfbfc3e1393408b684e4df5c0c89f292fe3b"
-os.environ["organization_id"] = "2856a16a-8d44-4c11-b24f-692cc2276afa"
-os.environ["experiment_id"] = "018cd4da-06f9-7016-83ad-8f175fc6edfe"
+
+model_architecture = os.environ.get("architecture", None)
+
+if model_architecture is None:
+    raise ValueError(
+        "The environment variable `architecture` is mandatory."
+        "You can choose between `yolox-s`, `yolox-m`, `yolox-l` or `yolox-x`"
+    )
+elif model_architecture not in ("yolox-s", "yolox-m", "yolox-l", "yolox-x"):
+    raise ValueError(
+        f"The provided model architecture {model_architecture} is not supported."
+        "You can choose between `yolox-s`, `yolox-m`, `yolox-l` or `yolox-x`"
+    )
 
 logging.getLogger("picsellia").setLevel(logging.INFO)
 
@@ -77,45 +87,14 @@ if len(attached_datasets) == 3:
 
         annotations_coco = COCO(annotations_path)
 
-        # dataset.list_assets().download(
-        #     target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
-        # )
-
-else:
-    dataset = experiment.list_attached_dataset_versions()[0]
-    coco_annotation = dataset.build_coco_file_locally()
-    annotations_dict = coco_annotation.dict()
-    annotations_path = "annotations.json"
-    with open(annotations_path, "w") as f:
-        f.write(json.dumps(annotations_dict))
-    annotations_coco = COCO(annotations_path)
-
-    labels = dataset.list_labels()
-    label_names = [label.name for label in labels]
-    labelmap = {str(i): label.name for i, label in enumerate(labels)}
-
-    prop = (
-        0.7
-        if not "prop_train_split" in parameters.keys()
-        else parameters["prop_train_split"]
-    )
-
-    train_assets, test_assets, val_assets, _, _, _, _ = dataset.train_test_val_split(
-        ratios=[prop, (1.0 - prop) / 2, (1.0 - prop) / 2]
-    )
-
-    for data_type, assets in {
-        "train": train_assets,
-        "val": val_assets,
-        "test": test_assets,
-    }.items():
-        assets.download(
+        dataset.list_assets().download(
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
         )
 
-        create_yolo_detection_label(
-            experiment, data_type, annotations_dict, annotations_coco, label_names
-        )
+else:
+    raise picsellia.exceptions.PicselliaError(
+        "This model expect 3 datasets: `train`, `test` and `val`."
+    )
 
 # 3 - Log the labelmap
 logged_labelmap = {str(i): label.name for i, label in enumerate(labels)}
@@ -135,12 +114,6 @@ if os.path.isdir(f"{experiment.png_dir}/val"):
 # 5 - Get and prepare the parameters
 parameters = experiment.get_log("parameters").data
 
-if "architecture" not in parameters:
-    raise AssertionError(
-        'The YoloX cannot be created since the model parameter "architecture" is missing.'
-    )
-
-model_architecture = parameters["architecture"]
 dataset_base_dir_path = experiment.base_dir
 dataset_train_annotation_file_path = f"{experiment.png_dir}/train_annotations.json"
 dataset_test_annotation_file_path = f"{experiment.png_dir}/test_annotations.json"
@@ -156,7 +129,7 @@ epochs = parameters.get("epochs", 100)
 image_size = int(parameters.get("image_size", 640))
 
 # 6 - Launch the training
-from YOLOX.tools.train import make_parser
+from YOLOX.tools.train import make_parser, main
 from YOLOX.yolox.exp import check_exp_value
 from YOLOX.yolox.utils import configure_module, get_num_devices
 from YOLOX.yolox.exp.build import get_exp_by_name
@@ -194,17 +167,22 @@ num_gpu = get_num_devices() if args.devices is None else args.devices
 assert num_gpu <= get_num_devices()
 
 # 6C - Launch training
-# main(exp, args)
+main(exp, args)
 
 # 7 - Prepare the model for inference and export
 model = exp.get_model()
-model.eval()
 
 file_name = os.path.join(exp.output_dir, args.experiment_name)
 ckpt_file = os.path.join(file_name, "best_ckpt.pth")
 
+if not os.path.isfile(ckpt_file):
+    ckpt_file = os.path.join(file_name, "latest_ckpt.pth")
+
 ckpt = torch.load(ckpt_file, map_location="cpu")
 model.load_state_dict(ckpt["model"])
+
+model.to("cpu")
+model.eval()
 
 # 8 - Run the evaluation
 test_labels = test_ds.list_labels()
