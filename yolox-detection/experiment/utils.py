@@ -140,9 +140,9 @@ def evaluate_model(
     type_formatter: TypeFormatter,
     experiment: Experiment,
     dataset: DatasetVersion,
-    asset_list: List[Asset] = None,
     confidence_threshold: float = 0.1,
 ) -> Job:
+    asset_list = dataset.list_assets()
     evaluation_batch_size = experiment.get_log(name="parameters").data.get(
         "evaluation_batch_size", 8
     )

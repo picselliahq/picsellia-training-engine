@@ -2,6 +2,7 @@ import json
 import logging
 import os
 
+import picsellia
 import torch
 from picsellia.exceptions import ResourceNotFoundError
 from pycocotools.coco import COCO
@@ -206,18 +207,20 @@ ckpt = torch.load(ckpt_file, map_location="cpu")
 model.load_state_dict(ckpt["model"])
 
 # 8 - Run the evaluation
-framework_formatter = YoloFormatter(labelmap=labelmap)
+test_labels = test_ds.list_labels()
+test_label_names = [label.name for label in test_labels]
+test_labelmap = {i: label for i, label in enumerate(test_labels)}
+
+framework_formatter = YoloFormatter(labelmap=test_labelmap)
 type_formatter = DetectionFormatter(framework_formatter=framework_formatter)
-yolox_predictor = Predictor(model=model, exp=exp, cls_names=label_names)
+yolox_predictor = Predictor(model=model, exp=exp, cls_names=test_label_names)
 
 compute_metrics_job = evaluate_model(
     yolox_predictor=yolox_predictor,
     type_formatter=type_formatter,
     experiment=experiment,
     dataset=test_ds,
-    asset_list=test_ds.list_assets(),
 )
-compute_metrics_job.wait_for_done()
 
 # 9 - Export the model to ONNX
 model = replace_module(model, torch.nn.SiLU, SiLU)
@@ -231,3 +234,13 @@ torch.onnx.export(
     model_path,
 )
 experiment.store("model-latest", model_path)
+
+# 10 - Finally, wait for the metrics computation
+try:
+    compute_metrics_job.wait_for_done()
+
+except picsellia.exceptions.WaitingAttemptsTimeout:
+    logging.info(
+        "The compute metrics job has reached its timeout."
+        "While the job will continue running in the background, the training script will now terminate."
+    )
