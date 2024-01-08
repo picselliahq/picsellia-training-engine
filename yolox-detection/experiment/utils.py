@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import os
@@ -10,7 +11,8 @@ import torch
 import tqdm
 from PIL import Image
 from PIL import UnidentifiedImageError
-from picsellia import Job, DatasetVersion, Asset
+from picsellia import Job, DatasetVersion, Asset, Dataset
+from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.experiment import Experiment
 from picsellia.types.enums import InferenceType
 from pycocotools.coco import COCO
@@ -239,3 +241,62 @@ def format_prediction_to_evaluations(
             )
             evaluations.append(evaluation)
     return evaluations
+
+
+def extract_dataset(experiment: Experiment) -> (Dataset, Dataset, Dataset):
+    attached_datasets = experiment.list_attached_dataset_versions()
+    base_imgdir = experiment.png_dir
+
+    if len(attached_datasets) == 3:
+        try:
+            train_ds = experiment.get_dataset(name="train")
+        except Exception:
+            raise ResourceNotFoundError(
+                "Found 3 attached datasets, but can't find any 'train' dataset.\n \
+                                                expecting 'train', 'test', ('val' or 'eval')"
+            )
+        try:
+            test_ds = experiment.get_dataset(name="test")
+        except Exception:
+            raise ResourceNotFoundError(
+                "Found 3 attached datasets, but can't find any 'test' dataset.\n \
+                                                expecting 'train', 'test', ('val' or 'eval')"
+            )
+        try:
+            val_ds = experiment.get_dataset(name="val")
+        except Exception:
+            try:
+                val_ds = experiment.get_dataset(name="eval")
+            except Exception:
+                raise ResourceNotFoundError(
+                    "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
+                                                    expecting 'train', 'test', ('val' or 'eval')"
+                )
+
+        label_names = [label.name for label in train_ds.list_labels()]
+
+        for data_type, dataset in {
+            "train": train_ds,
+            "val": val_ds,
+            "test": test_ds,
+        }.items():
+            coco_annotation = dataset.build_coco_file_locally(
+                enforced_ordered_categories=label_names
+            )
+            annotations_dict = coco_annotation.dict()
+            annotations_path = os.path.join(
+                base_imgdir, f"{data_type}_annotations.json"
+            )
+
+            with open(annotations_path, "w") as f:
+                f.write(json.dumps(annotations_dict))
+
+            dataset.list_assets().download(
+                target_path=os.path.join(base_imgdir, data_type, "images"),
+                max_workers=8,
+            )
+
+    else:
+        raise picsellia.exceptions.PicselliaError(
+            "This model expect 3 datasets: `train`, `test` and `val`."
+        )

@@ -86,7 +86,8 @@ class JitOp:
     def load(self, verbose=True):
         try:
             # try to import op from pre-installed package
-            return importlib.import_module(self.absolute_name())
+            module_name = ".".join(["YOLOX", self.absolute_name()])
+            return importlib.import_module(module_name)
         except Exception:  # op not compiled, jit load
             from YOLOX.yolox.utils import wait_for_the_master
 

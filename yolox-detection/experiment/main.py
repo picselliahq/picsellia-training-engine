@@ -1,16 +1,14 @@
-import json
 import logging
 import os
 
 import picsellia
 import torch
 from picsellia.exceptions import ResourceNotFoundError
-from pycocotools.coco import COCO
 
 from YOLOX.tools.demo import Predictor
 from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import DetectionFormatter
-from utils import get_experiment, evaluate_model
+from utils import get_experiment, evaluate_model, extract_dataset
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
@@ -36,68 +34,10 @@ experiment = get_experiment()
 # 2 - Get the artifacts
 experiment.download_artifacts(with_tree=True)
 current_dir = os.path.join(os.getcwd(), experiment.base_dir)
-base_imgdir = experiment.png_dir
-
-parameters = experiment.get_log(name="parameters").data
-attached_datasets = experiment.list_attached_dataset_versions()
-
-if len(attached_datasets) == 3:
-    try:
-        train_ds = experiment.get_dataset(name="train")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')"
-        )
-    try:
-        test_ds = experiment.get_dataset(name="test")
-    except Exception:
-        raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')"
-        )
-    try:
-        val_ds = experiment.get_dataset(name="val")
-    except Exception:
-        try:
-            val_ds = experiment.get_dataset(name="eval")
-        except Exception:
-            raise ResourceNotFoundError(
-                "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                expecting 'train', 'test', ('val' or 'eval')"
-            )
-
-    labels = train_ds.list_labels()
-    label_names = [label.name for label in labels]
-    labelmap = {i: label for i, label in enumerate(labels)}
-
-    for data_type, dataset in {
-        "train": train_ds,
-        "val": val_ds,
-        "test": test_ds,
-    }.items():
-        coco_annotation = dataset.build_coco_file_locally(
-            enforced_ordered_categories=label_names
-        )
-        annotations_dict = coco_annotation.dict()
-        annotations_path = os.path.join(base_imgdir, f"{data_type}_annotations.json")
-
-        with open(annotations_path, "w") as f:
-            f.write(json.dumps(annotations_dict))
-
-        annotations_coco = COCO(annotations_path)
-
-        dataset.list_assets().download(
-            target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
-        )
-
-else:
-    raise picsellia.exceptions.PicselliaError(
-        "This model expect 3 datasets: `train`, `test` and `val`."
-    )
+train_ds, test_ds, val_ds = extract_dataset(experiment=experiment)
 
 # 3 - Log the labelmap
-logged_labelmap = {str(i): label.name for i, label in enumerate(labels)}
+logged_labelmap = {str(i): label.name for i, label in enumerate(train_ds.list_labels())}
 experiment.log("labelmap", logged_labelmap, "labelmap", replace=True)
 cwd = os.getcwd()
 
@@ -127,6 +67,7 @@ learning_rate = parameters.get("learning_rate", 0.01 / 64)
 batch_size = parameters.get("batch_size", 8)
 epochs = parameters.get("epochs", 100)
 image_size = int(parameters.get("image_size", 640))
+eval_interval = int(parameters.get("eval_interval", 5))
 
 # 6 - Launch the training
 from YOLOX.tools.train import make_parser, main
@@ -148,12 +89,13 @@ args.test_ann = dataset_test_annotation_file_path
 args.val_ann = dataset_val_annotation_file_path
 args.ckpt = model_latest_checkpoint_path
 
-args.num_classes = len(labelmap)
+args.num_classes = len(logged_labelmap)
 args.learning_rate = learning_rate
 args.batch_size = batch_size
 args.epochs = epochs
 args.image_size = (image_size, image_size)
 args.picsellia_experiment = experiment
+args.eval_interval = eval_interval
 
 # 6B - Get model architecture
 exp = get_exp_by_name(args)
