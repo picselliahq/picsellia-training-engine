@@ -157,10 +157,10 @@ def evaluate_model(
     total_batch_number = math.ceil(len(asset_list) / batch_size)
 
     for i in tqdm.tqdm(range(total_batch_number)):
-        subest_asset_list = asset_list[i * batch_size : (i + 1) * batch_size]
-        inputs = preprocess_images(subest_asset_list)
+        subset_asset_list = asset_list[i * batch_size : (i + 1) * batch_size]
+        inputs = preprocess_images(subset_asset_list)
 
-        for j, asset in enumerate(subest_asset_list):
+        for j, asset in enumerate(subset_asset_list):
             prediction, img_info = yolox_predictor.inference(inputs[j])
 
             if prediction[0] is not None:
@@ -353,15 +353,20 @@ def extract_dataset_assets(
             with open(annotations_path, "w") as f:
                 f.write(json.dumps(annotations_dict))
 
+            dataset_path = os.path.join(base_imgdir, data_type, "images")
+            os.makedirs(dataset_path)
+
             dataset.list_assets().download(
-                target_path=os.path.join(base_imgdir, data_type, "images"),
+                target_path=dataset_path,
                 max_workers=8,
             )
 
         for split, asset_list in {"train": assets[0], "val": assets[1]}.items():
-            # Prepare the val split
+            dataset_path = os.path.join(base_imgdir, split, "images")
+            os.makedirs(dataset_path)
+
             asset_list.download(
-                target_path=os.path.join(base_imgdir, split, "images"),
+                target_path=dataset_path,
                 max_workers=8,
             )
             coco_annotation = train_ds.build_coco_file_locally(
@@ -381,7 +386,73 @@ def extract_dataset_assets(
             test_ds.list_labels(),
             train_ds.type,
         )
+    elif len(attached_datasets) == 1:
+        try:
+            train_ds = experiment.get_dataset(name="train")
+        except Exception:
+            raise ResourceNotFoundError(
+                "Found 2 attached datasets, but can't find any 'train' dataset.\n \
+                                                expecting 'train', 'test', ('val' or 'eval')"
+            )
 
+        assets, classes_repartition, labels = train_ds.split_into_multi_assets(
+            ratios=[
+                prop_train_split,
+                (1.0 - prop_train_split) / 2,
+                (1.0 - prop_train_split) / 2,
+            ]
+        )
+        labelmap = {str(i): label.name for i, label in enumerate(labels)}
+        label_names = [label.name for label in labels]
+
+        experiment.log(
+            "train-split",
+            order_repartition_according_labelmap(labelmap, classes_repartition[0]),
+            "bar",
+            replace=True,
+        )
+        experiment.log(
+            "test-split",
+            order_repartition_according_labelmap(labelmap, classes_repartition[1]),
+            "bar",
+            replace=True,
+        )
+        experiment.log(
+            "val-split",
+            order_repartition_according_labelmap(labelmap, classes_repartition[2]),
+            "bar",
+            replace=True,
+        )
+
+        for split, asset_list in {
+            "train": assets[0],
+            "test": assets[1],
+            "val": assets[2],
+        }.items():
+            dataset_path = os.path.join(base_imgdir, split, "images")
+            os.makedirs(dataset_path)
+
+            asset_list.download(
+                target_path=dataset_path,
+                max_workers=8,
+            )
+            coco_annotation = train_ds.build_coco_file_locally(
+                assets=asset_list, enforced_ordered_categories=label_names
+            )
+            annotations_dict = coco_annotation.dict()
+            annotations_path = os.path.join(base_imgdir, f"{split}_annotations.json")
+
+            with open(annotations_path, "w") as f:
+                f.write(json.dumps(annotations_dict))
+
+        return (
+            assets[0],
+            assets[1],
+            assets[2],
+            labels,
+            labels,
+            train_ds.type,
+        )
     else:
         raise picsellia.exceptions.PicselliaError(
             "This model expect 3 datasets: `train`, `test` and `val`."

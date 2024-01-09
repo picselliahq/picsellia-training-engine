@@ -4,14 +4,15 @@ import os
 import picsellia
 import torch
 from picsellia.exceptions import ResourceNotFoundError
+from picsellia.types.enums import LogType
 
 from YOLOX.tools.demo import Predictor
 from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import DetectionFormatter
 from utils import (
     get_experiment,
-    evaluate_model,
     extract_dataset_assets,
+    evaluate_model,
 )
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
@@ -69,10 +70,17 @@ dataset_base_dir_path = experiment.base_dir
 dataset_train_annotation_file_path = f"{experiment.png_dir}/train_annotations.json"
 dataset_test_annotation_file_path = f"{experiment.png_dir}/test_annotations.json"
 dataset_val_annotation_file_path = f"{experiment.png_dir}/val_annotations.json"
-model_latest_checkpoint_path = f"{experiment.checkpoint_dir}/{model_architecture}.pth"
+model_latest_checkpoint_path = None
 
-if not os.path.isfile(model_latest_checkpoint_path):
-    model_latest_checkpoint_path = None
+if best_epoch_number := parameters.get("best_epoch_number", None):
+    model_latest_checkpoint_path = (
+        f"{experiment.base_dir}/best_ckpt_{best_epoch_number}.pth"
+    )
+elif os.path.isfile(f"{experiment.base_dir}/last_epoch_ckpt.pth"):
+    model_latest_checkpoint_path = f"{experiment.base_dir}/last_epoch_ckpt.pth"
+
+elif os.path.isfile(f"{experiment.base_dir}/{model_architecture}.pth"):
+    model_latest_checkpoint_path = f"{experiment.base_dir}/{model_architecture}.pth"
 
 learning_rate = parameters.get("learning_rate", 0.01 / 64)
 batch_size = parameters.get("batch_size", 8)
@@ -129,7 +137,7 @@ file_name = os.path.join(exp.output_dir, args.experiment_name)
 ckpt_file = os.path.join(file_name, "best_ckpt.pth")
 
 if not os.path.isfile(ckpt_file):
-    ckpt_file = os.path.join(file_name, "latest_ckpt.pth")
+    ckpt_file = os.path.join(file_name, "last_epoch_ckpt.pth")
 
 ckpt = torch.load(ckpt_file, map_location="cpu")
 model.load_state_dict(ckpt["model"])
@@ -166,8 +174,28 @@ torch.onnx.export(
 )
 experiment.store("model-latest", model_path)
 
+# 9A - Handle Best checkpoint and add the epoch number
+best_checkpoint_path = os.path.join(
+    exp.output_dir, args.experiment_name, " best_ckpt.pth"
+)
+if os.path.isfile(best_checkpoint_path):
+    new_best_epoch_number = exp.get_trainer().best_ap
+    best_checkpoint_path_with_epoch = os.path.join(
+        exp.output_dir, args.experiment_name, f"best_ckpt_{new_best_epoch_number}.pth"
+    )
+    experiment.log("best_epoch_number", new_best_epoch_number, LogType.VALUE)
+    experiment.store("best-ckpt", best_checkpoint_path)
+
+# 9B - Handle latest checkpoint
+latest_checkpoint_path = os.path.join(
+    exp.output_dir, args.experiment_name, "last_epoch_ckpt.pth"
+)
+if os.path.isfile(latest_checkpoint_path):
+    experiment.store("last-epoch-ckpt", latest_checkpoint_path)
+
 # 10 - Finally, wait for the metrics computation
 try:
+    t = 1
     compute_metrics_job.wait_for_done()
 
 except picsellia.exceptions.WaitingAttemptsTimeout:
