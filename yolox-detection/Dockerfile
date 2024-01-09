@@ -10,5 +10,7 @@ WORKDIR /experiment
 COPY ./yolox-detection/experiment ./
 COPY ./evaluator ./evaluator
 
+RUN mkdir -p /workspace
+RUN chmod 777 /workspace
 
 ENTRYPOINT ["run", "main.py"]

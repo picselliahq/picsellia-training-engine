@@ -228,9 +228,10 @@ class Trainer:
 
         if self.rank == 0:
             for key, meter in self.meter.items():
-                self.picsellia_experiment.log(
-                    name=key, type=LogType.LINE, data=float(meter.latest)
-                )
+                if meter.latest is not None:
+                    self.picsellia_experiment.log(
+                        name=key, type=LogType.LINE, data=float(meter.latest)
+                    )
 
         self.meter.clear_meters()
 

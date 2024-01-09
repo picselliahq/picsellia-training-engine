@@ -11,8 +11,9 @@ import torch
 import tqdm
 from PIL import Image
 from PIL import UnidentifiedImageError
-from picsellia import Job, DatasetVersion, Asset, Dataset
+from picsellia import Job, Asset, Label
 from picsellia.exceptions import ResourceNotFoundError
+from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.experiment import Experiment
 from picsellia.types.enums import InferenceType
 from pycocotools.coco import COCO
@@ -141,10 +142,10 @@ def evaluate_model(
     yolox_predictor: Predictor,
     type_formatter: TypeFormatter,
     experiment: Experiment,
-    dataset: DatasetVersion,
+    asset_list: MultiAsset,
+    dataset_type: InferenceType,
     confidence_threshold: float = 0.1,
 ) -> Job:
-    asset_list = dataset.list_assets()
     evaluation_batch_size = experiment.get_log(name="parameters").data.get(
         "evaluation_batch_size", 8
     )
@@ -177,12 +178,12 @@ def evaluate_model(
                     experiment=experiment, asset=asset, evaluations=evaluations
                 )
 
-    if dataset.type in [
+    if dataset_type in [
         InferenceType.OBJECT_DETECTION,
         InferenceType.SEGMENTATION,
         InferenceType.CLASSIFICATION,
     ]:
-        return experiment.compute_evaluations_metrics(inference_type=dataset.type)
+        return experiment.compute_evaluations_metrics(inference_type=dataset_type)
 
 
 def preprocess_images(assets: List[Asset]) -> List[np.array]:
@@ -243,7 +244,9 @@ def format_prediction_to_evaluations(
     return evaluations
 
 
-def extract_dataset(experiment: Experiment) -> (Dataset, Dataset, Dataset):
+def extract_dataset_assets(
+    experiment: Experiment, prop_train_split: float
+) -> (MultiAsset, MultiAsset, MultiAsset, list[Label], list[Label], InferenceType):
     attached_datasets = experiment.list_attached_dataset_versions()
     base_imgdir = experiment.png_dir
 
@@ -252,26 +255,20 @@ def extract_dataset(experiment: Experiment) -> (Dataset, Dataset, Dataset):
             train_ds = experiment.get_dataset(name="train")
         except Exception:
             raise ResourceNotFoundError(
-                "Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                                expecting 'train', 'test', ('val' or 'eval')"
+                "Found 3 attached datasets, but can't find any 'train' dataset. Expecting 'train', 'test', 'val'"
             )
         try:
             test_ds = experiment.get_dataset(name="test")
         except Exception:
             raise ResourceNotFoundError(
-                "Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                                expecting 'train', 'test', ('val' or 'eval')"
+                "Found 3 attached datasets, but can't find any 'test' dataset. Expecting 'train', 'test', 'val'"
             )
         try:
             val_ds = experiment.get_dataset(name="val")
         except Exception:
-            try:
-                val_ds = experiment.get_dataset(name="eval")
-            except Exception:
-                raise ResourceNotFoundError(
-                    "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                    expecting 'train', 'test', ('val' or 'eval')"
-                )
+            raise ResourceNotFoundError(
+                "Found 3 attached datasets, but can't find any 'val' dataset. Expecting 'train', 'test', 'val"
+            )
 
         label_names = [label.name for label in train_ds.list_labels()]
 
@@ -291,12 +288,111 @@ def extract_dataset(experiment: Experiment) -> (Dataset, Dataset, Dataset):
             with open(annotations_path, "w") as f:
                 f.write(json.dumps(annotations_dict))
 
+            dataset_path = os.path.join(base_imgdir, data_type, "images")
+            os.makedirs(dataset_path)
+
+            dataset.list_assets().download(
+                target_path=dataset_path,
+                max_workers=8,
+            )
+
+        return (
+            train_ds.list_assets(),
+            test_ds.list_assets(),
+            val_ds.list_assets(),
+            train_ds.list_labels(),
+            test_ds.list_labels(),
+            train_ds.type,
+        )
+    elif len(attached_datasets) == 2:
+        try:
+            train_ds = experiment.get_dataset(name="train")
+        except Exception:
+            raise ResourceNotFoundError(
+                "Found 2 attached datasets, but can't find any 'train' dataset.\n \
+                                                expecting 'train', 'test', ('val' or 'eval')"
+            )
+        try:
+            test_ds = experiment.get_dataset(name="test")
+        except Exception:
+            raise ResourceNotFoundError(
+                "Found  attached datasets, but can't find any 'test' dataset.\n \
+                                                expecting 'train', 'test', ('val' or 'eval')"
+            )
+
+        assets, classes_repartition, labels = train_ds.split_into_multi_assets(
+            ratios=[prop_train_split, 1 - prop_train_split]
+        )
+        labelmap = {str(i): label.name for i, label in enumerate(labels)}
+        label_names = [label.name for label in labels]
+
+        experiment.log(
+            "train-split",
+            order_repartition_according_labelmap(labelmap, classes_repartition[0]),
+            "bar",
+            replace=True,
+        )
+        experiment.log(
+            "val-split",
+            order_repartition_according_labelmap(labelmap, classes_repartition[1]),
+            "bar",
+            replace=True,
+        )
+
+        for data_type, dataset in {
+            "test": test_ds,
+        }.items():
+            coco_annotation = dataset.build_coco_file_locally(
+                enforced_ordered_categories=label_names
+            )
+            annotations_dict = coco_annotation.dict()
+            annotations_path = os.path.join(
+                base_imgdir, f"{data_type}_annotations.json"
+            )
+
+            with open(annotations_path, "w") as f:
+                f.write(json.dumps(annotations_dict))
+
             dataset.list_assets().download(
                 target_path=os.path.join(base_imgdir, data_type, "images"),
                 max_workers=8,
             )
 
+        for split, asset_list in {"train": assets[0], "val": assets[1]}.items():
+            # Prepare the val split
+            asset_list.download(
+                target_path=os.path.join(base_imgdir, split, "images"),
+                max_workers=8,
+            )
+            coco_annotation = train_ds.build_coco_file_locally(
+                assets=asset_list, enforced_ordered_categories=label_names
+            )
+            annotations_dict = coco_annotation.dict()
+            annotations_path = os.path.join(base_imgdir, f"{split}_annotations.json")
+
+            with open(annotations_path, "w") as f:
+                f.write(json.dumps(annotations_dict))
+
+        return (
+            assets[0],
+            test_ds.list_assets(),
+            assets[1],
+            labels,
+            test_ds.list_labels(),
+            train_ds.type,
+        )
+
     else:
         raise picsellia.exceptions.PicselliaError(
             "This model expect 3 datasets: `train`, `test` and `val`."
         )
+
+
+def order_repartition_according_labelmap(labelmap: dict, repartition: dict) -> dict:
+    ordered_rep = {"x": list(labelmap.values()), "y": []}
+    for name in labelmap.values():
+        if name in repartition:
+            ordered_rep["y"].append(repartition[name])
+        else:
+            ordered_rep["y"].append(0)
+    return ordered_rep

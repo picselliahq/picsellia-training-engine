@@ -8,7 +8,11 @@ from picsellia.exceptions import ResourceNotFoundError
 from YOLOX.tools.demo import Predictor
 from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import DetectionFormatter
-from utils import get_experiment, evaluate_model, extract_dataset
+from utils import (
+    get_experiment,
+    evaluate_model,
+    extract_dataset_assets,
+)
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
@@ -28,16 +32,25 @@ elif model_architecture not in ("yolox-s", "yolox-m", "yolox-l", "yolox-x"):
 
 logging.getLogger("picsellia").setLevel(logging.INFO)
 
-# 1 - Get Experiment
+# 1 - Get Experiment and its parameters
 experiment = get_experiment()
+parameters = experiment.get_log("parameters").data
 
 # 2 - Get the artifacts
+prop_train_split = parameters.get("prop_train_split", 0.7)
 experiment.download_artifacts(with_tree=True)
 current_dir = os.path.join(os.getcwd(), experiment.base_dir)
-train_ds, test_ds, val_ds = extract_dataset(experiment=experiment)
+(
+    train_assets,
+    test_assets,
+    val_assets,
+    train_labels,
+    test_labels,
+    ds_type,
+) = extract_dataset_assets(experiment=experiment, prop_train_split=prop_train_split)
 
 # 3 - Log the labelmap
-logged_labelmap = {str(i): label.name for i, label in enumerate(train_ds.list_labels())}
+logged_labelmap = {str(i): label.name for i, label in enumerate(train_labels)}
 experiment.log("labelmap", logged_labelmap, "labelmap", replace=True)
 cwd = os.getcwd()
 
@@ -52,8 +65,6 @@ if os.path.isdir(f"{experiment.png_dir}/val"):
     os.rename(f"{experiment.png_dir}/val", f"{experiment.png_dir}/val2017")
 
 # 5 - Get and prepare the parameters
-parameters = experiment.get_log("parameters").data
-
 dataset_base_dir_path = experiment.base_dir
 dataset_train_annotation_file_path = f"{experiment.png_dir}/train_annotations.json"
 dataset_test_annotation_file_path = f"{experiment.png_dir}/test_annotations.json"
@@ -65,7 +76,7 @@ if not os.path.isfile(model_latest_checkpoint_path):
 
 learning_rate = parameters.get("learning_rate", 0.01 / 64)
 batch_size = parameters.get("batch_size", 8)
-epochs = parameters.get("epochs", 100)
+epochs = int(parameters.get("epochs", 100))
 image_size = int(parameters.get("image_size", 640))
 eval_interval = int(parameters.get("eval_interval", 5))
 
@@ -127,7 +138,6 @@ model.to("cpu")
 model.eval()
 
 # 8 - Run the evaluation
-test_labels = test_ds.list_labels()
 test_label_names = [label.name for label in test_labels]
 test_labelmap = {i: label for i, label in enumerate(test_labels)}
 
@@ -139,7 +149,8 @@ compute_metrics_job = evaluate_model(
     yolox_predictor=yolox_predictor,
     type_formatter=type_formatter,
     experiment=experiment,
-    dataset=test_ds,
+    asset_list=test_assets,
+    dataset_type=ds_type,
 )
 
 # 9 - Export the model to ONNX
