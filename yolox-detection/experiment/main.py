@@ -71,6 +71,7 @@ dataset_train_annotation_file_path = f"{experiment.png_dir}/train_annotations.js
 dataset_test_annotation_file_path = f"{experiment.png_dir}/test_annotations.json"
 dataset_val_annotation_file_path = f"{experiment.png_dir}/val_annotations.json"
 model_latest_checkpoint_path = None
+model_architecture = model_architecture.replace("-", "_")
 
 if best_epoch_number := parameters.get("best_epoch_number", None):
     model_latest_checkpoint_path = (
@@ -121,11 +122,8 @@ exp = get_exp_by_name(args)
 exp.merge(args.opts)
 check_exp_value(exp)
 
-if not args.experiment_name:
-    args.experiment_name = exp.exp_name
-
-num_gpu = get_num_devices() if args.devices is None else args.devices
-assert num_gpu <= get_num_devices()
+args.experiment_name = exp.exp_name
+num_gpu = get_num_devices()
 
 # 6C - Launch training
 main(exp, args)
@@ -139,10 +137,17 @@ ckpt_file = os.path.join(file_name, "best_ckpt.pth")
 if not os.path.isfile(ckpt_file):
     ckpt_file = os.path.join(file_name, "last_epoch_ckpt.pth")
 
-ckpt = torch.load(ckpt_file, map_location="cpu")
+if num_gpu > 0:
+    ckpt = torch.load(ckpt_file, map_location=lambda storage, loc: storage.cuda(0))
+    prediction_device = "gpu"
+else:
+    ckpt = torch.load(ckpt_file, map_location="cpu")
+    prediction_device = "cpu"
+
 model.load_state_dict(ckpt["model"])
 
-model.to("cpu")
+torch_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+model.to(torch_device)
 model.eval()
 
 # 8 - Run the evaluation
@@ -151,7 +156,9 @@ test_labelmap = {i: label for i, label in enumerate(test_labels)}
 
 framework_formatter = YoloFormatter(labelmap=test_labelmap)
 type_formatter = DetectionFormatter(framework_formatter=framework_formatter)
-yolox_predictor = Predictor(model=model, exp=exp, cls_names=test_label_names)
+yolox_predictor = Predictor(
+    model=model, exp=exp, cls_names=test_label_names, device=prediction_device
+)
 
 compute_metrics_job = evaluate_model(
     yolox_predictor=yolox_predictor,
@@ -164,7 +171,7 @@ compute_metrics_job = evaluate_model(
 # 9 - Export the model to ONNX
 model = replace_module(model, torch.nn.SiLU, SiLU)
 model.head.decode_in_inference = False
-dummy_input = torch.randn(1, 3, image_size, image_size)
+dummy_input = torch.randn(args.batch_size, 3, image_size, image_size)
 model_path = os.path.join(exp.output_dir, args.experiment_name, "best.onnx")
 
 torch.onnx.export(

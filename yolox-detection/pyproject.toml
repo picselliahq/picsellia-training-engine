@@ -19,7 +19,7 @@ pycocotools = "^2.0.7"
 tqdm = "^4.66.1"
 thop = "^0.1.1.post2209072238"
 ninja = "^1.11.1.1"
-picsellia = { path = "../../picsellia-sdk-python", develop = true }
+picsellia = "^6.10.3"
 onnx = "^1.15.0"
 
 
