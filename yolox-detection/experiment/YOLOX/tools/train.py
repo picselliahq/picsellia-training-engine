@@ -5,11 +5,9 @@
 import argparse
 import random
 import warnings
-from loguru import logger
 
 import torch
 import torch.backends.cudnn as cudnn
-
 from YOLOX.yolox.core import launch
 from YOLOX.yolox.exp import Exp, check_exp_value, get_exp
 from YOLOX.yolox.utils import (
@@ -18,6 +16,7 @@ from YOLOX.yolox.utils import (
     configure_omp,
     get_num_devices,
 )
+from loguru import logger
 
 
 def make_parser():
@@ -121,6 +120,7 @@ def main(exp: Exp, args):
 
     trainer = exp.get_trainer(args)
     trainer.train()
+    return trainer
 
 
 if __name__ == "__main__":

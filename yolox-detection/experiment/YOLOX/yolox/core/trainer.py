@@ -55,6 +55,7 @@ class Trainer:
         self.data_type = torch.float16 if args.fp16 else torch.float32
         self.input_size = exp.input_size
         self.best_ap = 0
+        self.best_epoch = None
 
         # metric record
         self.meter = MeterBuffer(window_size=exp.print_interval)
@@ -387,6 +388,9 @@ class Trainer:
                 self.file_name,
                 ckpt_name,
             )
+
+            if update_best_ckpt:
+                self.best_epoch = self.epoch + 1
 
             if self.args.logger == "wandb":
                 self.wandb_logger.save_checkpoint(

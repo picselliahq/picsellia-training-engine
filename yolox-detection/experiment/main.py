@@ -4,9 +4,14 @@ import os
 import picsellia
 import torch
 from picsellia.exceptions import ResourceNotFoundError
-from picsellia.types.enums import LogType
 
 from YOLOX.tools.demo import Predictor
+from YOLOX.tools.train import make_parser, main
+from YOLOX.yolox.exp import check_exp_value
+from YOLOX.yolox.exp.build import get_exp_by_name
+from YOLOX.yolox.models.network_blocks import SiLU
+from YOLOX.yolox.utils import configure_module, get_num_devices
+from YOLOX.yolox.utils import replace_module
 from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import DetectionFormatter
 from utils import (
@@ -37,7 +42,7 @@ logging.getLogger("picsellia").setLevel(logging.INFO)
 experiment = get_experiment()
 parameters = experiment.get_log("parameters").data
 
-# 2 - Get the artifacts
+# 2 - Retrieve the artifacts
 prop_train_split = parameters.get("prop_train_split", 0.7)
 experiment.download_artifacts(with_tree=True)
 current_dir = os.path.join(os.getcwd(), experiment.base_dir)
@@ -90,13 +95,6 @@ image_size = int(parameters.get("image_size", 640))
 eval_interval = int(parameters.get("eval_interval", 5))
 
 # 6 - Launch the training
-from YOLOX.tools.train import make_parser, main
-from YOLOX.yolox.exp import check_exp_value
-from YOLOX.yolox.utils import configure_module, get_num_devices
-from YOLOX.yolox.exp.build import get_exp_by_name
-from YOLOX.yolox.models.network_blocks import SiLU
-from YOLOX.yolox.utils import replace_module
-
 # 6A - Args
 configure_module()
 args = make_parser().parse_args()
@@ -126,7 +124,7 @@ args.experiment_name = exp.exp_name
 num_gpu = get_num_devices()
 
 # 6C - Launch training
-main(exp, args)
+trainer = main(exp, args)
 
 # 7 - Prepare the model for inference and export
 model = exp.get_model()
@@ -172,6 +170,10 @@ compute_metrics_job = evaluate_model(
 model = replace_module(model, torch.nn.SiLU, SiLU)
 model.head.decode_in_inference = False
 dummy_input = torch.randn(args.batch_size, 3, image_size, image_size)
+
+if num_gpu > 0:
+    dummy_input = dummy_input.to("cuda:0")
+
 model_path = os.path.join(exp.output_dir, args.experiment_name, "best.onnx")
 
 torch.onnx.export(
@@ -183,14 +185,13 @@ experiment.store("model-latest", model_path)
 
 # 9A - Handle Best checkpoint and add the epoch number
 best_checkpoint_path = os.path.join(
-    exp.output_dir, args.experiment_name, " best_ckpt.pth"
+    exp.output_dir, args.experiment_name, "best_ckpt.pth"
 )
 if os.path.isfile(best_checkpoint_path):
-    new_best_epoch_number = exp.get_trainer().best_ap
+    new_best_epoch_number = trainer.best_epoch
     best_checkpoint_path_with_epoch = os.path.join(
         exp.output_dir, args.experiment_name, f"best_ckpt_{new_best_epoch_number}.pth"
     )
-    experiment.log("best_epoch_number", new_best_epoch_number, LogType.VALUE)
     experiment.store("best-ckpt", best_checkpoint_path)
 
 # 9B - Handle latest checkpoint
@@ -202,7 +203,6 @@ if os.path.isfile(latest_checkpoint_path):
 
 # 10 - Finally, wait for the metrics computation
 try:
-    t = 1
     compute_metrics_job.wait_for_done()
 
 except picsellia.exceptions.WaitingAttemptsTimeout:
