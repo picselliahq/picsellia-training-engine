@@ -181,6 +181,7 @@ torch.onnx.export(
     model_path,
 )
 experiment.store("model-latest", model_path)
+logging.info("Exported the model best.onnx as model-latest")
 
 # 9A - Handle Best checkpoint and add the epoch number
 best_checkpoint_path = os.path.join(
@@ -188,7 +189,10 @@ best_checkpoint_path = os.path.join(
 )
 if os.path.isfile(best_checkpoint_path):
     new_best_epoch_number = trainer.best_epoch
-    experiment.store(f"best-ckpt-{new_best_epoch_number}.pth", best_checkpoint_path)
+    experiment.store(f"best-ckpt-{new_best_epoch_number}", best_checkpoint_path)
+    logging.info(
+        f"Exported best checkpoint for epoch {new_best_epoch_number} as best-ckpt-{new_best_epoch_number}"
+    )
 
 # 9B - Handle latest checkpoint
 latest_checkpoint_path = os.path.join(
@@ -196,6 +200,7 @@ latest_checkpoint_path = os.path.join(
 )
 if os.path.isfile(latest_checkpoint_path):
     experiment.store("last-epoch-ckpt", latest_checkpoint_path)
+    logging.info("Exported the last checkpoint as last-epoch-ckpt")
 
 # 10 - Finally, wait for the metrics computation
 try:
