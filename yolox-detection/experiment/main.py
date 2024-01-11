@@ -78,10 +78,9 @@ dataset_val_annotation_file_path = f"{experiment.png_dir}/val_annotations.json"
 model_latest_checkpoint_path = None
 model_architecture = model_architecture.replace("-", "_")
 
-if best_epoch_number := parameters.get("best_epoch_number", None):
-    model_latest_checkpoint_path = (
-        f"{experiment.base_dir}/best_ckpt_{best_epoch_number}.pth"
-    )
+if os.path.isfile(f"{experiment.base_dir}/best_ckpt.pth"):
+    model_latest_checkpoint_path = f"{experiment.base_dir}/best_ckpt.pth"
+
 elif os.path.isfile(f"{experiment.base_dir}/last_epoch_ckpt.pth"):
     model_latest_checkpoint_path = f"{experiment.base_dir}/last_epoch_ckpt.pth"
 
@@ -189,10 +188,7 @@ best_checkpoint_path = os.path.join(
 )
 if os.path.isfile(best_checkpoint_path):
     new_best_epoch_number = trainer.best_epoch
-    best_checkpoint_path_with_epoch = os.path.join(
-        exp.output_dir, args.experiment_name, f"best_ckpt_{new_best_epoch_number}.pth"
-    )
-    experiment.store("best-ckpt", best_checkpoint_path)
+    experiment.store(f"best-ckpt-{new_best_epoch_number}.pth", best_checkpoint_path)
 
 # 9B - Handle latest checkpoint
 latest_checkpoint_path = os.path.join(
