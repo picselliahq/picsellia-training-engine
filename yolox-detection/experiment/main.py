@@ -181,7 +181,7 @@ torch.onnx.export(
     model_path,
 )
 experiment.store("model-latest", model_path)
-logging.info("Exported the model best.onnx as model-latest")
+print("Exported the model best.onnx as model-latest")
 
 # 9A - Handle Best checkpoint and add the epoch number
 best_checkpoint_path = os.path.join(
@@ -190,7 +190,7 @@ best_checkpoint_path = os.path.join(
 if os.path.isfile(best_checkpoint_path):
     new_best_epoch_number = trainer.best_epoch
     experiment.store(f"best-ckpt-{new_best_epoch_number}", best_checkpoint_path)
-    logging.info(
+    print(
         f"Exported best checkpoint for epoch {new_best_epoch_number} as best-ckpt-{new_best_epoch_number}"
     )
 
@@ -200,14 +200,14 @@ latest_checkpoint_path = os.path.join(
 )
 if os.path.isfile(latest_checkpoint_path):
     experiment.store("last-epoch-ckpt", latest_checkpoint_path)
-    logging.info("Exported the last checkpoint as last-epoch-ckpt")
+    print("Exported the last checkpoint as last-epoch-ckpt")
 
 # 10 - Finally, wait for the metrics computation
 try:
     compute_metrics_job.wait_for_done()
 
 except picsellia.exceptions.WaitingAttemptsTimeout:
-    logging.info(
+    print(
         "The compute metrics job has reached its timeout."
         "While the job will continue running in the background, the training script will now terminate."
     )
