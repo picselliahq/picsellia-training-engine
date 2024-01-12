@@ -80,12 +80,25 @@ model_architecture = model_architecture.replace("-", "_")
 
 if os.path.isfile(f"{experiment.base_dir}/best_ckpt.pth"):
     model_latest_checkpoint_path = f"{experiment.base_dir}/best_ckpt.pth"
+    print(
+        "A previous training has been found. Its best checkpoint will be used for this training."
+    )
 
 elif os.path.isfile(f"{experiment.base_dir}/last_epoch_ckpt.pth"):
     model_latest_checkpoint_path = f"{experiment.base_dir}/last_epoch_ckpt.pth"
+    print(
+        "A previous training has been found but no best checkpoint has been registered."
+        "Its last checkpoint will be used instead."
+    )
 
 elif os.path.isfile(f"{experiment.base_dir}/{model_architecture}.pth"):
     model_latest_checkpoint_path = f"{experiment.base_dir}/{model_architecture}.pth"
+    print(f"Starting the training with {model_architecture}'s pre-trained weights.")
+
+else:
+    print(
+        "Warning: No checkpoint nor pre-trained weights have been found, this training will be started from scratch."
+    )
 
 learning_rate = parameters.get("learning_rate", 0.01 / 64)
 batch_size = parameters.get("batch_size", 8)
@@ -122,7 +135,7 @@ check_exp_value(exp)
 args.experiment_name = exp.exp_name
 num_gpu = get_num_devices()
 
-# 6C - Launch training
+# 6C - Start the training
 trainer = main(exp, args)
 
 # 7 - Prepare the model for inference and export
