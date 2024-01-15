@@ -34,14 +34,21 @@ class YOLOV8StyleOutput:
         self.img_width = img_info.get("width", 1)
         self.img_height = img_info.get("height", 1)
         self.ratio = img_info.get("ratio", 1)
-
+        if self.img_width >= self.img_height:
+            ratio = self.img_width / self.img_height
+            target_width = 640
+            target_height = int(target_width / ratio)
+        else:
+            ratio = self.img_height / self.img_width
+            target_height = 640
+            target_width = int(target_height / ratio)
         # Extract and normalize boxes
         boxes = yolox_output[:, 0:4]
         normalized_boxes = torch.zeros_like(boxes)
-        normalized_boxes[:, 0] = boxes[:, 0] / self.img_width
-        normalized_boxes[:, 1] = boxes[:, 1] / self.img_height
-        normalized_boxes[:, 2] = boxes[:, 2] / self.img_width
-        normalized_boxes[:, 3] = boxes[:, 3] / self.img_height
+        normalized_boxes[:, 0] = boxes[:, 0] / target_width
+        normalized_boxes[:, 1] = boxes[:, 1] / target_height
+        normalized_boxes[:, 2] = boxes[:, 2] / target_width
+        normalized_boxes[:, 3] = boxes[:, 3] / target_height
 
         # Extract confidences and classes
         conf = yolox_output[:, 4] * yolox_output[:, 5]
@@ -289,12 +296,12 @@ def extract_dataset_assets(
                 f.write(json.dumps(annotations_dict))
 
             dataset_path = os.path.join(base_imgdir, data_type, "images")
-            os.makedirs(dataset_path)
+            # os.makedirs(dataset_path)
 
-            dataset.list_assets().download(
-                target_path=dataset_path,
-                max_workers=8,
-            )
+            # dataset.list_assets().download(
+            #     target_path=dataset_path,
+            #     max_workers=8,
+            # )
 
         return (
             train_ds.list_assets(),

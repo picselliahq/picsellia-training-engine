@@ -152,3 +152,4 @@ checkpoint
 .idea
 
 */poetry.lock
+yolox-detection-test/*
