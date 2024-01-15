@@ -227,12 +227,23 @@ class Trainer:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
 
-        if self.rank == 0:
-            for key, meter in self.meter.items():
-                if meter.latest is not None:
+            loss_meter = self.meter.get_filtered_meter("loss")
+            for k, v in loss_meter.items():
+                try:
                     self.picsellia_experiment.log(
-                        name=key, type=LogType.LINE, data=float(meter.latest)
+                        name="train/" + k, type=LogType.LINE, data=float(v.latest)
                     )
+                    self.picsellia_experiment.log(
+                            name="train/lr", type=LogType.LINE, data=float(self.meter["lr"].latest)
+                        )
+                except Exception as e:
+                    logger.warn(f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}")
+            try:
+                self.picsellia_experiment.log(
+                        name="train/lr", type=LogType.LINE, data=float(self.meter["lr"].latest)
+                    )
+            except Exception as e:
+                logger.warn(f"Couldn't log metric 'train/lr' to Picsellia because: {str(e)}")
 
         self.meter.clear_meters()
 
@@ -292,7 +303,7 @@ class Trainer:
                     metrics = {"train/" + k: v.latest for k, v in loss_meter.items()}
                     metrics.update({"train/lr": self.meter["lr"].latest})
                     self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
-
+                
             self.meter.clear_meters()
 
         # random resizing
