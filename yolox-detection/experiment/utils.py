@@ -296,12 +296,12 @@ def extract_dataset_assets(
                 f.write(json.dumps(annotations_dict))
 
             dataset_path = os.path.join(base_imgdir, data_type, "images")
-            # os.makedirs(dataset_path)
+            os.makedirs(dataset_path)
 
-            # dataset.list_assets().download(
-            #     target_path=dataset_path,
-            #     max_workers=8,
-            # )
+            dataset.list_assets().download(
+                target_path=dataset_path,
+                max_workers=8,
+            )
 
         return (
             train_ds.list_assets(),
