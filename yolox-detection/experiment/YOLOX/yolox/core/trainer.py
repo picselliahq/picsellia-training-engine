@@ -234,13 +234,13 @@ class Trainer:
                         name="train/" + k, type=LogType.LINE, data=float(v.latest)
                     )
                 except Exception as e:
-                    logger.warn(f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}")
+                    logger.info(f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}")
             try:
                 self.picsellia_experiment.log(
                         name="train/lr", type=LogType.LINE, data=float(self.meter["lr"].latest)
                     )
             except Exception as e:
-                logger.warn(f"Couldn't log metric 'train/lr' to Picsellia because: {str(e)}")
+                logger.info(f"Couldn't log metric 'train/lr' to Picsellia because: {str(e)}")
 
         self.meter.clear_meters()
 
