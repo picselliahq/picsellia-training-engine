@@ -284,8 +284,9 @@ def extract_dataset_assets(
             "val": val_ds,
             "test": test_ds,
         }.items():
+            asset_list = dataset.list_assets()
             coco_annotation = dataset.build_coco_file_locally(
-                enforced_ordered_categories=label_names
+                assets=asset_list, enforced_ordered_categories=label_names, use_id=True
             )
             annotations_dict = coco_annotation.dict()
             annotations_path = os.path.join(
@@ -298,9 +299,10 @@ def extract_dataset_assets(
             dataset_path = os.path.join(base_imgdir, data_type, "images")
             os.makedirs(dataset_path)
 
-            dataset.list_assets().download(
+            asset_list.download(
                 target_path=dataset_path,
                 max_workers=8,
+                use_id=True
             )
 
         return (
@@ -349,8 +351,14 @@ def extract_dataset_assets(
         for data_type, dataset in {
             "test": test_ds,
         }.items():
+            asset_list = dataset.list_assets()
+            asset_list.download(
+                target_path=dataset_path,
+                max_workers=8,
+                use_id=True
+            )
             coco_annotation = dataset.build_coco_file_locally(
-                enforced_ordered_categories=label_names
+                assets=asset_list, enforced_ordered_categories=label_names, use_id=True
             )
             annotations_dict = coco_annotation.dict()
             annotations_path = os.path.join(
@@ -363,10 +371,7 @@ def extract_dataset_assets(
             dataset_path = os.path.join(base_imgdir, data_type, "images")
             os.makedirs(dataset_path)
 
-            dataset.list_assets().download(
-                target_path=dataset_path,
-                max_workers=8,
-            )
+            
 
         for split, asset_list in {"train": assets[0], "val": assets[1]}.items():
             dataset_path = os.path.join(base_imgdir, split, "images")
@@ -375,9 +380,10 @@ def extract_dataset_assets(
             asset_list.download(
                 target_path=dataset_path,
                 max_workers=8,
+                use_id=True
             )
             coco_annotation = train_ds.build_coco_file_locally(
-                assets=asset_list, enforced_ordered_categories=label_names
+                assets=asset_list, enforced_ordered_categories=label_names, use_id=True
             )
             annotations_dict = coco_annotation.dict()
             annotations_path = os.path.join(base_imgdir, f"{split}_annotations.json")
@@ -442,9 +448,10 @@ def extract_dataset_assets(
             asset_list.download(
                 target_path=dataset_path,
                 max_workers=8,
+                use_id=True
             )
             coco_annotation = train_ds.build_coco_file_locally(
-                assets=asset_list, enforced_ordered_categories=label_names
+                assets=asset_list, enforced_ordered_categories=label_names, use_id=True
             )
             annotations_dict = coco_annotation.dict()
             annotations_path = os.path.join(base_imgdir, f"{split}_annotations.json")
