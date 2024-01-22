@@ -181,7 +181,7 @@ compute_metrics_job = evaluate_model(
 # 9 - Export the model to ONNX
 model = replace_module(model, torch.nn.SiLU, SiLU)
 model.head.decode_in_inference = False
-dummy_input = torch.randn(args.batch_size, 3, image_size, image_size)
+dummy_input = torch.randn(1, 3, image_size, image_size)
 
 if num_gpu > 0:
     dummy_input = dummy_input.to("cuda:0")
@@ -192,6 +192,7 @@ torch.onnx.export(
     model,
     dummy_input,
     model_path,
+    output_names=["output_yolox"]
 )
 experiment.store("model-latest", model_path)
 print("Exported the model best.onnx as model-latest")
