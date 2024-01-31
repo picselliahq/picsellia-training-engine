@@ -18,7 +18,7 @@ from classification_models.keras import Classifiers
 from utils import (
     _move_files_in_class_directories,
     get_experiment,
-    get_train_test_eval_datasets_from_experiment,
+    get_train_test_val_datasets_from_experiment,
     order_repartition_according_labelmap,
 )
 
@@ -41,12 +41,13 @@ model_path = os.path.join(experiment.checkpoint_dir, model_name)
 
 os.rename(os.path.join(experiment.base_dir, model_name), model_path)
 
-is_split, train_ds, test_ds, eval_ds = get_train_test_eval_datasets_from_experiment(
+is_split, train_ds, test_ds, val_ds = get_train_test_val_datasets_from_experiment(
     experiment
 )
+
 if not is_split:
     dataset = train_ds
-    eval_ds = train_ds
+    val_ds = train_ds
     print("Downloading annotation COCO file ...")
     annotation_path = dataset.export_annotation_file(
         AnnotationFileType.COCO, experiment.base_dir
@@ -59,7 +60,7 @@ if not is_split:
     (
         train_assets,
         test_assets,
-        eval_assets,
+        val_assets,
         count_train,
         count_test,
         count_eval,
@@ -102,7 +103,7 @@ else:
     )
     print("Downloading annotation COCO file ... OK")
     print("Downloading annotation COCO file ...")
-    eval_annotation_path = eval_ds.export_annotation_file(
+    eval_annotation_path = val_ds.export_annotation_file(
         AnnotationFileType.COCO, experiment.base_dir
     )
     print("Downloading annotation COCO file ... OK")
@@ -113,16 +114,17 @@ else:
 
     train_assets = train_ds.list_assets()
     test_assets = test_ds.list_assets()
-    eval_assets = eval_ds.list_assets()
+    val_assets = val_ds.list_assets()
 
-    dataset_labels = {label.name: label for label in eval_ds.list_labels()}
+    dataset_labels = {label.name: label for label in val_ds.list_labels()}
 
 random.shuffle(train_assets)
 random.shuffle(test_assets)
-random.shuffle(eval_assets)
+random.shuffle(val_assets)
+
 train_assets.download(target_path=os.path.join(experiment.png_dir, "train"))
 test_assets.download(target_path=os.path.join(experiment.png_dir, "test"))
-eval_assets.download(target_path=os.path.join(experiment.png_dir, "eval"))
+val_assets.download(target_path=os.path.join(experiment.png_dir, "val"))
 
 _move_files_in_class_directories(
     coco=coco_train, base_imdir=os.path.join(experiment.png_dir, "train")
@@ -131,7 +133,7 @@ _move_files_in_class_directories(
     coco=coco_test, base_imdir=os.path.join(experiment.png_dir, "test")
 )
 _move_files_in_class_directories(
-    coco=coco_eval, base_imdir=os.path.join(experiment.png_dir, "eval")
+    coco=coco_eval, base_imdir=os.path.join(experiment.png_dir, "val")
 )
 
 labelmap = {}
@@ -150,7 +152,6 @@ INITIAL_LR = parameters.get("learning_rate", 0.0005)
 target_size = (target_width, target_height)
 target_input = (target_width, target_height, 3)
 batch_size = int(parameters.get("batch_size", 128))
-target_size = (target_width, target_height)
 
 train_datagen = ImageDataGenerator(
     rescale=1.0 / 255.0,
@@ -166,7 +167,7 @@ train_datagen = ImageDataGenerator(
 )
 
 test_datagen = ImageDataGenerator(rescale=1.0 / 255.0, dtype="float32")
-eval_datagen = test_datagen
+val_datagen = test_datagen
 
 train_generator = train_datagen.flow_from_directory(
     os.path.join(experiment.png_dir, "train"),
@@ -184,8 +185,8 @@ test_generator = test_datagen.flow_from_directory(
     seed=random_seed,
     shuffle=True,
 )
-eval_generator = eval_datagen.flow_from_directory(
-    os.path.join(experiment.png_dir, "eval"),
+val_generator = val_datagen.flow_from_directory(
+    os.path.join(experiment.png_dir, "val"),
     target_size=target_size,
     batch_size=batch_size,
     class_mode="categorical",
@@ -229,10 +230,10 @@ history = model.fit(
     train_generator,
     batch_size=batch_size,
     epochs=EPOCHS,
-    validation_data=test_generator,
+    validation_data=val_generator,
     callbacks=[
         utils.Metrics(
-            val_data=test_generator, batch_size=batch_size, experiment=experiment
+            val_data=val_generator, batch_size=batch_size, experiment=experiment
         )
     ],
     verbose=1,
@@ -266,28 +267,30 @@ experiment.store(
 
 experiment.start_logging_chapter("Evaluation")
 
-predictions = model.predict(eval_generator)
+predictions = model.predict(test_generator)
 
-eval_accuracy = accuracy_score(eval_generator.classes, predictions.argmax(axis=1))
+eval_accuracy = accuracy_score(test_generator.classes, predictions.argmax(axis=1))
 
 experiment.log(name="eval_accuracy", data=eval_accuracy.item(), type=LogType.VALUE)
 
-cm = confusion_matrix(eval_generator.classes, predictions.argmax(axis=1))
+cm = confusion_matrix(test_generator.classes, predictions.argmax(axis=1))
 
 confusion = {"categories": list(labelmap.values()), "values": cm.tolist()}
 log = experiment.log(name="confusion", data=confusion, type=LogType.HEATMAP)
 
 for i, pred in enumerate(tqdm.tqdm(predictions)):
-    asset_filename = eval_generator.filenames[i].split("/")[1]
+    asset_filename = test_generator.filenames[i].split("/")[1]
     try:
-        asset = eval_ds.find_asset(filename=asset_filename)
+        asset = test_ds.find_asset(filename=asset_filename)
+        experiment.add_evaluation(
+            asset=asset,
+            classifications=[
+                (dataset_labels[labelmap[str(np.argmax(pred))]], float(max(pred)))
+            ],
+        )
+        print(f"Asset: {asset_filename} evaluated.")
+
     except Exception as e:
         print(e)
-    experiment.add_evaluation(
-        asset=asset,
-        classifications=[
-            (dataset_labels[labelmap[str(np.argmax(pred))]], float(max(pred)))
-        ],
-    )
-    print(f"Asset: {asset_filename} evaluated.")
+
 experiment.compute_evaluations_metrics(InferenceType.CLASSIFICATION)

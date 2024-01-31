@@ -11,7 +11,7 @@ from picsellia import Client
 
 from core_utils.yolov8 import (
     _get_three_attached_datasets,
-    get_train_test_eval_datasets_from_experiment,
+    get_train_test_val_datasets_from_experiment,
 )
 
 sys.path.append(os.path.join(os.getcwd(), "yolov8-classification"))
@@ -163,7 +163,7 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         )
 
     def test_get_train_eval_datasets_from_experiment(self):
-        results = get_train_test_eval_datasets_from_experiment(self.experiment)
+        results = get_train_test_val_datasets_from_experiment(self.experiment)
         expected_results = (True, False, self.train_set, self.test_set, self.eval_set)
         self.assertEqual(expected_results, results)
 

@@ -1,7 +1,7 @@
 import json
 import os
-import sys
 import shutil
+import sys
 import time
 import unittest
 from datetime import date
@@ -13,7 +13,7 @@ from picsellia import Client
 sys.path.append(os.path.join(os.getcwd(), "core_utils"))
 
 from yolov8 import (
-    get_train_test_eval_datasets_from_experiment,
+    get_train_test_val_datasets_from_experiment,
     write_annotation_file,
     get_prop_parameter,
     order_repartition_according_labelmap,
@@ -61,7 +61,7 @@ class TestYoloUtils(unittest.TestCase):
         cls.dataset = cls.client.get_dataset_by_id(
             "01892b85-3c3b-72c8-943d-8a780c46a82d"
         )  # segmentation dataset
-        cls.train_set = cls.dataset.get_version("eval")
+        cls.train_set = cls.dataset.get_version("train")
         cls.experiment.attach_dataset(name="full", dataset_version=cls.train_set)
         cls.current_dir = os.path.join(cls.cwd, cls.experiment.base_dir)
         cls.parameters = {}
@@ -84,18 +84,18 @@ class TestYoloUtils(unittest.TestCase):
         if os.path.exists(os.path.join(cls.cwd, "runs")):
             shutil.rmtree(os.path.join(cls.cwd, "runs"))
 
-    def test_get_train_test_eval_datasets_from_experiment(self):
+    def test_get_train_test_val_datasets_from_experiment(self):
         (
             has_three_datasets,
             has_two_datasets,
             train_set,
             test_set,
-            eval_set,
-        ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
+            val_set,
+        ) = get_train_test_val_datasets_from_experiment(experiment=self.experiment)
         self.assertFalse(has_three_datasets)
         self.assertEqual(self.train_set, train_set)
         self.assertEqual(None, test_set)
-        self.assertEqual(None, eval_set)
+        self.assertEqual(None, val_set)
 
     def test_write_annotation_file(self):
         annotations_dict = {"key1": "value1", "key2": "value2"}
@@ -145,8 +145,8 @@ class TestYoloUtils(unittest.TestCase):
 
         expected_data_config = {
             "train": os.path.join(self.cwd, self.experiment.png_dir, "train"),
-            "val": os.path.join(self.cwd, self.experiment.png_dir, "val"),
             "test": os.path.join(self.cwd, self.experiment.png_dir, "test"),
+            "val": os.path.join(self.cwd, self.experiment.png_dir, "val"),
             "nc": len(self.labelmap),
             "names": sorted(self.labelmap.values()),
         }

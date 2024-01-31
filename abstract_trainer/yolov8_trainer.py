@@ -8,7 +8,7 @@ from pycocotools.coco import COCO
 
 from abstract_trainer.trainer import AbstractTrainer
 from core_utils.yolov8 import (
-    get_train_test_eval_datasets_from_experiment,
+    get_train_test_val_datasets_from_experiment,
     write_annotation_file,
     get_prop_parameter,
     log_split_dataset_repartition_to_experiment,
@@ -38,8 +38,8 @@ class Yolov8Trainer(AbstractTrainer):
             has_two_datasets,
             self.train_set,
             self.test_set,
-            self.eval_set,
-        ) = get_train_test_eval_datasets_from_experiment(self.experiment)
+            self.val_set,
+        ) = get_train_test_val_datasets_from_experiment(self.experiment)
 
         if self.train_set:
             labels = self.train_set.list_labels()
@@ -48,7 +48,7 @@ class Yolov8Trainer(AbstractTrainer):
             self.experiment.log("labelmap", self.labelmap, "labelmap", replace=True)
         if has_three_datasets:
             self._process_triple_dataset()
-        if has_two_datasets:  # self.eval_set is NONE
+        if has_two_datasets:  # self.val_set is NONE
             self._process_double_dataset()
 
         elif not has_three_datasets and not has_two_datasets:
@@ -58,7 +58,7 @@ class Yolov8Trainer(AbstractTrainer):
         for data_type, dataset in {
             "train": self.train_set,
             "test": self.test_set,
-            "val": self.eval_set,
+            "val": self.val_set,
         }.items():
             self._prepare_coco_annotations(dataset=dataset)
             self.download_data_with_label(
@@ -71,7 +71,7 @@ class Yolov8Trainer(AbstractTrainer):
         self._prepare_coco_annotations(dataset=self.train_set)
         (
             train_assets,
-            eval_assets,
+            val_assets,
             _,
             _,
             labels,
@@ -80,8 +80,8 @@ class Yolov8Trainer(AbstractTrainer):
         test_assets = self.test_set.list_assets()
         for data_type, assets in {
             "train": train_assets,
-            "val": eval_assets,
             "test": test_assets,
+            "val": val_assets,
         }.items():
             self.download_data_with_label(assets=assets, data_type=data_type)
 
@@ -94,7 +94,7 @@ class Yolov8Trainer(AbstractTrainer):
         (
             train_assets,
             test_assets,
-            eval_assets,
+            val_assets,
             train_rep,
             test_rep,
             val_rep,
@@ -105,12 +105,14 @@ class Yolov8Trainer(AbstractTrainer):
 
         for data_type, assets in {
             "train": train_assets,
-            "val": eval_assets,
             "test": test_assets,
+            "val": val_assets,
         }.items():
             self.download_data_with_label(assets=assets, data_type=data_type)
-        self.evaluation_ds = self.train_set
-        self.evaluation_assets = test_assets
+
+        self.evaluation_ds = self.test_set
+        self.evaluation_assets = self.evaluation_ds.list_assets()
+
         log_split_dataset_repartition_to_experiment(
             experiment=self.experiment,
             labelmap=self.labelmap,

@@ -21,7 +21,7 @@ from utils import (
     make_train_test_val_dirs,
     move_images_in_train_val_folders,
 )
-from core_utils.yolov8 import get_train_test_eval_datasets_from_experiment
+from core_utils.yolov8 import get_train_test_val_datasets_from_experiment
 
 
 class Yolov8ClassificationTrainer(AbstractTrainer):
@@ -44,7 +44,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             self.train_set,
             self.test_set,
             self.eval_set,
-        ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
+        ) = get_train_test_val_datasets_from_experiment(experiment=self.experiment)
         if has_three_datasets:
             self._process_triple_dataset()
 
