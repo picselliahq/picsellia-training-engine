@@ -33,35 +33,40 @@ if len(attached_datasets) == 3:
     try:
         train_ds = experiment.get_dataset(name="train")
     except Exception:
-        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')")
+        raise ResourceNotFoundError(
+            "Found 3 attached datasets, but can't find any 'train' dataset.\n \
+                                            expecting 'train', 'test', 'val'"
+        )
     try:
         test_ds = experiment.get_dataset(name="test")
     except Exception:
-        raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                            expecting 'train', 'test', ('val' or 'eval')")
+        raise ResourceNotFoundError(
+            "Found 3 attached datasets, but can't find any 'test' dataset.\n \
+                                            expecting 'train', 'test', 'val'"
+        )
     try:
         val_ds = experiment.get_dataset(name="val")
     except Exception:
-        try:
-            val_ds = experiment.get_dataset(name="eval")
-        except Exception:
-            raise ResourceNotFoundError("Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                expecting 'train', 'test', ('val' or 'eval')")
-    
+        raise ResourceNotFoundError(
+            "Found 3 attached datasets, but can't find any 'val' dataset.\n \
+                                                        expecting 'train', 'test', 'val'"
+        )
+
     labels = train_ds.list_labels()
     label_names = [label.name for label in labels]
     labelmap = {str(i): label.name for i, label in enumerate(labels)}
-    
+
     for data_type, dataset in {
         "train": train_ds,
-        "val": val_ds,
         "test": test_ds,
+        "val": val_ds,
     }.items():
-        coco_annotation = dataset.build_coco_file_locally(enforced_ordered_categories=label_names)
+        coco_annotation = dataset.build_coco_file_locally(
+            enforced_ordered_categories=label_names
+        )
         annotations_dict = coco_annotation.dict()
         annotations_path = "annotations.json"
-        with open(annotations_path, 'w') as f:
+        with open(annotations_path, "w") as f:
             f.write(json.dumps(annotations_dict))
         annotations_coco = COCO(annotations_path)
 
@@ -77,10 +82,10 @@ else:
     coco_annotation = dataset.build_coco_file_locally()
     annotations_dict = coco_annotation.dict()
     annotations_path = "annotations.json"
-    with open(annotations_path, 'w') as f:
+    with open(annotations_path, "w") as f:
         f.write(json.dumps(annotations_dict))
     annotations_coco = COCO(annotations_path)
-    
+
     labels = dataset.list_labels()
     labelmap = {str(i): label.name for i, label in enumerate(labels)}
 
@@ -96,8 +101,8 @@ else:
 
     for data_type, assets in {
         "train": train_assets,
-        "val": val_assets,
         "test": test_assets,
+        "val": val_assets,
     }.items():
         assets.download(
             target_path=os.path.join(base_imgdir, data_type, "images"), max_workers=8
@@ -120,7 +125,7 @@ opt = picsellia_utils.setup_hyp(
     config_path=cfg,
     params=parameters,
     label_map=labelmap,
-    cwd=cwd
+    cwd=cwd,
 )
 
 picsellia_utils.check_files(opt)
