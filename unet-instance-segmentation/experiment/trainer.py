@@ -1,11 +1,12 @@
 import logging
 import os
 import sys
+
 import keras
 import matplotlib.image
 import numpy as np
-import tensorflow as tf
 import segmentation_models as sm
+import tensorflow as tf
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset import DatasetVersion
 from picsellia.types.enums import AnnotationFileType
@@ -34,7 +35,7 @@ from utils import (
     shift_x_and_y_coordinates,
     move_files_for_polygon_creation,
     get_filename_from_fullpath,
-    format_and_log_eval_metrics,
+    format_and_log_test_metrics,
     predict_and_log_mask,
     find_asset_by_dataset_index,
     predict_mask_from_image,
@@ -54,7 +55,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.classes = None
         self.image_dataset_name = "images"
         self.label = None
-        self.eval_dataset_version = None
+        self.test_dataset_version = None
         self.annotated_dataset = None
         self.annotation_file_path = None
         self.mask_files = None
@@ -68,8 +69,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.x_test_dir = os.path.join(self.experiment.png_dir, "test-images")
         self.y_test_dir = os.path.join(self.experiment.png_dir, "test-masks")
 
-        self.x_eval_dir = os.path.join(self.experiment.png_dir, "eval-images")
-        self.y_eval_dir = os.path.join(self.experiment.png_dir, "eval-masks")
+        self.x_val_dir = os.path.join(self.experiment.png_dir, "val-images")
+        self.y_val_dir = os.path.join(self.experiment.png_dir, "val-masks")
 
         self.backbone = "efficientnetb1"
         self.parameters = self.experiment.get_log("parameters").data
@@ -191,15 +192,15 @@ class UnetSegmentationTrainer(AbstractTrainer):
         (
             self.train_images_filenames,
             self.test_images_filenames,
-            self.eval_images_filenames,
+            self.val_images_filenames,
         ) = split_train_test_val_filenames(image_files=self.image_files, seed=11)
         makedirs_images_masks(
             x_train_dir=self.x_train_dir,
             y_train_dir=self.y_train_dir,
             x_test_dir=self.x_test_dir,
             y_test_dir=self.y_test_dir,
-            x_eval_dir=self.x_eval_dir,
-            y_eval_dir=self.y_eval_dir,
+            x_val_dir=self.x_val_dir,
+            y_val_dir=self.y_val_dir,
         )
         self._move_all_images_masks_to_directories()
 
@@ -207,7 +208,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         dataset_mappings = [
             (self.train_images_filenames, self.x_train_dir, self.y_train_dir),
             (self.test_images_filenames, self.x_test_dir, self.y_test_dir),
-            (self.eval_images_filenames, self.x_eval_dir, self.y_eval_dir),
+            (self.val_images_filenames, self.x_val_dir, self.y_val_dir),
         ]
 
         for image_list, dest_image_dir, dest_mask_dir in dataset_mappings:
@@ -230,16 +231,16 @@ class UnetSegmentationTrainer(AbstractTrainer):
             augmentation=get_training_augmentation(),
             preprocessing=get_preprocessing(self.preprocess_input),
         )
-        test_dataset = Dataset(
+        self.test_dataset = Dataset(
             self.x_test_dir,
             self.y_test_dir,
             classes=self.classes,
             augmentation=get_validation_augmentation(),
             preprocessing=get_preprocessing(self.preprocess_input),
         )
-        self.eval_dataset = Dataset(
-            self.x_eval_dir,
-            self.y_eval_dir,
+        val_dataset = Dataset(
+            self.x_val_dir,
+            self.y_val_dir,
             classes=self.classes,
             augmentation=get_validation_augmentation(),
             preprocessing=get_preprocessing(self.preprocess_input),
@@ -252,10 +253,10 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.train_dataloader = Dataloader(
             train_dataset, batch_size=self.batch_size, shuffle=True
         )
-        self.test_dataloader = Dataloader(test_dataset, batch_size=1, shuffle=False)
-        self.eval_dataloader = Dataloader(
-            self.eval_dataset, batch_size=1, shuffle=False
+        self.test_dataloader = Dataloader(
+            self.test_dataset, batch_size=1, shuffle=False
         )
+        self.val_dataloader = Dataloader(val_dataset, batch_size=1, shuffle=False)
 
     def train(self):
         epochs = int(self.parameters.get("epochs", 1))
@@ -290,8 +291,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
             steps_per_epoch=len(self.train_dataloader),
             epochs=epochs,
             callbacks=self.callbacks,
-            validation_data=self.eval_dataloader,
-            validation_steps=len(self.eval_dataloader),
+            validation_data=self.val_dataloader,
+            validation_steps=len(self.val_dataloader),
         )
         self.experiment.store("finetuned_model_weights", self.best_model_path)
 
@@ -345,16 +346,16 @@ class UnetSegmentationTrainer(AbstractTrainer):
         return total_loss
 
     def eval(self):
-        self.eval_dataset_version = self.experiment.get_dataset(
+        self.test_dataset_version = self.experiment.get_dataset(
             name=self.image_dataset_name
         )
-        self.label = self.eval_dataset_version.list_labels()[0]
+        self.label = self.test_dataset_version.list_labels()[0]
         self.labelmap = {"0": self.label.name}
         self.model.load_weights(self.best_model_path)
         scores = self.model.evaluate(self.eval_dataloader)
-        format_and_log_eval_metrics(self.experiment, self.metrics, scores)
+        format_and_log_test_metrics(self.experiment, self.metrics, scores)
         predict_and_log_mask(
-            dataset=self.eval_dataset, experiment=self.experiment, model=self.model
+            dataset=self.test_dataset, experiment=self.experiment, model=self.model
         )
         self.setup_files_for_evaluation()
         self.draw_ground_truth_polygons_from_masks()
@@ -362,7 +363,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.experiment.compute_evaluations_metrics(InferenceType.SEGMENTATION)
 
     def setup_files_for_evaluation(self):
-        for filepath in [self.x_eval_dir, self.y_eval_dir]:
+        for filepath in [self.x_test_dir, self.y_test_dir]:
             move_files_for_polygon_creation(
                 label_name=self.label.name, input_folder_path=filepath
             )
@@ -371,8 +372,8 @@ class UnetSegmentationTrainer(AbstractTrainer):
         dataset = self.experiment.get_dataset(self.image_dataset_name)
         dataset.set_type(InferenceType.SEGMENTATION)
         converter = CustomConverter(
-            images_dir=self.x_eval_dir,
-            masks_dir=self.y_eval_dir,
+            images_dir=self.x_test_dir,
+            masks_dir=self.y_test_dir,
             labelmap=self.labelmap,
             conversion_tolerance=0.9,
             min_contour_points=20,
@@ -391,14 +392,14 @@ class UnetSegmentationTrainer(AbstractTrainer):
         )
 
     def _run_evaluations(self):
-        for i in range(self.eval_dataset.__len__()):
+        for i in range(self.test_dataset.__len__()):
             image_filepath, asset = find_asset_by_dataset_index(
-                dataset=self.eval_dataset,
+                dataset=self.test_dataset,
                 dataset_version=self.eval_dataset_version,
                 i=i,
             )
             if asset is not None:
-                image, ground_truth_mask = self.eval_dataset[i]
+                image, ground_truth_mask = self.test_dataset[i]
                 predicted_mask = predict_mask_from_image(
                     image=image, model=self.model, asset=asset
                 )
