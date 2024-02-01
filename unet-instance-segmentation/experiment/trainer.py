@@ -91,7 +91,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
 
         self.train_dataloader = None
         self.test_dataloader = None
-        self.eval_dataloader = None
+        self.val_dataloader = None
         self.model = None
         self.callbacks = [
             keras.callbacks.ModelCheckpoint(
@@ -119,7 +119,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
             self.classes = get_classes_mask_dataset(mask_dataset=self.mask_dataset)
 
         self._split_and_move_data()
-        self._create_train_test_eval_dataloaders()
+        self._create_train_test_val_dataloaders()
 
     def get_segmentation_dataset(self) -> DatasetVersion | None:
         try:
@@ -223,7 +223,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
                 image_prefix=self.image_prefix,
             )
 
-    def _create_train_test_eval_dataloaders(self):
+    def _create_train_test_val_dataloaders(self):
         train_dataset = Dataset(
             self.x_train_dir,
             self.y_train_dir,
@@ -352,7 +352,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.label = self.test_dataset_version.list_labels()[0]
         self.labelmap = {"0": self.label.name}
         self.model.load_weights(self.best_model_path)
-        scores = self.model.evaluate(self.eval_dataloader)
+        scores = self.model.evaluate(self.val_dataloader)
         format_and_log_test_metrics(self.experiment, self.metrics, scores)
         predict_and_log_mask(
             dataset=self.test_dataset, experiment=self.experiment, model=self.model
@@ -395,7 +395,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         for i in range(self.test_dataset.__len__()):
             image_filepath, asset = find_asset_by_dataset_index(
                 dataset=self.test_dataset,
-                dataset_version=self.eval_dataset_version,
+                dataset_version=self.test_dataset_version,
                 i=i,
             )
             if asset is not None:

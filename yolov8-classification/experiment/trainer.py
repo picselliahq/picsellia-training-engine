@@ -43,7 +43,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             has_two_datasets,
             self.train_set,
             self.test_set,
-            self.eval_set,
+            self.val_set,
         ) = get_train_test_val_datasets_from_experiment(experiment=self.experiment)
         if has_three_datasets:
             self._process_triple_dataset()
@@ -56,11 +56,11 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
         self.labelmap = create_and_log_labelmap(experiment=self.experiment)
 
     def _process_triple_dataset(self):
-        download_triple_dataset(self.train_set, self.test_set, self.eval_set)
+        download_triple_dataset(self.train_set, self.test_set, self.val_set)
         _, _ = prepare_datasets_with_annotation(
-            self.train_set, self.test_set, self.eval_set
+            self.train_set, self.test_set, self.val_set
         )
-        self.evaluation_ds = self.eval_set
+        self.evaluation_ds = self.test_set
         self.evaluation_assets = self.evaluation_ds.list_assets()
 
     def _process_double_dataset(self):
@@ -68,14 +68,14 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
         self.test_set.download(target_path=os.path.join("data", "test"), max_workers=8)
         (
             train_assets,
-            eval_assets,
+            val_assets,
             _,
             _,
             labels,
         ) = self.train_set.train_test_split(prop=0.8)
 
         make_train_test_val_dirs()
-        move_images_in_train_val_folders(train_assets, eval_assets)
+        move_images_in_train_val_folders(train_assets, val_assets)
 
         self._move_files_in_class_directories_double()
         self.evaluation_ds = self.test_set
@@ -85,21 +85,21 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
         train_annotation_path = self.train_set.export_annotation_file(
             AnnotationFileType.COCO
         )
-        eval_annotation_path = self.test_set.export_annotation_file(
+        test_annotation_path = self.test_set.export_annotation_file(
             AnnotationFileType.COCO
         )
         coco_train = COCO(train_annotation_path)
-        coco_eval = COCO(eval_annotation_path)
+        coco_test = COCO(test_annotation_path)
         move_files_in_class_directories(coco_train, "data/train")
         move_files_in_class_directories(coco_train, "data/val")
-        move_files_in_class_directories(coco_eval, "data/test")
+        move_files_in_class_directories(coco_test, "data/test")
 
     def _process_single_dataset(self):
         self.train_set.download("images")
         (
             train_assets,
             test_assets,
-            eval_assets,
+            val_assets,
             train_rep,
             test_rep,
             val_rep,
@@ -114,7 +114,7 @@ class Yolov8ClassificationTrainer(AbstractTrainer):
             val_rep=val_rep,
         )
         self.evaluation_ds = self.train_set
-        self.evaluation_assets = eval_assets
+        self.evaluation_assets = test_assets
 
     def train(self):
         self.model.train(

@@ -1,7 +1,7 @@
 import os
 import shutil
-import time
 import sys
+import time
 import unittest
 from datetime import date
 
@@ -87,8 +87,8 @@ class TestUnetSegmentationUtils(unittest.TestCase):
         cls.x_test_dir = os.path.join(cls.experiment.png_dir, "test-images")
         cls.y_test_dir = os.path.join(cls.experiment.png_dir, "test-masks")
 
-        cls.x_eval_dir = os.path.join(cls.experiment.png_dir, "eval-images")
-        cls.y_eval_dir = os.path.join(cls.experiment.png_dir, "eval-masks")
+        cls.x_val_dir = os.path.join(cls.experiment.png_dir, "val-images")
+        cls.y_val_dir = os.path.join(cls.experiment.png_dir, "val-masks")
 
         cls.parameters = cls.experiment.get_log("parameters").data
         cls.mask_prefix = cls.parameters["mask_filename_prefix"]
@@ -125,12 +125,12 @@ class TestUnetSegmentationUtils(unittest.TestCase):
         (
             train_image_filenames,
             test_images_filenames,
-            eval_images_filenames,
+            val_images_filenames,
         ) = split_train_test_val_filenames(image_files=image_files, seed=11)
 
         self.assertEqual(len(train_image_filenames), 7)
         self.assertEqual(len(test_images_filenames), 1)
-        self.assertEqual(len(eval_images_filenames), 1)
+        self.assertEqual(len(val_images_filenames), 1)
 
     def test_makedirs_images_masks(self):
         all_directories_are_created = True
@@ -139,16 +139,16 @@ class TestUnetSegmentationUtils(unittest.TestCase):
             y_train_dir=self.y_train_dir,
             x_test_dir=self.x_test_dir,
             y_test_dir=self.y_test_dir,
-            x_eval_dir=self.x_eval_dir,
-            y_eval_dir=self.y_eval_dir,
+            x_val_dir=self.x_val_dir,
+            y_val_dir=self.y_val_dir,
         )
         for directory_path in [
             self.x_train_dir,
             self.y_test_dir,
             self.x_test_dir,
             self.y_test_dir,
-            self.y_eval_dir,
-            self.x_eval_dir,
+            self.y_val_dir,
+            self.x_val_dir,
         ]:
             if not os.path.exists(directory_path):
                 all_directories_are_created = False
@@ -381,21 +381,21 @@ class TestUnetTrainer(unittest.TestCase):
             self.training_pipeline.y_train_dir,
             self.training_pipeline.x_test_dir,
             self.training_pipeline.y_test_dir,
-            self.training_pipeline.x_eval_dir,
-            self.training_pipeline.y_eval_dir,
+            self.training_pipeline.x_val_dir,
+            self.training_pipeline.y_val_dir,
         ]
         for directory in directories_to_check:
             self.assertGreaterEqual(len(os.listdir(directory)), 1)
         self.assertNotEquals(self.training_pipeline.train_dataloader, None)
         self.assertNotEquals(self.training_pipeline.test_dataloader, None)
-        self.assertNotEquals(self.training_pipeline.eval_dataloader, None)
+        self.assertNotEquals(self.training_pipeline.val_dataloader, None)
 
         self.training_pipeline.train()
         self.assertTrue(os.path.isfile(self.training_pipeline.best_model_path))
 
         self.training_pipeline.eval()
         self.assertNotEqual(
-            type(self.training_pipeline.experiment.get_log(name="eval-results").data),
+            type(self.training_pipeline.experiment.get_log(name="test-results").data),
             None,
         )
 

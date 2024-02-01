@@ -30,10 +30,7 @@ def prepare_datasets_with_annotation(
     move_files_in_class_directories(coco_test, "data/test")
     move_files_in_class_directories(coco_val, "data/val")
 
-    evaluation_ds = test_set
-    evaluation_assets = evaluation_ds.list_assets()
-
-    return evaluation_ds, evaluation_assets
+    return test_set, test_set.list_assets()
 
 
 def _create_coco_objects(
@@ -113,7 +110,7 @@ def split_single_dataset(
     (
         train_assets,
         test_assets,
-        eval_assets,
+        val_assets,
         train_rep,
         test_rep,
         val_rep,
@@ -122,10 +119,10 @@ def split_single_dataset(
 
     make_train_test_val_dirs()
     move_images_in_train_test_val_folders(
-        train_assets=train_assets, test_assets=test_assets, eval_assets=eval_assets
+        train_assets=train_assets, test_assets=test_assets, val_assets=val_assets
     )
 
-    return train_assets, test_assets, eval_assets, train_rep, test_rep, val_rep, labels
+    return train_assets, test_assets, val_assets, train_rep, test_rep, val_rep, labels
 
 
 def get_prop_parameter(parameters: dict) -> float:
@@ -140,7 +137,7 @@ def make_train_test_val_dirs() -> None:
 
 
 def move_images_in_train_test_val_folders(
-    train_assets: MultiAsset, test_assets: MultiAsset, eval_assets: MultiAsset
+    train_assets: MultiAsset, test_assets: MultiAsset, val_assets: MultiAsset
 ) -> None:
     for asset in train_assets:
         move_image(
@@ -155,7 +152,7 @@ def move_images_in_train_test_val_folders(
             new_location_path="data/test",
         )
 
-    for asset in eval_assets:
+    for asset in val_assets:
         move_image(
             filename=asset.filename,
             old_location_path="images",
@@ -163,14 +160,14 @@ def move_images_in_train_test_val_folders(
         )
 
 
-def move_images_in_train_val_folders(train_assets: MultiAsset, eval_assets: MultiAsset):
+def move_images_in_train_val_folders(train_assets: MultiAsset, val_assets: MultiAsset):
     for asset in train_assets:
         move_image(
             filename=asset.filename,
             old_location_path="images",
             new_location_path="data/train",
         )
-    for asset in eval_assets:
+    for asset in val_assets:
         move_image(
             filename=asset.filename,
             old_location_path="images",
@@ -188,12 +185,12 @@ def move_image(filename: str, old_location_path: str, new_location_path: str) ->
 
 
 def download_triple_dataset(
-    train_set: DatasetVersion, test_set: DatasetVersion, eval_set: DatasetVersion
+    train_set: DatasetVersion, test_set: DatasetVersion, val_set: DatasetVersion
 ) -> None:
     for data_type, dataset in {
         "train": train_set,
         "test": test_set,
-        "val": eval_set,
+        "val": val_set,
     }.items():
         dataset.download(target_path=os.path.join("data", data_type), max_workers=8)
 

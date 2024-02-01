@@ -23,8 +23,8 @@ class Yolov8Trainer(AbstractTrainer):
     def __init__(self):
         super().__init__()
         self.trainer = None
-        self.evaluation_ds = None
-        self.evaluation_assets = None
+        self.test_ds = None
+        self.test_assets = None
         self.annotations_dict = None
         self.annotations_coco = None
         self.label_names = None
@@ -64,8 +64,8 @@ class Yolov8Trainer(AbstractTrainer):
             self.download_data_with_label(
                 assets=dataset.list_assets(), data_type=data_type
             )
-        self.evaluation_ds = self.test_set
-        self.evaluation_assets = self.evaluation_ds.list_assets()
+        self.test_ds = self.test_set
+        self.test_assets = self.test_ds.list_assets()
 
     def _process_double_dataset(self):
         self._prepare_coco_annotations(dataset=self.train_set)
@@ -85,8 +85,8 @@ class Yolov8Trainer(AbstractTrainer):
         }.items():
             self.download_data_with_label(assets=assets, data_type=data_type)
 
-        self.evaluation_ds = self.test_set
-        self.evaluation_assets = self.evaluation_ds.list_assets()
+        self.test_ds = self.test_set
+        self.test_assets = self.test_ds.list_assets()
 
     def _process_single_dataset(self):
         self._prepare_coco_annotations(dataset=self.train_set)
@@ -110,8 +110,8 @@ class Yolov8Trainer(AbstractTrainer):
         }.items():
             self.download_data_with_label(assets=assets, data_type=data_type)
 
-        self.evaluation_ds = self.test_set
-        self.evaluation_assets = self.evaluation_ds.list_assets()
+        self.test_ds = self.test_set
+        self.test_assets = self.test_ds.list_assets()
 
         log_split_dataset_repartition_to_experiment(
             experiment=self.experiment,

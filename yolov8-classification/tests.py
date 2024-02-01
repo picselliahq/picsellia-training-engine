@@ -36,9 +36,11 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
     organization_id = None
     base_path = None
     test_file_path = None
-    eval_set = None
-    test_set = None
+
     train_set = None
+    test_set = None
+    val_set = None
+
     dataset = None
     experiment = None
     project = None
@@ -72,13 +74,13 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
             name="test", dataset_version=cls.dataset.get_version("test")
         )
         cls.experiment.attach_dataset(
-            name="eval", dataset_version=cls.dataset.get_version("eval")
+            name="val", dataset_version=cls.dataset.get_version("val")
         )
-        cls.train_set, cls.test_set, cls.eval_set = _get_three_attached_datasets(
+        cls.train_set, cls.test_set, cls.val_set = _get_three_attached_datasets(
             cls.experiment
         )
         cls.coco_train, cls.coco_test, cls.coco_val = _create_coco_objects(
-            cls.train_set, cls.test_set, cls.eval_set
+            cls.train_set, cls.test_set, cls.val_set
         )
         cls.base_path = os.path.join(os.getcwd(), "yolov8-classification")
         cls.train_path = os.path.join(cls.base_path, "data/train")
@@ -156,15 +158,15 @@ class TestYolov8ClassificationUtils(unittest.TestCase):
         self.assertEqual(expected_cat, cat)
 
     def test_get_three_attached_datasets(self):
-        train_set, test_set, eval_test = _get_three_attached_datasets(self.experiment)
+        train_set, test_set, val_set = _get_three_attached_datasets(self.experiment)
         self.assertEqual(
-            (self.train_set, self.test_set, self.eval_set),
-            (train_set, test_set, eval_test),
+            (self.train_set, self.test_set, self.val_set),
+            (train_set, test_set, val_set),
         )
 
-    def test_get_train_eval_datasets_from_experiment(self):
+    def test_get_train_test_val_datasets_from_experiment(self):
         results = get_train_test_val_datasets_from_experiment(self.experiment)
-        expected_results = (True, False, self.train_set, self.test_set, self.eval_set)
+        expected_results = (True, False, self.train_set, self.test_set, self.val_set)
         self.assertEqual(expected_results, results)
 
     def test_format_confusion_matrix(self):

@@ -56,14 +56,14 @@ if not is_split:
 
     coco_train = COCO(annotation_path)
     coco_test = coco_train
-    coco_eval = coco_train
+    coco_val = coco_train
     (
         train_assets,
         test_assets,
         val_assets,
         count_train,
         count_test,
-        count_eval,
+        count_val,
         _,
     ) = dataset.train_test_val_split()
     labelmap = {}
@@ -82,8 +82,8 @@ if not is_split:
         replace=True,
     )
     experiment.log(
-        "eval-split",
-        order_repartition_according_labelmap(labelmap, count_eval),
+        "val-split",
+        order_repartition_according_labelmap(labelmap, count_val),
         "bar",
         replace=True,
     )
@@ -103,14 +103,14 @@ else:
     )
     print("Downloading annotation COCO file ... OK")
     print("Downloading annotation COCO file ...")
-    eval_annotation_path = val_ds.export_annotation_file(
+    val_annotation_path = val_ds.export_annotation_file(
         AnnotationFileType.COCO, experiment.base_dir
     )
     print("Downloading annotation COCO file ... OK")
 
     coco_train = COCO(train_annotation_path)
     coco_test = COCO(test_annotation_path)
-    coco_eval = COCO(eval_annotation_path)
+    coco_val = COCO(val_annotation_path)
 
     train_assets = train_ds.list_assets()
     test_assets = test_ds.list_assets()
@@ -133,7 +133,7 @@ _move_files_in_class_directories(
     coco=coco_test, base_imdir=os.path.join(experiment.png_dir, "test")
 )
 _move_files_in_class_directories(
-    coco=coco_eval, base_imdir=os.path.join(experiment.png_dir, "val")
+    coco=coco_val, base_imdir=os.path.join(experiment.png_dir, "val")
 )
 
 labelmap = {}
@@ -269,9 +269,9 @@ experiment.start_logging_chapter("Evaluation")
 
 predictions = model.predict(test_generator)
 
-eval_accuracy = accuracy_score(test_generator.classes, predictions.argmax(axis=1))
+test_accuracy = accuracy_score(test_generator.classes, predictions.argmax(axis=1))
 
-experiment.log(name="eval_accuracy", data=eval_accuracy.item(), type=LogType.VALUE)
+experiment.log(name="test_accuracy", data=test_accuracy.item(), type=LogType.VALUE)
 
 cm = confusion_matrix(test_generator.classes, predictions.argmax(axis=1))
 
