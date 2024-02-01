@@ -17,7 +17,7 @@ from transformers import (
 
 from abstract_trainer.trainer import AbstractTrainer
 from utils import (
-    get_train_test_eval_datasets_from_experiment,
+    get_train_test_val_datasets_from_experiment,
     prepare_datasets_with_annotation,
     split_single_dataset,
     _move_all_files_in_class_directories,
@@ -37,16 +37,16 @@ class VitClassificationTrainer(AbstractTrainer):
         super().__init__()
         self.train_path = os.path.join(self.experiment.base_dir, "data/train")
         self.test_path = os.path.join(self.experiment.base_dir, "data/test")
-        self.eval_path = os.path.join(self.experiment.base_dir, "data/val")
-        self.train_test_eval_path = {
+        self.val_path = os.path.join(self.experiment.base_dir, "data/val")
+        self.train_test_val_path = {
             "train_path": self.train_path,
             "test_path": self.test_path,
-            "eval_path": self.eval_path,
+            "val_path": self.val_path,
         }
         self.output_model_dir = os.path.join(self.experiment.checkpoint_dir)
         self.data_dir = os.path.join(self.experiment.base_dir, "data")
-        self.evaluation_assets = None
-        self.evaluation_ds = None
+        self.test_assets = None
+        self.test_ds = None
         self.loaded_dataset = None
         self.image_processor = None
         self.dataset_labels = None
@@ -62,19 +62,19 @@ class VitClassificationTrainer(AbstractTrainer):
             has_three_datasets,
             train_set,
             test_set,
-            eval_set,
-        ) = get_train_test_eval_datasets_from_experiment(experiment=self.experiment)
+            val_set,
+        ) = get_train_test_val_datasets_from_experiment(experiment=self.experiment)
 
         if has_three_datasets:
-            self.download_triple_dataset(train_set, test_set, eval_set)
+            self.download_triple_dataset(train_set, test_set, val_set)
             (
-                self.evaluation_ds,
-                self.evaluation_assets,
+                self.test_ds,
+                self.test_assets,
             ) = prepare_datasets_with_annotation(
                 train_set=train_set,
                 test_set=test_set,
-                val_set=eval_set,
-                train_test_eval_path_dict=self.train_test_eval_path,
+                val_set=val_set,
+                train_test_val_path_dict=self.train_test_val_path,
             )
 
         elif has_one_dataset and not has_three_datasets:
@@ -82,7 +82,7 @@ class VitClassificationTrainer(AbstractTrainer):
             (
                 train_assets,
                 test_assets,
-                eval_assets,
+                val_assets,
                 train_rep,
                 test_rep,
                 val_rep,
@@ -90,19 +90,19 @@ class VitClassificationTrainer(AbstractTrainer):
             ) = split_single_dataset(
                 parameters=self.parameters,
                 train_set=train_set,
-                train_test_eval_path_dict=self.train_test_eval_path,
+                train_test_val_path_dict=self.train_test_val_path,
             )
             _move_all_files_in_class_directories(
-                train_set=train_set, train_test_eval_path_dict=self.train_test_eval_path
+                train_set=train_set, train_test_val_path_dict=self.train_test_val_path
             )
-            self.evaluation_ds = train_set
-            self.evaluation_assets = eval_assets
+            self.test_ds = test_set
+            self.test_assets = test_assets
         else:
             raise Exception(
-                "You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, eval)"
+                "You must either have only one Dataset, 2 (train, test) or 3 datasets (train, test, val)"
             )
         self.dataset_labels = {
-            label.name: label for label in self.evaluation_ds.list_labels()
+            label.name: label for label in self.test_ds.list_labels()
         }
 
         self.loaded_dataset = load_dataset(
@@ -120,12 +120,12 @@ class VitClassificationTrainer(AbstractTrainer):
         self,
         train_set: DatasetVersion,
         test_set: DatasetVersion,
-        eval_set: DatasetVersion,
+        val_set: DatasetVersion,
     ) -> None:
         for data_path, dataset in {
             self.train_path: train_set,
             self.test_path: test_set,
-            self.eval_path: eval_set,
+            self.val_path: val_set,
         }.items():
             dataset.download(target_path=data_path, max_workers=8)
 
@@ -194,7 +194,7 @@ class VitClassificationTrainer(AbstractTrainer):
             args=training_args,
             data_collator=data_collator,
             train_dataset=self.loaded_dataset["train"],
-            eval_dataset=self.loaded_dataset["test"],
+            eval_dataset=self.loaded_dataset["val"],
             tokenizer=self.image_processor,
             compute_metrics=compute_metrics,
         )
@@ -222,7 +222,7 @@ class VitClassificationTrainer(AbstractTrainer):
 
         self.create_and_store_onnx_model(classifier)
 
-        for path, subdirs, file_list in os.walk(self.eval_path):
+        for path, subdirs, file_list in os.walk(self.test_path):
             for file in file_list:
                 self._run_one_asset_evaluation(
                     path=path, file=file, classifier=classifier
@@ -263,9 +263,7 @@ class VitClassificationTrainer(AbstractTrainer):
     def _find_asset_send_evaluation_by_filename(
         self, asset_filename: str, pred_label: str, pred_conf: float
     ):
-        asset = find_asset_by_filename(
-            filename=asset_filename, dataset=self.evaluation_ds
-        )
+        asset = find_asset_by_filename(filename=asset_filename, dataset=self.test_ds)
         classification_data = (self.dataset_labels[pred_label], float(pred_conf))
         if asset is not None:
             self.experiment.add_evaluation(

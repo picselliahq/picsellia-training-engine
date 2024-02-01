@@ -13,9 +13,9 @@ from picsellia.types.enums import AnnotationFileType
 from pycocotools.coco import COCO
 
 
-def compute_metrics(eval_pred) -> float:
+def compute_metrics(val_pred) -> float:
     accuracy = evaluate.load("accuracy")
-    predictions, labels = eval_pred
+    predictions, labels = val_pred
     predictions = np.argmax(predictions, axis=1)
 
     return accuracy.compute(predictions=predictions, references=labels)
@@ -25,20 +25,15 @@ def prepare_datasets_with_annotation(
     train_set: DatasetVersion,
     test_set: DatasetVersion,
     val_set: DatasetVersion,
-    train_test_eval_path_dict: dict,
+    train_test_val_path_dict: dict,
 ) -> tuple[DatasetVersion, MultiAsset]:
     coco_train, coco_test, coco_val = _create_coco_objects(train_set, test_set, val_set)
 
-    _move_files_in_class_directories(
-        coco_train, train_test_eval_path_dict["train_path"]
-    )
-    _move_files_in_class_directories(coco_test, train_test_eval_path_dict["test_path"])
-    _move_files_in_class_directories(coco_val, train_test_eval_path_dict["eval_path"])
+    _move_files_in_class_directories(coco_train, train_test_val_path_dict["train_path"])
+    _move_files_in_class_directories(coco_test, train_test_val_path_dict["test_path"])
+    _move_files_in_class_directories(coco_val, train_test_val_path_dict["val_path"])
 
-    evaluation_ds = val_set
-    evaluation_assets = evaluation_ds.list_assets()
-
-    return evaluation_ds, evaluation_assets
+    return test_set, test_set.list_assets()
 
 
 def _create_coco_objects(
@@ -57,15 +52,13 @@ def _create_coco_objects(
 
 
 def _move_all_files_in_class_directories(
-    train_set: DatasetVersion, train_test_eval_path_dict: dict
+    train_set: DatasetVersion, train_test_val_path_dict: dict
 ) -> None:
     train_annotation_path = train_set.export_annotation_file(AnnotationFileType.COCO)
     coco_train = COCO(train_annotation_path)
-    _move_files_in_class_directories(
-        coco_train, train_test_eval_path_dict["train_path"]
-    )
-    _move_files_in_class_directories(coco_train, train_test_eval_path_dict["test_path"])
-    _move_files_in_class_directories(coco_train, train_test_eval_path_dict["eval_path"])
+    _move_files_in_class_directories(coco_train, train_test_val_path_dict["train_path"])
+    _move_files_in_class_directories(coco_train, train_test_val_path_dict["test_path"])
+    _move_files_in_class_directories(coco_train, train_test_val_path_dict["val_path"])
 
 
 def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None | str:
@@ -106,14 +99,14 @@ def get_image_annotation(coco: COCO, fnames: list[str], image: dict) -> None | d
     return cat
 
 
-def get_train_test_eval_datasets_from_experiment(
+def get_train_test_val_datasets_from_experiment(
     experiment: Experiment,
 ) -> tuple[bool, bool, DatasetVersion, DatasetVersion, DatasetVersion]:
     number_of_attached_datasets = len(experiment.list_attached_dataset_versions())
     has_three_datasets, has_one_dataset = False, False
     if number_of_attached_datasets == 3:
         has_three_datasets = True
-        train_set, test_set, eval_set = _get_three_attached_datasets(experiment)
+        train_set, test_set, val_set = _get_three_attached_datasets(experiment)
     elif number_of_attached_datasets == 1:
         has_one_dataset = True
         logging.info(
@@ -121,12 +114,14 @@ def get_train_test_eval_datasets_from_experiment(
         )
         train_set: DatasetVersion = experiment.list_attached_dataset_versions()[0]
         test_set = None
-        eval_set = None
+        val_set = None
 
     else:
-        logging.info("We need exactly 1 or 3 datasets attached to this experiment ")
+        raise Exception(
+            "You must either have only one dataset or 3 datasets (train, test, val)"
+        )
 
-    return has_one_dataset, has_three_datasets, train_set, test_set, eval_set
+    return has_one_dataset, has_three_datasets, train_set, test_set, val_set
 
 
 def _get_three_attached_datasets(
@@ -137,27 +132,27 @@ def _get_three_attached_datasets(
     except Exception:
         raise ResourceNotFoundError(
             "Found 3 attached datasets, but can't find any 'train' dataset.\n \
-                                                expecting 'train', 'test', 'eval')"
+                                                expecting 'train', 'test', 'val')"
         )
     try:
         test_set = experiment.get_dataset(name="test")
     except Exception:
         raise ResourceNotFoundError(
             "Found 3 attached datasets, but can't find any 'test' dataset.\n \
-                                                expecting 'train', 'test', 'eval')"
+                                                expecting 'train', 'test', 'val')"
         )
     try:
-        eval_set = experiment.get_dataset(name="eval")
+        val_set = experiment.get_dataset(name="val")
     except Exception:
         raise ResourceNotFoundError(
-            "Found 3 attached datasets, but can't find any 'eval' dataset.\n \
-                                                    expecting 'train', 'test', 'eval')"
+            "Found 3 attached datasets, but can't find any 'val' dataset.\n \
+                                                    expecting 'train', 'test', 'val')"
         )
-    return train_set, test_set, eval_set
+    return train_set, test_set, val_set
 
 
 def split_single_dataset(
-    parameters: dict, train_set: DatasetVersion, train_test_eval_path_dict: dict
+    parameters: dict, train_set: DatasetVersion, train_test_val_path_dict: dict
 ) -> tuple[
     MultiAsset,
     MultiAsset,
@@ -171,22 +166,22 @@ def split_single_dataset(
     (
         train_assets,
         test_assets,
-        eval_assets,
+        val_assets,
         train_rep,
         test_rep,
         val_rep,
         labels,
     ) = train_set.train_test_val_split([prop, (1 - prop) / 2, (1 - prop) / 2])
 
-    make_train_test_val_dirs(train_test_eval_path_dict)
+    make_train_test_val_dirs(train_test_val_path_dict)
     move_images_in_train_test_val_folders(
         train_assets=train_assets,
         test_assets=test_assets,
-        eval_assets=eval_assets,
-        train_test_val_path=train_test_eval_path_dict,
+        val_assets=val_assets,
+        train_test_val_path=train_test_val_path_dict,
     )
 
-    return train_assets, test_assets, eval_assets, train_rep, test_rep, val_rep, labels
+    return train_assets, test_assets, val_assets, train_rep, test_rep, val_rep, labels
 
 
 def get_prop_parameter(parameters: dict) -> float:
@@ -194,16 +189,16 @@ def get_prop_parameter(parameters: dict) -> float:
     return prop
 
 
-def make_train_test_val_dirs(train_test_eval_path_dict: dict) -> None:
-    os.makedirs(train_test_eval_path_dict["train_path"], exist_ok=True)
-    os.makedirs(train_test_eval_path_dict["test_path"], exist_ok=True)
-    os.makedirs(train_test_eval_path_dict["eval_path"], exist_ok=True)
+def make_train_test_val_dirs(train_test_val_path_dict: dict) -> None:
+    os.makedirs(train_test_val_path_dict["train_path"], exist_ok=True)
+    os.makedirs(train_test_val_path_dict["test_path"], exist_ok=True)
+    os.makedirs(train_test_val_path_dict["val_path"], exist_ok=True)
 
 
 def move_images_in_train_test_val_folders(
     train_assets: MultiAsset,
     test_assets: MultiAsset,
-    eval_assets: MultiAsset,
+    val_assets: MultiAsset,
     train_test_val_path: dict,
 ) -> None:
     for asset in train_assets:
@@ -219,11 +214,11 @@ def move_images_in_train_test_val_folders(
             new_location_path=train_test_val_path["test_path"],
         )
 
-    for asset in eval_assets:
+    for asset in val_assets:
         move_image(
             filename=asset.filename,
             old_location_path="images",
-            new_location_path=train_test_val_path["eval_path"],
+            new_location_path=train_test_val_path["val_path"],
         )
 
 
