@@ -352,7 +352,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.label = self.test_dataset_version.list_labels()[0]
         self.labelmap = {"0": self.label.name}
         self.model.load_weights(self.best_model_path)
-        scores = self.model.evaluate(self.val_dataloader)
+        scores = self.model.evaluate(self.test_dataloader)
         format_and_log_test_metrics(self.experiment, self.metrics, scores)
         predict_and_log_mask(
             dataset=self.test_dataset, experiment=self.experiment, model=self.model
