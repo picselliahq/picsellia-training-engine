@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 test-sonia/
+yolox-detection/YOLOX_outputs/
 # C extensions
 *.so
 
@@ -151,3 +152,4 @@ checkpoint
 .idea
 
 */poetry.lock
+yolox-detection-test/*

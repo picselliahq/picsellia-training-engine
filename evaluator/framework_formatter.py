@@ -1,12 +1,17 @@
 from abc import ABC, abstractmethod
 from typing import List
-import numpy as np
-from picsellia.sdk.asset import Asset
+
 import cv2
-from evaluator.utils.general import (cast_type_list_to_float, cast_type_list_to_int,
-                                     convert_tensor_to_list,
-                                     rescale_normalized_box)
+import numpy as np
 from PIL import Image
+from picsellia.sdk.asset import Asset
+
+from evaluator.utils.general import (
+    cast_type_list_to_float,
+    cast_type_list_to_int,
+    convert_tensor_to_list,
+    rescale_normalized_box,
+)
 
 
 class FrameworkFormatter(ABC):
@@ -33,8 +38,7 @@ class FrameworkFormatter(ABC):
 class YoloFormatter(FrameworkFormatter):
     def format_confidences(self, prediction):
         if prediction.boxes is not None:
-            confidences_list = convert_tensor_to_list(
-                tensor=prediction.boxes.conf)
+            confidences_list = convert_tensor_to_list(tensor=prediction.boxes.conf)
 
         elif prediction.probs is not None:
             confidences_list = [max(prediction.probs)]
@@ -77,25 +81,21 @@ class YoloFormatter(FrameworkFormatter):
         if prediction.masks is None:
             return []
         polygons = prediction.masks.xy
-        casted_polygons = list(
-            map(lambda polygon: polygon.astype(int), polygons))
+        casted_polygons = list(map(lambda polygon: polygon.astype(int), polygons))
         return list(map(lambda polygon: polygon.tolist(), casted_polygons))
 
 
 class TensorflowFormatter(FrameworkFormatter):
-
     def format_confidences(self, prediction):
-        if prediction['detection_scores'] is not None:
-            scores = prediction["detection_scores"].numpy()[
-                0].astype(np.float).tolist()
+        if prediction["detection_scores"] is not None:
+            scores = prediction["detection_scores"].numpy()[0].astype(np.float).tolist()
 
         return scores
 
     def format_classes(self, prediction):
-        if prediction['detection_scores'] is not None:
+        if prediction["detection_scores"] is not None:
             classes = (
-                prediction["detection_classes"].numpy()[
-                    0].astype(np.float).tolist()
+                prediction["detection_classes"].numpy()[0].astype(np.float).tolist()
             )
         casted_classes = cast_type_list_to_int(_list=classes)
         picsellia_labels = list(
@@ -107,9 +107,9 @@ class TensorflowFormatter(FrameworkFormatter):
 
     def format_boxes(self, asset: Asset, prediction):
         boxes = self._postprocess_boxes(
-            prediction["detection_boxes"].numpy(
-            )[0].astype(np.float).tolist(),
-            asset.width, asset.height
+            prediction["detection_boxes"].numpy()[0].astype(np.float).tolist(),
+            asset.width,
+            asset.height,
         )
 
         return boxes
@@ -117,8 +117,8 @@ class TensorflowFormatter(FrameworkFormatter):
     def format_polygons(self, asset: Asset, prediction):
         boxes = self._postprocess_boxes(
             prediction["detection_boxes"].numpy()[0].astype(np.float).tolist(),
-            asset.width, asset.height
-
+            asset.width,
+            asset.height,
         )
         masks = self._postprocess_masks(
             detection_masks=prediction["detection_masks"]
@@ -128,12 +128,14 @@ class TensorflowFormatter(FrameworkFormatter):
             resized_detection_boxes=boxes,
             mask_threshold=0.4,
             image_height=asset.height,
-            image_width=asset.width
+            image_width=asset.width,
         )
 
         return masks
 
-    def _postprocess_boxes(self, detection_boxes: list, image_width: int, image_height: int) -> list:
+    def _postprocess_boxes(
+        self, detection_boxes: list, image_width: int, image_height: int
+    ) -> list:
         return [
             [
                 int(e[1] * image_width),
@@ -145,22 +147,20 @@ class TensorflowFormatter(FrameworkFormatter):
         ]
 
     def _postprocess_masks(
-            self,
-            detection_masks: list,
-            resized_detection_boxes: list,
-            image_width: int,
-            image_height: int,
-            mask_threshold: float = 0.5,
-
+        self,
+        detection_masks: list,
+        resized_detection_boxes: list,
+        image_width: int,
+        image_height: int,
+        mask_threshold: float = 0.5,
     ) -> list:
         list_mask = []
         for idx, detection_mask in enumerate(detection_masks):
-
             # background_mask with all black=0
             mask = np.zeros((image_height, image_width))
             # Get normalised bbox coordinates
             xmin, ymin, w, h = resized_detection_boxes[idx]
-            if w > 0 and h >0 and xmin > 0 and ymin > 0:
+            if w > 0 and h > 0 and xmin > 0 and ymin > 0:
                 xmax = xmin + w
                 ymax = ymin + h
 
@@ -178,7 +178,7 @@ class TensorflowFormatter(FrameworkFormatter):
                 assert bbox_mask.shape == mask[ymin:ymax, xmin:xmax].shape
                 mask[ymin:ymax, xmin:xmax] = bbox_mask
                 if (
-                        mask_threshold > 0
+                    mask_threshold > 0
                 ):  # np.where(mask != 1, 0, mask)  # in case threshold is used to have other values (0)
                     mask = np.where(np.abs(mask) > mask_threshold * 255, 1, mask)
                     mask = np.where(mask != 1, 0, mask)

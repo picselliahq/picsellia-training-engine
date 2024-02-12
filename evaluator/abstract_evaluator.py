@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Type, Union
 
 import tqdm
+from picsellia import Job
 from picsellia.exceptions import InsufficientResourcesError, ResourceNotFoundError
 from picsellia.sdk.asset import Asset
 from picsellia.sdk.dataset import DatasetVersion
@@ -140,7 +141,7 @@ class AbstractEvaluator(ABC):
     def _load_saved_model(self):
         pass
 
-    def evaluate(self) -> None:
+    def evaluate(self) -> Job:
         total_batch_number = math.ceil(len(self._asset_list) / self._batch_size)
 
         for i in tqdm.tqdm(range(total_batch_number)):
@@ -153,7 +154,7 @@ class AbstractEvaluator(ABC):
             InferenceType.SEGMENTATION,
             InferenceType.CLASSIFICATION,
         ]:
-            self._experiment.compute_evaluations_metrics(
+            return self._experiment.compute_evaluations_metrics(
                 inference_type=self._dataset.type
             )
 

@@ -27,3 +27,6 @@ docker push picsellia/training-yolov8-segmentation:latest
 
 docker build . -f unet-instance-segmentation/Dockerfile -t picsellia/training-unet-segmentation:latest
 docker push picsellia/training-unet-segmentation:latest
+
+docker build . -f yolox-detection/Dockerfile -t picsellia/training-yolox-detection:latest
+docker push picsellia/training-yolox-detection:latest
