@@ -8,7 +8,7 @@ ARG REBUILD_PICSELLIA
 
 
 RUN pip3 install --no-cache-dir picsellia
-RUN python3.10 -m pip install picsellia --upgrade
+RUN pip3 install picsellia --upgrade
 
 RUN pip3 install -U accelerate
 RUN pip3 install -U transformers

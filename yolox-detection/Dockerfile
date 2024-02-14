@@ -3,7 +3,7 @@ FROM picsellia/cuda:11.7.1-cudnn8-ubuntu20.04-python3.10
 COPY ./yolox-detection/requirements.txt .
 
 ARG REBUILD_ALL
-RUN python3.10 -m pip install -r requirements.txt --no-cache-dir
+RUN pip3 install -r requirements.txt --no-cache-dir
 
 WORKDIR /experiment
 

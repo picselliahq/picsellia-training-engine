@@ -4,6 +4,7 @@ COPY ./unet-instance-segmentation/requirements.txt .
 
 ARG REBUILD_ALL
 RUN pip3 install -r ./requirements.txt --no-cache-dir
+RUN pip3 install picsellia --upgrade
 
 WORKDIR /experiment
 ENV SM_FRAMEWORK="tf.keras"
