@@ -1,4 +1,4 @@
-FROM picsellia/cuda:11.8.0-cudnn8-ubuntu20.04
+FROM picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.10
 
 COPY ./unet-instance-segmentation/requirements.txt .
 

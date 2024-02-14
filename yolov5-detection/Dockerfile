@@ -1,4 +1,4 @@
-FROM picsellia/cuda:11.4.3-cudnn8-ubuntu20.04
+FROM picsellia/cuda:11.4.3-cudnn8-ubuntu20.04-python3.8
 
 COPY ./yolov5-detection/requirements.txt .
 
