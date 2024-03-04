@@ -1,5 +1,5 @@
 ---
-name: DevOps User Story Template
+name: "\U0001F527 DevOps User Story Template"
 about: A basic template for DevOps User Stories
 title: ''
 labels: "#devops"

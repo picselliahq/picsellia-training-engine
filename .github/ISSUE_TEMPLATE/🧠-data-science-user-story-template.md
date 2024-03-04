@@ -1,5 +1,5 @@
 ---
-name: Data-Science User Story Template
+name: "\U0001F9E0 Data-Science User Story Template"
 about: A basic template for Data-Science User Stories
 title: ''
 labels: "#data-sience"
