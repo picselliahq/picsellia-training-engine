@@ -9,7 +9,7 @@ assignees: ''
 
 **As a ...,**
 **I want to ...**
-**So that ...*
+**So that ...**
 
 **Acceptance Criteria:**
 - [ ]
