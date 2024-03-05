@@ -118,7 +118,7 @@ class AbstractEvaluator(ABC):
         """
         Check if the selected dataset is included into the given experiment,
 
-        If the dataset isn't in the experiment, we'll add it under the name "eval".
+        If the dataset isn't in the experiment, we'll add it under the name "test".
         """
 
         attached_datasets = self._experiment.list_attached_dataset_versions()
@@ -126,7 +126,7 @@ class AbstractEvaluator(ABC):
             if dataset_version.id == self._dataset.id:
                 return
 
-        self._experiment.attach_dataset(name="eval", dataset_version=self._dataset)
+        self._experiment.attach_dataset(name="test", dataset_version=self._dataset)
         logging.info(
             f"{self._dataset.name}/{self._dataset.version} attached to the experiment."
         )

@@ -54,8 +54,8 @@ class Yolov8DetectionTrainer(Yolov8Trainer):
     def eval(self):
         detection_evaluator = DetectionYOLOEvaluator(
             experiment=self.experiment,
-            dataset=self.evaluation_ds,
-            asset_list=self.evaluation_assets,
+            dataset=self.test_ds,
+            asset_list=self.test_assets,
             confidence_threshold=self.parameters.get("confidence_threshold", 0.1),
         )
 

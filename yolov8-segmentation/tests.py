@@ -140,15 +140,15 @@ class TestYolov8SegmentationTrainer(unittest.TestCase):
         cls.dataset = cls.client.get_dataset_by_id(
             "01892b85-3c3b-72c8-943d-8a780c46a82d"
         )  # segmentation dataset
-        cls.train_set = cls.dataset.get_version("eval")
+        cls.train_set = cls.dataset.get_version("val")
         cls.experiment.attach_dataset(name="full", dataset_version=cls.train_set)
         cls.asset_train_path = os.path.join(cls.experiment.png_dir, "train", "images")
         cls.asset_test_path = os.path.join(cls.experiment.png_dir, "test", "images")
-        cls.asset_eval_path = os.path.join(cls.experiment.png_dir, "val", "images")
+        cls.asset_val_path = os.path.join(cls.experiment.png_dir, "val", "images")
 
         cls.label_train_path = os.path.join(cls.experiment.png_dir, "train", "labels")
         cls.label_test_path = os.path.join(cls.experiment.png_dir, "test", "labels")
-        cls.label_eval_path = os.path.join(cls.experiment.png_dir, "val", "labels")
+        cls.label_val_path = os.path.join(cls.experiment.png_dir, "val", "labels")
         cls.checkpoint_path = os.path.join(cls.experiment.checkpoint_dir)
         cls.test_folder = os.path.join(
             os.getcwd(),
@@ -210,7 +210,7 @@ class TestYolov8SegmentationTrainer(unittest.TestCase):
         for directory_path in [
             self.asset_train_path,
             self.asset_test_path,
-            self.asset_eval_path,
+            self.asset_val_path,
         ]:
             print(directory_path)
             self.assert_directory_exists_and_not_empty(directory_path=directory_path)
@@ -219,7 +219,7 @@ class TestYolov8SegmentationTrainer(unittest.TestCase):
         for directory_path in [
             self.label_train_path,
             self.label_test_path,
-            self.label_eval_path,
+            self.label_val_path,
         ]:
             self.assert_directory_exists_and_not_empty(directory_path=directory_path)
 
@@ -227,7 +227,7 @@ class TestYolov8SegmentationTrainer(unittest.TestCase):
         image_to_text_file_dict = {
             self.asset_train_path: self.label_train_path,
             self.asset_test_path: self.label_test_path,
-            self.asset_eval_path: self.label_eval_path,
+            self.asset_val_path: self.label_val_path,
         }
         for image_path, label_path in image_to_text_file_dict.items():
             image_files = os.listdir(image_path)

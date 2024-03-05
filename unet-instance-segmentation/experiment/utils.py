@@ -37,9 +37,9 @@ def split_train_test_val_filenames(
     test_length = (nbr_images - train_length) // 2
     train_image_filenames = image_files[:train_length]
     test_images_filenames = image_files[train_length : train_length + test_length]
-    eval_images_filenames = image_files[train_length + test_length :]
+    val_images_filenames = image_files[train_length + test_length :]
 
-    return train_image_filenames, test_images_filenames, eval_images_filenames
+    return train_image_filenames, test_images_filenames, val_images_filenames
 
 
 def makedirs_images_masks(
@@ -47,8 +47,8 @@ def makedirs_images_masks(
     y_train_dir: str,
     x_test_dir: str,
     y_test_dir: str,
-    x_eval_dir: str,
-    y_eval_dir: str,
+    x_val_dir: str,
+    y_val_dir: str,
 ) -> None:
     os.makedirs(name=x_train_dir)
     os.makedirs(name=y_train_dir)
@@ -56,8 +56,8 @@ def makedirs_images_masks(
     os.makedirs(name=x_test_dir)
     os.makedirs(name=y_test_dir)
 
-    os.makedirs(name=x_eval_dir)
-    os.makedirs(name=y_eval_dir)
+    os.makedirs(name=x_val_dir)
+    os.makedirs(name=y_val_dir)
 
 
 def move_images_and_masks_to_directories(
@@ -260,12 +260,12 @@ def get_preprocessing(preprocessing_fn) -> A.Compose:
     return A.Compose(_transform)
 
 
-def format_and_log_eval_metrics(experiment: Experiment, metrics: list, scores: list):
-    eval_metrics = {"loss": float("{:.5f}".format(scores[0]))}
+def format_and_log_test_metrics(experiment: Experiment, metrics: list, scores: list):
+    test_metrics = {"loss": float("{:.5f}".format(scores[0]))}
     for metric, value in zip(metrics, scores[1:]):
-        eval_metrics[metric.__name__] = float("{:.5f}".format(value))
+        test_metrics[metric.__name__] = float("{:.5f}".format(value))
 
-    experiment.log(name="eval-results", type=LogType.TABLE, data=eval_metrics)
+    experiment.log(name="test-results", type=LogType.TABLE, data=test_metrics)
 
 
 def log_training_sample_to_picsellia(dataset: Dataset, experiment: Experiment):
