@@ -1,7 +1,9 @@
 import logging
+import os
 from typing import Optional, Union, Callable, TypeVar, Any
 
 from poc.enum import PipelineState, StepState
+from poc.pipeline_logger import PipelineLogger
 from poc.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., None])
@@ -11,8 +13,18 @@ logger = logging.getLogger("poc")
 class Pipeline:
     ACTIVE_PIPELINE = None
 
-    def __init__(self, name: str, entrypoint: F) -> None:
+    def __init__(
+        self,
+        name: str,
+        log_folder_path: Union[str, None],
+        remove_logs_on_completion: bool,
+        entrypoint: F,
+    ) -> None:
         self.name = name
+        self.pipeline_logger = PipelineLogger(
+            pipeline_name=name, log_folder_path=log_folder_path
+        )
+        self.remove_logs_on_completion = remove_logs_on_completion
         self.entrypoint = entrypoint
 
         self._is_pipeline_initialized = False
@@ -83,10 +95,15 @@ class Pipeline:
             )
 
         Pipeline.ACTIVE_PIPELINE = self
+
+        self.pipeline_logger.configure()
         self._state = PipelineState.RUNNING
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         Pipeline.ACTIVE_PIPELINE = None
+
+        if self.remove_logs_on_completion:
+            self.pipeline_logger.clean()
 
     def register_step_metadata(
         self,
@@ -98,6 +115,8 @@ class Pipeline:
 def pipeline(
     _func: Optional["F"] = None,
     name: Union[str, None] = None,
+    log_folder_path: Union[str, None] = None,
+    remove_logs_on_completion: bool = True,
 ) -> Union["Pipeline", Callable[["F"], "Pipeline"]]:
     """Decorator to create a pipeline.
 
@@ -105,13 +124,20 @@ def pipeline(
         _func: The decorated function.
         name: The name of the pipeline. If left empty, the name of the
             decorated function will be used as a fallback.
+        log_folder_path: The path to the log folder. If left empty, a temporary folder will be created.
+        remove_logs_on_completion: Whether to remove the logs on completion. Defaults to True.
 
     Returns:
         A pipeline instance.
     """
 
     def inner_decorator(func: "F") -> "Pipeline":
-        p = Pipeline(name=name or func.__name__, entrypoint=func)
+        p = Pipeline(
+            name=name or func.__name__,
+            log_folder_path=log_folder_path,
+            remove_logs_on_completion=remove_logs_on_completion,
+            entrypoint=func,
+        )
 
         p.__doc__ = func.__doc__
         return p

@@ -6,7 +6,7 @@ from poc.pipeline import pipeline, Pipeline
 from poc.step import step
 
 
-@pipeline
+@pipeline(name="pipeline", log_folder_path="poc/logs", remove_logs_on_completion=False)
 def training_pipeline():
     val_1 = step_1()
     val_2 = step_2()
@@ -39,7 +39,7 @@ def step_3(value_1, value_2) -> float:
     return value_1 + value_2
 
 
-@step
+@step(continue_on_failure=True)
 def step_4(value_1) -> float:
     time.sleep(0.9)
     return value_1 * 2
