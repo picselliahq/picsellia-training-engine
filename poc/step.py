@@ -1,9 +1,11 @@
 import logging
 import time
+import uuid
 from typing import Callable, Union, TypeVar, Optional, Any
 
 from poc.enum import StepState, PipelineState
 from poc.pipeline import Pipeline
+from poc.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., None])
 logger = logging.getLogger("poc")
@@ -22,15 +24,20 @@ class Step:
             name: The name of the step.
             entrypoint: The entrypoint function of the pipeline.
         """
+        self.id = uuid.uuid4()
         self.step_name = name
         self.continue_on_failure = continue_on_failure
         self.entrypoint = entrypoint
 
-        self._state = StepState.RUNNING
+        self._metadata = self.initialize_metadata()
 
     @property
     def state(self) -> StepState:
-        return self._state
+        return self._metadata.state
+
+    @property
+    def metadata(self) -> StepMetadata:
+        return self._metadata
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         result = None
@@ -42,12 +49,19 @@ class Step:
                 "A step must be run within a function decorated with @pipeline."
             )
 
+        if not current_pipeline.is_initialized:
+            current_pipeline.register_step_metadata(step_metadata=self._metadata)
+            return self._metadata
+
+        else:
+            self._metadata.state = StepState.RUNNING
+
         if (
             current_pipeline.state
             not in [PipelineState.RUNNING, PipelineState.PARTIAL_SUCCESS]
             and not self.continue_on_failure
         ):
-            self._state = StepState.SKIPPED
+            self._metadata.state = StepState.SKIPPED
             logger.warning(f"{self.step_name} was skipped.")
 
         else:
@@ -58,22 +72,32 @@ class Step:
 
             except Exception as e:
                 logger.error(f"Error in {self.step_name}: {e}", exc_info=True)
-                self._state = StepState.FAILED
+                self._metadata.state = StepState.FAILED
 
             else:
-                self._state = StepState.SUCCESS
+                self._metadata.state = StepState.SUCCESS
+
+            finally:
                 execution_time = time.time() - start_time
                 logger.info(
                     f"{self.step_name} execution time: {execution_time:.3f} seconds"
                 )
+                self._metadata.execution_time = execution_time
 
-        current_pipeline.register_step_execution(self.step_name, self.state)
         return None if self.state is StepState.FAILED else result
+
+    def initialize_metadata(self) -> StepMetadata:
+        return StepMetadata(
+            id=self.id,
+            name=self.step_name,
+            state=StepState.PENDING,
+            execution_time=0,
+        )
 
 
 def step(
     _func: Optional["F"] = None,
-    name: str | None = None,
+    name: Union[str, None] = None,
     continue_on_failure: bool = False,
 ) -> Union["Step", Callable[["F"], "Step"]]:
     """Decorator to create a step.

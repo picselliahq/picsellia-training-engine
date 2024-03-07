@@ -2,6 +2,7 @@ from enum import Enum, auto
 
 
 class StepState(Enum):
+    PENDING = auto()
     RUNNING = auto()
     SUCCESS = auto()
     FAILED = auto()

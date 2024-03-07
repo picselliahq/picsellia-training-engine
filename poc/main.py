@@ -17,8 +17,8 @@ def training_pipeline():
     print(val_4)
 
     if Pipeline.ACTIVE_PIPELINE is not None:
-        print(Pipeline.ACTIVE_PIPELINE.step_statuses)
-        print(Pipeline.ACTIVE_PIPELINE.state)
+        print(Pipeline.ACTIVE_PIPELINE.steps_metadata)
+        print(f"Pipeline state is: {Pipeline.ACTIVE_PIPELINE.state}")
 
 
 @step
