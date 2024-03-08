@@ -1,14 +1,16 @@
 import logging
+import sys
 import time
 import uuid
+from inspect import signature
 from typing import Callable, Union, TypeVar, Optional, Any
 
 from poc.enum import StepState, PipelineState
+from poc.log_handler import StreamToLogger
 from poc.pipeline import Pipeline
 from poc.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., None])
-logger = logging.getLogger("poc")
 
 
 class Step:
@@ -55,6 +57,7 @@ class Step:
 
         else:
             self._metadata.state = StepState.RUNNING
+            logger = current_pipeline.logger_manager.pipeline_logger
 
         if (
             current_pipeline.state
@@ -66,8 +69,12 @@ class Step:
 
         else:
             start_time = time.time()
+            original_stdout = sys.stdout
 
             try:
+                step_logger = self._prepare_step_logger(pipeline=current_pipeline)
+
+                kwargs = self._prepare_entrypoint_kwargs(kwargs, step_logger)
                 result = self.entrypoint(*args, **kwargs)
 
             except Exception as e:
@@ -78,6 +85,7 @@ class Step:
                 self._metadata.state = StepState.SUCCESS
 
             finally:
+                sys.stdout = original_stdout
                 execution_time = time.time() - start_time
                 logger.info(
                     f"{self.step_name} execution time: {execution_time:.3f} seconds"
@@ -85,6 +93,21 @@ class Step:
                 self._metadata.execution_time = execution_time
 
         return None if self.state is StepState.FAILED else result
+
+    def _prepare_step_logger(self, pipeline: Pipeline):
+        step_logger = pipeline.logger_manager.get_step_logger(step_id=self.id)
+        sys.stdout = StreamToLogger(step_logger)
+        return step_logger
+
+    def _prepare_entrypoint_kwargs(
+        self, kwargs: dict[str, Any], step_logger: logging.Logger
+    ):
+        sig = signature(self.entrypoint)
+        if "logger" in sig.parameters:
+            kwargs["logger"] = step_logger
+        else:
+            kwargs.pop("logger", None)
+        return kwargs
 
     def initialize_metadata(self) -> StepMetadata:
         return StepMetadata(

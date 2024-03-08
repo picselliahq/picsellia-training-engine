@@ -3,7 +3,7 @@ import os
 from typing import Optional, Union, Callable, TypeVar, Any
 
 from poc.enum import PipelineState, StepState
-from poc.pipeline_logger import PipelineLogger
+from poc.pipeline_logger import LoggerManager
 from poc.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., None])
@@ -21,7 +21,7 @@ class Pipeline:
         entrypoint: F,
     ) -> None:
         self.name = name
-        self.pipeline_logger = PipelineLogger(
+        self.logger_manager = LoggerManager(
             pipeline_name=name, log_folder_path=log_folder_path
         )
         self.remove_logs_on_completion = remove_logs_on_completion
@@ -82,10 +82,15 @@ class Pipeline:
 
     def __call__(self, *args, **kwargs) -> Any:
         with self:
-            _ = self.entrypoint(*args, **kwargs)
+            _ = self.entrypoint(
+                *args, **kwargs, logger=self.logger_manager.pipeline_logger
+            )
 
-            self._is_pipeline_initialized = True
-            return self.entrypoint(*args, **kwargs)
+            self.finalize_initialization()
+
+            return self.entrypoint(
+                *args, **kwargs, logger=self.logger_manager.pipeline_logger
+            )
 
     def __enter__(self):
         if Pipeline.ACTIVE_PIPELINE is not None:
@@ -96,20 +101,22 @@ class Pipeline:
 
         Pipeline.ACTIVE_PIPELINE = self
 
-        self.pipeline_logger.configure()
-        self._state = PipelineState.RUNNING
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         Pipeline.ACTIVE_PIPELINE = None
 
         if self.remove_logs_on_completion:
-            self.pipeline_logger.clean()
+            self.logger_manager.clean()
 
     def register_step_metadata(
         self,
         step_metadata: StepMetadata,
     ) -> None:
         self._registered_steps_metadata.append(step_metadata)
+
+    def finalize_initialization(self):
+        self.logger_manager.configure(steps_metadata=self.steps_metadata)
+        self._is_pipeline_initialized = True
+        self._state = PipelineState.RUNNING
 
 
 def pipeline(
