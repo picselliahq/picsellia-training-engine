@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "poc-yolov8-classification"
+version = "0.1.0"
+description = ""
+authors = ["SoniaGrh <sonia.garrouch@hotmail.fr>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ultralytics = "^8.1.24"
+picsellia = "^6.13.0"
+black = "^24.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
