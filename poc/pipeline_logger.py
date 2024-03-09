@@ -5,7 +5,6 @@ import tempfile
 from datetime import datetime
 from typing import Union
 
-from poc import step_metadata
 from poc.step_metadata import StepMetadata
 
 
@@ -23,6 +22,7 @@ class LoggerManager:
         Configures the pipeline logger.
         If the log folder path is not provided, a temporary directory is created.
         """
+
         if self.log_folder_root_path is None:
             self.log_folder_root_path = tempfile.mkdtemp()
             self.uses_temp_dir = True
@@ -58,12 +58,13 @@ class LoggerManager:
         os.makedirs(self.log_folder_path)
 
     def _configure_steps_logger(self, steps_metadata: [StepMetadata]) -> None:
-        for step_metadata in steps_metadata:
-            log_file_name = self._sanitize_for_path(
-                input_string=f"{step_metadata.name}-{step_metadata.id}.txt"
+        for index, step_metadata in enumerate(steps_metadata):
+            log_file_name = self._sanitize_file_path(
+                input_string=f"{index + 1}-{step_metadata.name}-{step_metadata.id}.txt"
             )
             step_log_file_path = os.path.join(self.log_folder_path, log_file_name)
             step_metadata.log_file_path = step_log_file_path
+            step_metadata.index = index
 
             open(step_log_file_path, "w").close()
 
@@ -71,7 +72,7 @@ class LoggerManager:
                 step_name=step_metadata.name, log_file_path=step_log_file_path
             )
 
-    def _sanitize_for_path(self, input_string: str, replacement: str = "_"):
+    def _sanitize_file_path(self, input_string: str, replacement: str = "_"):
         invalid_chars_pattern = r'[\\/*?:"<>|]'
         sanitized_string = re.sub(invalid_chars_pattern, replacement, input_string)
         return sanitized_string
@@ -82,7 +83,7 @@ class LoggerManager:
         return pipeline_logger
 
     def _create_step_logger(self, step_name: str, log_file_path: str) -> logging.Logger:
-        step_logger = logging.getLogger(f"{self.pipeline_name}.{step_name}")
+        step_logger = logging.getLogger("picsellia")
         step_logger.setLevel(logging.INFO)
         step_logger.addHandler(logging.FileHandler(log_file_path))
         return step_logger

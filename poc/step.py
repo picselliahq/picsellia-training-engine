@@ -75,7 +75,9 @@ class Step:
                 step_logger = self._prepare_step_logger(pipeline=current_pipeline)
 
                 kwargs = self._prepare_entrypoint_kwargs(kwargs, step_logger)
-                result = self.entrypoint(*args, **kwargs)
+                result = self._run_entrypoint(
+                    pipeline=current_pipeline, step_logger=logger, *args, **kwargs
+                )
 
             except Exception as e:
                 logger.error(f"Error in {self.step_name}: {e}", exc_info=True)
@@ -108,6 +110,19 @@ class Step:
         else:
             kwargs.pop("logger", None)
         return kwargs
+
+    def _run_entrypoint(
+        self,
+        pipeline: Pipeline,
+        step_logger: logging.Logger,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        total_number_of_steps = len(pipeline.steps_metadata)
+        step_logger.info(
+            f"({self.metadata.index}/{total_number_of_steps}) Starting step {self.step_name} ({self.id}):"
+        )
+        return self.entrypoint(*args, **kwargs)
 
     def initialize_metadata(self) -> StepMetadata:
         return StepMetadata(

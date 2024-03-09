@@ -30,13 +30,13 @@ def dataset_extractor(dataset: DatasetVersion) -> dict:
     )
     coco_file = dataset.build_coco_file_locally(use_id=True)
     labelmap = {str(i): label.name for i, label in enumerate(dataset.list_labels())}
-    train_dataset_context = {
+    dataset_context = {
         "dataset_extraction_path": dataset_extraction_path,
         "images_dir": os.path.join(dataset_extraction_path, "images"),
         "coco_file": coco_file,
         "labelmap": labelmap,
     }
-    return train_dataset_context
+    return dataset_context
 
 
 def data_extractor(context: dict):

@@ -56,7 +56,4 @@ def step_4(value_1) -> float:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(message)s", handlers=[CustomLogHandler()]
-    )
     training_pipeline()

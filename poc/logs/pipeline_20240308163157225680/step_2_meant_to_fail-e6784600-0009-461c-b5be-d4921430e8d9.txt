@@ -1,6 +1,0 @@
-Error in meant_to_fail(): float division by zero
-Traceback (most recent call last):
-  File "/Users/alexis/Documents/Projects/picsellia/picsellia-training-engine/poc/main.py", line 39, in step_2
-    return 0.9 / 0
-           ~~~~^~~
-ZeroDivisionError: float division by zero
