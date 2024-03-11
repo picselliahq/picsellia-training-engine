@@ -5,7 +5,7 @@ import uuid
 from inspect import signature
 from typing import Callable, Union, TypeVar, Optional, Any
 
-from poc.enum import StepState, PipelineState
+from poc.state_enums import StepState, PipelineState
 from poc.log_handler import StreamToLogger
 from poc.pipeline import Pipeline
 from poc.step_metadata import StepMetadata
@@ -57,7 +57,7 @@ class Step:
 
         else:
             self._metadata.state = StepState.RUNNING
-            logger = current_pipeline.logger_manager.pipeline_logger
+            step_logger = self._prepare_step_logger(pipeline=current_pipeline)
 
         if (
             current_pipeline.state
@@ -65,64 +65,52 @@ class Step:
             and not self.continue_on_failure
         ):
             self._metadata.state = StepState.SKIPPED
-            logger.warning(f"{self.step_name} was skipped.")
+            self.log_step_info(
+                pipeline=current_pipeline,
+                step_logger=step_logger,
+                log_content=f"{self.step_name} was skipped.",
+            )
 
         else:
             start_time = time.time()
-            original_stdout = sys.stdout
 
             try:
-                step_logger = self._prepare_step_logger(pipeline=current_pipeline)
-
-                kwargs = self._prepare_entrypoint_kwargs(kwargs, step_logger)
-                result = self._run_entrypoint(
-                    pipeline=current_pipeline, step_logger=logger, *args, **kwargs
+                self.log_step_info(
+                    pipeline=current_pipeline,
+                    step_logger=step_logger,
+                    log_content=f"Starting step {self.step_name} ({self.id})",
                 )
 
+                result = self.entrypoint(*args, **kwargs)
+
             except Exception as e:
-                logger.error(f"Error in {self.step_name}: {e}", exc_info=True)
+                step_logger.error(f"Error in {self.step_name}: {e}", exc_info=True)
                 self._metadata.state = StepState.FAILED
 
             else:
                 self._metadata.state = StepState.SUCCESS
 
             finally:
-                sys.stdout = original_stdout
                 execution_time = time.time() - start_time
-                logger.info(
+                step_logger.info(
                     f"{self.step_name} execution time: {execution_time:.3f} seconds"
                 )
                 self._metadata.execution_time = execution_time
 
         return None if self.state is StepState.FAILED else result
 
-    def _prepare_step_logger(self, pipeline: Pipeline):
-        step_logger = pipeline.logger_manager.get_step_logger(step_id=self.id)
-        sys.stdout = StreamToLogger(step_logger)
-        return step_logger
+    def _prepare_step_logger(self, pipeline: Pipeline) -> logging.Logger:
+        return pipeline.logger_manager.prepare_step_logger(
+            log_file_path=self.metadata.log_file_path
+        )
 
-    def _prepare_entrypoint_kwargs(
-        self, kwargs: dict[str, Any], step_logger: logging.Logger
-    ):
-        sig = signature(self.entrypoint)
-        if "logger" in sig.parameters:
-            kwargs["logger"] = step_logger
-        else:
-            kwargs.pop("logger", None)
-        return kwargs
-
-    def _run_entrypoint(
-        self,
-        pipeline: Pipeline,
-        step_logger: logging.Logger,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
+    def log_step_info(
+        self, pipeline: Pipeline, step_logger: logging.Logger, log_content: str
+    ) -> None:
         total_number_of_steps = len(pipeline.steps_metadata)
         step_logger.info(
-            f"({self.metadata.index}/{total_number_of_steps}) Starting step {self.step_name} ({self.id}):"
+            f"({self.metadata.index}/{total_number_of_steps}) {log_content}:"
         )
-        return self.entrypoint(*args, **kwargs)
 
     def initialize_metadata(self) -> StepMetadata:
         return StepMetadata(

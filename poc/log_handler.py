@@ -2,14 +2,18 @@ import logging
 
 
 class StreamToLogger:
-    def __init__(self, logger, log_level=logging.INFO):
-        self.logger = logger
-        self.log_level = log_level
-        self.linebuf = ""
+    """
+    Logger that duplicates output to stdout and a log file.
+    """
 
-    def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.log(self.log_level, line.rstrip())
+    def __init__(self, filepath, original_stream, mode="a"):
+        self.original_stream = original_stream
+        self.log = open(filepath, mode)
+
+    def write(self, message):
+        self.original_stream.write(message)
+        self.log.write(message)
 
     def flush(self):
-        pass
+        self.original_stream.flush()
+        self.log.flush()

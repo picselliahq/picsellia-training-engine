@@ -1,7 +1,10 @@
 import logging
+import sys
 import time
 
+from picsellia import Client
 from tqdm import tqdm
+from ultralytics.models.yolo.classify import ClassificationTrainer
 
 from poc.pipeline import pipeline
 from poc.steps.augmentation_preparators import augmentation_preparator
@@ -16,7 +19,7 @@ from poc.steps.model_trainers import model_trainer
 
 
 @pipeline(log_folder_path="logs", remove_logs_on_completion=False)
-def yolov8_classification_pipeline(logger: logging.Logger):
+def yolov8_classification_pipeline():
     api_token = "b2a2ffd0f4be0c79d0a719bf0d1177b5a12854eb"
     host = "https://app.picsellia.com"
     organization_name = "SoniaGrh"

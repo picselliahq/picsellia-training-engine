@@ -2,12 +2,11 @@ import logging
 import os
 from typing import Optional, Union, Callable, TypeVar, Any
 
-from poc.enum import PipelineState, StepState
+from poc.state_enums import PipelineState, StepState
 from poc.pipeline_logger import LoggerManager
 from poc.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., None])
-logger = logging.getLogger("poc")
 
 
 class Pipeline:
@@ -82,15 +81,11 @@ class Pipeline:
 
     def __call__(self, *args, **kwargs) -> Any:
         with self:
-            _ = self.entrypoint(
-                *args, **kwargs, logger=self.logger_manager.pipeline_logger
-            )
+            _ = self.entrypoint(*args, **kwargs)
 
             self.finalize_initialization()
 
-            return self.entrypoint(
-                *args, **kwargs, logger=self.logger_manager.pipeline_logger
-            )
+            return self.entrypoint(*args, **kwargs)
 
     def __enter__(self):
         if Pipeline.ACTIVE_PIPELINE is not None:
