@@ -4,25 +4,22 @@ import re
 import sys
 import tempfile
 from datetime import datetime
-from typing import Union
 
 from poc.log_handler import StreamToLogger
 from poc.step_metadata import StepMetadata
 
 
 class LoggerManager:
-    def __init__(self, pipeline_name: str, log_folder_path: Union[str, None]):
+    def __init__(self, pipeline_name: str, log_folder_path: str | None):
         self.pipeline_name = pipeline_name
         self.log_folder_root_path = log_folder_path
         self.uses_temp_dir = False
-
-        self.steps_logger: {str: logging.Logger} = {}
 
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
         self.current_file_handler = None
 
-    def configure(self, steps_metadata: [StepMetadata]) -> None:
+    def configure(self, steps_metadata: list[StepMetadata]) -> None:
         """
         Configures the pipeline logger.
         If the log folder path is not provided, a temporary directory is created.
@@ -46,13 +43,12 @@ class LoggerManager:
         If the log folder is a temporary directory, it is removed.
         Otherwise, only the pipeline log folder is removed.
         """
-        if self.uses_temp_dir:
+        if self.uses_temp_dir and self.log_folder_root_path:
             os.rmdir(self.log_folder_root_path)
-        else:
+        elif self.log_folder_path:
             os.rmdir(self.log_folder_path)
-
-    def get_step_logger(self, step_id: str) -> logging.Logger:
-        return self.steps_logger[step_id]
+        else:
+            logging.getLogger().warning("No log folder could cleaned.")
 
     def _create_pipeline_log_folder(self) -> None:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -62,7 +58,7 @@ class LoggerManager:
 
         os.makedirs(self.log_folder_path)
 
-    def _configure_steps_logger(self, steps_metadata: [StepMetadata]) -> None:
+    def _configure_steps_logger(self, steps_metadata: list[StepMetadata]) -> None:
         for index, step_metadata in enumerate(steps_metadata):
             step_metadata.index = index + 1
 
@@ -74,7 +70,7 @@ class LoggerManager:
 
             open(step_log_file_path, "w").close()
 
-    def _sanitize_file_path(self, input_string: str, replacement: str = "_"):
+    def _sanitize_file_path(self, input_string: str, replacement: str = "_") -> str:
         invalid_chars_pattern = r'[\\/*?:"<>|]'
         sanitized_string = re.sub(invalid_chars_pattern, replacement, input_string)
         return sanitized_string

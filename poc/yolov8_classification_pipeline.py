@@ -1,11 +1,3 @@
-import logging
-import sys
-import time
-
-from picsellia import Client
-from tqdm import tqdm
-from ultralytics.models.yolo.classify import ClassificationTrainer
-
 from poc.pipeline import pipeline
 from poc.steps.augmentation_preparators import augmentation_preparator
 from poc.steps.checkpoint_preparators import checkpoints_preparator
