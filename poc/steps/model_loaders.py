@@ -1,18 +1,11 @@
-from ultralytics.models.yolo.classify import ClassificationTrainer
-
+from ultralytics import YOLO
 from poc.step import step
 
 
 @step
 def model_loader(
-    context: dict, checkpoints_path: str, dataset_path: str, augmentation_args: dict
+    context: dict,
+    weights_path: str,
 ):
-    model_args = dict(
-        model=checkpoints_path,
-        project=context["experiment"].name,
-        data=dataset_path,
-        **context["parameters"],
-        **augmentation_args,
-    )
-    trainer = ClassificationTrainer(overrides=model_args)
-    return trainer
+    model = YOLO(model=weights_path, task="classify")
+    return model

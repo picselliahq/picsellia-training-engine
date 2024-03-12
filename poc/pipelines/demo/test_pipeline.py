@@ -3,7 +3,6 @@ import time
 
 from tqdm import tqdm
 
-from poc.log_handler import CustomLogHandler
 from poc.pipeline import pipeline, Pipeline
 from poc.step import step
 

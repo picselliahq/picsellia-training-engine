@@ -132,9 +132,9 @@ dmypy.json
 *.jpg
 *.zip
 *.pb*
-*.config 
-*.record 
-*.meta 
+*.config
+*.record
+*.meta
 *.data*
 *.index
 *.tfevents.*
@@ -145,7 +145,7 @@ checkpoint
 /scripts
 
 *.jpeg
-*.png 
+*.png
 *.pt
 .env
 
@@ -153,3 +153,6 @@ checkpoint
 
 */poetry.lock
 yolox-detection-test/*
+
+poc/logs/*
+poc/poc-yolov8-classification-3/*

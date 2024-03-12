@@ -1,6 +1,3 @@
-import logging
-
-
 class StreamToLogger:
     """
     Logger that duplicates output to stdout and a log file.

@@ -1,6 +1,6 @@
 import os
 
-from poc.dataset_organizer import DatasetOrganizer
+from poc.models.dataset.dataset_organizer import DatasetOrganizer
 from poc.step import step
 
 

@@ -1,7 +1,7 @@
 from typing import Union
 from uuid import UUID
 
-from poc.state_enums import StepState
+from poc.enums.state_enums import StepState
 
 
 class StepMetadata:

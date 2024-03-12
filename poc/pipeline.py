@@ -1,8 +1,8 @@
 from typing import Optional, Union, Callable, TypeVar, Any
 
-from poc.state_enums import PipelineState, StepState
-from poc.logger_manager import LoggerManager
-from poc.step_metadata import StepMetadata
+from poc.enums.state_enums import PipelineState, StepState
+from poc.models.logging.logger_manager import LoggerManager
+from poc.models.steps.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., None])
 

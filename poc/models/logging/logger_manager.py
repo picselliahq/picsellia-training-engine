@@ -5,8 +5,8 @@ import sys
 import tempfile
 from datetime import datetime
 
-from poc.log_handler import StreamToLogger
-from poc.step_metadata import StepMetadata
+from poc.models.logging.log_handler import StreamToLogger
+from poc.models.steps.step_metadata import StepMetadata
 
 
 class LoggerManager:
