@@ -75,7 +75,7 @@ class Step:
                 self.log_step_info(
                     pipeline=current_pipeline,
                     step_logger=step_logger,
-                    log_content=f"Starting step {self.step_name} ({self.id})",
+                    log_content=f"Starting step {self.step_name} ({self.id}):",
                 )
 
                 result = self.entrypoint(*args, **kwargs)
@@ -89,8 +89,10 @@ class Step:
 
             finally:
                 execution_time = time.time() - start_time
-                step_logger.info(
-                    f"{self.step_name} execution time: {execution_time:.3f} seconds"
+                self.log_step_info(
+                    pipeline=current_pipeline,
+                    step_logger=step_logger,
+                    log_content=f"{self.step_name} execution time: {execution_time:.3f} seconds",
                 )
                 self._metadata.execution_time = execution_time
 
@@ -106,7 +108,7 @@ class Step:
     ) -> None:
         total_number_of_steps = len(pipeline.steps_metadata)
         step_logger.info(
-            f"({self.metadata.index}/{total_number_of_steps}) {log_content}:"
+            f"({self.metadata.index}/{total_number_of_steps}) {log_content}"
         )
 
     def initialize_metadata(self) -> StepMetadata:

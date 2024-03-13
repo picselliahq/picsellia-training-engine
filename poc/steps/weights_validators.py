@@ -4,9 +4,11 @@ from poc.step import step
 
 
 @step
-def weights_validator(context: dict, weights_path: str):
+def weights_validator(_: dict, weights_path: str) -> str:
     if not os.path.exists(weights_path):
-        raise FileNotFoundError(f"weights {weights_path} not found")
+        raise FileNotFoundError(f"Weights {weights_path} not found.")
+
     if "cls" not in weights_path:
-        raise ValueError(f"weights {weights_path} is not a classification weights")
+        raise ValueError(f"Weights {weights_path} are not classification weights.")
+
     return weights_path

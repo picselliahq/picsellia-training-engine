@@ -4,7 +4,7 @@ from ultralytics import YOLO
 from poc.step import step
 
 
-def postprocess(results: list, labelmap: dict[str, Label]):
+def postprocess(results: list, labelmap: dict[str, Label]) -> list[tuple[Label, float]]:
     classifications = []
     for result in results:
         label_names = result.names
@@ -19,9 +19,11 @@ def postprocess(results: list, labelmap: dict[str, Label]):
 @step
 def model_inference(
     context: dict, model: YOLO, dataset_context: dict, attached_dataset_version: str
-):
+) -> list[tuple[Label, float]]:
     images_list = dataset_context[attached_dataset_version]["images_list"]
     labelmap = dataset_context[attached_dataset_version]["labelmap"]
+
     results = model.predict(images_list, **context["inference_args"])
+
     picsellia_results = postprocess(results, labelmap)
     return picsellia_results

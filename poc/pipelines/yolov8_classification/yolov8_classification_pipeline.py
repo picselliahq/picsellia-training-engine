@@ -14,14 +14,14 @@ from poc.steps.model_loaders import model_loader
 from poc.steps.model_registers import model_register
 from poc.steps.model_trainers import model_trainer
 
+api_token = "b2a2ffd0f4be0c79d0a719bf0d1177b5a12854eb"
+host = "https://app.picsellia.com"
+organization_name = "SoniaGrh"
+experiment_id = "018e3238-b56e-7f2a-b118-222a039ce80a"
 
-@pipeline(log_folder_path="logs", remove_logs_on_completion=False)
+
+@pipeline(log_folder_path="logs/", remove_logs_on_completion=False)
 def yolov8_classification_pipeline():
-    api_token = "b2a2ffd0f4be0c79d0a719bf0d1177b5a12854eb"
-    host = "https://app.picsellia.com"
-    organization_name = "SoniaGrh"
-    experiment_id = "018e3238-b56e-7f2a-b118-222a039ce80a"
-
     context = context_preparator(
         api_token=api_token,
         host=host,
