@@ -14,11 +14,13 @@ class Pipeline:
 
     def __init__(
         self,
+        context: Any,
         name: str,
         log_folder_path: Optional[str],
         remove_logs_on_completion: bool,
         entrypoint: F,
     ) -> None:
+        self._context = context
         self.name = name
         self.logger_manager = LoggerManager(
             pipeline_name=name, log_folder_path=log_folder_path
@@ -115,6 +117,16 @@ class Pipeline:
 
         Pipeline.STEPS_REGISTRY[step_name] = step_metadata
 
+    @staticmethod
+    def get_active_context() -> Any:
+        if Pipeline.ACTIVE_PIPELINE is None:
+            raise RuntimeError(
+                "No current pipeline running."
+                "A step must be run within a function decorated with @pipeline."
+            )
+
+        return Pipeline.ACTIVE_PIPELINE._context
+
     def finalize_initialization(self) -> None:
         self.logger_manager.configure(steps_metadata=self.steps_metadata)
         self._is_pipeline_initialized = True
@@ -142,6 +154,7 @@ class Pipeline:
 
 
 def pipeline(
+    context: Any,
     _func: Optional["F"] = None,
     name: Union[str, None] = None,
     log_folder_path: Union[str, None] = None,
@@ -150,6 +163,8 @@ def pipeline(
     """Decorator to create a pipeline.
 
     Args:
+        context: The context of the pipeline. This object can be used to store and share data between steps.
+            It will be accessible by calling the method `Pipeline.get_active_context()`.
         _func: The decorated function.
         name: The name of the pipeline. If left empty, the name of the
             decorated function will be used as a fallback.
@@ -162,6 +177,7 @@ def pipeline(
 
     def inner_decorator(func: "F") -> "Pipeline":
         p = Pipeline(
+            context=context,
             name=name or func.__name__,
             log_folder_path=log_folder_path,
             remove_logs_on_completion=remove_logs_on_completion,

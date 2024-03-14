@@ -1,6 +1,8 @@
 from picsellia import Label
 from ultralytics import YOLO
 
+from poc.models.contexts.picsellia_context import PicselliaTrainingContext
+from poc.pipeline import Pipeline
 from poc.step import step
 
 
@@ -18,8 +20,10 @@ def postprocess(results: list, labelmap: dict[str, Label]) -> list[tuple[Label, 
 
 @step
 def model_inference(
-    context: dict, model: YOLO, dataset_context: dict, attached_dataset_version: str
+    model: YOLO, dataset_context: dict, attached_dataset_version: str
 ) -> list[tuple[Label, float]]:
+    context: PicselliaTrainingContext = Pipeline.get_active_context()
+
     images_list = dataset_context[attached_dataset_version]["images_list"]
     labelmap = dataset_context[attached_dataset_version]["labelmap"]
 

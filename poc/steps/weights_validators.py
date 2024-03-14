@@ -4,7 +4,7 @@ from poc.step import step
 
 
 @step
-def weights_validator(_: dict, weights_path: str) -> str:
+def weights_validator(weights_path: str) -> str:
     if not os.path.exists(weights_path):
         raise FileNotFoundError(f"Weights {weights_path} not found.")
 

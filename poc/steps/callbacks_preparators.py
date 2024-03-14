@@ -5,6 +5,8 @@ from ultralytics.models.yolo.classify import (
     ClassificationValidator,
 )
 
+from poc.models.contexts.picsellia_context import PicselliaTrainingContext
+from poc.pipeline import Pipeline
 from poc.step import step
 
 
@@ -56,14 +58,16 @@ def on_train_end(trainer: ClassificationTrainer, experiment: Experiment):
 
 
 @step
-def callback_preparator(context: dict):
+def callback_preparator():
+    context: PicselliaTrainingContext = Pipeline.get_active_context()
+
     return {
         "on_train_epoch_end": lambda trainer: on_train_epoch_end(
-            trainer, context["experiment"]
+            trainer, context.experiment
         ),
         "on_fit_epoch_end": lambda trainer: on_fit_epoch_end(
-            trainer, context["experiment"]
+            trainer, context.experiment
         ),
-        "on_val_end": lambda validator: on_val_end(validator, context["experiment"]),
-        "on_train_end": lambda trainer: on_train_end(trainer, context["experiment"]),
+        "on_val_end": lambda validator: on_val_end(validator, context.experiment),
+        "on_train_end": lambda trainer: on_train_end(trainer, context.experiment),
     }

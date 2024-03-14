@@ -5,7 +5,7 @@ from poc.step import step
 
 
 @step
-def data_preparator(context: dict, dataset_context: dict):
+def data_preparator(dataset_context: dict):
     train_converter = DatasetOrganizer(
         dataset_context["train"]["coco_file"],
         dataset_context["train"]["images_dir"],

@@ -2,11 +2,13 @@ import os
 
 from picsellia import DatasetVersion
 
+from poc.models.contexts.picsellia_context import PicselliaTrainingContext
+from poc.pipeline import Pipeline
 from poc.step import step
 
 
-def dataset_extractor(context: dict, dataset: DatasetVersion) -> dict:
-    dataset_extraction_path = os.path.join(context["experiment"].name, dataset.name)
+def dataset_extractor(dataset: DatasetVersion, destination_path: str) -> dict:
+    dataset_extraction_path = os.path.join(destination_path, dataset.name)
     dataset.download(
         target_path=os.path.join(dataset_extraction_path, "images", dataset.version),
         use_id=True,
@@ -31,9 +33,16 @@ def dataset_extractor(context: dict, dataset: DatasetVersion) -> dict:
 
 
 @step
-def data_extractor(context: dict):
-    train_dataset: DatasetVersion = context["experiment"].get_dataset("train")
-    test_dataset: DatasetVersion = context["experiment"].get_dataset("test")
-    train_dataset_context = dataset_extractor(context, train_dataset)
-    test_dataset_context = dataset_extractor(context, test_dataset)
+def data_extractor():
+    context: PicselliaTrainingContext = Pipeline.get_active_context()
+
+    train_dataset: DatasetVersion = context.experiment.get_dataset("train")
+    test_dataset: DatasetVersion = context.experiment.get_dataset("test")
+    train_dataset_context = dataset_extractor(
+        dataset=train_dataset, destination_path=context.experiment.name
+    )
+    test_dataset_context = dataset_extractor(
+        dataset=test_dataset, destination_path=context.experiment.name
+    )
+
     return {"train": train_dataset_context, "test": test_dataset_context}
