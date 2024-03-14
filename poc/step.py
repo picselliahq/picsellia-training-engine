@@ -1,3 +1,4 @@
+import functools
 import logging
 import time
 import uuid
@@ -13,9 +14,9 @@ F = TypeVar("F", bound=Callable[..., None])
 class Step:
     def __init__(
         self,
-        name: str,
         continue_on_failure: bool,
         entrypoint: F,
+        metadata: StepMetadata,
     ) -> None:
         """Initializes a step.
 
@@ -23,12 +24,12 @@ class Step:
             name: The name of the step.
             entrypoint: The entrypoint function of the pipeline.
         """
-        self.id = uuid.uuid4()
-        self.step_name = name
+        self.id = metadata.id
+        self.step_name = metadata.name
         self.continue_on_failure = continue_on_failure
         self.entrypoint = entrypoint
 
-        self._metadata = self.initialize_metadata()
+        self._metadata = metadata
 
     @property
     def state(self) -> StepState:
@@ -48,13 +49,8 @@ class Step:
                 "A step must be run within a function decorated with @pipeline."
             )
 
-        if not current_pipeline.is_initialized:
-            current_pipeline.register_step_metadata(step_metadata=self._metadata)
-            return self._metadata
-
-        else:
-            self._metadata.state = StepState.RUNNING
-            step_logger = self._prepare_step_logger(pipeline=current_pipeline)
+        self._metadata.state = StepState.RUNNING
+        step_logger = self._prepare_step_logger(pipeline=current_pipeline)
 
         if (
             current_pipeline.state
@@ -111,14 +107,6 @@ class Step:
             f"({self.metadata.index}/{total_number_of_steps}) {log_content}"
         )
 
-    def initialize_metadata(self) -> StepMetadata:
-        return StepMetadata(
-            id=self.id,
-            name=self.step_name,
-            state=StepState.PENDING,
-            execution_time=0,
-        )
-
 
 def step(
     _func: Optional["F"] = None,
@@ -137,14 +125,22 @@ def step(
         A pipeline instance.
     """
 
+    @functools.wraps(_func)
     def inner_decorator(func: "F") -> "Step":
+        s_metadata = StepMetadata(
+            id=uuid.uuid4(),
+            name=func.__name__,
+            display_name=name or func.__name__,
+            state=StepState.PENDING,
+            execution_time=0.0,
+        )
         s = Step(
-            name=name or func.__name__,
             continue_on_failure=continue_on_failure,
             entrypoint=func,
+            metadata=s_metadata,
         )
 
-        s.__doc__ = func.__doc__
+        Pipeline.register_step_metadata(step_metadata=s_metadata)
         return s
 
     return inner_decorator if _func is None else inner_decorator(_func)

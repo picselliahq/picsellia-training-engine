@@ -9,12 +9,14 @@ class StepMetadata:
         self,
         id: UUID,
         name: str,
+        display_name: str,
         state: StepState,
         execution_time: float,
         log_file_path: Union[str, None] = None,
     ) -> None:
         self.id = id
         self.name = name
+        self.display_name = display_name
         self.state = state
         self.execution_time = execution_time
         self.log_file_path = log_file_path
@@ -23,7 +25,7 @@ class StepMetadata:
     def __repr__(self):
         return (
             f"StepMetadata("
-            f"'{self.id}', '{self.name}', {self.state},"
+            f"'{self.id}', '{self.name}', '{self.display_name}', {self.state},"
             f"{self.execution_time}, {self.log_file_path}, {self.index}"
             f")"
         )

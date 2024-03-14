@@ -18,6 +18,7 @@ class LoggerManager:
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
         self.current_file_handler = None
+        self.logger = logging.getLogger("picsellia")
 
     def configure(self, steps_metadata: list[StepMetadata]) -> None:
         """
@@ -30,8 +31,9 @@ class LoggerManager:
             self.uses_temp_dir = True
 
         elif not os.path.isdir(self.log_folder_root_path):
-            raise NotADirectoryError(
-                f"{self.log_folder_root_path} is not a valid directory."
+            os.makedirs(self.log_folder_root_path)
+            self.logger.info(
+                f"Log folder created at {os.path.abspath(self.log_folder_root_path) }"
             )
 
         self._create_pipeline_log_folder()
@@ -48,7 +50,7 @@ class LoggerManager:
         elif self.log_folder_path:
             os.rmdir(self.log_folder_path)
         else:
-            logging.getLogger().warning("No log folder could cleaned.")
+            self.logger.warning("No log folder could cleaned.")
 
     def _create_pipeline_log_folder(self) -> None:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -105,4 +107,4 @@ class LoggerManager:
         sys.stdout = StreamToLogger(log_file_path, self.original_stdout)
         sys.stderr = StreamToLogger(log_file_path, self.original_stderr)
 
-        return logging.getLogger("picsellia")
+        return self.logger

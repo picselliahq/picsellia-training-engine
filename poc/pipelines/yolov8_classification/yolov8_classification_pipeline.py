@@ -1,3 +1,5 @@
+import os
+
 from poc.pipeline import pipeline
 from poc.steps.callbacks_preparators import callback_preparator
 from poc.steps.data_validators import data_validator
@@ -14,7 +16,7 @@ from poc.steps.model_loaders import model_loader
 from poc.steps.model_registers import model_register
 from poc.steps.model_trainers import model_trainer
 
-api_token = "b2a2ffd0f4be0c79d0a719bf0d1177b5a12854eb"
+api_token = os.environ["api_token"]
 host = "https://app.picsellia.com"
 organization_name = "SoniaGrh"
 experiment_id = "018e3238-b56e-7f2a-b118-222a039ce80a"

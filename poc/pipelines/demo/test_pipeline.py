@@ -1,5 +1,6 @@
 from poc.pipeline import pipeline
 from poc.step import step
+from poc.pipelines.demo.test2 import step_3 as step_3b
 
 
 @step
@@ -18,9 +19,12 @@ def step_3(value_1, value_2) -> float:
 
 
 @pipeline
-def demo_pipeline(
-    context_preparator=step_1, model_loader=step_2, model_exporter=step_3
-):
+def demo_pipeline():
     val_1 = step_1()
     val_2 = step_2()
     step_3(value_1=val_1, value_2=val_2)
+    step_3b(value_1=val_1, value_2=val_2)
+
+
+if __name__ == "__main__":
+    demo_pipeline()
