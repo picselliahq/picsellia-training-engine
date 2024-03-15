@@ -11,10 +11,9 @@ def weights_extractor() -> str:
     context: PicselliaTrainingContext = Pipeline.get_active_context()
 
     model_file = context.experiment.get_artifact("weights")
-    destination_path = os.path.join(context.experiment.name, "weights")
+    weights_destination_path = os.path.join(context.experiment.name, "weights")
 
-    model_file.download(target_path=destination_path)
+    model_file.download(target_path=weights_destination_path)
 
-    return os.path.abspath(
-        os.path.join(destination_path, "weights", model_file.filename)
-    )
+    weights_path = os.path.join(weights_destination_path, model_file.filename)
+    return os.path.abspath(weights_path)

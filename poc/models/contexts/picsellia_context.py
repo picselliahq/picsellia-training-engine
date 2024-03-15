@@ -1,11 +1,13 @@
 import os
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import picsellia
 
 
 class PicselliaContext(ABC):
-    def __init__(self, api_token=None, host=None, organization_id=None):
+    def __init__(
+        self, api_token=None, host=None, organization_id=None, organization_name=None
+    ):
         self.api_token = api_token or os.getenv("api_token")
 
         if not self.api_token:
@@ -15,6 +17,7 @@ class PicselliaContext(ABC):
 
         self.host = host or os.getenv("host", "https://app.picsellia.com")
         self.organization_id = organization_id or os.getenv("organization_id")
+        self.organization_name = organization_id or os.getenv("organization_name")
 
         self.client = self._initialize_client()
 
@@ -23,7 +26,12 @@ class PicselliaContext(ABC):
             api_token=self.api_token,
             host=self.host,
             organization_id=self.organization_id,
+            organization_name=self.organization_name,
         )
+
+    @abstractmethod
+    def to_dict(self):
+        pass
 
 
 class PicselliaTrainingContext(PicselliaContext):
@@ -43,6 +51,14 @@ class PicselliaTrainingContext(PicselliaContext):
 
     def _initialize_experiment(self):
         return self.client.get_experiment_by_id(self.experiment_id)
+
+    def to_dict(self):
+        return {
+            "host": self.host,
+            "organization_id": self.organization_id,
+            "organization_name": self.organization_name,
+            "experiment_id": self.experiment_id,
+        }
 
 
 class PicselliaProcessingContext(PicselliaContext):
@@ -77,3 +93,10 @@ class PicselliaProcessingContext(PicselliaContext):
                 "Failed to retrieve necessary context from the job. Please ensure the job is correctly configured."
             )
         return context
+
+    def to_dict(self):
+        return {
+            "host": self.host,
+            "organization_id": self.organization_id,
+            "job_id": self.job_id,
+        }

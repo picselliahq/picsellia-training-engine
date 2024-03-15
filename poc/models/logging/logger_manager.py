@@ -37,7 +37,7 @@ class LoggerManager:
             )
 
         self._create_pipeline_log_folder()
-        self._configure_steps_logger(steps_metadata)
+        self._configure_steps_log_files(steps_metadata)
 
     def clean(self) -> None:
         """
@@ -52,6 +52,18 @@ class LoggerManager:
         else:
             self.logger.warning("No log folder could cleaned.")
 
+    def configure_pipeline_initialization_log_file(self) -> str:
+        """
+        Configures the pipeline initialization log file.
+        """
+        log_file_name = "0-pipeline-initialization.log"
+        pipeline_initialization_log_file_path = os.path.join(
+            self.log_folder_path, log_file_name
+        )
+        open(pipeline_initialization_log_file_path, "w").close()
+
+        return pipeline_initialization_log_file_path
+
     def _create_pipeline_log_folder(self) -> None:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
         self.log_folder_path = os.path.join(
@@ -60,12 +72,12 @@ class LoggerManager:
 
         os.makedirs(self.log_folder_path)
 
-    def _configure_steps_logger(self, steps_metadata: list[StepMetadata]) -> None:
+    def _configure_steps_log_files(self, steps_metadata: list[StepMetadata]) -> None:
         for index, step_metadata in enumerate(steps_metadata):
             step_metadata.index = index + 1
 
             log_file_name = self._sanitize_file_path(
-                input_string=f"{step_metadata.index}-{step_metadata.name}-{step_metadata.id}.txt"
+                input_string=f"{step_metadata.index}-{step_metadata.name}-{step_metadata.id}.log"
             )
             step_log_file_path = os.path.join(self.log_folder_path, log_file_name)
             step_metadata.log_file_path = step_log_file_path
@@ -77,7 +89,16 @@ class LoggerManager:
         sanitized_string = re.sub(invalid_chars_pattern, replacement, input_string)
         return sanitized_string
 
-    def prepare_step_logger(self, log_file_path: str) -> logging.Logger:
+    def prepare_logger(self, log_file_path: str) -> logging.Logger:
+        """
+        Prepares the logger for a step or the pipeline.
+
+        Args:
+            log_file_path: The path of the log file where the logs will be written.
+
+        Returns:
+            The configured logger.
+        """
         sys.stdout = self.original_stdout
         sys.stderr = self.original_stderr
 

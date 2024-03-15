@@ -18,11 +18,12 @@ class Step:
         entrypoint: F,
         metadata: StepMetadata,
     ) -> None:
-        """Initializes a step.
+        """Initialize a step.
 
         Args:
-            name: The name of the step.
-            entrypoint: The entrypoint function of the pipeline.
+            continue_on_failure: Tells if the step should be executed, even if the previous steps have failed.
+            entrypoint: The function to be executed when the step is called.
+            metadata: The metadata associated to the step.
         """
         self.id = metadata.id
         self.step_name = metadata.name
@@ -30,14 +31,6 @@ class Step:
         self.entrypoint = entrypoint
 
         self._metadata = metadata
-
-    @property
-    def state(self) -> StepState:
-        return self._metadata.state
-
-    @property
-    def metadata(self) -> StepMetadata:
-        return self._metadata
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         result = None
@@ -94,10 +87,13 @@ class Step:
 
         return None if self.state is StepState.FAILED else result
 
-    def _prepare_step_logger(self, pipeline: Pipeline) -> logging.Logger:
-        return pipeline.logger_manager.prepare_step_logger(
-            log_file_path=self.metadata.log_file_path
-        )
+    @property
+    def metadata(self) -> StepMetadata:
+        return self._metadata
+
+    @property
+    def state(self) -> StepState:
+        return self._metadata.state
 
     def log_step_info(
         self, pipeline: Pipeline, step_logger: logging.Logger, log_content: str
@@ -105,6 +101,11 @@ class Step:
         total_number_of_steps = len(pipeline.steps_metadata)
         step_logger.info(
             f"({self.metadata.index}/{total_number_of_steps}) {log_content}"
+        )
+
+    def _prepare_step_logger(self, pipeline: Pipeline) -> logging.Logger:
+        return pipeline.logger_manager.prepare_logger(
+            log_file_path=self.metadata.log_file_path
         )
 
 
