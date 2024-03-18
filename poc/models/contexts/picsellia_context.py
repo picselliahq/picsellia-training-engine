@@ -17,7 +17,7 @@ class PicselliaContext(ABC):
 
         self.host = host or os.getenv("host", "https://app.picsellia.com")
         self.organization_id = organization_id or os.getenv("organization_id")
-        self.organization_name = organization_id or os.getenv("organization_name")
+        self.organization_name = organization_name or os.getenv("organization_name")
 
         self.client = self._initialize_client()
 
@@ -36,7 +36,11 @@ class PicselliaContext(ABC):
 
 class PicselliaTrainingContext(PicselliaContext):
     def __init__(
-        self, api_token=None, host=None, organization_id=None, experiment_id=None
+        self,
+        api_token=None,
+        host=None,
+        organization_id=None,
+        experiment_id=None,
     ):
         super().__init__(api_token, host, organization_id)
         self.experiment_id = experiment_id or os.getenv("experiment_id")
