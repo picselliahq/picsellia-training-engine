@@ -1,7 +1,12 @@
 import os
 from abc import ABC, abstractmethod
+from typing import Type
 
 import picsellia
+from picsellia import Experiment
+
+from poc.models.parameters.augmentation_parameters import AugmentationParameters
+from poc.models.parameters.hyper_parameters import HyperParameters
 
 
 class PicselliaContext(ABC):
@@ -37,6 +42,8 @@ class PicselliaContext(ABC):
 class PicselliaTrainingContext(PicselliaContext):
     def __init__(
         self,
+        hyperparameters_cls: Type[HyperParameters],
+        augmentation_parameters_cls: Type[AugmentationParameters],
         api_token=None,
         host=None,
         organization_id=None,
@@ -52,8 +59,14 @@ class PicselliaTrainingContext(PicselliaContext):
             )
 
         self.experiment = self._initialize_experiment()
+        parameters_log_data = self.experiment.get_log("parameters").data
 
-    def _initialize_experiment(self):
+        self.hyperparameters = hyperparameters_cls(log_data=parameters_log_data)
+        self.augmentation_parameters = augmentation_parameters_cls(
+            log_data=parameters_log_data
+        )
+
+    def _initialize_experiment(self) -> Experiment:
         return self.client.get_experiment_by_id(self.experiment_id)
 
     def to_dict(self):
@@ -62,6 +75,8 @@ class PicselliaTrainingContext(PicselliaContext):
             "organization_id": self.organization_id,
             "organization_name": self.organization_name,
             "experiment_id": self.experiment_id,
+            "hyperparameters": self.hyperparameters.__dict__,
+            "augmentation_parameters": self.augmentation_parameters.__dict__,
         }
 
 

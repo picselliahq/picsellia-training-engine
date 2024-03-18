@@ -1,6 +1,11 @@
 from poc.models.contexts.picsellia_context import (
     PicselliaTrainingContext,
+    PicselliaContext,
 )
+from poc.models.parameters.augmentation_parameters import (
+    UltralyticsAugmentationParameters,
+)
+from poc.models.parameters.hyper_parameters import UltralyticsHyperParameters
 from poc.pipeline import pipeline
 from poc.steps.callbacks_preparators import callback_preparator
 from poc.steps.data_validators import data_validator
@@ -17,8 +22,15 @@ from poc.steps.model_registers import model_register
 from poc.steps.model_trainers import model_trainer
 
 
+def get_context() -> PicselliaContext:
+    return PicselliaTrainingContext(
+        hyperparameters_cls=UltralyticsHyperParameters,
+        augmentation_parameters_cls=UltralyticsAugmentationParameters,
+    )
+
+
 @pipeline(
-    context=PicselliaTrainingContext(),
+    context=get_context(),
     log_folder_path="logs/",
     remove_logs_on_completion=False,
 )
