@@ -81,15 +81,20 @@ class PicselliaTrainingContext(PicselliaContext):
 
         for key, value in self.hyperparameters.to_dict().items():
             suffix = " (default)" if key in self.hyperparameters.defaulted_keys else ""
-            result["hyperparameters"][key] = f"{value}{suffix}"
+            color_code = "\033[33m" if suffix else "\033[34m"
+            result["hyperparameters"][key] = f"{color_code}{value}\033[0m{suffix}"
 
+            # Augmentation Parameters
         for key, value in self.augmentation_parameters.to_dict().items():
             suffix = (
                 " (default)"
                 if key in self.augmentation_parameters.defaulted_keys
                 else ""
             )
-            result["augmentation_parameters"][key] = f"{value}{suffix}"
+            color_code = "\033[33m" if suffix else "\033[34m"
+            result["augmentation_parameters"][
+                key
+            ] = f"{color_code}{value}\033[0m{suffix}"
 
         return result
 

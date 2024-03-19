@@ -66,11 +66,12 @@ class Parameters(ABC):
             raise KeyError(error_string)
 
     def to_dict(self) -> dict:
-        return {
+        filtered_dict = {
             key: value
             for key, value in self.__dict__.items()
             if key not in ["parameters_data", "defaulted_keys"]
         }
+        return dict(sorted(filtered_dict.items()))
 
     def validate_log_data(self, log_data: LogDataType) -> dict:
         if isinstance(log_data, dict):

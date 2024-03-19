@@ -197,10 +197,10 @@ class Pipeline:
 
     def _get_markdown_table(self, category: str, context: dict) -> str:
         headers = (
-            [category, "Value"]
+            [category, "values"]
             if isinstance(context, dict)
             and not any(isinstance(val, dict) for val in context.values())
-            else ["Parameter", "Value"]
+            else ["parameters", "values"]
         )
         data = [
             [key, (value if value is not None else "None")]
