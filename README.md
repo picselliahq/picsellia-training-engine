@@ -30,6 +30,65 @@ You'll just need to install [Docker](https://docs.docker.com/engine/install/), t
   Docker Hub using `picsellia/cuda:<base-tag>`. The available tags
   are [here](https://hub.docker.com/r/picsellia/cuda/tags).
 
+# Development Setup 🚀
+
+For local development, especially when working with Python and needing to manage data science dependencies, we use `uv`. Here's how you can set up your local environment to start developing:
+
+1. **Python Installation:** Make sure you have Python installed on your system. The Picsellia Training Engine supports Python 3.8, 3.9, 3.10 and 3.11.
+
+
+2. **Install `uv`:** There are several methods to install `uv`, depending on your operating system.
+   - **macOS and Linux:**
+     ```bash
+     curl -LsSf https://astral.sh/uv/install.sh | sh
+     ```
+   - **Windows:**
+     ```bash
+     powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+     ```
+   - **With pip:**
+     ```bash
+     pip install uv
+     ```
+   - **With Homebrew:**
+      ```bash
+      brew install uv
+      ```
+
+3. **Navigate to your project directory:** (for example, `yolov8-detection` or any other project like `tf2`, `unet-instance-segmentation`, etc.)
+
+    ```bash
+    cd yolov8-detection
+    ```
+
+4. **Create and activate a virtual environment:** With `uv venv` a virtual environment is created in the `.venv` directory.
+
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    ```
+
+5. **Increase HTTP Timeout:** To prevent timeouts during package installation, especially for larger packages like PyTorch, increase the HTTP timeout:
+
+    ```bash
+    export UV_HTTP_TIMEOUT=600
+    ```
+
+6. **Install Dependencies:** Install the required dependencies from the requirements.txt file:
+
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
+7. **Adding New Packages:** `uv` also handles dependency resolution. If you need to add a new package, such as Flask, to your project, you can do so with:
+
+      ```bash
+      uv pip install flask
+      ```
+    This ensures that any new dependencies are properly resolved and installed within your environment.
+
+By following these guidelines, you create a consistent and isolated development environment optimized for efficient dependency management and project development.
+
 # Configuration 🛠️️
 
 If you create your own Dockerfile, its structure should look like this:
@@ -47,7 +106,7 @@ WORKDIR /picsellia
 
 COPY your-custom-image/picsellia .
 
-ENTRYPOINT ["run", "main.py"] 
+ENTRYPOINT ["run", "main.py"]
 ```
 
 Using `ENTRYPOINT ["run", "main.py"]` will ensure that the log container's output is automatically directed to your
