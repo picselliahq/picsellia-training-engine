@@ -4,10 +4,11 @@ FROM python:${PYTHON_VERSION}-bookworm as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ARG DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractives
 
-RUN pip3 install --upgrade pip
-RUN pip3 install -U setuptools
+RUN if [ "$PYTHON_VERSION" = "3.10" ]; then \ 
+        python${PYTHON_VERSION} -m ensurepip --upgrade && python${PYTHON_VERSION} -m pip install -U setuptools; \
+    fi
 
 COPY ./base /experiment
 
