@@ -1,5 +1,6 @@
 import os
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import Type
 
 import picsellia
@@ -70,16 +71,27 @@ class PicselliaTrainingContext(PicselliaContext):
         return self.client.get_experiment_by_id(self.experiment_id)
 
     def to_dict(self):
-        return {
-            "context_parameters": {
-                "host": self.host,
-                "organization_id": self.organization_id,
-                "organization_name": self.organization_name,
-                "experiment_id": self.experiment_id,
-            },
-            "hyperparameters": {**self.hyperparameters.to_dict()},
-            "augmentation_parameters": {**self.augmentation_parameters.to_dict()},
+        result = defaultdict(dict)
+        result["context_parameters"] = {
+            "host": self.host,
+            "organization_id": self.organization_id,
+            "organization_name": self.organization_name,
+            "experiment_id": self.experiment_id,
         }
+
+        for key, value in self.hyperparameters.to_dict().items():
+            suffix = " (default)" if key in self.hyperparameters.defaulted_keys else ""
+            result["hyperparameters"][key] = f"{value}{suffix}"
+
+        for key, value in self.augmentation_parameters.to_dict().items():
+            suffix = (
+                " (default)"
+                if key in self.augmentation_parameters.defaulted_keys
+                else ""
+            )
+            result["augmentation_parameters"][key] = f"{value}{suffix}"
+
+        return result
 
 
 class PicselliaProcessingContext(PicselliaContext):

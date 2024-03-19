@@ -10,10 +10,16 @@ logger = logging.getLogger("picsellia")
 class Parameters(ABC):
     def __init__(self, log_data: LogDataType):
         self.parameters_data = self.validate_log_data(log_data)
+        self.defaulted_keys = set()
 
     def extract_parameter(
         self, keys: list, expected_type: type, default=None, value_range=None
     ):
+        if len(keys) == 0:
+            raise ValueError(
+                "Cannot extract a parameter without any keys. One or more keys must be provided."
+            )
+
         for key in keys:
             if key in self.parameters_data:
                 value = self.parameters_data[key]
@@ -41,6 +47,7 @@ class Parameters(ABC):
                 f"None of the keys {keys} were found in the provided data. "
                 f"Using default value \033[33m{default}\033[0m."
             )
+            self.defaulted_keys.update(keys)
             return self._flexible_type_check(default, expected_type)
 
         else:
@@ -62,7 +69,7 @@ class Parameters(ABC):
         return {
             key: value
             for key, value in self.__dict__.items()
-            if key != "parameters_data"
+            if key not in ["parameters_data", "defaulted_keys"]
         }
 
     def validate_log_data(self, log_data: LogDataType) -> dict:
