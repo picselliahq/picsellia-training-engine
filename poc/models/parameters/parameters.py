@@ -12,7 +12,7 @@ class Parameters(ABC):
         self.parameters_data = self.validate_log_data(log_data)
 
     def extract_parameter(
-        self, keys: list, expected_type, default=None, value_range=None
+        self, keys: list, expected_type: type, default=None, value_range=None
     ):
         for key in keys:
             if key in self.parameters_data:
@@ -32,21 +32,38 @@ class Parameters(ABC):
                             )
                     return checked_value
                 else:
-                    error_message = f"Value for key '{key}' is not of expected type {expected_type.__name__}."
-                    logger.error(error_message)
-                    raise TypeError(error_message)
+                    raise TypeError(
+                        f"Value for key '{key}' is not of expected type `{expected_type.__name__}`."
+                    )
 
         if default is not None:
             logger.warning(
                 f"None of the keys {keys} were found in the provided data. "
-                f"Using default value {default}."
+                f"Using default value \033[33m{default}\033[0m."
             )
             return self._flexible_type_check(default, expected_type)
 
         else:
-            raise KeyError(
-                f"Some parameters are missing. At least one parameter from {keys} must be provided."
+            error_string = (
+                f"Some parameters are missing. "
+                f"At least one parameter with a key from {keys}"
             )
+
+            if value_range is not None:
+                error_string += f", of type `{expected_type.__name__}` and within the range {value_range}"
+            else:
+                error_string += f" and of type `{expected_type.__name__}`"
+
+            error_string += " must be provided."
+
+            raise KeyError(error_string)
+
+    def to_dict(self) -> dict:
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if key != "parameters_data"
+        }
 
     def validate_log_data(self, log_data: LogDataType) -> dict:
         if isinstance(log_data, dict):

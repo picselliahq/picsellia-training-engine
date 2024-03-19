@@ -71,12 +71,14 @@ class PicselliaTrainingContext(PicselliaContext):
 
     def to_dict(self):
         return {
-            "host": self.host,
-            "organization_id": self.organization_id,
-            "organization_name": self.organization_name,
-            "experiment_id": self.experiment_id,
-            "hyperparameters": self.hyperparameters.__dict__,
-            "augmentation_parameters": self.augmentation_parameters.__dict__,
+            "context_parameters": {
+                "host": self.host,
+                "organization_id": self.organization_id,
+                "organization_name": self.organization_name,
+                "experiment_id": self.experiment_id,
+            },
+            "hyperparameters": {**self.hyperparameters.to_dict()},
+            "augmentation_parameters": {**self.augmentation_parameters.to_dict()},
         }
 
 

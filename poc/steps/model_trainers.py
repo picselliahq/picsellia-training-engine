@@ -9,12 +9,6 @@ from poc.step import step
 def model_trainer(model: YOLO, callbacks: dict, dataset_path: str):
     context: PicselliaTrainingContext = Pipeline.get_active_context()
 
-    # trainer_args = dict(
-    #     project=context.experiment.name,
-    #     data=dataset_path,
-    #     **context["training_args"],
-    #     **context["augmentation_args"],
-    # )
     for callback_name, callback_function in callbacks.items():
         model.add_callback(event=callback_name, func=callback_function)
 
@@ -29,5 +23,20 @@ def model_trainer(model: YOLO, callbacks: dict, dataset_path: str):
         cache=context.hyperparameters.use_cache,
         save_period=context.hyperparameters.save_period,
         val=context.hyperparameters.validate,
+        hsv_h=context.augmentation_parameters.hsv_h,
+        hsv_s=context.augmentation_parameters.hsv_s,
+        hsv_v=context.augmentation_parameters.hsv_v,
+        degrees=context.augmentation_parameters.degrees,
+        translate=context.augmentation_parameters.translate,
+        scale=context.augmentation_parameters.scale,
+        shear=context.augmentation_parameters.shear,
+        perspective=context.augmentation_parameters.perspective,
+        flipud=context.augmentation_parameters.flipud,
+        fliplr=context.augmentation_parameters.fliplr,
+        mosaic=context.augmentation_parameters.mosaic,
+        mixup=context.augmentation_parameters.mixup,
+        copy_paste=context.augmentation_parameters.copy_paste,
+        auto_augment=context.augmentation_parameters.auto_augment,
+        erasing=context.augmentation_parameters.erasing,
     )
     return model

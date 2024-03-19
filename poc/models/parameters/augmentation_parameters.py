@@ -39,7 +39,7 @@ class UltralyticsAugmentationParameters(AugmentationParameters):
             value_range=(
                 0.0,
                 float("inf"),
-            ),  # Assuming scale can be any non-negative number
+            ),
         )
         self.shear = self.extract_parameter(
             keys=["shear"],
@@ -72,9 +72,7 @@ class UltralyticsAugmentationParameters(AugmentationParameters):
             value_range=(0.0, 1.0),
         )
         self.auto_augment = self.extract_parameter(
-            keys=["auto_augment"],
-            expected_type=str,
-            default="randaugment",  # No range needed for string type
+            keys=["auto_augment"], expected_type=str, default="randaugment"
         )
         self.erasing = self.extract_parameter(
             keys=["erasing"], expected_type=float, default=0.4, value_range=(0.0, 1.0)

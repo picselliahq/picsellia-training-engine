@@ -132,37 +132,42 @@ class Pipeline:
         )
 
     def log_pipeline_context(self):
-        def print_as_markdown_table(context: dict) -> None:
-            data = [
-                [key, (value if value is not None else "None")]
-                for key, value in context.items()
-            ]
-            formatted_array = tabulate(
-                tabular_data=data,
-                headers=["Parameter", "Value"],
-                tablefmt="github",
-            )
-            self.log_pipeline_info(
-                f"Pipeline \033[94m{self.name}\033[0m is starting with the following context:"
-            )
-            self.log_pipeline_info(f"{formatted_array}\n")
+        self.log_pipeline_info(
+            f"Pipeline \033[94m{self.name}\033[0m is starting with the following context:"
+        )
 
+        # Normalize the context to always be a dictionary
         if hasattr(self._context, "to_dict") and callable(
             getattr(self._context, "to_dict")
         ):
-            # Context is an instance of a class with a to_dict() method
             context_dict = self._context.to_dict()
-            print_as_markdown_table(context_dict)
-
         elif isinstance(self._context, dict):
-            # Context is already a dictionary
-            print_as_markdown_table(self._context)
-
+            context_dict = self._context
         else:
-            # Context is a generic object; gather its properties/values
             self.log_pipeline_info(
-                "Cannot print the context. It should be a dictionary or an object with a to_dict() method."
+                "Cannot print the context. It should be a dictionary or an object with a `to_dict() -> dict` method."
             )
+            return
+
+        # Separate flat parameters from nested ones
+        flat_parameters = {}
+        nested_parameters = {}
+
+        for key, value in context_dict.items():
+            if isinstance(value, dict):
+                nested_parameters[key] = value
+            else:
+                flat_parameters[key] = value
+
+        # Log flat parameters
+        if flat_parameters:
+            markdown_table = self._get_markdown_table("parameters", flat_parameters)
+            self.log_pipeline_info(f"{markdown_table}\n")
+
+        # Log each nested dictionary under its key
+        for key, nested_dict in nested_parameters.items():
+            markdown_table = self._get_markdown_table(key, nested_dict)
+            self.log_pipeline_info(f"{markdown_table}\n")
 
     def log_pipeline_info(self, log_content: str) -> None:
         self.logger_manager.logger.info(f"{log_content}")
@@ -189,6 +194,23 @@ class Pipeline:
 
         visitor = StepCallVisitor()
         visitor.visit(tree)
+
+    def _get_markdown_table(self, category: str, context: dict) -> str:
+        headers = (
+            [category, "Value"]
+            if isinstance(context, dict)
+            and not any(isinstance(val, dict) for val in context.values())
+            else ["Parameter", "Value"]
+        )
+        data = [
+            [key, (value if value is not None else "None")]
+            for key, value in context.items()
+        ]
+        return tabulate(
+            tabular_data=data,
+            headers=headers,
+            tablefmt="github",
+        )
 
     @staticmethod
     def get_active_context() -> Any:
