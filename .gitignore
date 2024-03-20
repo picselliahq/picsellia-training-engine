@@ -153,6 +153,3 @@ checkpoint
 
 */poetry.lock
 yolox-detection-test/*
-
-poc/logs/*
-poc/poc-yolov8-classification-3/*
