@@ -74,20 +74,33 @@ For local development, especially when working with Python and needing to manage
     export UV_HTTP_TIMEOUT=600
     ```
 
-6. **Install Dependencies:** Install the required dependencies from the requirements.txt file:
+6. **Install dependencies:** Install the required dependencies from the requirements.txt file:
 
     ```bash
     uv pip install -r requirements.txt
     ```
 
-7. **Adding New Packages:** `uv` also handles dependency resolution. If you need to add a new package, such as Flask, to your project, you can do so with:
+7. **Managing dependency versions:** Whether you're setting up a new environment or updating an existing one with additional dependencies, the starting point always involves `requirements.in`. This file serves as the blueprint for specifying the version constraints for each package, which `uv` then uses to resolve and lock down dependencies in `requirements.txt`. This ensures your project's dependency management is both flexible and stable. Examples of how to specify dependencies in `requirements.in` include:
+    - For a range of acceptable versions (e.g., Flask):
+        ```bash
+        flask>=2.0.0, <3.0
+        ```
+    - For a fixed version when compatibility is crucial:
+        ```bash
+        flask==2.0.0
+        ```
+    - For specifying a minimum version:
+        ```bash
+        flask>=2.0.0
+        ```
+    It's crucial to validate that your model performs optimally across the specified dependency ranges by testing thoroughly. Should any version range introduce compatibility issues, it may be necessary to narrow down the specifications to a single, stable version that ensures consistent performance.
 
-      ```bash
-      uv pip install flask
-      ```
-    This ensures that any new dependencies are properly resolved and installed within your environment.
 
-By following these guidelines, you create a consistent and isolated development environment optimized for efficient dependency management and project development.
+8. **Creating or updating `requirements.txt` from `requirements.in`:** Whether you're setting up `requirements.txt` for the first time or updating it to reflect changes in `requirements.in`, the command remains the same:
+    ```bash
+    uv pip compile requirements.in -o requirements.txt
+    ```
+    This command generates or updates `requirements.txt`, locking your project to specific versions of dependencies based on the guidelines you've set in `requirements.in`. This ensures your environment is both reproducible and consistent, whether you're adding new dependencies or updating existing ones.
 
 # Configuration 🛠️️
 
