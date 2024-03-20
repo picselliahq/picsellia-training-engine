@@ -30,14 +30,24 @@ You'll just need to install [Docker](https://docs.docker.com/engine/install/), t
   Docker Hub using `picsellia/cuda:<base-tag>`. The available tags
   are [here](https://hub.docker.com/r/picsellia/cuda/tags).
 
-# Development Setup 🚀
 
-For local development, especially when working with Python and needing to manage data science dependencies, we use `uv`. Here's how you can set up your local environment to start developing:
+# UV Development Environment Setup 🚀
 
-1. **Python Installation:** Make sure you have Python installed on your system. The Picsellia Training Engine supports Python 3.8, 3.9, 3.10 and 3.11.
+Streamline your Python data science projects with `uv`. This guide covers setup instructions from installation to dependency management.
+
+## Dependency Files Explained
+
+Before diving in, let's clarify the roles of `requirements.in` and `requirements.txt`:
+
+- **`requirements.in`:** Specify your project's direct dependencies and their version ranges here for flexibility and compatibility.
+- **`requirements.txt`:** Generated from `requirements.in` by `uv`, this file pins all dependencies to specific versions for a consistent and stable environment.
+
+## Setup Instructions
+
+1. **Python Installation:** Ensure Python (versions 3.8 to 3.11 supported) is installed on your system.
 
 
-2. **Install `uv`:** There are several methods to install `uv`, depending on your operating system.
+2. **Install `uv`:** Pick the right `uv` installation method for your OS.
    - **macOS and Linux:**
      ```bash
      curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -55,7 +65,7 @@ For local development, especially when working with Python and needing to manage
       brew install uv
       ```
 
-3. **Navigate to your project directory:** (for example, `yolov8-detection` or any other project like `tf2`, `unet-instance-segmentation`, etc.)
+3. **Navigate to your project directory:** (for example `yolov8-detection`, `tf2` or a new project directory)
 
     ```bash
     cd yolov8-detection
@@ -68,19 +78,45 @@ For local development, especially when working with Python and needing to manage
     source .venv/bin/activate
     ```
 
-5. **Increase HTTP Timeout:** To prevent timeouts during package installation, especially for larger packages like PyTorch, increase the HTTP timeout:
+5. **(Optional) Increase HTTP Timeout:** To prevent timeouts during package installation (step 6.), especially for larger packages like PyTorch, increase the HTTP timeout:
 
     ```bash
     export UV_HTTP_TIMEOUT=600
     ```
 
-6. **Install dependencies:** Install the required dependencies from the requirements.txt file:
+
+## Using an Existing Model
+
+If you're working with an existing model that includes both `requirements.in` and `requirements.txt`, follow these steps:
+
+
+1. **Install dependencies:** Install the required dependencies from the requirements.txt file:
 
     ```bash
     uv pip install -r requirements.txt
     ```
 
-7. **Managing dependency versions:** Whether you're setting up a new environment or updating an existing one with additional dependencies, the starting point always involves `requirements.in`. This file serves as the blueprint for specifying the version constraints for each package, which `uv` then uses to resolve and lock down dependencies in `requirements.txt`. This ensures your project's dependency management is both flexible and stable. Examples of how to specify dependencies in `requirements.in` include:
+### Optional Steps:
+
+- **Upgrade Dependencies:** To update dependencies based on requirements.in, recompile to generate an updated requirements.txt:
+
+    ```bash
+    uv pip compile requirements.in -o requirements.txt
+    ```
+
+- **Adding a New Package:** If you need to add a new package, insert it into requirements.in with version constraints, then recompile to update requirements.txt:
+
+    ```bash
+    echo "flask>=2.0.0, <3.0" >> requirements.in
+    uv pip compile requirements.in -o requirements.txt
+    ```
+
+## Creating a New Model
+
+When starting a new model, you'll need to create `requirements.in` and generate `requirements.txt` to manage dependencies. Follow these steps to set up your project:
+
+1. **Define Dependencies:** Create requirements.in with your model's dependencies. Ensure to specify versions that are tested and compatible with your model.
+
     - For a range of acceptable versions (e.g., Flask):
         ```bash
         flask>=2.0.0, <3.0
@@ -93,14 +129,18 @@ For local development, especially when working with Python and needing to manage
         ```bash
         flask>=2.0.0
         ```
-    It's crucial to validate that your model performs optimally across the specified dependency ranges by testing thoroughly. Should any version range introduce compatibility issues, it may be necessary to narrow down the specifications to a single, stable version that ensures consistent performance.
 
+2. **Lock Dependencies:** Generate requirements.txt from your requirements.in.
 
-8. **Creating or updating `requirements.txt` from `requirements.in`:** Whether you're setting up `requirements.txt` for the first time or updating it to reflect changes in `requirements.in`, the command remains the same:
     ```bash
     uv pip compile requirements.in -o requirements.txt
     ```
-    This command generates or updates `requirements.txt`, locking your project to specific versions of dependencies based on the guidelines you've set in `requirements.in`. This ensures your environment is both reproducible and consistent, whether you're adding new dependencies or updating existing ones.
+
+3. **Install Dependencies:** Proceed with installing dependencies specified in requirements.txt.
+
+    ```bash
+    uv pip install -r requirements.txt
+    ```
 
 # Configuration 🛠️️
 
