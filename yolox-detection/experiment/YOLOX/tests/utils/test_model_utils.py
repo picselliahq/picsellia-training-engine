@@ -93,12 +93,12 @@ class TestModelUtils(unittest.TestCase):
         freeze_module(self.model, "backbone")
         for module in self.model.backbone.modules():
             self.assertFalse(module.training)
-        for p in self.model.backbone.parameters():
+        for p in self.model.backbone.hyperparameters():
             self.assertFalse(p.requires_grad)
 
         for module in self.model.head.modules():
             self.assertTrue(module.training)
-        for p in self.model.head.parameters():
+        for p in self.model.head.hyperparameters():
             self.assertTrue(p.requires_grad)
 
 

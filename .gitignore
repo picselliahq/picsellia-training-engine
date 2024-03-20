@@ -132,9 +132,9 @@ dmypy.json
 *.jpg
 *.zip
 *.pb*
-*.config 
-*.record 
-*.meta 
+*.config
+*.record
+*.meta
 *.data*
 *.index
 *.tfevents.*
@@ -145,7 +145,7 @@ checkpoint
 /scripts
 
 *.jpeg
-*.png 
+*.png
 *.pt
 .env
 
