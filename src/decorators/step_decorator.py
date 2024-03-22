@@ -133,7 +133,6 @@ def step(
             name=func.__name__,
             display_name=name or func.__name__,
             state=StepState.PENDING,
-            execution_time=0.0,
         )
         s = Step(
             continue_on_failure=continue_on_failure,

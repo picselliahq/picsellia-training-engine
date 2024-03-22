@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import shutil
 import sys
 import tempfile
 from datetime import datetime
@@ -10,9 +11,10 @@ from src.models.steps.step_metadata import StepMetadata
 
 
 class LoggerManager:
-    def __init__(self, pipeline_name: str, log_folder_path: str | None):
+    def __init__(self, pipeline_name: str, log_folder_root_path: str | None):
         self.pipeline_name = pipeline_name
-        self.log_folder_root_path = log_folder_path
+        self.log_folder_root_path = log_folder_root_path
+        self.log_folder_path = None
         self.uses_temp_dir = False
 
         self.original_stdout = sys.stdout
@@ -46,9 +48,9 @@ class LoggerManager:
         Otherwise, only the pipeline log folder is removed.
         """
         if self.uses_temp_dir and self.log_folder_root_path:
-            os.rmdir(self.log_folder_root_path)
+            shutil.rmtree(self.log_folder_root_path)
         elif self.log_folder_path:
-            os.rmdir(self.log_folder_path)
+            shutil.rmtree(self.log_folder_path)
         else:
             self.logger.warning("No log folder could cleaned.")
 

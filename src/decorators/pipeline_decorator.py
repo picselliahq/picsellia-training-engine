@@ -1,6 +1,6 @@
 import ast
 import inspect
-from typing import Optional, Union, Callable, TypeVar, Any, List
+from typing import Optional, Union, Callable, TypeVar, Any, List, Tuple
 
 from tabulate import tabulate
 
@@ -36,7 +36,7 @@ class Pipeline:
         self._context = context
         self.name = name
         self.logger_manager = LoggerManager(
-            pipeline_name=name, log_folder_path=log_folder_path
+            pipeline_name=name, log_folder_root_path=log_folder_path
         )
         self.remove_logs_on_completion = remove_logs_on_completion
         self.entrypoint = entrypoint
@@ -86,17 +86,17 @@ class Pipeline:
             return PipelineState.PENDING
 
         elif all(
+            step_metadata.state == StepState.SUCCESS
+            for step_metadata in self.steps_metadata
+        ):
+            return PipelineState.SUCCESS
+
+        elif all(
             step_metadata.state
             in [StepState.RUNNING, StepState.PENDING, StepState.SUCCESS]
             for step_metadata in self.steps_metadata
         ):
             return PipelineState.RUNNING
-
-        elif all(
-            step_metadata.state == StepState.SUCCESS
-            for step_metadata in self.steps_metadata
-        ):
-            return PipelineState.SUCCESS
 
         else:
             for step_metadata in self.steps_metadata:
@@ -109,11 +109,6 @@ class Pipeline:
                     ):
                         return PipelineState.PARTIAL_SUCCESS
                     return PipelineState.FAILED
-
-        raise RuntimeError(
-            "Pipeline state could not be determined."
-            "You need at least one step to determine the pipeline state.",
-        )
 
     @property
     def steps_metadata(self) -> List[StepMetadata]:
@@ -136,37 +131,21 @@ class Pipeline:
             f"Pipeline \033[94m{self.name}\033[0m is starting with the following context:"
         )
 
-        # Normalize the context to always be a dictionary
-        if hasattr(self._context, "to_dict") and callable(
-            getattr(self._context, "to_dict")
-        ):
-            context_dict = self._context.to_dict()
-        elif isinstance(self._context, dict):
-            context_dict = self._context
-        else:
-            self.log_pipeline_info(
-                "Cannot print the context. It should be a dictionary or an object with a `to_dict() -> dict` method."
-            )
-            return
+        context_dict = self._parse_context_to_dict(self._context)
 
         # Separate flat parameters from nested ones
-        flat_parameters = {}
-        nested_parameters = {}
-
-        for key, value in context_dict.items():
-            if isinstance(value, dict):
-                nested_parameters[key] = value
-            else:
-                flat_parameters[key] = value
+        flat_parameters, nested_parameters = self._extract_parameters_from_context_dict(
+            context_dict
+        )
 
         # Log flat parameters
         if flat_parameters:
-            markdown_table = self._get_markdown_table("parameters", flat_parameters)
+            markdown_table = self._compute_markdown_table("parameters", flat_parameters)
             self.log_pipeline_info(f"{markdown_table}\n")
 
         # Log each nested dictionary under its key
         for key, nested_dict in nested_parameters.items():
-            markdown_table = self._get_markdown_table(key, nested_dict)
+            markdown_table = self._compute_markdown_table(key, nested_dict)
             self.log_pipeline_info(f"{markdown_table}\n")
 
     def log_pipeline_info(self, log_content: str) -> None:
@@ -177,7 +156,13 @@ class Pipeline:
 
     def _analyze_and_register_steps(self) -> None:
         """Analyze the pipeline entrypoint function to identify and register step calls."""
-        src = inspect.getsource(self.entrypoint)
+        try:
+            src = inspect.getsource(self.entrypoint)
+        except TypeError as e:
+            raise ValueError(
+                f"The provided entrypoint cannot be scanned: {str(e)}"
+            ) from e
+
         tree = ast.parse(src)
 
         pipeline_instance = self
@@ -195,7 +180,7 @@ class Pipeline:
         visitor = StepCallVisitor()
         visitor.visit(tree)
 
-    def _get_markdown_table(self, category: str, context: dict) -> str:
+    def _compute_markdown_table(self, category: str, context: dict) -> str:
         headers = (
             [category, "values"]
             if isinstance(context, dict)
@@ -211,6 +196,26 @@ class Pipeline:
             headers=headers,
             tablefmt="github",
         )
+
+    def _extract_parameters_from_context_dict(self, context: dict) -> Tuple[dict, dict]:
+        flat_parameters = {}
+        nested_parameters = {}
+
+        for key, value in context.items():
+            if isinstance(value, dict):
+                nested_parameters[key] = value
+            else:
+                flat_parameters[key] = value
+
+        return flat_parameters, nested_parameters
+
+    def _parse_context_to_dict(self, context: Any) -> Optional[dict]:
+        if hasattr(context, "to_dict") and callable(getattr(context, "to_dict")):
+            return context.to_dict()
+        elif isinstance(context, dict):
+            return context
+        else:
+            return None
 
     @staticmethod
     def get_active_context() -> Any:
