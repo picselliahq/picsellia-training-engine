@@ -1,0 +1,172 @@
+import os
+
+from picsellia import DatasetVersion, Experiment
+from picsellia.exceptions import ResourceNotFoundError
+
+from src.steps.data_extraction.utils.dataset_collection import DatasetCollection
+from src.steps.data_extraction.utils.dataset_context import DatasetContext
+from src.models.dataset.dataset_type import DatasetType
+
+
+def get_labelmap(dataset_version: DatasetVersion) -> dict:
+    return {label.name: label for label in dataset_version.list_labels()}
+
+
+class DatasetHandler:
+    def __init__(self, experiment: Experiment, prop_train_split: float):
+        self.experiment = experiment
+        self.prop_train_split = prop_train_split
+        self.destination_path = os.path.join(os.getcwd(), self.experiment.name)
+
+    def get_dataset_collection(self) -> DatasetCollection:
+        datasets_count = len(self.experiment.list_attached_dataset_versions())
+        try:
+            train_dataset_version = self.experiment.get_dataset(DatasetType.TRAIN.value)
+        except Exception:
+            raise ResourceNotFoundError(
+                f"Dataset {DatasetType.TRAIN.value} not found in the experiment"
+            )
+
+        if datasets_count == 3:
+            try:
+                val_dataset_version = self.experiment.get_dataset(DatasetType.VAL.value)
+            except Exception:
+                raise ResourceNotFoundError(
+                    f"Found {datasets_count} attached datasets but {DatasetType.VAL.value} not found"
+                )
+            try:
+                test_dataset_version = self.experiment.get_dataset(
+                    DatasetType.TEST.value
+                )
+            except Exception:
+                raise ResourceNotFoundError(
+                    f"Found {datasets_count} attached datasets but {DatasetType.TEST.value} not found"
+                )
+            return self._handle_three_datasets(
+                train_dataset_version=train_dataset_version,
+                val_dataset_version=val_dataset_version,
+                test_dataset_version=test_dataset_version,
+            )
+        elif datasets_count == 2:
+            try:
+                test_dataset_version = self.experiment.get_dataset(
+                    DatasetType.TEST.value
+                )
+            except Exception:
+                raise ResourceNotFoundError(
+                    f"Found {datasets_count} attached datasets but {DatasetType.TEST.value} not found"
+                )
+            return self._handle_two_datasets(
+                train_dataset_version=train_dataset_version,
+                test_dataset_version=test_dataset_version,
+            )
+        elif datasets_count == 1:
+            return self._handle_one_dataset(train_dataset_version=train_dataset_version)
+        else:
+            raise RuntimeError()
+
+    def _handle_three_datasets(
+        self,
+        train_dataset_version: DatasetVersion,
+        val_dataset_version: DatasetVersion,
+        test_dataset_version: DatasetVersion,
+    ) -> DatasetCollection:
+        return DatasetCollection(
+            train_context=DatasetContext(
+                name=DatasetType.TRAIN.value,
+                dataset_version=train_dataset_version,
+                multi_asset=train_dataset_version.list_assets(),
+                labelmap=get_labelmap(train_dataset_version),
+                destination_path=self.destination_path,
+            ),
+            val_context=DatasetContext(
+                name=DatasetType.VAL.value,
+                dataset_version=val_dataset_version,
+                multi_asset=val_dataset_version.list_assets(),
+                labelmap=get_labelmap(val_dataset_version),
+                destination_path=self.destination_path,
+            ),
+            test_context=DatasetContext(
+                name=DatasetType.TEST.value,
+                dataset_version=test_dataset_version,
+                multi_asset=test_dataset_version.list_assets(),
+                labelmap=get_labelmap(test_dataset_version),
+                destination_path=self.destination_path,
+            ),
+        )
+
+    def _handle_two_datasets(
+        self,
+        train_dataset_version: DatasetVersion,
+        test_dataset_version: DatasetVersion,
+    ) -> DatasetCollection:
+        split_ratios = self._get_split_ratios(count_datasets=2)
+        split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
+            ratios=split_ratios
+        )
+        train_assets, val_assets = split_assets
+        return DatasetCollection(
+            train_context=DatasetContext(
+                name=DatasetType.TRAIN.value,
+                dataset_version=train_dataset_version,
+                multi_asset=train_assets,
+                labelmap=get_labelmap(train_dataset_version),
+                destination_path=self.destination_path,
+            ),
+            val_context=DatasetContext(
+                name=DatasetType.VAL.value,
+                dataset_version=train_dataset_version,
+                multi_asset=val_assets,
+                labelmap=get_labelmap(train_dataset_version),
+                destination_path=self.destination_path,
+            ),
+            test_context=DatasetContext(
+                name=DatasetType.TEST.value,
+                dataset_version=test_dataset_version,
+                multi_asset=test_dataset_version.list_assets(),
+                labelmap=get_labelmap(test_dataset_version),
+                destination_path=self.destination_path,
+            ),
+        )
+
+    def _handle_one_dataset(
+        self, train_dataset_version: DatasetVersion
+    ) -> DatasetCollection:
+        split_ratios = self._get_split_ratios(count_datasets=1)
+        split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
+            ratios=split_ratios
+        )
+        train_assets, val_assets, test_assets = split_assets
+        return DatasetCollection(
+            train_context=DatasetContext(
+                name=DatasetType.TRAIN.value,
+                dataset_version=train_dataset_version,
+                multi_asset=train_assets,
+                labelmap=get_labelmap(train_dataset_version),
+                destination_path=self.destination_path,
+            ),
+            val_context=DatasetContext(
+                name=DatasetType.VAL.value,
+                dataset_version=train_dataset_version,
+                multi_asset=val_assets,
+                labelmap=get_labelmap(train_dataset_version),
+                destination_path=self.destination_path,
+            ),
+            test_context=DatasetContext(
+                name=DatasetType.TEST.value,
+                dataset_version=train_dataset_version,
+                multi_asset=test_assets,
+                labelmap=get_labelmap(train_dataset_version),
+                destination_path=self.destination_path,
+            ),
+        )
+
+    def _get_split_ratios(self, count_datasets: int) -> list:
+        if count_datasets == 1:
+            return [
+                self.prop_train_split,
+                (1 - self.prop_train_split) / 2,
+                (1 - self.prop_train_split) / 2,
+            ]
+        elif count_datasets == 2:
+            return [self.prop_train_split, 1 - self.prop_train_split]
