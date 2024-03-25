@@ -19,7 +19,6 @@ class LoggerManager:
 
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
-        self.current_file_handler = None
         self.logger = logging.getLogger("picsellia")
 
     def configure(self, steps_metadata: list[StepMetadata]) -> None:
@@ -91,6 +90,13 @@ class LoggerManager:
         sanitized_string = re.sub(invalid_chars_pattern, replacement, input_string)
         return sanitized_string
 
+    def _reset_file_handlers(self, logger: logging.Logger):
+        handlers = logger.handlers[:]
+        for handler in handlers:
+            if isinstance(handler, logging.FileHandler):
+                logger.removeHandler(handler)
+                handler.close()
+
     def prepare_logger(self, log_file_path: str) -> logging.Logger:
         """
         Prepares the logger for a step or the pipeline.
@@ -101,6 +107,11 @@ class LoggerManager:
         Returns:
             The configured logger.
         """
+        if not os.path.isfile(log_file_path):
+            raise FileNotFoundError(
+                f"Cannot open log file at {log_file_path}. This file does not exist."
+            )
+
         sys.stdout = self.original_stdout
         sys.stderr = self.original_stderr
 
@@ -125,7 +136,9 @@ class LoggerManager:
             if isinstance(logger, logging.Logger):
                 logger.addHandler(new_file_handler)
 
-        logging.getLogger().addHandler(new_file_handler)
+        root_logger = logging.getLogger()
+        self._reset_file_handlers(root_logger)
+        root_logger.addHandler(new_file_handler)
 
         sys.stdout = StreamToLogger(log_file_path, self.original_stdout)
         sys.stderr = StreamToLogger(log_file_path, self.original_stderr)

@@ -48,8 +48,8 @@ def mock_pipeline_name() -> str:
 
 
 @pytest.fixture
-def mock_pipeline_log_folder_path() -> Optional[str]:
-    return None
+def mock_pipeline_log_folder_path(temp_log_dir) -> Optional[str]:
+    return temp_log_dir
 
 
 @pytest.fixture

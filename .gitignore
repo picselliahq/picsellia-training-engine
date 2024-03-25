@@ -153,3 +153,6 @@ checkpoint
 
 */poetry.lock
 yolox-detection-test/*
+
+# MacOS files
+.DS_Store

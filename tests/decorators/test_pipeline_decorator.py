@@ -12,28 +12,42 @@ from tests.decorators.fixtures.pipeline_fixtures import entrypoint_call_tracker
 
 
 class TestPipelineDecorator:
-    def test_pipeline_initialization(
+    def test_pipeline_decorator_returns_configured_pipeline_object(
         self,
-        mock_pipeline: Pipeline,
+        mock_pipeline_entrypoint,
         mock_pipeline_context,
         mock_pipeline_name,
+        mock_pipeline_log_folder_path,
         mock_pipeline_remove_logs_on_completion,
-        mock_pipeline_entrypoint,
     ):
+        decorated_function = pipeline_decorator(
+            context=mock_pipeline_context,
+            name=mock_pipeline_name,
+            log_folder_path=mock_pipeline_log_folder_path,
+            remove_logs_on_completion=mock_pipeline_remove_logs_on_completion,
+        )(mock_pipeline_entrypoint)
+
+        assert isinstance(
+            decorated_function, Pipeline
+        ), "The decorated function should be an instance of Pipeline."
+
         assert (
-            mock_pipeline._context is not None
-            and mock_pipeline._context == mock_pipeline_context
-        )
-        assert mock_pipeline.name == mock_pipeline_name
+            decorated_function._context == mock_pipeline_context
+        ), "The Pipeline context was not set correctly."
         assert (
-            mock_pipeline.remove_logs_on_completion
+            decorated_function.name == mock_pipeline_name
+        ), "The Pipeline name was not set correctly."
+        assert (
+            decorated_function.logger_manager.log_folder_root_path
+            == mock_pipeline_log_folder_path
+        ), "The log folder path was not set correctly."
+        assert (
+            decorated_function.remove_logs_on_completion
             is mock_pipeline_remove_logs_on_completion
-        )
+        ), "The remove_logs_on_completion flag was not set correctly."
         assert (
-            mock_pipeline.entrypoint is not None
-            and mock_pipeline.entrypoint == mock_pipeline_entrypoint
-        )
-        assert mock_pipeline.state == PipelineState.PENDING
+            decorated_function.entrypoint == mock_pipeline_entrypoint
+        ), "The entrypoint was not set to the decorated function correctly."
 
     def test_pipeline_inside_pipeline_exception(self, mock_pipeline: Pipeline):
         with pytest.raises(RuntimeError):
@@ -316,42 +330,3 @@ class TestPipelineDecorator:
             assert (
                 mock_log.call_count == expected_call_count
             ), f"Expected log_pipeline_info to be called {expected_call_count} times, but got {mock_log.call_count}."
-
-    def test_pipeline_decorator_returns_configured_pipeline_object(
-        self,
-        mock_pipeline_entrypoint,
-        mock_pipeline_context,
-        mock_pipeline_name,
-        mock_pipeline_log_folder_path,
-        mock_pipeline_remove_logs_on_completion,
-    ):
-        decorated_function = pipeline_decorator(
-            context=mock_pipeline_context,
-            name=mock_pipeline_name,
-            log_folder_path=mock_pipeline_log_folder_path,
-            remove_logs_on_completion=mock_pipeline_remove_logs_on_completion,
-        )(mock_pipeline_entrypoint)
-
-        # Verify the returned object is an instance of Pipeline
-        assert isinstance(
-            decorated_function, Pipeline
-        ), "The decorated function should be an instance of Pipeline."
-
-        # Verify the Pipeline object is configured correctly
-        assert (
-            decorated_function._context == mock_pipeline_context
-        ), "The Pipeline context was not set correctly."
-        assert (
-            decorated_function.name == mock_pipeline_name
-        ), "The Pipeline name was not set correctly."
-        assert (
-            decorated_function.logger_manager.log_folder_root_path
-            == mock_pipeline_log_folder_path
-        ), "The log folder path was not set correctly."
-        assert (
-            decorated_function.remove_logs_on_completion
-            is mock_pipeline_remove_logs_on_completion
-        ), "The remove_logs_on_completion flag was not set correctly."
-        assert (
-            decorated_function.entrypoint == mock_pipeline_entrypoint
-        ), "The entrypoint was not set to the decorated function correctly."

@@ -100,8 +100,17 @@ class Step:
     ) -> None:
         total_number_of_steps = len(pipeline.steps_metadata)
         step_logger.info(
-            f"({self.metadata.index}/{total_number_of_steps}) {log_content}"
+            self._format_step_info(
+                step_index=self._metadata.index,
+                total_number_of_steps=total_number_of_steps,
+                content=log_content,
+            )
         )
+
+    def _format_step_info(
+        self, step_index: int, total_number_of_steps: int, content: str
+    ) -> str:
+        return f"({step_index}/{total_number_of_steps}) {content}"
 
     def _prepare_step_logger(self, pipeline: Pipeline) -> logging.Logger:
         return pipeline.logger_manager.prepare_logger(
