@@ -6,9 +6,11 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ARG DEBIAN_FRONTEND=noninteractives
 
-RUN if [ "$PYTHON_VERSION" = "3.10" ]; then \ 
+RUN if [ "$PYTHON_VERSION" = "3.10" ]; then \
         python${PYTHON_VERSION} -m ensurepip --upgrade && python${PYTHON_VERSION} -m pip install -U setuptools; \
     fi
+
+RUN pip install uv
 
 COPY ./base /experiment
 
