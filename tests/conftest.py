@@ -1,4 +1,5 @@
 import logging
+import os
 import pathlib
 
 import pytest
@@ -33,6 +34,11 @@ def discover_fixture_modules(root_dir: str) -> list:
 
 
 pytest_plugins = discover_fixture_modules("tests")
+
+
+@pytest.fixture
+def temp_log_dir() -> str:
+    return os.path.join(os.path.dirname(__file__), "tests_logs")
 
 
 @pytest.fixture

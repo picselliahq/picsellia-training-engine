@@ -8,11 +8,6 @@ from tests.decorators.fixtures.pipeline_fixtures import (
 import pytest
 
 
-@pytest.fixture
-def temp_log_dir() -> str:
-    return os.path.join(os.path.dirname(__file__), "logs")
-
-
 @pytest.fixture(autouse=True)
 def cleanup(temp_log_dir):
     Pipeline.ACTIVE_PIPELINE = None
