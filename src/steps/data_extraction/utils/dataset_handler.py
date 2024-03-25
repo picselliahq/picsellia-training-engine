@@ -163,10 +163,14 @@ class DatasetHandler:
 
     def _get_split_ratios(self, count_datasets: int) -> list:
         if count_datasets == 1:
+            remaining = round((1 - self.prop_train_split), 2)
+            val_test_ratio = round(remaining / 2, 2)
             return [
                 self.prop_train_split,
-                (1 - self.prop_train_split) / 2,
-                (1 - self.prop_train_split) / 2,
+                val_test_ratio,
+                val_test_ratio,
             ]
         elif count_datasets == 2:
-            return [self.prop_train_split, 1 - self.prop_train_split]
+            return [self.prop_train_split, round(1 - self.prop_train_split, 2)]
+        else:
+            raise RuntimeError()
