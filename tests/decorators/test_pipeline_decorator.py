@@ -68,7 +68,7 @@ class TestPipelineDecorator:
     def test_pipeline_cannot_scan_entrypoint(self, mock_pipeline: Pipeline):
         with pytest.raises(ValueError):
             mock_pipeline.entrypoint = None
-            mock_pipeline._analyze_and_register_steps()
+            mock_pipeline._scan_steps()
 
     def test_no_active_pipeline_get_active_context(self):
         with pytest.raises(RuntimeError):
@@ -122,7 +122,7 @@ class TestPipelineDecorator:
         Pipeline.STEPS_REGISTRY["step1"] = mock_step_metadata_1
         Pipeline.STEPS_REGISTRY["step2"] = mock_step_metadata_2
 
-        mock_pipeline._analyze_and_register_steps()
+        mock_pipeline._scan_steps()
 
         assert len(mock_pipeline.steps_metadata) == 2
         assert mock_pipeline.steps_metadata[0].name == mock_step_metadata_1.name
@@ -134,8 +134,7 @@ class TestPipelineDecorator:
             mock_info.assert_called_with("Test log")
 
     def test_finalize_initialization_sets_state_to_running(self, mock_pipeline):
-        mock_pipeline.finalize_initialization()
-        assert mock_pipeline.is_initialized
+        mock_pipeline()
         assert mock_pipeline._state == PipelineState.RUNNING
         assert mock_pipeline.initialization_log_file_path is not None
 
@@ -323,7 +322,7 @@ class TestPipelineDecorator:
     ):
         with patch.object(mock_pipeline, "log_pipeline_info") as mock_log:
             mock_pipeline._context = context
-            mock_pipeline.log_pipeline_context()
+            mock_pipeline._log_pipeline_context()
             # The expected call count is:
             # 1 for the initial "Pipeline ... is starting with the following context:" message,
             # Plus 1 for each Markdown table generated (1 for flat parameters, and 1 for each nested parameter group)

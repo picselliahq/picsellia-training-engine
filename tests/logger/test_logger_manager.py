@@ -7,14 +7,14 @@ from src.logger import LoggerManager
 
 class TestLoggerManager:
     def test_configure_uses_provided_log_dir(self, logger_manager, temp_log_dir):
-        logger_manager.configure(steps_metadata=[])
+        logger_manager.configure_log_files(steps_metadata=[])
         assert not logger_manager.uses_temp_dir
         assert logger_manager.log_folder_root_path == temp_log_dir
 
     def test_configure_uses_temp_log_dir(self, logger_manager):
         with patch("tempfile.mkdtemp", return_value="/tmp/testdir") as mkdtemp_mock:
             logger_manager.log_folder_root_path = None
-            logger_manager.configure(steps_metadata=[])
+            logger_manager.configure_log_files(steps_metadata=[])
             assert logger_manager.uses_temp_dir
             assert logger_manager.log_folder_root_path == mkdtemp_mock.return_value
 

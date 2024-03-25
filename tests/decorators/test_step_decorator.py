@@ -81,7 +81,7 @@ class TestStepDecorator:
     def test_step_get_logger(self, mock_pipeline, step_factory):
         mock_step = step_factory(continue_on_failure=True, entrypoint=lambda: None)
         mock_pipeline._registered_steps_metadata = [mock_step.metadata]
-        mock_pipeline.finalize_initialization()
+        mock_pipeline._configure_logging()
         Pipeline.ACTIVE_PIPELINE = mock_pipeline
 
         step_logger = mock_step._prepare_step_logger(mock_pipeline)
@@ -100,7 +100,7 @@ class TestStepDecorator:
             continue_on_failure=True, entrypoint=lambda: True
         )
         mock_pipeline._registered_steps_metadata = [mock_step_success.metadata]
-        mock_pipeline.finalize_initialization()
+        mock_pipeline._configure_logging()
 
         with pytest.raises(RuntimeError):
             mock_step_success()
@@ -110,7 +110,7 @@ class TestStepDecorator:
             continue_on_failure=True, entrypoint=lambda: True
         )
         mock_pipeline._registered_steps_metadata = [mock_step_success.metadata]
-        mock_pipeline.finalize_initialization()
+        mock_pipeline._configure_logging()
         Pipeline.ACTIVE_PIPELINE = mock_pipeline
 
         mock_step_success()
@@ -135,7 +135,7 @@ class TestStepDecorator:
             mock_step_failed.metadata,
             mock_step_skipped.metadata,
         ]
-        mock_pipeline.finalize_initialization()
+        mock_pipeline._configure_logging()
         Pipeline.ACTIVE_PIPELINE = mock_pipeline
 
         mock_step_failed()
@@ -171,7 +171,7 @@ class TestStepDecorator:
             mock_step_skipped.metadata,
             mock_step_success_2.metadata,
         ]
-        mock_pipeline.finalize_initialization()
+        mock_pipeline._configure_logging()
         Pipeline.ACTIVE_PIPELINE = mock_pipeline
 
         mock_step_success_1()

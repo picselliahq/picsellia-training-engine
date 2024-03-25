@@ -18,7 +18,7 @@ class Step:
         entrypoint: F,
         metadata: StepMetadata,
     ) -> None:
-        """Initialize a step.
+        """Initializes a step.
 
         Args:
             continue_on_failure: Tells if the step should be executed, even if the previous steps have failed.
@@ -33,6 +33,21 @@ class Step:
         self._metadata = metadata
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """Handles a step's call.
+
+        This method first checks if the step can be executed.
+        If yes, it runs the step's entrypoint function, otherwise it skips the step.
+
+        Args:
+            *args: Entrypoint function arguments.
+            **kwargs: Entrypoint function keyword arguments.
+
+        Returns:
+            The outputs of the entrypoint function call.
+
+        Raises:
+            RuntimeError: If no current pipeline is running.
+        """
         result = None
         current_pipeline = Pipeline.ACTIVE_PIPELINE
 
@@ -89,15 +104,32 @@ class Step:
 
     @property
     def metadata(self) -> StepMetadata:
+        """The metadata associated to the step.
+
+        Returns:
+            The metadata associated to the step.
+        """
         return self._metadata
 
     @property
     def state(self) -> StepState:
+        """The step's current state.
+
+        Returns:
+            The step's current state.
+        """
         return self._metadata.state
 
     def log_step_info(
         self, pipeline: Pipeline, step_logger: logging.Logger, log_content: str
     ) -> None:
+        """Wrapper to log step information.
+
+        Args:
+            pipeline: The pipeline the step belongs to.
+            step_logger: The logger to use for logging.
+            log_content: The content to log.
+        """
         total_number_of_steps = len(pipeline.steps_metadata)
         step_logger.info(
             self._format_step_info(
@@ -110,9 +142,27 @@ class Step:
     def _format_step_info(
         self, step_index: int, total_number_of_steps: int, content: str
     ) -> str:
+        """Formats the step information to be logged.
+
+        Args:
+            step_index: The step's index, ranging from 1 to the total number of steps.
+            total_number_of_steps: The total number of steps in the pipeline.
+            content: The content to log.
+
+        Returns:
+            The formatted step information.
+        """
         return f"({step_index}/{total_number_of_steps}) {content}"
 
     def _prepare_step_logger(self, pipeline: Pipeline) -> logging.Logger:
+        """Prepares the logger for the step by configuring the available logger's handlers.
+
+        Args:
+            pipeline: The pipeline the step belongs to.
+
+        Returns:
+            A ready to be used logger.
+        """
         return pipeline.logger_manager.prepare_logger(
             log_file_path=self.metadata.log_file_path
         )
@@ -124,6 +174,7 @@ def step(
     continue_on_failure: bool = False,
 ) -> Union["Step", Callable[["F"], "Step"]]:
     """Decorator to create a step.
+    The step will automatically be registered in the current pipeline and log its content inside a dedicated log file.
 
     Args:
         _func: The decorated function.
