@@ -1,17 +1,22 @@
 import os
 
-from src.models.dataset.dataset_type import DatasetType
+import pytest
+from picsellia.types.enums import InferenceType
+
+from src.models.dataset.dataset_split_name import DatasetSplitName
 
 
 class TestDatasetCollection:
-    def test_download(self, mock_dataset_collection):
-        mock_dataset_collection.download()
+    @pytest.mark.parametrize("dataset_type", [InferenceType.CLASSIFICATION])
+    def test_download(self, dataset_type: InferenceType, mock_dataset_collection):
+        dataset_collection = mock_dataset_collection(dataset_type=dataset_type)
+        dataset_collection.download()
         for context_name in [
-            DatasetType.TRAIN.value,
-            DatasetType.VAL.value,
-            DatasetType.TEST.value,
+            DatasetSplitName.TRAIN.value,
+            DatasetSplitName.VAL.value,
+            DatasetSplitName.TEST.value,
         ]:
-            context = getattr(mock_dataset_collection, context_name)
+            context = getattr(dataset_collection, context_name)
             assert context is not None
             download_path = os.path.join(context.dataset_extraction_path, "images")
             assert os.path.exists(download_path)
