@@ -1,7 +1,11 @@
 import logging
+from typing import List, Tuple, Optional
 
 import pytest
+from picsellia import Client, Experiment
+from picsellia.types.enums import InferenceType
 
+from src.models.dataset.dataset_split_name import DatasetSplitName
 from src.steps.data_extraction.utils.dataset_handler import DatasetHandler
 
 
@@ -12,68 +16,53 @@ def mock_prop_train_split():
 
 @pytest.fixture
 def mock_project(
-    picsellia_client,
-    mock_train_dataset_version,
-    mock_val_dataset_version,
-    mock_test_dataset_version,
+    picsellia_client: Client,
 ):
     project = picsellia_client.create_project("test-picsellia-training-engine")
-    project.attach_dataset(dataset_version=mock_train_dataset_version)
-    project.attach_dataset(dataset_version=mock_val_dataset_version)
-    project.attach_dataset(dataset_version=mock_test_dataset_version)
     return project
 
 
 @pytest.fixture
-def mock_experiment_one_dataset(mock_project, mock_train_dataset_version):
-    experiment = mock_project.create_experiment("test-one-dataset")
-    experiment.attach_dataset(name="train", dataset_version=mock_train_dataset_version)
-    return experiment
-
-
-@pytest.fixture
-def mock_experiment_two_datasets(
-    mock_project, mock_train_dataset_version, mock_test_dataset_version
-):
-    experiment = mock_project.create_experiment("test-two-datasets")
-    experiment.attach_dataset(name="train", dataset_version=mock_train_dataset_version)
-    experiment.attach_dataset(name="test", dataset_version=mock_test_dataset_version)
-    return experiment
-
-
-@pytest.fixture
-def mock_experiment_three_datasets(
+def mock_experiment(
     mock_project,
-    mock_train_dataset_version,
-    mock_val_dataset_version,
-    mock_test_dataset_version,
+    mock_dataset_version,
 ):
-    experiment = mock_project.create_experiment("test-three-datasets")
-    experiment.attach_dataset(name="train", dataset_version=mock_train_dataset_version)
-    experiment.attach_dataset(name="val", dataset_version=mock_val_dataset_version)
-    experiment.attach_dataset(name="test", dataset_version=mock_test_dataset_version)
-    return experiment
+    def _mock_experiment(
+        experiment_name: str,
+        datasets: (
+            List[Tuple[DatasetSplitName, InferenceType]]
+            | List[Tuple[DatasetSplitName, InferenceType, str]]
+        ),
+    ) -> Experiment:
+        experiment = mock_project.create_experiment(name=experiment_name)
+        for dataset_info in datasets:
+            dataset_split_name, dataset_type = dataset_info[:2]
+            attached_name = dataset_info[2] if len(dataset_info) > 2 else None
+
+            dataset_version = mock_dataset_version(dataset_split_name, dataset_type)
+
+            name_to_attach = (
+                attached_name if attached_name else dataset_split_name.value
+            )
+            experiment.attach_dataset(
+                name=name_to_attach, dataset_version=dataset_version
+            )
+
+        return experiment
+
+    return _mock_experiment
 
 
 @pytest.fixture
-def mock_dataset_handler_one_dataset(
-    mock_experiment_one_dataset, mock_prop_train_split
-):
-    return DatasetHandler(mock_experiment_one_dataset, mock_prop_train_split)
+def mock_dataset_handler(mock_experiment, mock_prop_train_split: float):
+    def _mock_dataset_handler(
+        experiment_name: str,
+        datasets: List[Tuple[DatasetSplitName, InferenceType, Optional[str]]],
+    ) -> DatasetHandler:
+        experiment = mock_experiment(experiment_name, datasets)
+        return DatasetHandler(experiment, mock_prop_train_split)
 
-
-@pytest.fixture
-def mock_dataset_handler_two_datasets(
-    mock_experiment_two_datasets, mock_prop_train_split
-):
-    return DatasetHandler(mock_experiment_two_datasets, mock_prop_train_split)
-
-
-@pytest.fixture
-def mock_dataset_handler_three_datasets(
-    mock_experiment_three_datasets, mock_prop_train_split
-):
-    return DatasetHandler(mock_experiment_three_datasets, mock_prop_train_split)
+    return _mock_dataset_handler
 
 
 @pytest.fixture(autouse=True)
