@@ -3,7 +3,7 @@ import os
 from PIL import Image
 
 from src.steps.data_extraction.utils.dataset_collection import DatasetCollection
-from src.models.dataset.dataset_type import DatasetType
+from src.models.dataset.dataset_split_name import DatasetSplitName
 
 
 def get_image_path_list(image_dir) -> list:
@@ -44,9 +44,9 @@ class DatasetValidator:
 
     def validate_common(self):
         for dataset_name in (
-            DatasetType.TRAIN.value,
-            DatasetType.VAL.value,
-            DatasetType.TEST.value,
+            DatasetSplitName.TRAIN.value,
+            DatasetSplitName.VAL.value,
+            DatasetSplitName.TEST.value,
         ):
             dataset_context = getattr(self.dataset_collection, dataset_name)
             image_path_list = get_image_path_list(dataset_context.image_dir)
@@ -78,9 +78,9 @@ class ClassificationDatasetValidator(DatasetValidator):
 
     def _validate_labelmap(self):
         for dataset_name in (
-            DatasetType.TRAIN.value,
-            DatasetType.VAL.value,
-            DatasetType.TEST.value,
+            DatasetSplitName.TRAIN.value,
+            DatasetSplitName.VAL.value,
+            DatasetSplitName.TEST.value,
         ):
             dataset_context = getattr(self.dataset_collection, dataset_name)
             if len(dataset_context.labelmap) < 2:
