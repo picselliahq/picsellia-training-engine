@@ -1,4 +1,4 @@
-from src.models.dataset.dataset_type import DatasetType
+from src.models.dataset.dataset_split_name import DatasetSplitName
 from src.steps.data_extraction.utils.dataset_context import DatasetContext
 
 
@@ -15,9 +15,9 @@ class DatasetCollection:
 
     def download(self):
         for context_name in [
-            DatasetType.TRAIN.value,
-            DatasetType.VAL.value,
-            DatasetType.TEST.value,
+            DatasetSplitName.TRAIN.value,
+            DatasetSplitName.VAL.value,
+            DatasetSplitName.TEST.value,
         ]:
             context = getattr(self, context_name)
             if context is not None:

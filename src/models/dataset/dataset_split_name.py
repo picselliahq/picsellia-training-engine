@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class DatasetType(Enum):
+class DatasetSplitName(Enum):
     TRAIN = "train"
     VAL = "val"
     TEST = "test"
