@@ -1,63 +1,53 @@
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Callable
 
 import pytest
-from picsellia import Client, Experiment
-from picsellia.types.enums import InferenceType
+from picsellia import Client, Experiment, Project
 
-from src.models.dataset.dataset_split_name import DatasetSplitName
 from src.steps.data_extraction.utils.dataset_handler import DatasetHandler
+from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
 
 
 @pytest.fixture
-def mock_prop_train_split():
+def mock_prop_train_split() -> float:
     return 0.8
 
 
 @pytest.fixture
 def mock_project(
     picsellia_client: Client,
-):
+) -> Project:
     project = picsellia_client.create_project("test-picsellia-training-engine")
     return project
 
 
 @pytest.fixture
 def mock_experiment(
-    mock_project,
-    mock_dataset_version,
-):
+    mock_project: Project,
+    mock_dataset_version: Callable,
+) -> Callable:
     def _mock_experiment(
         experiment_name: str,
-        datasets: (
-            List[Tuple[DatasetSplitName, InferenceType]]
-            | List[Tuple[DatasetSplitName, InferenceType, str]]
-        ),
+        datasets_metadata: List[DatasetTestMetadata],
     ) -> Experiment:
         experiment = mock_project.create_experiment(name=experiment_name)
-        for dataset_info in datasets:
-            dataset_split_name, dataset_type = dataset_info[:2]
-            attached_name = dataset_info[2] if len(dataset_info) > 2 else None
-
-            dataset_version = mock_dataset_version(dataset_split_name, dataset_type)
-
-            name_to_attach = (
-                attached_name if attached_name else dataset_split_name.value
-            )
+        for dataset_metadata in datasets_metadata:
+            dataset_version = mock_dataset_version(dataset_metadata=dataset_metadata)
             experiment.attach_dataset(
-                name=name_to_attach, dataset_version=dataset_version
+                name=dataset_metadata.attached_name, dataset_version=dataset_version
             )
-
         return experiment
 
     return _mock_experiment
 
 
 @pytest.fixture
-def mock_dataset_handler(mock_experiment, mock_prop_train_split: float):
+def mock_dataset_handler(
+    mock_experiment: Callable, mock_prop_train_split: float
+) -> Callable:
     def _mock_dataset_handler(
         experiment_name: str,
-        datasets: List[Tuple[DatasetSplitName, InferenceType, Optional[str]]],
+        datasets: List[DatasetTestMetadata],
     ) -> DatasetHandler:
         experiment = mock_experiment(experiment_name, datasets)
         return DatasetHandler(experiment, mock_prop_train_split)
