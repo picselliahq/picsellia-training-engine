@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import shutil
 import sys
 import tempfile
 from datetime import datetime
@@ -10,20 +11,50 @@ from src.models.steps.step_metadata import StepMetadata
 
 
 class LoggerManager:
-    def __init__(self, pipeline_name: str, log_folder_path: str | None):
+    def __init__(self, pipeline_name: str, log_folder_root_path: str | None):
         self.pipeline_name = pipeline_name
-        self.log_folder_root_path = log_folder_path
+        self.log_folder_root_path = log_folder_root_path
+        self.log_folder_path = None
         self.uses_temp_dir = False
 
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
-        self.current_file_handler = None
         self.logger = logging.getLogger("picsellia")
 
-    def configure(self, steps_metadata: list[StepMetadata]) -> None:
+    def clean(self) -> None:
         """
-        Configures the pipeline logger.
-        If the log folder path is not provided, a temporary directory is created.
+        Cleans the log folder. If the log folder is a temporary directory, it is removed.
+        Otherwise, only the pipeline log folder is removed.
+        """
+        if self.uses_temp_dir and self.log_folder_root_path:
+            shutil.rmtree(self.log_folder_root_path)
+        elif self.log_folder_path:
+            shutil.rmtree(self.log_folder_path)
+        else:
+            self.logger.warning("No log folder could cleaned.")
+
+    def configure_pipeline_initialization_log_file(self) -> str:
+        """Configures the log file for the pipeline own logs.
+
+        Returns:
+            The path of the log file where the pipeline will log its own logs.
+        """
+        log_file_name = "0-pipeline-initialization.log"
+        pipeline_initialization_log_file_path = os.path.join(
+            self.log_folder_path, log_file_name
+        )
+        open(pipeline_initialization_log_file_path, "w").close()
+
+        return pipeline_initialization_log_file_path
+
+    def configure_log_files(self, steps_metadata: list[StepMetadata]) -> None:
+        """Configures the folders and log files for the pipeline and its steps.
+
+        If the `log_folder_path` is not provided when decorating a pipeline, a temporary directory is created instead.
+        This function will create the log folder and configure the log files for each step.
+
+        Args:
+            steps_metadata: The metadata of the steps in the pipeline.
         """
 
         if self.log_folder_root_path is None:
@@ -37,42 +68,74 @@ class LoggerManager:
             )
 
         self._create_pipeline_log_folder()
-        self._configure_steps_log_files(steps_metadata)
+        self._configure_steps_log_files(steps_metadata=steps_metadata)
 
-    def clean(self) -> None:
+    def prepare_logger(self, log_file_path: str) -> logging.Logger:
         """
-        Cleans the log folder.
-        If the log folder is a temporary directory, it is removed.
-        Otherwise, only the pipeline log folder is removed.
-        """
-        if self.uses_temp_dir and self.log_folder_root_path:
-            os.rmdir(self.log_folder_root_path)
-        elif self.log_folder_path:
-            os.rmdir(self.log_folder_path)
-        else:
-            self.logger.warning("No log folder could cleaned.")
+        Prepares the logger for a step or the pipeline.
 
-    def configure_pipeline_initialization_log_file(self) -> str:
+        The logging strategy is to log to the console (`StreamToLogger`) and to a file (`FileHandler`) at the same time.
+        Each time a new step begins, the loggers are reset to remove the previous file handler and add the new one.
+
+        Args:
+            log_file_path: The path of the log file where the logs will be written.
+
+        Returns:
+            The configured logger.
         """
-        Configures the pipeline initialization log file.
-        """
-        log_file_name = "0-pipeline-initialization.log"
-        pipeline_initialization_log_file_path = os.path.join(
-            self.log_folder_path, log_file_name
+        if not os.path.isfile(log_file_path):
+            raise FileNotFoundError(
+                f"Cannot open log file at {log_file_path}. This file does not exist."
+            )
+
+        # Reset the stdout and stderr to the original streams, this is needed to avoid issues with the logger
+        sys.stdout = self.original_stdout
+        sys.stderr = self.original_stderr
+
+        # Remove the file handlers from the previous step and close them
+        for logger in logging.root.manager.loggerDict.values():
+            if isinstance(logger, logging.Logger):
+                self._reset_file_handlers(logger=logger)
+
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
         )
-        open(pipeline_initialization_log_file_path, "w").close()
 
-        return pipeline_initialization_log_file_path
+        # Prepare the file handler for the next step
+        new_file_handler = logging.FileHandler(log_file_path, "a")
+        new_file_handler.setFormatter(fmt=logging.Formatter("%(message)s"))
 
-    def _create_pipeline_log_folder(self) -> None:
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
-        self.log_folder_path = os.path.join(
-            self.log_folder_root_path, f"{self.pipeline_name}_{timestamp}"
+        # Add the file handler to all the loggers
+        for logger in logging.root.manager.loggerDict.values():
+            if isinstance(logger, logging.Logger):
+                logger.addHandler(hdlr=new_file_handler)
+
+        # Prepare as well the root logger
+        root_logger = logging.getLogger()
+        self._reset_file_handlers(logger=root_logger)
+        root_logger.addHandler(hdlr=new_file_handler)
+
+        # Redirect stdout and stderr to the logger
+        sys.stdout = StreamToLogger(
+            filepath=log_file_path, original_stream=self.original_stdout
+        )
+        sys.stderr = StreamToLogger(
+            filepath=log_file_path, original_stream=self.original_stderr
         )
 
-        os.makedirs(self.log_folder_path)
+        return self.logger
 
     def _configure_steps_log_files(self, steps_metadata: list[StepMetadata]) -> None:
+        """Configures the log files for each step.
+
+        For each step, will look at the metadata to create a log file.
+        The log file's name is composed of the step index, name and id. Example: `1-step_name-uuid.log`.
+
+        Args:
+            steps_metadata: The metadata of the steps in the pipeline.
+        """
         for index, step_metadata in enumerate(steps_metadata):
             step_metadata.index = index + 1
 
@@ -84,48 +147,39 @@ class LoggerManager:
 
             open(step_log_file_path, "w").close()
 
+    def _create_pipeline_log_folder(self) -> None:
+        """Creates the log folder for the pipeline. The folder name is composed of the pipeline name and a timestamp."""
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        self.log_folder_path = os.path.join(
+            self.log_folder_root_path, f"{self.pipeline_name}_{timestamp}"
+        )
+
+        os.makedirs(self.log_folder_path)
+
+    def _reset_file_handlers(self, logger: logging.Logger):
+        """Resets the file handlers of the logger.
+
+        This function will remove all the file handlers from the provided logger and close them.
+
+        Args:
+            logger: The logger to reset the file handlers of.
+        """
+        handlers = logger.handlers[:]
+        for handler in handlers:
+            if isinstance(handler, logging.FileHandler):
+                logger.removeHandler(handler)
+                handler.close()
+
     def _sanitize_file_path(self, input_string: str, replacement: str = "_") -> str:
+        """Sanitizes a string to be used as a file path.
+
+        Args:
+            input_string: The string to sanitize.
+            replacement: The character to replace invalid characters with.
+
+        Returns:
+            The sanitized string.
+        """
         invalid_chars_pattern = r'[\\/*?:"<>|]'
         sanitized_string = re.sub(invalid_chars_pattern, replacement, input_string)
         return sanitized_string
-
-    def prepare_logger(self, log_file_path: str) -> logging.Logger:
-        """
-        Prepares the logger for a step or the pipeline.
-
-        Args:
-            log_file_path: The path of the log file where the logs will be written.
-
-        Returns:
-            The configured logger.
-        """
-        sys.stdout = self.original_stdout
-        sys.stderr = self.original_stderr
-
-        for logger in logging.root.manager.loggerDict.values():
-            if isinstance(logger, logging.Logger):
-                handlers = logger.handlers[:]
-                for handler in handlers:
-                    if isinstance(handler, logging.FileHandler):
-                        logger.removeHandler(handler)
-                        handler.close()
-
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(message)s",
-            handlers=[logging.StreamHandler(sys.stdout)],
-        )
-
-        new_file_handler = logging.FileHandler(log_file_path, "a")
-        new_file_handler.setFormatter(logging.Formatter("%(message)s"))
-
-        for logger in logging.root.manager.loggerDict.values():
-            if isinstance(logger, logging.Logger):
-                logger.addHandler(new_file_handler)
-
-        logging.getLogger().addHandler(new_file_handler)
-
-        sys.stdout = StreamToLogger(log_file_path, self.original_stdout)
-        sys.stderr = StreamToLogger(log_file_path, self.original_stderr)
-
-        return self.logger

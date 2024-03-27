@@ -7,14 +7,15 @@ usage() {
 
 # Depending on the model to train, choose to either use python3.8 or python3.10
 get_python_command() {
-  if command -v python3.10 &> /dev/null; then
-    echo "python3.10"
-  elif command -v python3.8 &> /dev/null; then
-    echo "python3.8"
-  else
-    echo "Error: Neither Python 3.10 nor Python 3.8 is available on the system."
-    exit 1
-  fi
+  for version in 3.12 3.11 3.10 3.9 3.8; do
+    if command -v python$version &> /dev/null; then
+      echo "python$version"
+      return 0
+    fi
+  done
+
+  echo "Error: No supported Python version (3.8 to 3.12) is available on the system."
+  exit 1
 }
 
 # Function to monitor log handler process

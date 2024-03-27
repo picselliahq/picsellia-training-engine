@@ -11,14 +11,13 @@ class StepMetadata:
         name: str,
         display_name: str,
         state: StepState,
-        execution_time: float,
         log_file_path: Union[str, None] = None,
     ) -> None:
         self.id = id
         self.name = name
         self.display_name = display_name
         self.state = state
-        self.execution_time = execution_time
+        self.execution_time = 0.0
         self.log_file_path = log_file_path
         self.index = None
 
