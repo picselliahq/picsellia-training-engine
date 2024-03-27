@@ -7,19 +7,19 @@ from picsellia.sdk.asset import MultiAsset
 class DatasetContext:
     def __init__(
         self,
-        name: str,
+        dataset_name: str,
         dataset_version: DatasetVersion,
         multi_asset: MultiAsset,
         labelmap: dict,
         destination_path: str,
     ):
-        self.image_dir = None
-        self.coco_file = None
-        self.name = name
+        self.dataset_name = dataset_name
         self.dataset_version = dataset_version
         self.multi_asset = multi_asset
-        self.dataset_extraction_path = os.path.join(destination_path, self.name)
+        self.dataset_extraction_path = os.path.join(destination_path, self.dataset_name)
         self.labelmap = labelmap
+        self.image_dir = None
+        self.coco_file = None
 
     def download_assets(self) -> None:
         self.image_dir = os.path.join(self.dataset_extraction_path, "images")
