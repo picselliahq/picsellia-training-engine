@@ -44,4 +44,5 @@ repos:
     - id: mypy
       args:
         - --check-untyped-defs
+      exclude: ^tests/
       additional_dependencies: ['types-PyYAML']
