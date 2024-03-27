@@ -4,25 +4,9 @@ from typing import Dict
 from src.steps.data_extraction.utils.dataset_context import DatasetContext
 
 
-class FileSystemOperations:
-    @staticmethod
-    def create_directory(path: str):
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-    @staticmethod
-    def copy_file(source_path: str, destination_path: str):
-        shutil.copy(source_path, destination_path)
-
-    @staticmethod
-    def remove_directory(path: str):
-        shutil.rmtree(path)
-
-
 class ClassificationDatasetOrganizer:
     def __init__(self, dataset_context: DatasetContext):
         self.dataset_context = dataset_context
-        self.fs_operations = FileSystemOperations()
         self.destination_dir = dataset_context.dataset_extraction_path
 
     def organize(self):
@@ -56,11 +40,12 @@ class ClassificationDatasetOrganizer:
 
     def _create_category_dir_and_copy_image(self, category_name: str, image):
         category_dir = os.path.join(self.destination_dir, category_name)
-        self.fs_operations.create_directory(category_dir)
+        if not os.path.exists(category_dir):
+            os.makedirs(category_dir)
         src_image_path = os.path.join(self.dataset_context.image_dir, image.file_name)
         dest_image_path = os.path.join(category_dir, image.file_name)
-        self.fs_operations.copy_file(src_image_path, dest_image_path)
+        shutil.copy(src_image_path, dest_image_path)
 
     def _cleanup(self):
-        self.fs_operations.remove_directory(self.dataset_context.image_dir)
+        shutil.rmtree(self.dataset_context.image_dir)
         self.dataset_context.image_dir = self.destination_dir
