@@ -1,14 +1,22 @@
 import os
+from typing import Callable
 
 import pytest
 from picsellia.types.enums import InferenceType
 
+from src.models.dataset.dataset_split_name import DatasetSplitName
+from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
+
 
 class TestDatasetContext:
     @pytest.mark.parametrize("dataset_type", [InferenceType.CLASSIFICATION])
-    def test_download_assets(self, dataset_type: InferenceType, mock_dataset_context):
+    def test_download_assets(
+        self, dataset_type: InferenceType, mock_dataset_context: Callable
+    ):
         dataset_context = mock_dataset_context(
-            dataset_split_name="train", dataset_type=dataset_type
+            dataset_metadata=DatasetTestMetadata(
+                dataset_split_name=DatasetSplitName.TRAIN, dataset_type=dataset_type
+            )
         )
 
         dataset_context.download_assets()
@@ -23,10 +31,12 @@ class TestDatasetContext:
     def test_download_coco_file(
         self,
         dataset_type: InferenceType,
-        mock_dataset_context,
+        mock_dataset_context: Callable,
     ):
         dataset_context = mock_dataset_context(
-            dataset_split_name="train", dataset_type=dataset_type
+            dataset_metadata=DatasetTestMetadata(
+                dataset_split_name=DatasetSplitName.TRAIN, dataset_type=dataset_type
+            )
         )
         dataset_context.download_coco_file()
         assert dataset_context.coco_file is not None
