@@ -1,5 +1,4 @@
 import os
-import sys
 
 import pytest
 from picsellia import Client, Dataset, DatasetVersion, Data
@@ -43,18 +42,17 @@ def picsellia_client() -> Client:
     try:
         TOKEN = os.environ["PICSELLIA_TEST_TOKEN"]
         HOST = os.environ["PICSELLIA_TEST_HOST"]
-    except KeyError:
-        sys.stdout.write(
+
+    except KeyError as e:
+        raise KeyError(
             "FATAL ERROR, you need to define env var PICSELLIA_TEST_TOKEN with api token and PICSELLIA_TEST_HOST with "
             "platform host"
-        )
-        sys.exit(1)
+        ) from e
 
     if HOST == "https://app.picsellia.com":
-        sys.stdout.write("FATAL ERROR, can't test on production")
-        sys.exit(1)
-    client = Client(api_token=TOKEN, host=HOST)
-    return client
+        raise ValueError("FATAL ERROR, can't test on production")
+
+    return Client(api_token=TOKEN, host=HOST)
 
 
 @pytest.fixture
