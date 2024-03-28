@@ -1,4 +1,4 @@
-name: Python application
+name: Engine tests
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
     paths:
       - 'src/decorators/**'
       - 'src/logger.py'
+  workflow_dispatch:
 
 permissions:
   contents: read
