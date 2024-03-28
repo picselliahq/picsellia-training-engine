@@ -5,20 +5,21 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
+from typing import Optional, TextIO, cast
 
 from src.models.logging.stream_to_logger import StreamToLogger
 from src.models.steps.step_metadata import StepMetadata
 
 
 class LoggerManager:
-    def __init__(self, pipeline_name: str, log_folder_root_path: str | None):
+    def __init__(self, pipeline_name: str, log_folder_root_path: Optional[str] = None):
         self.pipeline_name = pipeline_name
         self.log_folder_root_path = log_folder_root_path
-        self.log_folder_path = None
+        self.log_folder_path: Optional[str] = None
         self.uses_temp_dir = False
 
-        self.original_stdout = sys.stdout
-        self.original_stderr = sys.stderr
+        self.original_stdout: TextIO = sys.stdout
+        self.original_stderr: TextIO = sys.stderr
         self.logger = logging.getLogger("picsellia")
 
     def clean(self) -> None:
@@ -39,6 +40,11 @@ class LoggerManager:
         Returns:
             The path of the log file where the pipeline will log its own logs.
         """
+        if self.log_folder_path is None:
+            raise ValueError(
+                "The log folder path is empty, did you forget to call `configure_log_files`?"
+            )
+
         log_file_name = "0-pipeline-initialization.log"
         pipeline_initialization_log_file_path = os.path.join(
             self.log_folder_path, log_file_name
@@ -70,7 +76,7 @@ class LoggerManager:
         self._create_pipeline_log_folder()
         self._configure_steps_log_files(steps_metadata=steps_metadata)
 
-    def prepare_logger(self, log_file_path: str) -> logging.Logger:
+    def prepare_logger(self, log_file_path: Optional[str]) -> logging.Logger:
         """
         Prepares the logger for a step or the pipeline.
 
@@ -83,6 +89,11 @@ class LoggerManager:
         Returns:
             The configured logger.
         """
+        if not log_file_path:
+            raise ValueError(
+                "The log file path is empty. Did you forget to call `configure_log_files`?"
+            )
+
         if not os.path.isfile(log_file_path):
             raise FileNotFoundError(
                 f"Cannot open log file at {log_file_path}. This file does not exist."
@@ -118,11 +129,17 @@ class LoggerManager:
         root_logger.addHandler(hdlr=new_file_handler)
 
         # Redirect stdout and stderr to the logger
-        sys.stdout = StreamToLogger(
-            filepath=log_file_path, original_stream=self.original_stdout
+        sys.stdout = cast(
+            TextIO,
+            StreamToLogger(
+                filepath=log_file_path, original_stream=self.original_stdout
+            ),
         )
-        sys.stderr = StreamToLogger(
-            filepath=log_file_path, original_stream=self.original_stderr
+        sys.stderr = cast(
+            TextIO,
+            StreamToLogger(
+                filepath=log_file_path, original_stream=self.original_stderr
+            ),
         )
 
         return self.logger
@@ -136,6 +153,10 @@ class LoggerManager:
         Args:
             steps_metadata: The metadata of the steps in the pipeline.
         """
+        if self.log_folder_path is None:
+            raise ValueError(
+                "The log folder path is empty, did you forget to call `_create_pipeline_log_folder`?"
+            )
         for index, step_metadata in enumerate(steps_metadata):
             step_metadata.index = index + 1
 
@@ -150,6 +171,12 @@ class LoggerManager:
     def _create_pipeline_log_folder(self) -> None:
         """Creates the log folder for the pipeline. The folder name is composed of the pipeline name and a timestamp."""
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
+
+        if self.log_folder_root_path is None:
+            raise ValueError(
+                "The log folder root path is empty, did you forget to call `configure_log_files`?"
+            )
+
         self.log_folder_path = os.path.join(
             self.log_folder_root_path, f"{self.pipeline_name}_{timestamp}"
         )

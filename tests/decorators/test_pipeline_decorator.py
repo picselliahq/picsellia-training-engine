@@ -133,6 +133,11 @@ class TestPipelineDecorator:
             mock_pipeline.log_pipeline_info("Test log")
             mock_info.assert_called_with("Test log")
 
+    def test_log_pipeline_warning(self, mock_pipeline):
+        with patch.object(mock_pipeline.logger_manager.logger, "warning") as mock_info:
+            mock_pipeline.log_pipeline_warning("Test log")
+            mock_info.assert_called_with("Test log")
+
     def test_finalize_initialization_sets_state_to_running(self, mock_pipeline):
         mock_pipeline()
         assert mock_pipeline._state == PipelineState.RUNNING
@@ -329,3 +334,9 @@ class TestPipelineDecorator:
             assert (
                 mock_log.call_count == expected_call_count
             ), f"Expected log_pipeline_info to be called {expected_call_count} times, but got {mock_log.call_count}."
+
+    def test_log_pipeline_no_context_prints_warning(self, mock_pipeline):
+        with patch.object(mock_pipeline, "log_pipeline_warning") as mock_log:
+            mock_pipeline._context = None
+            mock_pipeline._log_pipeline_context()
+            mock_log.assert_called_once()

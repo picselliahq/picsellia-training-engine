@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional
 from uuid import UUID
 
 from src.enums import StepState
@@ -11,7 +11,7 @@ class StepMetadata:
         name: str,
         display_name: str,
         state: StepState,
-        log_file_path: Union[str, None] = None,
+        log_file_path: Optional[str] = None,
     ) -> None:
         self.id = id
         self.name = name
@@ -19,7 +19,7 @@ class StepMetadata:
         self.state = state
         self.execution_time = 0.0
         self.log_file_path = log_file_path
-        self.index = None
+        self.index: Optional[int] = None
 
     def __repr__(self):
         return (

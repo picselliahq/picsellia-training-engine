@@ -1,10 +1,9 @@
 import os
 from abc import ABC, abstractmethod
-from collections import defaultdict
-from typing import Type, Optional, Any
+from typing import Type, Optional, Any, Dict
 
-import picsellia
-from picsellia import Experiment
+import picsellia  # type: ignore
+from picsellia import Experiment  # type: ignore
 
 from src.models.parameters.augmentation_parameters import AugmentationParameters
 from src.models.parameters.hyper_parameters import HyperParameters
@@ -31,7 +30,7 @@ class PicselliaContext(ABC):
 
         self.client = self._initialize_client()
 
-    def _initialize_client(self):
+    def _initialize_client(self) -> picsellia.Client:
         return picsellia.Client(
             api_token=self.api_token,
             host=self.host,
@@ -107,29 +106,33 @@ class PicselliaTrainingContext(PicselliaContext):
             log_data=parameters_log_data
         )
 
-    def to_dict(self) -> dict:
-        result = defaultdict(dict)
-
-        # Context Parameters
-        result["context_parameters"] = {
-            "host": self.host,
-            "organization_id": self.organization_id,
-            "organization_name": self.organization_name,
-            "experiment_id": self.experiment_id,
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "context_parameters": {
+                "host": self.host,
+                "organization_id": self.organization_id,
+                "organization_name": self.organization_name,
+                "experiment_id": self.experiment_id,
+            },
+            "hyperparameters": self._process_parameters(
+                parameters_dict=self.hyperparameters.to_dict(),
+                defaulted_keys=self.hyperparameters.defaulted_keys,
+            ),
+            "augmentation_parameters": self._process_parameters(
+                parameters_dict=self.augmentation_parameters.to_dict(),
+                defaulted_keys=self.augmentation_parameters.defaulted_keys,
+            ),
         }
 
-        # Process Hyperparameters and Augmentation Parameters
-        result["hyperparameters"] = self._process_parameters(
-            self.hyperparameters.to_dict(), self.hyperparameters.defaulted_keys
-        )
-        result["augmentation_parameters"] = self._process_parameters(
-            self.augmentation_parameters.to_dict(),
-            self.augmentation_parameters.defaulted_keys,
-        )
-
-        return result
-
     def _initialize_experiment(self) -> Experiment:
+        """Fetches the experiment from Picsellia using the experiment ID.
+
+        The experiment, in a Picsellia training context,
+        is the entity that contains all the information needed to train a model.
+
+        Returns:
+            The experiment fetched from Picsellia.
+        """
         return self.client.get_experiment_by_id(self.experiment_id)
 
 
@@ -153,31 +156,69 @@ class PicselliaProcessingContext(PicselliaContext):
 
         # Initialize job and context specifics
         self.job = self._initialize_job()
-        self.context = self._initialize_context()
+        self._model_version_id: Optional[str] = None
+        self._input_dataset_version_id: Optional[str] = None
+        self._output_dataset_version_id: Optional[str] = None
 
-    def _initialize_job(self):
-        # Use the client from the base class to fetch the job by ID
-        return self.client.get_job_by_id(self.job_id)
+        self._initialize_context()
 
-    def _initialize_context(self):
-        # Retrieve and return the context from the job
+    @property
+    def input_dataset_version_id(self) -> str:
+        if not self._input_dataset_version_id:
+            raise ValueError(
+                "There's not input dataset version ID available. Please ensure the job is correctly configured."
+            )
+        return self._input_dataset_version_id
+
+    @property
+    def model_version_id(self) -> str:
+        if not self._model_version_id:
+            raise ValueError(
+                "There's not model version ID available. Please ensure the job is correctly configured."
+            )
+        return self._model_version_id
+
+    @property
+    def output_dataset_version_id(self) -> str:
+        if not self._output_dataset_version_id:
+            raise ValueError(
+                "There's not output dataset version ID available. Please ensure the job is correctly configured."
+            )
+        return self._output_dataset_version_id
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "context_parameters": {
+                "host": self.host,
+                "organization_id": self.organization_id,
+                "job_id": self.job_id,
+            },
+            "model_version_id": self.model_version_id,
+            "input_dataset_version_id": self.input_dataset_version_id,
+            "output_dataset_version_id": self.output_dataset_version_id,
+        }
+
+    def _initialize_context(self) -> None:
+        """Initializes the context by fetching the necessary information from the job."""
         context = self.job.sync()["dataset_version_processing_job"]
 
-        self.model_version_id = context.get("model_version_id")
-        self.input_dataset_version_id = context.get("input_dataset_version_id")
-        self.output_dataset_version_id = context.get("output_dataset_version_id")
+        self._model_version_id = context.get("model_version_id")
+        self._input_dataset_version_id = context.get("input_dataset_version_id")
+        self._output_dataset_version_id = context.get("output_dataset_version_id")
 
         if not self.model_version_id or not self.input_dataset_version_id:
             raise ValueError(
                 "Failed to retrieve necessary context from the job. Please ensure the job is correctly configured."
             )
-        return context
 
-    def to_dict(self):
-        result = defaultdict(dict)
-        result["context_parameters"] = {
-            "host": self.host,
-            "organization_id": self.organization_id,
-            "job_id": self.job_id,
-        }
-        return result
+    def _initialize_job(self) -> picsellia.Job:
+        """
+        Fetches the job from Picsellia using the job ID.
+
+        The Job, in a Picsellia processing context,
+        is the entity that contains all the information needed to run a processing job.
+
+        Returns:
+            The job fetched from Picsellia.
+        """
+        return self.client.get_job_by_id(self.job_id)

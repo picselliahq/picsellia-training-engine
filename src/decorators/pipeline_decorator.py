@@ -1,8 +1,8 @@
 import ast
 import inspect
-from typing import Optional, Union, Callable, TypeVar, Any, List, Tuple
+from typing import Optional, Union, Callable, TypeVar, Any, List, Tuple, Dict
 
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore
 
 from src.enums import PipelineState, StepState
 from src.logger import LoggerManager
@@ -44,9 +44,9 @@ class Pipeline:
 
         self._is_pipeline_initialized = False
         self._state = PipelineState.PENDING
-        self._registered_steps_metadata: [StepMetadata] = []
+        self._registered_steps_metadata: List[StepMetadata] = []
 
-        self.initialization_log_file_path = None
+        self.initialization_log_file_path: Optional[str] = None
 
     def __call__(self, *args, **kwargs) -> Any:
         """Handles the pipeline call.
@@ -145,6 +145,10 @@ class Pipeline:
                         return PipelineState.PARTIAL_SUCCESS
                     return PipelineState.FAILED
 
+        raise RuntimeError(
+            "Pipeline state could not be determined."
+        )  # pragma: no cover
+
     @property
     def steps_metadata(self) -> List[StepMetadata]:
         """All the pipeline's steps' metadata.
@@ -162,6 +166,14 @@ class Pipeline:
         """
         self.logger_manager.logger.info(f"{log_content}")
 
+    def log_pipeline_warning(self, log_content: str) -> None:
+        """Log the provided content inside the pipeline log file.
+
+        Args:
+            log_content: The content to log.
+        """
+        self.logger_manager.logger.warning(f"{log_content}")
+
     def register_active_step_metadata(self, step_metadata: StepMetadata) -> None:
         """Register the metadata of a step found during the pipeline scan.
 
@@ -169,6 +181,33 @@ class Pipeline:
             step_metadata: The metadata of the step to register.
         """
         self._registered_steps_metadata.append(step_metadata)
+
+    def _compute_markdown_table(self, category: str, context: dict) -> str:
+        """Format a dictionary as a Markdown table with two columns: keys and values.
+
+        Args:
+            category: The category of the provided context. This will be the header of the first column.
+                For example, "hyperparameters", "augmentation_parameters, etc.
+            context: The context to format.
+
+        Returns:
+            The context formatted as a Markdown table.
+        """
+        headers = (
+            [category, "values"]
+            if isinstance(context, dict)
+            and not any(isinstance(val, dict) for val in context.values())
+            else ["parameters", "values"]
+        )
+        data = [
+            [key, (value if value is not None else "None")]
+            for key, value in context.items()
+        ]
+        return tabulate(
+            tabular_data=data,
+            headers=headers,
+            tablefmt="github",
+        )
 
     def _configure_logging(self) -> None:
         """Configures the logging for the pipeline.
@@ -184,6 +223,34 @@ class Pipeline:
         self.logger_manager.prepare_logger(
             log_file_path=self.initialization_log_file_path
         )
+
+    def _extract_parameters_from_context_dict(
+        self, context: Dict[Any, Any]
+    ) -> Tuple[Dict[Any, Any], Dict[Any, Any]]:
+        """Extracts flat parameters and nested parameters from a context dictionary.
+
+        For example, given the following context: `{'nested': {'learning_rate': 0.01}, 'flat': "value"}`,
+        the output will be :
+
+        - flat_parameters: `{'flat': "value"}`
+        - nested_parameters: `{'nested': {'learning_rate': 0.01}}`
+
+        Args:
+            context: The context dictionary to extract the parameters from.
+
+        Returns:
+            A tuple containing the flat parameters and the nested parameters.
+        """
+        flat_parameters: Dict[Any, Any] = {}
+        nested_parameters: Dict[Any, Any] = {}
+
+        for key, value in context.items():
+            if isinstance(value, dict):
+                nested_parameters[key] = value
+            else:
+                flat_parameters[key] = value
+
+        return flat_parameters, nested_parameters
 
     def _flag_pipeline(self, state: PipelineState) -> None:
         """Flags the pipeline with the provided state.
@@ -211,12 +278,19 @@ class Pipeline:
         | batch_size        | 32       |
         """
         self.log_pipeline_info(
-            f"Pipeline \033[94m{self.name}\033[0m is starting with the following context:"
+            log_content=f"Pipeline \033[94m{self.name}\033[0m is starting with the following context:"
         )
 
         context_dict = self._parse_context_to_dict(self._context)
 
-        # Separate flat parameters from nested ones
+        if context_dict is None:
+            self.log_pipeline_warning(
+                log_content="The provided context does not expose a `to_dict` method, "
+                "therefore it will could not be logged. "
+                "Try to implement a `to_dict` method in your context or provide a dictionary."
+            )
+            return
+
         flat_parameters, nested_parameters = self._extract_parameters_from_context_dict(
             context_dict
         )
@@ -224,12 +298,30 @@ class Pipeline:
         # Log flat parameters
         if flat_parameters:
             markdown_table = self._compute_markdown_table("parameters", flat_parameters)
-            self.log_pipeline_info(f"{markdown_table}\n")
+            self.log_pipeline_info(log_content=f"{markdown_table}\n")
 
         # Log each nested dictionary under its key
         for key, nested_dict in nested_parameters.items():
             markdown_table = self._compute_markdown_table(key, nested_dict)
-            self.log_pipeline_info(f"{markdown_table}\n")
+            self.log_pipeline_info(log_content=f"{markdown_table}\n")
+
+    def _parse_context_to_dict(self, context: Any) -> Optional[Dict[Any, Any]]:
+        """Parse the context to a dictionary.
+
+        This method only works if the context exposes a `to_dict` method or is already a dictionary.
+
+        Args:
+            context: The context to parse.
+
+        Returns:
+            The context as a dictionary.
+        """
+        if hasattr(context, "to_dict") and callable(getattr(context, "to_dict")):
+            return context.to_dict()
+        elif isinstance(context, dict):
+            return context
+        else:
+            return None
 
     def _scan_steps(self) -> None:
         """Analyze the pipeline entrypoint function to identify and register step calls.
@@ -263,77 +355,6 @@ class Pipeline:
 
         visitor = StepCallVisitor()
         visitor.visit(tree)
-
-    def _compute_markdown_table(self, category: str, context: dict) -> str:
-        """Format a dictionary as a Markdown table with two columns: keys and values.
-
-        Args:
-            category: The category of the provided context. This will be the header of the first column.
-                For example, "hyperparameters", "augmentation_parameters, etc.
-            context: The context to format.
-
-        Returns:
-            The context formatted as a Markdown table.
-        """
-        headers = (
-            [category, "values"]
-            if isinstance(context, dict)
-            and not any(isinstance(val, dict) for val in context.values())
-            else ["parameters", "values"]
-        )
-        data = [
-            [key, (value if value is not None else "None")]
-            for key, value in context.items()
-        ]
-        return tabulate(
-            tabular_data=data,
-            headers=headers,
-            tablefmt="github",
-        )
-
-    def _extract_parameters_from_context_dict(self, context: dict) -> Tuple[dict, dict]:
-        """Extracts flat parameters and nested parameters from a context dictionary.
-
-        For example, given the following context: `{'nested': {'learning_rate': 0.01}, 'flat': "value"}`,
-        the output will be :
-
-        - flat_parameters: `{'flat': "value"}`
-        - nested_parameters: `{'nested': {'learning_rate': 0.01}}`
-
-        Args:
-            context: The context dictionary to extract the parameters from.
-
-        Returns:
-            A tuple containing the flat parameters and the nested parameters.
-        """
-        flat_parameters = {}
-        nested_parameters = {}
-
-        for key, value in context.items():
-            if isinstance(value, dict):
-                nested_parameters[key] = value
-            else:
-                flat_parameters[key] = value
-
-        return flat_parameters, nested_parameters
-
-    def _parse_context_to_dict(self, context: Any) -> Optional[dict]:
-        """Parse the context to a dictionary.
-
-        This method only works if the context exposes a `to_dict` method or is already a dictionary.
-
-        Args:
-            context: The context to parse.
-
-        Returns:
-            The context as a dictionary.
-        """
-        if hasattr(context, "to_dict") and callable(getattr(context, "to_dict")):
-            return context.to_dict()
-        elif isinstance(context, dict):
-            return context
-        else:
-            return None
 
     @staticmethod
     def get_active_context() -> Any:
