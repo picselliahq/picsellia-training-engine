@@ -13,7 +13,7 @@ F = TypeVar("F", bound=Callable[..., None])
 
 class Pipeline:
     ACTIVE_PIPELINE: Optional["Pipeline"] = None
-    STEPS_REGISTRY: dict[str, StepMetadata] = {}
+    STEPS_REGISTRY: Dict[str, StepMetadata] = {}
 
     def __init__(
         self,
