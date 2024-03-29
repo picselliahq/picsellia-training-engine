@@ -1,24 +1,69 @@
 import os
 
-from picsellia import DatasetVersion, Experiment
+from picsellia import DatasetVersion, Experiment, Label
 from picsellia.exceptions import ResourceNotFoundError
 
-from src.steps.data_extraction.utils.dataset_collection import DatasetCollection
-from src.steps.data_extraction.utils.dataset_context import DatasetContext
+from src.models.dataset.dataset_collection import DatasetCollection
+from src.models.dataset.dataset_context import DatasetContext
 from src.models.dataset.dataset_split_name import DatasetSplitName
 
 
-def get_labelmap(dataset_version: DatasetVersion) -> dict:
+def get_labelmap(dataset_version: DatasetVersion) -> dict[str, Label]:
+    """
+    Retrieves the label map from a dataset version.
+
+    Parameters:
+        dataset_version (DatasetVersion): The dataset version from which to retrieve the label map.
+
+    Returns:
+        dict: A dictionary mapping label names to label objects.
+    """
     return {label.name: label for label in dataset_version.list_labels()}
 
 
 class DatasetHandler:
+    """
+    Manages dataset versions attached to an experiment and prepares dataset collections for processing.
+
+    This class provides functionality to retrieve dataset versions from an experiment,
+    organize them into dataset contexts based on training, validation, and testing splits,
+    and assemble these contexts into a DatasetCollection for convenient access and use.
+
+    Attributes:
+        experiment (Experiment): The experiment from which datasets are to be retrieved.
+        prop_train_split (float): The proportion of the dataset to be used for training when only one dataset is attached.
+        destination_path (str): The local path where datasets will be stored and accessed.
+    """
+
     def __init__(self, experiment: Experiment, prop_train_split: float):
+        """
+        Initializes a DatasetHandler with an experiment and configuration for dataset splits.
+
+        Args:
+            experiment (Experiment): The Picsellia Experiment object.
+            prop_train_split (float): The proportion of data to allocate to the training split.
+        """
         self.experiment = experiment
         self.prop_train_split = prop_train_split
         self.destination_path = os.path.join(os.getcwd(), self.experiment.name)
 
     def get_dataset_collection(self) -> DatasetCollection:
+        """
+        Retrieves dataset versions attached to the experiment and organizes them into a DatasetCollection.
+
+        This method handles different scenarios based on the number of attached datasets: one, two, or three.
+        It prepares dataset contexts for each scenario and assembles them into a DatasetCollection.
+
+        Returns:
+            - DatasetCollection: A collection of dataset contexts prepared based on the attached dataset versions.
+
+        Raises:
+            - ResourceNotFoundError: If the expected dataset splits are not found in the experiment.
+            - RuntimeError: If an invalid number of datasets are attached to the experiment.
+
+        Returns:
+            - DatasetCollection: A collection of dataset contexts prepared based on the attached dataset versions.
+        """
         nb_attached_datasets = len(self.experiment.list_attached_dataset_versions())
         try:
             train_dataset_version = self.experiment.get_dataset(
@@ -78,6 +123,17 @@ class DatasetHandler:
         val_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
     ) -> DatasetCollection:
+        """
+        Handles the scenario where three distinct datasets (train, validation, and test) are attached to the experiment.
+
+        Parameters:
+            train_dataset_version (DatasetVersion): The dataset version for the training split.
+            val_dataset_version (DatasetVersion): The dataset version for the validation split.
+            test_dataset_version (DatasetVersion): The dataset version for the test split.
+
+        Returns:
+            DatasetCollection: A collection with distinct contexts for training, validation, and testing splits.
+        """
         return DatasetCollection(
             train_dataset_context=DatasetContext(
                 dataset_name=DatasetSplitName.TRAIN.value,
@@ -107,6 +163,16 @@ class DatasetHandler:
         train_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
     ) -> DatasetCollection:
+        """
+        Handles the scenario where two datasets are attached to the experiment, requiring a split of the first for training and validation.
+
+        Parameters:
+            train_dataset_version (DatasetVersion): The dataset version used for both training and validation splits.
+            test_dataset_version (DatasetVersion): The dataset version for the test split.
+
+        Returns:
+            DatasetCollection: A collection with contexts for training, validation, and testing splits, with the first dataset split for the first two.
+        """
         split_ratios = self._get_split_ratios(nb_attached_datasets=2)
         split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
             ratios=split_ratios
@@ -139,6 +205,15 @@ class DatasetHandler:
     def _handle_one_dataset(
         self, train_dataset_version: DatasetVersion
     ) -> DatasetCollection:
+        """
+        Handles the scenario where a single dataset is attached to the experiment, requiring splitting into training, validation, and test splits.
+
+        Parameters:
+            train_dataset_version (DatasetVersion): The dataset version to be split into training, validation, and test contexts.
+
+        Returns:
+            DatasetCollection: A collection with contexts for training, validation, and testing splits, all derived from the single dataset version.
+        """
         split_ratios = self._get_split_ratios(nb_attached_datasets=1)
         split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
             ratios=split_ratios
@@ -169,6 +244,18 @@ class DatasetHandler:
         )
 
     def _get_split_ratios(self, nb_attached_datasets: int) -> list:
+        """
+        Determines the split ratios for dividing a single dataset into training, validation, and testing splits based on the configuration.
+
+        Parameters:
+            nb_attached_datasets (int): The number of datasets attached to the experiment.
+
+        Returns:
+            list: A list of float values representing the split ratios for training, validation, and testing.
+
+        Raises:
+            RuntimeError: If an invalid number of attached datasets is provided.
+        """
         if nb_attached_datasets == 1:
             remaining = round((1 - self.prop_train_split), 2)
             val_test_ratio = round(remaining / 2, 2)
