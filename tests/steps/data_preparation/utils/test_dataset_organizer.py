@@ -3,9 +3,8 @@ from typing import Callable
 
 from picsellia.types.enums import InferenceType
 
-from src.models.dataset.dataset_organizer import ClassificationDatasetOrganizer
 from src.models.dataset.dataset_split_name import DatasetSplitName
-from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
+from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 class TestDatasetOrganizer:
@@ -81,16 +80,22 @@ class TestDatasetOrganizer:
 
     def test_cleanup_removes_original_images_dir(
         self,
-        mock_classification_dataset_organizer: ClassificationDatasetOrganizer,
+        mock_classification_dataset_organizer: Callable,
         destination_path: str,
     ):
+        classification_dataset_organizer = mock_classification_dataset_organizer(
+            dataset_metadata=DatasetTestMetadata(
+                dataset_split_name=DatasetSplitName.TRAIN,
+                dataset_type=InferenceType.CLASSIFICATION,
+            )
+        )
         original_images_dir = os.path.join(destination_path, "images")
         os.makedirs(original_images_dir, exist_ok=True)
-        mock_classification_dataset_organizer.dataset_context.image_dir = str(
+        classification_dataset_organizer.dataset_context.image_dir = str(
             original_images_dir
         )
 
-        mock_classification_dataset_organizer._cleanup()
+        classification_dataset_organizer._cleanup()
 
         assert not os.path.exists(
             original_images_dir

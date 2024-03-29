@@ -5,7 +5,7 @@ import pytest
 from picsellia.types.enums import InferenceType
 
 from src.models.dataset.dataset_split_name import DatasetSplitName
-from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
+from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 class TestDatasetContext:

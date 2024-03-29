@@ -1,22 +1,32 @@
 import logging
 import os
 import shutil
-from typing import Callable
+from typing import Callable, Optional
 
 import pytest
 from picsellia import Client, Dataset, DatasetVersion, Data
 from picsellia.types.enums import InferenceType
 
-from src.steps.data_extraction.utils.dataset_context import DatasetContext
-from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
+from src.models.dataset.dataset_split_name import DatasetSplitName
 from tests.steps.fixtures.initialize_integration_tests_fixtures import (
     create_dataset_version,
     upload_data,
-    get_multi_asset,
-    get_labelmap,
 )
 
+
 uploaded_data_registry = []
+
+
+class DatasetTestMetadata:
+    def __init__(
+        self,
+        dataset_split_name: DatasetSplitName,
+        dataset_type: InferenceType,
+        attached_name: Optional[str] = None,
+    ):
+        self.dataset_split_name = dataset_split_name
+        self.dataset_type = dataset_type
+        self.attached_name = attached_name or dataset_split_name.value
 
 
 def get_dataset_name(dataset_type: InferenceType) -> str:
@@ -72,7 +82,7 @@ def mock_dataset_version(dataset: Dataset, mock_uploaded_data: Callable) -> Call
         uploaded_data = mock_uploaded_data(dataset_metadata=dataset_metadata)
         dataset_version = create_dataset_version(
             dataset=dataset,
-            version_name=dataset_metadata.dataset_split_name.value,
+            version_name=dataset_metadata.attached_name,
             dataset_type=dataset_metadata.dataset_type,
             uploaded_data=uploaded_data,
             annotations_path=get_annotations_path(dataset_metadata=dataset_metadata),
@@ -80,24 +90,6 @@ def mock_dataset_version(dataset: Dataset, mock_uploaded_data: Callable) -> Call
         return dataset_version
 
     return _mock_dataset_version
-
-
-@pytest.fixture
-def mock_dataset_context(
-    destination_path: str, mock_uploaded_data: Callable, mock_dataset_version: Callable
-) -> Callable:
-    def _mock_dataset_context(dataset_metadata: DatasetTestMetadata) -> DatasetContext:
-        dataset_version = mock_dataset_version(dataset_metadata=dataset_metadata)
-        dataset_context = DatasetContext(
-            dataset_name=dataset_metadata.dataset_split_name.value,
-            dataset_version=dataset_version,
-            multi_asset=get_multi_asset(dataset_version=dataset_version),
-            labelmap=get_labelmap(dataset_version=dataset_version),
-            destination_path=destination_path,
-        )
-        return dataset_context
-
-    return _mock_dataset_context
 
 
 @pytest.fixture(autouse=True)
