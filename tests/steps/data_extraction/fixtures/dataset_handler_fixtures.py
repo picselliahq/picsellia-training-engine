@@ -5,7 +5,7 @@ import pytest
 from picsellia import Client, Experiment, Project
 
 from src.steps.data_extraction.utils.dataset_handler import DatasetHandler
-from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
+from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 @pytest.fixture

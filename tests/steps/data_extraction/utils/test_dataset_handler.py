@@ -5,8 +5,8 @@ from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
 
 from src.models.dataset.dataset_split_name import DatasetSplitName
-from src.steps.data_extraction.utils.dataset_collection import DatasetCollection
-from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
+from src.models.dataset.dataset_collection import DatasetCollection
+from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 def get_experiment_name(nb_dataset: int) -> str:
@@ -170,8 +170,28 @@ def generate_params_for_nested_datasets(
             expected_exception = ResourceNotFoundError
             yield experiment_name_1, dataset_metadatas_1, expected_exception
             yield experiment_name_2, dataset_metadatas_2, expected_exception
-        else:
-            raise ValueError(f"Unsupported number of datasets: {nb_dataset}")
+        elif nb_dataset == 4:
+            dataset_metadatas = [
+                DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.TRAIN,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                ),
+                DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.TEST,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                ),
+                DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.VAL,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                ),
+                DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.VAL,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                    attached_name="val_nested",
+                ),
+            ]
+            expected_exception = RuntimeError
+            yield experiment_name, dataset_metadatas, expected_exception
 
 
 def get_nb_assets_after_split(nb_dataset: int) -> tuple[int, int, int]:
@@ -254,9 +274,9 @@ class TestDatasetHandler:
             experiment_name=experiment_name, datasets=datasets
         )
         dataset_collection = dataset_handler.get_dataset_collection()
-        assert dataset_collection.train.name == DatasetSplitName.TRAIN.value
-        assert dataset_collection.val.name == DatasetSplitName.VAL.value
-        assert dataset_collection.test.name == DatasetSplitName.TEST.value
+        assert dataset_collection.train.dataset_name == DatasetSplitName.TRAIN.value
+        assert dataset_collection.val.dataset_name == DatasetSplitName.VAL.value
+        assert dataset_collection.test.dataset_name == DatasetSplitName.TEST.value
 
     @pytest.mark.parametrize(
         "experiment_name, datasets, expected_split_ratios, expected_exception",
@@ -275,10 +295,10 @@ class TestDatasetHandler:
         )
         if expected_exception:
             with pytest.raises(expected_exception):
-                dataset_handler._get_split_ratios(count_datasets=len(datasets))
+                dataset_handler._get_split_ratios(nb_attached_datasets=len(datasets))
         else:
             split_ratios = dataset_handler._get_split_ratios(
-                count_datasets=len(datasets)
+                nb_attached_datasets=len(datasets)
             )
             assert split_ratios == expected_split_ratios
 
@@ -335,7 +355,7 @@ class TestDatasetHandler:
 
     @pytest.mark.parametrize(
         "experiment_name, datasets, expected_exception",
-        list(generate_params_for_nested_datasets(nb_datasets=[1, 2, 3])),
+        list(generate_params_for_nested_datasets(nb_datasets=[1, 2, 3, 4])),
     )
     def test_handle_datasets_exceptions(
         self,

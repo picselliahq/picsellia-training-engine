@@ -5,6 +5,10 @@ from picsellia import Client, Dataset, DatasetVersion, Data
 from picsellia.types.enums import InferenceType
 from picsellia.sdk.asset import MultiAsset
 
+from src.models.contexts.picsellia_context import PicselliaContext
+
+from picsellia.services.error_manager import ErrorManager
+
 
 def get_multi_asset(dataset_version: DatasetVersion) -> MultiAsset:
     return dataset_version.list_assets()
@@ -32,27 +36,49 @@ def upload_data(picsellia_client: Client, images_path: str) -> Data:
     datalake = picsellia_client.get_datalake()
 
     files = [os.path.join(images_path, file) for file in os.listdir(images_path)]
-    data = datalake.upload_data(filepaths=files)
+
+    error_manager = ErrorManager()
+    data = datalake.upload_data(filepaths=files, error_manager=error_manager)
+    error_paths = [error.path for error in error_manager.errors]
+    while error_paths:
+        error_manager = ErrorManager()
+        data = datalake.upload_data(filepaths=error_paths, error_manager=error_manager)
+        error_paths = [error.path for error in error_manager.errors]
 
     return data
 
 
 @pytest.fixture
-def picsellia_client() -> Client:
+def api_token() -> str:
     try:
-        TOKEN = os.environ["PICSELLIA_TEST_TOKEN"]
-        HOST = os.environ["PICSELLIA_TEST_HOST"]
-
+        return os.environ["PICSELLIA_TEST_TOKEN"]
     except KeyError as e:
         raise KeyError(
-            "FATAL ERROR, you need to define env var PICSELLIA_TEST_TOKEN with api token and PICSELLIA_TEST_HOST with "
-            "platform host"
+            "FATAL ERROR, you need to define env var PICSELLIA_TEST_TOKEN with api token"
         ) from e
 
-    if HOST == "https://app.picsellia.com":
-        raise ValueError("FATAL ERROR, can't test on production")
 
-    return Client(api_token=TOKEN, host=HOST)
+@pytest.fixture
+def host() -> str:
+    try:
+        HOST = os.environ["PICSELLIA_TEST_HOST"]
+        if HOST == "https://app.picsellia.com":
+            raise ValueError("FATAL ERROR, can't test on production")
+        return HOST
+    except KeyError as e:
+        raise KeyError(
+            "FATAL ERROR, you need to define env var PICSELLIA_TEST_HOST with platform host"
+        ) from e
+
+
+@pytest.fixture
+def picsellia_client(api_token: str, host: str) -> Client:
+    return Client(api_token=api_token, host=host)
+
+
+@pytest.fixture
+def picsellia_context(api_token: str, host: str) -> PicselliaContext:
+    return PicselliaContext(api_token=api_token, host=host)
 
 
 @pytest.fixture

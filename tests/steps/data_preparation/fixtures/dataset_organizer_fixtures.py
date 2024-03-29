@@ -1,8 +1,10 @@
 from typing import Callable
 
 import pytest
-from src.models.dataset.dataset_organizer import ClassificationDatasetOrganizer
-from tests.steps.data_extraction.utils.conftest import DatasetTestMetadata
+from src.steps.data_preparation.utils.classification_dataset_organizer import (
+    ClassificationDatasetOrganizer,
+)
+from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 @pytest.fixture
