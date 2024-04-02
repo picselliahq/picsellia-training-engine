@@ -4,6 +4,7 @@ import sys
 import keras
 import matplotlib.image
 import numpy as np
+import tensorflow as tf
 import segmentation_models as sm
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset import DatasetVersion
@@ -81,6 +82,7 @@ class UnetSegmentationTrainer(AbstractTrainer):
         self.best_model_path = os.path.join(
             self.experiment.checkpoint_dir, "best_model.h5"
         )
+        self.saved_model_path = os.path.join(self.experiment.base_dir, "model_latest")
         self.metrics = [
             sm.metrics.IOUScore(threshold=0.5),
             sm.metrics.FScore(threshold=0.5),
@@ -292,6 +294,15 @@ class UnetSegmentationTrainer(AbstractTrainer):
             validation_steps=len(self.eval_dataloader),
         )
         self.experiment.store("finetuned_model_weights", self.best_model_path)
+
+        tf.saved_model.save(
+            self.model, os.path.join(self.experiment.exported_model_dir, "saved_model")
+        )
+        self.experiment.store(
+            "model-latest",
+            os.path.join(self.experiment.exported_model_dir, "saved_model"),
+            do_zip=True,
+        )
 
     def _download_either_original_or_finetuned_artifact(self):
         try:

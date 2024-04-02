@@ -30,6 +30,118 @@ You'll just need to install [Docker](https://docs.docker.com/engine/install/), t
   Docker Hub using `picsellia/cuda:<base-tag>`. The available tags
   are [here](https://hub.docker.com/r/picsellia/cuda/tags).
 
+
+# UV Development Environment Setup 🚀
+
+Streamline your Python data science projects with `uv`. This guide covers setup instructions from installation to dependency management.
+
+## Dependency Files Explained
+
+Before diving in, let's clarify the roles of `requirements.in` and `requirements.txt`:
+
+- **`requirements.in`:** Specify your project's direct dependencies and their version ranges here for flexibility and compatibility.
+- **`requirements.txt`:** Generated from `requirements.in` by `uv`, this file pins all dependencies to specific versions for a consistent and stable environment.
+
+## Setup Instructions
+
+1. **Python Installation:** Ensure Python (versions 3.8 to 3.11 supported) is installed on your system.
+
+
+2. **Install `uv`:** Pick the right `uv` installation method for your OS.
+   - **macOS and Linux:**
+     ```bash
+     curl -LsSf https://astral.sh/uv/install.sh | sh
+     ```
+   - **Windows:**
+     ```bash
+     powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+     ```
+   - **With pip:**
+     ```bash
+     pip install uv
+     ```
+   - **With Homebrew:**
+      ```bash
+      brew install uv
+      ```
+
+3. **Navigate to your project directory:** (for example `yolov8-detection`, `tf2` or a new project directory)
+
+    ```bash
+    cd yolov8-detection
+    ```
+
+4. **Create and activate a virtual environment:** With `uv venv` a virtual environment is created in the `.venv` directory.
+
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    ```
+
+5. **(Optional) Increase HTTP Timeout:** To prevent timeouts during package installation (step 6.), especially for larger packages like PyTorch, increase the HTTP timeout:
+
+    ```bash
+    export UV_HTTP_TIMEOUT=600
+    ```
+
+
+## Using an Existing Model
+
+If you're working with an existing model that includes both `requirements.in` and `requirements.txt`, follow these steps:
+
+
+1. **Install dependencies:** Install the required dependencies from the requirements.txt file:
+
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
+### Optional Steps:
+
+- **Upgrade Dependencies:** To update dependencies based on requirements.in, recompile to generate an updated requirements.txt:
+
+    ```bash
+    uv pip compile requirements.in -o requirements.txt
+    ```
+
+- **Adding a New Package:** If you need to add a new package, insert it into requirements.in with version constraints, then recompile to update requirements.txt:
+
+    ```bash
+    echo "flask>=2.0.0, <3.0" >> requirements.in
+    uv pip compile requirements.in -o requirements.txt
+    ```
+
+## Creating a New Model
+
+When starting a new model, you'll need to create `requirements.in` and generate `requirements.txt` to manage dependencies. Follow these steps to set up your project:
+
+1. **Define Dependencies:** Create requirements.in with your model's dependencies. Ensure to specify versions that are tested and compatible with your model.
+
+    - For a range of acceptable versions (e.g., Flask):
+        ```bash
+        flask>=2.0.0, <3.0
+        ```
+    - For a fixed version when compatibility is crucial:
+        ```bash
+        flask==2.0.0
+        ```
+    - For specifying a minimum version:
+        ```bash
+        flask>=2.0.0
+        ```
+
+2. **Lock Dependencies:** Generate requirements.txt from your requirements.in.
+
+    ```bash
+    uv pip compile requirements.in -o requirements.txt
+    ```
+
+3. **Install Dependencies:** Proceed with installing dependencies specified in requirements.txt.
+
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
 # Configuration 🛠️️
 
 If you create your own Dockerfile, its structure should look like this:
@@ -47,7 +159,7 @@ WORKDIR /picsellia
 
 COPY your-custom-image/picsellia .
 
-ENTRYPOINT ["run", "main.py"] 
+ENTRYPOINT ["run", "main.py"]
 ```
 
 Using `ENTRYPOINT ["run", "main.py"]` will ensure that the log container's output is automatically directed to your

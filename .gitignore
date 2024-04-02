@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 test-sonia/
+yolox-detection/YOLOX_outputs/
 # C extensions
 *.so
 
@@ -131,9 +132,9 @@ dmypy.json
 *.jpg
 *.zip
 *.pb*
-*.config 
-*.record 
-*.meta 
+*.config
+*.record
+*.meta
 *.data*
 *.index
 *.tfevents.*
@@ -144,10 +145,14 @@ checkpoint
 /scripts
 
 *.jpeg
-*.png 
+*.png
 *.pt
 .env
 
 .idea
 
 */poetry.lock
+yolox-detection-test/*
+
+# MacOS files
+.DS_Store

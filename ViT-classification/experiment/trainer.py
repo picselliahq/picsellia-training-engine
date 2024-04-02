@@ -1,9 +1,10 @@
 import os
 
 from datasets import load_dataset
+from optimum.onnxruntime import ORTModelForImageClassification
 from picsellia.exceptions import ResourceNotFoundError
-from picsellia.types.enums import InferenceType
 from picsellia.sdk.dataset_version import DatasetVersion
+from picsellia.types.enums import InferenceType
 from torchvision.transforms import RandomResizedCrop, Compose, Normalize, ToTensor
 from transformers import (
     pipeline,
@@ -24,6 +25,7 @@ from utils import (
     get_asset_filename_from_path,
     find_asset_by_filename,
     get_predicted_label_confidence,
+    log_labelmap,
 )
 
 
@@ -159,6 +161,8 @@ class VitClassificationTrainer(AbstractTrainer):
     def init_train(self):
         data_collator = DefaultDataCollator()
         label2id, id2label = self._get_label2id_id2label()
+        log_labelmap(id2label=id2label, experiment=self.experiment)
+
         self.model = AutoModelForImageClassification.from_pretrained(
             self.checkpoint,
             num_labels=len(self.labels),
@@ -215,6 +219,9 @@ class VitClassificationTrainer(AbstractTrainer):
 
     def eval(self):
         classifier = pipeline("image-classification", model=self.output_model_dir)
+
+        self.create_and_store_onnx_model(classifier)
+
         for path, subdirs, file_list in os.walk(self.eval_path):
             for file in file_list:
                 self._run_one_asset_evaluation(
@@ -222,6 +229,24 @@ class VitClassificationTrainer(AbstractTrainer):
                 )
 
         self.experiment.compute_evaluations_metrics(InferenceType.CLASSIFICATION)
+
+    def create_and_store_onnx_model(self, classifier):
+        bin_weights_directory_path = os.path.join(
+            self.experiment.base_dir, "bin_weights"
+        )
+        classifier.save_pretrained(bin_weights_directory_path)
+        onnx_weights_directory_path = os.path.join(
+            self.experiment.base_dir, "onnx_weights"
+        )
+        ort_model = ORTModelForImageClassification.from_pretrained(
+            bin_weights_directory_path, export=True
+        )
+        ort_model.save_pretrained(onnx_weights_directory_path)
+
+        self.experiment.store(
+            name="model-latest",
+            path=os.path.join(onnx_weights_directory_path, "model.onnx"),
+        )
 
     def _run_one_asset_evaluation(self, path: str, file: str, classifier):
         file_path = os.path.join(path, file)
