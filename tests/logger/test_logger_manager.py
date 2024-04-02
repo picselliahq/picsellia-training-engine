@@ -33,6 +33,36 @@ class TestLoggerManager:
         assert os.path.exists(log_file_path)
         assert log_file_path.endswith("0-pipeline-initialization.log")
 
+    def test_configure_pipeline_initialization_log_file_raises_error_if_no_log_folder_path(
+        self, logger_manager
+    ):
+        with pytest.raises(ValueError):
+            logger_manager.configure_pipeline_initialization_log_file()
+
+    def test_configure_steps_logs_files_raises_error_if_no_log_folder_path(
+        self, logger_manager
+    ):
+        with pytest.raises(ValueError):
+            logger_manager._configure_steps_log_files(steps_metadata=[])
+
+    def test_prepare_logger_raises_error_if_no_log_file_path(self, logger_manager):
+        with pytest.raises(ValueError):
+            logger_manager.prepare_logger(log_file_path=None)
+
+    def test_prepare_logger_raises_error_if_log_file_path_does_not_exist(
+        self, logger_manager
+    ):
+        with pytest.raises(FileNotFoundError):
+            logger_manager.prepare_logger(log_file_path="nonexistent.log")
+
+    def test_create_pipeline_log_folder_raises_error_if_no_log_folder_root_path(
+        self, logger_manager
+    ):
+        logger_manager.log_folder_root_path = None
+
+        with pytest.raises(ValueError):
+            logger_manager._create_pipeline_log_folder()
+
     def test_configure_steps_log_files_creates_files(
         self, logger_manager, mock_step_metadata_1, mock_step_metadata_2, temp_log_dir
     ):

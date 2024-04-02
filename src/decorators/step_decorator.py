@@ -1,4 +1,3 @@
-import functools
 import logging
 import time
 import uuid
@@ -140,9 +139,12 @@ class Step:
         )
 
     def _format_step_info(
-        self, step_index: int, total_number_of_steps: int, content: str
+        self, step_index: Optional[int], total_number_of_steps: int, content: str
     ) -> str:
         """Formats the step information to be logged.
+
+        Formats the step information to be logged in the following format: (step_index/total_number_of_steps) content.
+        If the step index is not provided, it will be replaced by a question mark.
 
         Args:
             step_index: The step's index, ranging from 1 to the total number of steps.
@@ -152,7 +154,10 @@ class Step:
         Returns:
             The formatted step information.
         """
-        return f"({step_index}/{total_number_of_steps}) {content}"
+
+        return (
+            f"({step_index if step_index else '?'}/{total_number_of_steps}) {content}"
+        )
 
     def _prepare_step_logger(self, pipeline: Pipeline) -> logging.Logger:
         """Prepares the logger for the step by configuring the available logger's handlers.
@@ -170,7 +175,7 @@ class Step:
 
 def step(
     _func: Optional["F"] = None,
-    name: Union[str, None] = None,
+    name: Optional[str] = None,
     continue_on_failure: bool = False,
 ) -> Union["Step", Callable[["F"], "Step"]]:
     """Decorator to create a step.
@@ -186,7 +191,6 @@ def step(
         A pipeline instance.
     """
 
-    @functools.wraps(_func)
     def inner_decorator(func: "F") -> "Step":
         s_metadata = StepMetadata(
             id=uuid.uuid4(),
@@ -199,6 +203,7 @@ def step(
             entrypoint=func,
             metadata=s_metadata,
         )
+        s.__doc__ = func.__doc__
 
         Pipeline.register_step_metadata(step_metadata=s_metadata)
         return s
