@@ -5,7 +5,7 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
-from typing import Optional, TextIO, cast
+from typing import Optional, TextIO, cast, List
 
 from src.models.logging.stream_to_logger import StreamToLogger
 from src.models.steps.step_metadata import StepMetadata
@@ -53,7 +53,7 @@ class LoggerManager:
 
         return pipeline_initialization_log_file_path
 
-    def configure_log_files(self, steps_metadata: list[StepMetadata]) -> None:
+    def configure_log_files(self, steps_metadata: List[StepMetadata]) -> None:
         """Configures the folders and log files for the pipeline and its steps.
 
         If the `log_folder_path` is not provided when decorating a pipeline, a temporary directory is created instead.
@@ -144,7 +144,7 @@ class LoggerManager:
 
         return self.logger
 
-    def _configure_steps_log_files(self, steps_metadata: list[StepMetadata]) -> None:
+    def _configure_steps_log_files(self, steps_metadata: List[StepMetadata]) -> None:
         """Configures the log files for each step.
 
         For each step, will look at the metadata to create a log file.
