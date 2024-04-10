@@ -31,7 +31,7 @@ class TestClassificationDatasetValidator:
         self, classification_dataset_validator: ClassificationDatasetValidator
     ):
         with patch.object(
-            classification_dataset_validator, "validate_common"
+            classification_dataset_validator, "_validate_common"
         ) as mock_validate_common, patch.object(
             classification_dataset_validator, "validate_labelmap"
         ) as mock_validate_labelmap, patch.object(

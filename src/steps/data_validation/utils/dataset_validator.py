@@ -1,5 +1,4 @@
 import os
-from abc import abstractmethod, ABC
 from typing import List
 
 from PIL import Image
@@ -25,7 +24,7 @@ def get_image_path_list(image_dir: str) -> List[str]:
     return image_path_list
 
 
-class DatasetValidator(ABC):
+class DatasetValidator:
     """
     Validates various aspects of datasets within a dataset collection.
 
@@ -63,7 +62,6 @@ class DatasetValidator(ABC):
             self.validate_image_corruption(
                 dataset_context=dataset_context, image_path_list=image_path_list
             )
-            self.validate_image_annotation_integrity(dataset_context)
 
     def validate_image_extraction(
         self, dataset_context: DatasetContext, image_path_list: List[str]
@@ -129,19 +127,6 @@ class DatasetValidator(ABC):
                     f"Image {image_path} is corrupted in {dataset_context.dataset_name} dataset and cannot be used."
                 ) from e
 
-    @abstractmethod
-    def validate_image_annotation_integrity(
-        self, dataset_context: DatasetContext
-    ) -> None:
-        """
-        Placeholder for validating the integrity of image annotations. This should be implemented by subclasses.
-
-        Parameters:
-            dataset_context (DatasetContext): The dataset context to validate.
-        """
-        pass
-
-    @abstractmethod
     def validate(self):
         """
         Validates the dataset collection. This method is intended to be overridden by subclasses to include

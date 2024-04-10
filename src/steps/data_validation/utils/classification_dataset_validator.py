@@ -28,7 +28,7 @@ class ClassificationDatasetValidator(DatasetValidator, ABC):
         for dataset_context in self.dataset_collection:
             if len(dataset_context.labelmap) < 2:
                 raise ValueError(
-                    f"Labelmap for dataset {dataset_context.name} is not valid. "
+                    f"Labelmap for dataset {dataset_context.dataset_name} is not valid. "
                     f"A classification labelmap must have at least 2 classes. "
                     f"Current labelmap is {dataset_context.labelmap}"
                 )
@@ -50,5 +50,5 @@ class ClassificationDatasetValidator(DatasetValidator, ABC):
                 )
                 if not os.path.exists(folder_path) or len(os.listdir(folder_path)) == 0:
                     raise ValueError(
-                        f"{dataset_context.name} dataset must have at least 1 image for class {class_name}"
+                        f"{dataset_context.dataset_name} dataset must have at least 1 image for class {class_name}"
                     )
