@@ -8,7 +8,6 @@ charset-normalizer==3.3.2
     # via requests
 contourpy==1.2.0
     # via matplotlib
-coverage==7.3.0
 cycler==0.12.1
     # via matplotlib
 deprecation==2.1.0
