@@ -1,4 +1,6 @@
 import os
+from abc import abstractmethod, ABC
+from typing import List
 
 from PIL import Image
 
@@ -6,7 +8,7 @@ from src.models.dataset.dataset_collection import DatasetCollection
 from src.models.dataset.dataset_context import DatasetContext
 
 
-def get_image_path_list(image_dir: str) -> list[str]:
+def get_image_path_list(image_dir: str) -> List[str]:
     """
     Generates a list of all image file paths within a specified directory.
 
@@ -14,7 +16,7 @@ def get_image_path_list(image_dir: str) -> list[str]:
         image_dir (str): The directory to search for image files.
 
     Returns:
-        list[str]: A list containing the paths to all images found within the directory and its subdirectories.
+        List[str]: A list containing the paths to all images found within the directory and its subdirectories.
     """
     image_path_list = []
     for root, dirs, files in os.walk(image_dir):
@@ -24,14 +26,14 @@ def get_image_path_list(image_dir: str) -> list[str]:
 
 
 def validate_image_extraction(
-    dataset_context: DatasetContext, image_path_list: list[str]
+    dataset_context: DatasetContext, image_path_list: List[str]
 ) -> None:
     """
     Validates that the number of extracted images matches the expected number of assets.
 
     Args:
         dataset_context (DatasetContext): The dataset context to validate.
-        image_path_list (list[str]): The list of image paths extracted from the dataset.
+        image_path_list (List[str]): The list of image paths extracted from the dataset.
 
     Raises:
         ValueError: If the number of extracted images does not match the expected number of assets.
@@ -47,14 +49,14 @@ def validate_image_extraction(
 
 
 def validate_image_corruption(
-    dataset_context: DatasetContext, image_path_list: list[str]
+    dataset_context: DatasetContext, image_path_list: List[str]
 ) -> None:
     """
     Checks for corruption in the extracted images.
 
     Parameters:
         dataset_context (DatasetContext): The dataset context to validate.
-        image_path_list (list[str]): The list of image paths extracted from the dataset.
+        image_path_list (List[str]): The list of image paths extracted from the dataset.
 
     Raises:
         ValueError: If any of the images are found to be corrupted.
@@ -69,7 +71,7 @@ def validate_image_corruption(
             )
 
 
-class DatasetValidator:
+class DatasetValidator(ABC):
     """
     Validates various aspects of datasets within a dataset collection.
 
@@ -109,13 +111,15 @@ class DatasetValidator:
             )
             self.validate_image_annotation_integrity(dataset_context)
 
-    def validate_image_format(self, dataset_context, image_path_list) -> None:
+    def validate_image_format(
+        self, dataset_context: DatasetContext, image_path_list: List[str]
+    ) -> None:
         """
         Validates that all images in the dataset are in an expected format.
 
         Args:
             dataset_context (DatasetContext): The dataset context to validate.
-            image_path_list (list[str]): The list of image paths extracted from the dataset.
+            image_path_list (List[str]): The list of image paths extracted from the dataset.
 
         Raises:
             ValueError: If any image is not in one of the valid formats.
@@ -126,6 +130,7 @@ class DatasetValidator:
                     f"Invalid image format for image {image_path} in {dataset_context.dataset_name} dataset"
                 )
 
+    @abstractmethod
     def validate_image_annotation_integrity(
         self, dataset_context: DatasetContext
     ) -> None:
@@ -137,6 +142,7 @@ class DatasetValidator:
         """
         pass
 
+    @abstractmethod
     def validate(self):
         """
         Validates the dataset collection. This method is intended to be overridden by subclasses to include

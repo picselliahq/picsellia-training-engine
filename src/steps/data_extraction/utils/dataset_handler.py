@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from picsellia import DatasetVersion, Experiment, Label
 from picsellia.exceptions import ResourceNotFoundError
@@ -243,7 +244,7 @@ class DatasetHandler:
             ),
         )
 
-    def _get_split_ratios(self, nb_attached_datasets: int) -> list:
+    def _get_split_ratios(self, nb_attached_datasets: int) -> List[float]:
         """
         Determines the split ratios for dividing a single dataset into training, validation, and testing splits based on the configuration.
 
@@ -251,7 +252,7 @@ class DatasetHandler:
             nb_attached_datasets (int): The number of datasets attached to the experiment.
 
         Returns:
-            list: A list of float values representing the split ratios for training, validation, and testing.
+            List[float]: A list of split ratios for training, validation, and testing splits.
 
         Raises:
             RuntimeError: If an invalid number of attached datasets is provided.

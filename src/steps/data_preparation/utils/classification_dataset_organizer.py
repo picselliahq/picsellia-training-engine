@@ -30,7 +30,7 @@ class ClassificationDatasetOrganizer:
         self.dataset_context = dataset_context
         self.destination_dir = dataset_context.dataset_extraction_path
 
-    def organize(self):
+    def organize(self) -> None:
         """
         Organizes the dataset by creating category directories and moving images.
 
@@ -69,7 +69,7 @@ class ClassificationDatasetOrganizer:
 
     def _organize_images(
         self, categories: Dict[int, str], image_categories: Dict[int, int]
-    ):
+    ) -> None:
         """
         Creates category directories and moves images into their respective directories.
 
@@ -84,7 +84,9 @@ class ClassificationDatasetOrganizer:
                 category_name = categories[category_id]
                 self._create_category_dir_and_copy_image(category_name, image)
 
-    def _create_category_dir_and_copy_image(self, category_name: str, image: Image):
+    def _create_category_dir_and_copy_image(
+        self, category_name: str, image: Image
+    ) -> None:
         """
         Creates a directory for a category if it doesn't exist and copies an image into it.
 
@@ -99,7 +101,7 @@ class ClassificationDatasetOrganizer:
         dest_image_path = os.path.join(category_dir, image.file_name)
         shutil.copy(src_image_path, dest_image_path)
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """
         Cleans up the original image directory after organizing the images.
 
