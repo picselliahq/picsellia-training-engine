@@ -9,7 +9,7 @@ from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 @pytest.fixture
-def mock_prop_train_split() -> float:
+def mock_train_set_split_ratio() -> float:
     return 0.8
 
 
@@ -43,14 +43,14 @@ def mock_experiment(
 
 @pytest.fixture
 def mock_dataset_handler(
-    mock_experiment: Callable, mock_prop_train_split: float
+    mock_experiment: Callable, mock_train_set_split_ratio: float
 ) -> Callable:
     def _mock_dataset_handler(
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
     ) -> DatasetHandler:
         experiment = mock_experiment(experiment_name, datasets)
-        return DatasetHandler(experiment, mock_prop_train_split)
+        return DatasetHandler(experiment, mock_train_set_split_ratio)
 
     return _mock_dataset_handler
 

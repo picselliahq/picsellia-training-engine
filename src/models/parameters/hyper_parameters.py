@@ -28,8 +28,10 @@ class HyperParameters(Parameters):
             default=False,
         )
 
-        self.prop_train_split = self.extract_parameter(
-            keys=["prop_train_split"], expected_type=float, default=0.8
+        self.train_set_split_ratio = self.extract_parameter(
+            keys=["prop_train_split", "train_set_split_ratio"],
+            expected_type=float,
+            default=0.8,
         )
 
 

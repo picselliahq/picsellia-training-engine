@@ -32,20 +32,20 @@ class DatasetHandler:
 
     Attributes:
         experiment (Experiment): The experiment from which datasets are to be retrieved.
-        prop_train_split (float): The proportion of the dataset to be used for training when only one dataset is attached.
+        train_set_split_ratio (float): The proportion of the dataset to be used for training when only one dataset is attached.
         destination_path (str): The local path where datasets will be stored and accessed.
     """
 
-    def __init__(self, experiment: Experiment, prop_train_split: float):
+    def __init__(self, experiment: Experiment, train_set_split_ratio: float):
         """
         Initializes a DatasetHandler with an experiment and configuration for dataset splits.
 
         Args:
             experiment (Experiment): The Picsellia Experiment object.
-            prop_train_split (float): The proportion of data to allocate to the training split.
+            train_set_split_ratio (float): The proportion of data to allocate to the training split.
         """
         self.experiment = experiment
-        self.prop_train_split = prop_train_split
+        self.train_set_split_ratio = train_set_split_ratio
         self.destination_path = os.path.join(os.getcwd(), self.experiment.name)
 
     def get_dataset_collection(self) -> DatasetCollection:
@@ -258,15 +258,18 @@ class DatasetHandler:
             RuntimeError: If an invalid number of attached datasets is provided.
         """
         if nb_attached_datasets == 1:
-            remaining = round((1 - self.prop_train_split), 2)
+            remaining = round((1 - self.train_set_split_ratio), 2)
             val_test_ratio = round(remaining / 2, 2)
             return [
-                self.prop_train_split,
+                self.train_set_split_ratio,
                 val_test_ratio,
                 val_test_ratio,
             ]
         elif nb_attached_datasets == 2:
-            return [self.prop_train_split, round(1 - self.prop_train_split, 2)]
+            return [
+                self.train_set_split_ratio,
+                round(1 - self.train_set_split_ratio, 2),
+            ]
         else:
             raise RuntimeError(
                 "Invalid number of datasets attached to the experiment: "

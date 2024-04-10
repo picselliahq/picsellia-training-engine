@@ -30,7 +30,7 @@ def data_extractor() -> DatasetCollection:
     context: PicselliaTrainingContext = Pipeline.get_active_context()
     dataset_handler = DatasetHandler(
         experiment=context.experiment,
-        prop_train_split=context.hyperparameters.prop_train_split,
+        train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
     dataset_collection = dataset_handler.get_dataset_collection()
     dataset_collection.download()
