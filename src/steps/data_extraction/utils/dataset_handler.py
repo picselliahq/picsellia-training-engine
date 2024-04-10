@@ -70,28 +70,28 @@ class DatasetHandler:
             train_dataset_version = self.experiment.get_dataset(
                 DatasetSplitName.TRAIN.value
             )
-        except Exception:
+        except Exception as e:
             raise ResourceNotFoundError(
-                f"Dataset {DatasetSplitName.TRAIN.value} not found in the experiment"
-            )
+                "Training dataset not found in the experiment."
+            ) from e
 
         if nb_attached_datasets == 3:
             try:
                 val_dataset_version = self.experiment.get_dataset(
                     DatasetSplitName.VAL.value
                 )
-            except Exception:
+            except Exception as e:
                 raise ResourceNotFoundError(
-                    f"Found {nb_attached_datasets} attached datasets but {DatasetSplitName.VAL.value} not found"
-                )
+                    f"Found {nb_attached_datasets} attached datasets but {DatasetSplitName.VAL.value} not found."
+                ) from e
             try:
                 test_dataset_version = self.experiment.get_dataset(
                     DatasetSplitName.TEST.value
                 )
-            except Exception:
+            except Exception as e:
                 raise ResourceNotFoundError(
                     f"Found {nb_attached_datasets} attached datasets but {DatasetSplitName.TEST.value} not found"
-                )
+                ) from e
             return self._handle_three_datasets(
                 train_dataset_version=train_dataset_version,
                 val_dataset_version=val_dataset_version,
@@ -102,10 +102,10 @@ class DatasetHandler:
                 test_dataset_version = self.experiment.get_dataset(
                     DatasetSplitName.TEST.value
                 )
-            except Exception:
+            except Exception as e:
                 raise ResourceNotFoundError(
                     f"Found {nb_attached_datasets} attached datasets but {DatasetSplitName.TEST.value} not found"
-                )
+                ) from e
             return self._handle_two_datasets(
                 train_dataset_version=train_dataset_version,
                 test_dataset_version=test_dataset_version,
@@ -268,4 +268,7 @@ class DatasetHandler:
         elif nb_attached_datasets == 2:
             return [self.prop_train_split, round(1 - self.prop_train_split, 2)]
         else:
-            raise RuntimeError()
+            raise RuntimeError(
+                "Invalid number of datasets attached to the experiment: "
+                "1, 2 or 3 datasets are expected."
+            )

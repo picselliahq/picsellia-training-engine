@@ -67,8 +67,8 @@ def validate_image_corruption(
                 img.verify()  # Verify that this is a valid image
         except Exception as e:
             raise ValueError(
-                f"Image {image_path} is corrupted in {dataset_context.dataset_name} dataset - {e}"
-            )
+                f"Image {image_path} is corrupted in {dataset_context.dataset_name} dataset and cannot be used."
+            ) from e
 
 
 class DatasetValidator(ABC):
@@ -127,7 +127,8 @@ class DatasetValidator(ABC):
         for image_path in image_path_list:
             if not image_path.endswith(self.VALID_IMAGE_EXTENSIONS):
                 raise ValueError(
-                    f"Invalid image format for image {image_path} in {dataset_context.dataset_name} dataset"
+                    f"Invalid image format for image {image_path} in {dataset_context.dataset_name} dataset. "
+                    f"Valid image formats are {self.VALID_IMAGE_EXTENSIONS}"
                 )
 
     @abstractmethod

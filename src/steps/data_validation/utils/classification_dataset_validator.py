@@ -1,9 +1,10 @@
 import os
+from abc import ABC
 
 from src.steps.data_validation.utils.dataset_validator import DatasetValidator
 
 
-class ClassificationDatasetValidator(DatasetValidator):
+class ClassificationDatasetValidator(DatasetValidator, ABC):
     def validate(self):
         super().validate()  # Call common validations
         self.validate_labelmap()
@@ -13,7 +14,9 @@ class ClassificationDatasetValidator(DatasetValidator):
         for dataset_context in self.dataset_collection:
             if len(dataset_context.labelmap) < 2:
                 raise ValueError(
-                    f"Labelmap must have at least 2 classes in {dataset_context.dataset_name} dataset"
+                    f"Labelmap for dataset {dataset_context.name} is not valid. "
+                    f"A classification labelmap must have at least 2 classes. "
+                    f"Current labelmap is {dataset_context.labelmap}"
                 )
 
     def validate_at_least_one_image_per_class(self):
