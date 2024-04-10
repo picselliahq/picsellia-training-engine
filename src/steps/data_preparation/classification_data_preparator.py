@@ -11,27 +11,51 @@ def classification_data_preparator(
     dataset_collection: DatasetCollection,
 ) -> DatasetCollection:
     """
-    Prepares the dataset collection for classification tasks by organizing images into category directories.
+    Example:
+        Assume `dataset_collection` comprises unorganized images across training, validation, and testing splits.
+        After applying `classification_data_preparator`, the images within each split are reorganized into
+        directories named after their classification categories. This reorganization aids in simplifying dataset
+        loading and usage for training classification models.
 
-    This function iterates through each dataset context within the provided dataset collection. For dataset
-    contexts corresponding to training, validation, and testing splits, it utilizes the ClassificationDatasetOrganizer
-    to organize images into directories based on their classification categories. This organization is crucial for
-    many machine learning frameworks and simplifies the process of dataset loading for classification models.
+        Before applying `classification_data_preparator`:
+        ```
+        dataset/
+        ├── train/
+        │   ├── image1.jpg
+        │   ├── image2.jpg
+        │   └── image3.jpg
+        ├── val/
+        │   ├── image4.jpg
+        │   ├── image5.jpg
+        │   └── image6.jpg
+        └── test/
+            ├── image7.jpg
+            ├── image8.jpg
+            └── image9.jpg
+        ```
 
-    The organization process involves creating a directory for each category and moving images into their
-    respective category directories within the dataset's extraction path.
-
-    Args:
-        dataset_collection (DatasetCollection): A collection of dataset contexts that include the training,
-        validation, and testing splits of the dataset.
-
-    Returns:
-        DatasetCollection: The original dataset collection with its dataset contexts now organized by classification
-        categories. This modified collection is ready for use in training classification models.
-
-    Note:
-        The function modifies the dataset contexts in place by organizing the images into category directories.
-        It returns the original dataset collection object, which now references the organized dataset contexts.
+        After applying `classification_data_preparator`:
+        ```
+        dataset/
+        ├── train/
+        │   ├── category1/
+        │   │   ├── image1.jpg
+        │   │   └── image3.jpg
+        │   └── category2/
+        │       └── image2.jpg
+        ├── val/
+        │   ├── category1/
+        │   │   └── image4.jpg
+        │   └── category2/
+        │       ├── image5.jpg
+        │       └── image6.jpg
+        └── test/
+            ├── category1/
+            │   └── image7.jpg
+            └── category2/
+                ├── image8.jpg
+                └── image9.jpg
+        ```
     """
     for dataset_context in dataset_collection:
         if dataset_context.dataset_name in [

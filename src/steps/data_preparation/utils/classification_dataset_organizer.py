@@ -93,6 +93,11 @@ class ClassificationDatasetOrganizer:
         Parameters:
             category_name (str): The name of the category.
             image: The image object containing the file name.
+
+        Raises:
+            PermissionError: If there is a permission issue creating the directory or copying the file.
+            FileNotFoundError: If the source image file to copy is not found.
+            shutil.SameFileError: If the source and destination paths are the same.
         """
         category_dir = os.path.join(self.destination_dir, category_name)
         if not os.path.exists(category_dir):

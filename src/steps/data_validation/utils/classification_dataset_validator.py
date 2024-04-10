@@ -6,11 +6,25 @@ from src.steps.data_validation.utils.dataset_validator import DatasetValidator
 
 class ClassificationDatasetValidator(DatasetValidator, ABC):
     def validate(self):
+        """
+        Validate the classification dataset.
+        A classification dataset must have at least 2 classes and at least 1 image per class
+
+        Raises:
+            ValueError: If the classification dataset is not valid.
+        """
         super().validate()  # Call common validations
         self.validate_labelmap()
         self.validate_at_least_one_image_per_class()
 
     def validate_labelmap(self):
+        """
+        Validate that the labelmap for each dataset in the collection is valid.
+        A classification labelmap must have at least 2 classes.
+
+        Raises:
+            ValueError: If the labelmap for any dataset in the collection is not valid.
+        """
         for dataset_context in self.dataset_collection:
             if len(dataset_context.labelmap) < 2:
                 raise ValueError(
@@ -20,6 +34,13 @@ class ClassificationDatasetValidator(DatasetValidator, ABC):
                 )
 
     def validate_at_least_one_image_per_class(self):
+        """
+        Validate that each class in the train dataset has at least 1 image.
+
+        Raises:
+            ValueError: If a class in the train dataset has no images.
+
+        """
         class_names = self.dataset_collection.train.labelmap.keys()
         for class_name in class_names:
             folder_path = os.path.join(
