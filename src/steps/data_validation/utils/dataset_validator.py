@@ -94,7 +94,7 @@ class DatasetValidator(ABC):
         """
         self.dataset_collection = dataset_collection
 
-    def validate_common(self) -> None:
+    def _validate_common(self) -> None:
         """
         Performs common validation tasks across all datasets in the collection.
         """
@@ -125,7 +125,7 @@ class DatasetValidator(ABC):
             ValueError: If any image is not in one of the valid formats.
         """
         for image_path in image_path_list:
-            if not image_path.endswith(self.VALID_IMAGE_EXTENSIONS):
+            if not image_path.lower().endswith(self.VALID_IMAGE_EXTENSIONS):
                 raise ValueError(
                     f"Invalid image format for image {image_path} in {dataset_context.dataset_name} dataset. "
                     f"Valid image formats are {self.VALID_IMAGE_EXTENSIONS}"
