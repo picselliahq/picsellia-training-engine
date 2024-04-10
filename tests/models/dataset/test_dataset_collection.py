@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from picsellia.types.enums import InferenceType
 
-from src.models.dataset.dataset_split_name import DatasetSplitName
+from src.enums import DatasetSplitName
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 

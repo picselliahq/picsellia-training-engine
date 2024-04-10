@@ -2,7 +2,7 @@ from src import step
 from src.steps.data_preparation.utils.classification_dataset_organizer import (
     ClassificationDatasetOrganizer,
 )
-from src.models.dataset.dataset_split_name import DatasetSplitName
+from src.enums import DatasetSplitName
 from src.models.dataset.dataset_collection import DatasetCollection
 
 

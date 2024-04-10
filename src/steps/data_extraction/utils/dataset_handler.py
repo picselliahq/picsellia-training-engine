@@ -5,7 +5,7 @@ from picsellia.exceptions import ResourceNotFoundError
 
 from src.models.dataset.dataset_collection import DatasetCollection
 from src.models.dataset.dataset_context import DatasetContext
-from src.models.dataset.dataset_split_name import DatasetSplitName
+from src.enums import DatasetSplitName
 
 
 def get_labelmap(dataset_version: DatasetVersion) -> dict[str, Label]:

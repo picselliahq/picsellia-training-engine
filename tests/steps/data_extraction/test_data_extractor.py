@@ -2,7 +2,7 @@ from typing import Callable
 from unittest.mock import patch
 
 from src import Pipeline
-from src.models.dataset.dataset_split_name import DatasetSplitName
+from src.enums import DatasetSplitName
 from src.models.parameters.augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )

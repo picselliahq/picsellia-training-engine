@@ -4,7 +4,7 @@ import pytest
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
 
-from src.models.dataset.dataset_split_name import DatasetSplitName
+from src.enums import DatasetSplitName
 from src.models.dataset.dataset_collection import DatasetCollection
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
