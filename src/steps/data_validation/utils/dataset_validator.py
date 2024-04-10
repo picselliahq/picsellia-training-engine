@@ -25,52 +25,6 @@ def get_image_path_list(image_dir: str) -> List[str]:
     return image_path_list
 
 
-def validate_image_extraction(
-    dataset_context: DatasetContext, image_path_list: List[str]
-) -> None:
-    """
-    Validates that the number of extracted images matches the expected number of assets.
-
-    Args:
-        dataset_context (DatasetContext): The dataset context to validate.
-        image_path_list (List[str]): The list of image paths extracted from the dataset.
-
-    Raises:
-        ValueError: If the number of extracted images does not match the expected number of assets.
-    """
-    if len(image_path_list) < len(dataset_context.multi_asset):
-        raise ValueError(
-            f"Some images have not been extracted in {dataset_context.dataset_name} dataset"
-        )
-    if len(image_path_list) > len(dataset_context.multi_asset):
-        raise ValueError(
-            f"There are more images than expected in {dataset_context.dataset_name} dataset"
-        )
-
-
-def validate_image_corruption(
-    dataset_context: DatasetContext, image_path_list: List[str]
-) -> None:
-    """
-    Checks for corruption in the extracted images.
-
-    Parameters:
-        dataset_context (DatasetContext): The dataset context to validate.
-        image_path_list (List[str]): The list of image paths extracted from the dataset.
-
-    Raises:
-        ValueError: If any of the images are found to be corrupted.
-    """
-    for image_path in image_path_list:
-        try:
-            with Image.open(image_path) as img:
-                img.verify()  # Verify that this is a valid image
-        except Exception as e:
-            raise ValueError(
-                f"Image {image_path} is corrupted in {dataset_context.dataset_name} dataset and cannot be used."
-            ) from e
-
-
 class DatasetValidator(ABC):
     """
     Validates various aspects of datasets within a dataset collection.
@@ -100,16 +54,38 @@ class DatasetValidator(ABC):
         """
         for dataset_context in self.dataset_collection:
             image_path_list = get_image_path_list(image_dir=dataset_context.image_dir)
-            validate_image_extraction(
+            self.validate_image_extraction(
                 dataset_context=dataset_context, image_path_list=image_path_list
             )
             self.validate_image_format(
                 dataset_context=dataset_context, image_path_list=image_path_list
             )
-            validate_image_corruption(
+            self.validate_image_corruption(
                 dataset_context=dataset_context, image_path_list=image_path_list
             )
             self.validate_image_annotation_integrity(dataset_context)
+
+    def validate_image_extraction(
+        self, dataset_context: DatasetContext, image_path_list: List[str]
+    ) -> None:
+        """
+        Validates that the number of extracted images matches the expected number of assets.
+
+        Args:
+            dataset_context (DatasetContext): The dataset context to validate.
+            image_path_list (List[str]): The list of image paths extracted from the dataset.
+
+        Raises:
+            ValueError: If the number of extracted images does not match the expected number of assets.
+        """
+        if len(image_path_list) < len(dataset_context.multi_asset):
+            raise ValueError(
+                f"Some images have not been extracted in {dataset_context.dataset_name} dataset"
+            )
+        if len(image_path_list) > len(dataset_context.multi_asset):
+            raise ValueError(
+                f"There are more images than expected in {dataset_context.dataset_name} dataset"
+            )
 
     def validate_image_format(
         self, dataset_context: DatasetContext, image_path_list: List[str]
@@ -131,6 +107,28 @@ class DatasetValidator(ABC):
                     f"Valid image formats are {self.VALID_IMAGE_EXTENSIONS}"
                 )
 
+    def validate_image_corruption(
+        self, dataset_context: DatasetContext, image_path_list: List[str]
+    ) -> None:
+        """
+        Checks for corruption in the extracted images.
+
+        Parameters:
+            dataset_context (DatasetContext): The dataset context to validate.
+            image_path_list (List[str]): The list of image paths extracted from the dataset.
+
+        Raises:
+            ValueError: If any of the images are found to be corrupted.
+        """
+        for image_path in image_path_list:
+            try:
+                with Image.open(image_path) as img:
+                    img.verify()  # Verify that this is a valid image
+            except Exception as e:
+                raise ValueError(
+                    f"Image {image_path} is corrupted in {dataset_context.dataset_name} dataset and cannot be used."
+                ) from e
+
     @abstractmethod
     def validate_image_annotation_integrity(
         self, dataset_context: DatasetContext
@@ -149,4 +147,4 @@ class DatasetValidator(ABC):
         Validates the dataset collection. This method is intended to be overridden by subclasses to include
         specific validation logic in addition to the common validations.
         """
-        self.validate_common()
+        self._validate_common()
