@@ -94,8 +94,7 @@ class PicselliaTrainingContext(PicselliaContext):
 
         if not self.experiment_id:
             raise ValueError(
-                "Experiment ID not provided."
-                "Please provide it as an argument or set the 'experiment_id' environment variable."
+                "Experiment ID not provided. Please provide it as an argument or set the 'experiment_id' environment variable."
             )
 
         self.experiment = self._initialize_experiment()

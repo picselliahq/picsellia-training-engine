@@ -28,6 +28,12 @@ class HyperParameters(Parameters):
             default=False,
         )
 
+        self.train_set_split_ratio = self.extract_parameter(
+            keys=["prop_train_split", "train_set_split_ratio"],
+            expected_type=float,
+            default=0.8,
+        )
+
 
 class UltralyticsHyperParameters(HyperParameters):
     def __init__(self, log_data: LogDataType):
