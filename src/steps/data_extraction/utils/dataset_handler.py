@@ -72,7 +72,8 @@ class DatasetHandler:
             )
         except Exception as e:
             raise ResourceNotFoundError(
-                "Training dataset not found in the experiment."
+                f"A training dataset is required and couldn't be found. "
+                f"Please attach a dataset with the alias '{DatasetSplitName.TRAIN.value}'."
             ) from e
 
         if nb_attached_datasets == 3:
@@ -82,7 +83,8 @@ class DatasetHandler:
                 )
             except Exception as e:
                 raise ResourceNotFoundError(
-                    f"Found {nb_attached_datasets} attached datasets but {DatasetSplitName.VAL.value} not found."
+                    f"Found {nb_attached_datasets} attached datasets but a validation dataset couldn't be found. "
+                    f"Please attach a dataset with the alias '{DatasetSplitName.VAL.value}'."
                 ) from e
             try:
                 test_dataset_version = self.experiment.get_dataset(
@@ -90,7 +92,8 @@ class DatasetHandler:
                 )
             except Exception as e:
                 raise ResourceNotFoundError(
-                    f"Found {nb_attached_datasets} attached datasets but {DatasetSplitName.TEST.value} not found"
+                    f"Found {nb_attached_datasets} attached datasets but a test dataset couldn't be found. "
+                    f"Please attach a dataset with the alias '{DatasetSplitName.TEST.value}'."
                 ) from e
             return self._handle_three_datasets(
                 train_dataset_version=train_dataset_version,
@@ -104,7 +107,8 @@ class DatasetHandler:
                 )
             except Exception as e:
                 raise ResourceNotFoundError(
-                    f"Found {nb_attached_datasets} attached datasets but {DatasetSplitName.TEST.value} not found"
+                    f"Found {nb_attached_datasets} attached datasets but a test dataset couldn't be found. "
+                    f"Please attach a dataset with the alias '{DatasetSplitName.TEST.value}'."
                 ) from e
             return self._handle_two_datasets(
                 train_dataset_version=train_dataset_version,
