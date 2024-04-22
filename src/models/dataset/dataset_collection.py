@@ -76,5 +76,4 @@ class DatasetCollection:
         to the training, validation, and testing splits.
         """
         for dataset_context in self:
-            dataset_context.download_assets()
-            dataset_context.download_coco_file()
+            dataset_context.download()
