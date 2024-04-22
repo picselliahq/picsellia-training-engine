@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from picsellia import DatasetVersion
 
@@ -6,7 +7,7 @@ from src.models.dataset.dataset_context import DatasetContext
 
 
 class ProcessingDatasetHandler:
-    def __init__(self, job_id: str, dataset_version: DatasetVersion):
+    def __init__(self, dataset_version: DatasetVersion, job_id: Optional[str] = None):
         """
         Initializes a DatasetHandler with the input dataset version and destination path.
 
@@ -14,7 +15,10 @@ class ProcessingDatasetHandler:
             dataset_version (DatasetVersion): The dataset version to be processed.
         """
         self.dataset_version = dataset_version
-        self.destination_path = os.path.join(os.getcwd(), str(job_id))
+        if not job_id:
+            self.destination_path = os.path.join(os.getcwd(), "current_job")
+        else:
+            self.destination_path = os.path.join(os.getcwd(), str(job_id))
 
     def get_dataset_context(self) -> DatasetContext:
         """
