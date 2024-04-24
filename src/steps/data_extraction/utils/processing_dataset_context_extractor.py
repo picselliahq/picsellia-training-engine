@@ -6,7 +6,7 @@ from picsellia import DatasetVersion
 from src.models.dataset.dataset_context import DatasetContext
 
 
-class ProcessingDatasetHandler:
+class ProcessingDatasetContextExtractor:
     def __init__(self, dataset_version: DatasetVersion, job_id: Optional[str] = None):
         """
         Initializes a DatasetHandler with the input dataset version and destination path.
