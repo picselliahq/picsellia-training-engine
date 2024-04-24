@@ -1,7 +1,10 @@
 from src import step
 from src.models.dataset.dataset_collection import DatasetCollection
-from src.steps.data_validation.utils.classification_dataset_validator import (
-    ClassificationDatasetValidator,
+from src.steps.data_validation.utils.classification_dataset_context_validator import (
+    ClassificationDatasetContextValidator,
+)
+from src.steps.data_validation.utils.dataset_collection_validator import (
+    DatasetCollectionValidator,
 )
 
 
@@ -18,5 +21,8 @@ def classification_data_validator(dataset_collection: DatasetCollection):
         dataset_collection (DatasetCollection): The collection of datasets to be validated, typically including
                                                 training, validation, and testing splits.
     """
-    validator = ClassificationDatasetValidator(dataset_collection)
+    validator = DatasetCollectionValidator(
+        dataset_collection=dataset_collection,
+        dataset_context_validator=ClassificationDatasetContextValidator,
+    )
     validator.validate()
