@@ -1,15 +1,15 @@
 from src import step
-from src.steps.data_preparation.utils.classification_dataset_organizer import (
-    ClassificationDatasetOrganizer,
-)
 from src.enums import DatasetSplitName
 from src.models.dataset.dataset_collection import DatasetCollection
+from src.steps.data_preparation.utils.classification_dataset_context_preparator import (
+    ClassificationDatasetContextPreparator,
+)
 
 
 @step
 def classification_data_preparator(
     dataset_collection: DatasetCollection,
-) -> DatasetCollection:
+):
     """
     Example:
         Assume `dataset_collection` comprises unorganized images across training, validation, and testing splits.
@@ -63,6 +63,8 @@ def classification_data_preparator(
             DatasetSplitName.VAL.value,
             DatasetSplitName.TEST.value,
         ]:
-            organizer = ClassificationDatasetOrganizer(dataset_context=dataset_context)
+            organizer = ClassificationDatasetContextPreparator(
+                dataset_context=dataset_context
+            )
             organizer.organize()
     return dataset_collection
