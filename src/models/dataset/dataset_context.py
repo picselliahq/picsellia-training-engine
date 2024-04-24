@@ -7,6 +7,7 @@ from picsellia.sdk.asset import MultiAsset
 from src.steps.data_extraction.utils.image_utils import get_labelmap
 
 from picsellia.exceptions import NoDataError
+from picsellia_annotations.coco import COCOFile
 
 
 class DatasetContext:
@@ -48,8 +49,7 @@ class DatasetContext:
         """
         self.dataset_name = dataset_name
         self.dataset_version = dataset_version
-        self.dataset_extraction_path = os.path.join(destination_path, self.dataset_name)
-        os.makedirs(self.dataset_extraction_path, exist_ok=True)
+        self.destination_path = destination_path
         if not labelmap:
             self.labelmap = get_labelmap(dataset_version=dataset_version)
         else:
@@ -61,8 +61,20 @@ class DatasetContext:
                 self.multi_asset = None
         else:
             self.multi_asset = multi_asset
-        self.image_dir = os.path.join(self.dataset_extraction_path, "images")
-        self.coco_file = None
+        self.image_dir = os.path.join(destination_path, self.dataset_name, "images")
+        self.coco_file = self.build_coco_file()
+
+    def build_coco_file(self) -> COCOFile:
+        """
+        Builds the COCO file associated with the dataset. Initializes `coco_file` to the COCO file object.
+        """
+        if self.multi_asset:
+            return self.dataset_version.build_coco_file_locally(
+                assets=self.multi_asset,
+                use_id=True,
+            )
+        else:
+            raise ValueError("No assets found in the dataset")
 
     def download_assets(self) -> None:
         """
@@ -70,22 +82,7 @@ class DatasetContext:
         to the path where images are stored.
         """
         if self.multi_asset:
+            os.makedirs(self.image_dir, exist_ok=True)
             self.multi_asset.download(target_path=self.image_dir, use_id=True)
         else:
             raise ValueError("No assets found in the dataset")
-
-    def download_coco_file(self) -> None:
-        """
-        Builds the COCO file associated with the dataset. Initializes `coco_file` to the COCO file object.
-        """
-        if self.multi_asset:
-            self.coco_file = self.dataset_version.build_coco_file_locally(
-                assets=self.multi_asset,
-                use_id=True,
-            )
-        else:
-            raise ValueError("No assets found in the dataset")
-
-    def download(self) -> None:
-        self.download_assets()
-        self.download_coco_file()
