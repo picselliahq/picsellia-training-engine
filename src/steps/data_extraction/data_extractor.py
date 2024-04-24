@@ -40,7 +40,7 @@ def training_data_extractor():
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
     dataset_collection = dataset_collection_extractor.get_dataset_collection()
-    dataset_collection.download()
+    dataset_collection.download_assets()
     return dataset_collection
 
 
@@ -51,5 +51,5 @@ def processing_data_extractor():
         job_id=context.job_id, dataset_version=context.input_dataset_version
     )
     dataset_context = dataset_context_extractor.get_dataset_context()
-    dataset_context.download()
+    dataset_context.download_assets()
     return dataset_context
