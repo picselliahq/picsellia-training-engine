@@ -151,11 +151,15 @@ class PicselliaProcessingContext(PicselliaContext):
         super().__init__(api_token, host, organization_id)
 
         # If job_id is not passed as a parameter, try to get it from the environment variables
-        self.job_id = job_id or os.environ.get("job_id")
-        if not self.job_id:
-            raise ValueError(
-                "Job ID not provided. Please provide it as an argument or set the 'job_id' environment variable."
-            )
+        if not job_id:
+            if not os.environ.get("job_id"):
+                raise ValueError(
+                    "Job ID not provided. Please provide it as an argument or set the 'job_id' environment variable."
+                )
+            else:
+                self.job_id = os.environ.get("job_id")
+        else:
+            self.job_id = job_id
 
         # Initialize job and context specifics
         self.job = self._initialize_job()
