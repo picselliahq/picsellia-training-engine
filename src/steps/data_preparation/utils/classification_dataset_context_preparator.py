@@ -1,12 +1,13 @@
 import os
 import shutil
 from typing import Dict
-from src.models.dataset.dataset_context import DatasetContext
 
 from picsellia_annotations.coco import Image
 
+from src.models.dataset.dataset_context import DatasetContext
 
-class ClassificationDatasetOrganizer:
+
+class ClassificationDatasetContextPreparator:
     """
     Organizes dataset images into directories based on their classification categories.
 
@@ -17,7 +18,7 @@ class ClassificationDatasetOrganizer:
 
     Attributes:
         dataset_context (DatasetContext): The context of the dataset to organize, including paths and COCO file.
-        destination_dir (str): The root directory where the organized dataset will be stored.
+        destination_path (str): The root directory where the organized dataset will be stored.
     """
 
     def __init__(self, dataset_context: DatasetContext):
@@ -28,7 +29,7 @@ class ClassificationDatasetOrganizer:
             dataset_context (DatasetContext): The dataset context to organize.
         """
         self.dataset_context = dataset_context
-        self.destination_dir = dataset_context.dataset_extraction_path
+        self.destination_path = dataset_context.destination_path
 
     def organize(self) -> None:
         """
@@ -99,7 +100,7 @@ class ClassificationDatasetOrganizer:
             FileNotFoundError: If the source image file to copy is not found.
             shutil.SameFileError: If the source and destination paths are the same.
         """
-        category_dir = os.path.join(self.destination_dir, category_name)
+        category_dir = os.path.join(self.destination_path, category_name)
         if not os.path.exists(category_dir):
             os.makedirs(category_dir)
         src_image_path = os.path.join(self.dataset_context.image_dir, image.file_name)
@@ -114,4 +115,4 @@ class ClassificationDatasetOrganizer:
         to point to the new, organized directory structure.
         """
         shutil.rmtree(self.dataset_context.image_dir)
-        self.dataset_context.image_dir = self.destination_dir
+        self.dataset_context.image_dir = self.destination_path
