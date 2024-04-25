@@ -4,6 +4,8 @@ from src.models.contexts.picsellia_context import (
     PicselliaTrainingContext,
     PicselliaProcessingContext,
 )
+from src.models.dataset.dataset_collection import DatasetCollection
+from src.models.dataset.dataset_context import DatasetContext
 from src.steps.data_extraction.utils.experiment_dataset_collection_extractor import (
     ExperimentDatasetCollectionExtractor,
 )
@@ -13,7 +15,7 @@ from src.steps.data_extraction.utils.processing_dataset_context_extractor import
 
 
 @step
-def training_data_extractor():
+def training_data_extractor() -> DatasetCollection:
     """
     Extracts datasets from an experiment and prepares them for training.
 
@@ -45,7 +47,7 @@ def training_data_extractor():
 
 
 @step
-def processing_data_extractor():
+def processing_data_extractor() -> DatasetContext:
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     dataset_context_extractor = ProcessingDatasetContextExtractor(
         job_id=context.job_id, dataset_version=context.input_dataset_version

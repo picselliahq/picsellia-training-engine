@@ -9,7 +9,7 @@ from src.steps.data_preparation.utils.classification_dataset_context_preparator 
 @step
 def classification_data_preparator(
     dataset_collection: DatasetCollection,
-):
+) -> DatasetCollection:
     """
     Example:
         Assume `dataset_collection` comprises unorganized images across training, validation, and testing splits.

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from picsellia import Client, DatasetVersion, Data
 from picsellia.services.error_manager import ErrorManager
@@ -23,7 +23,7 @@ class DatasetVersionCreationProcessing:
 
     def _upload_data_with_error_manager(
         self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
-    ):
+    ) -> Tuple[Data, List[str]]:
         error_manager = ErrorManager()
         data = self.datalake.upload_data(
             filepaths=images_to_upload, tags=images_tags, error_manager=error_manager

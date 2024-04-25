@@ -97,7 +97,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
 
         cv2.imwrite(processed_image_filepath, extracted_image)
 
-    def _add_processed_image_to_dataset_version(self) -> None:
+    def _add_processed_images_to_dataset_version(self) -> None:
         for label_folder in os.listdir(self.processed_dataset_context.image_dir):
             full_label_folder_path = os.path.join(
                 self.processed_dataset_context.image_dir, label_folder
@@ -119,7 +119,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
 
     def process(self) -> None:
         self._process_images()
-        self._add_processed_image_to_dataset_version()
+        self._add_processed_images_to_dataset_version()
 
 
 @step
