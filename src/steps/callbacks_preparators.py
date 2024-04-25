@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import List
+
 from picsellia import Experiment
 from picsellia.types.enums import LogType
 from ultralytics.models.yolo.classify import (
@@ -31,25 +34,25 @@ def on_fit_epoch_end(trainer: ClassificationTrainer, experiment: Experiment):
 
 def on_val_end(validator: ClassificationValidator, experiment: Experiment):
     """Logs validation results including labels and predictions."""
-    files = sorted(validator.save_dir.glob("val*.jpg"))
+    save_dir = Path(validator.save_dir)
+    files = sorted(save_dir.glob("val*.jpg"))
     for f in files:
         experiment.log(str(f.stem), str(f), LogType.IMAGE)
 
 
 def on_train_end(trainer: ClassificationTrainer, experiment: Experiment):
     """Logs final model and its name on training completion."""
-    # Log final results, CM matrix + PR plots
+    save_dir = Path(trainer.save_dir)
     files = [
         "results.png",
         "confusion_matrix.png",
         "confusion_matrix_normalized.png",
         *(f"{x}_curve.png" for x in ("F1", "PR", "P", "R")),
     ]
-    files = [
-        (trainer.save_dir / f) for f in files if (trainer.save_dir / f).exists()
-    ]  # filter
-    for f in files:
-        experiment.log(str(f.stem), str(f), LogType.IMAGE)
+    # Créez une liste de Path et assurez-vous que save_dir est un Path
+    files_paths: List[Path] = [save_dir / f for f in files if (save_dir / f).exists()]
+    for f in files_paths:
+        experiment.log(f.stem, str(f), LogType.IMAGE)
     # Report final metrics
     for k, v in trainer.validator.metrics.results_dict.items():
         experiment.log(f"final_val/{k}", v, LogType.VALUE)
