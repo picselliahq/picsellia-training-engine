@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Type, Optional, Any, Dict, Union
+from typing import Type, Optional, Any, Dict, Union, TypeVar, Generic
 
 import picsellia  # type: ignore
 from picsellia import DatasetVersion, ModelVersion
@@ -10,6 +10,12 @@ from picsellia.types.enums import ProcessingType
 from src.models.parameters.augmentation_parameters import AugmentationParameters
 from src.models.parameters.hyper_parameters import HyperParameters
 from src.models.parameters.parameters import Parameters
+
+TParameters = TypeVar("TParameters", bound=Parameters)
+THyperParameters = TypeVar("THyperParameters", bound=HyperParameters)
+TAugmentationParameters = TypeVar(
+    "TAugmentationParameters", bound=AugmentationParameters
+)
 
 
 class PicselliaContext(ABC):
@@ -82,11 +88,13 @@ class PicselliaContext(ABC):
         pass
 
 
-class PicselliaTrainingContext(PicselliaContext):
+class PicselliaTrainingContext(
+    PicselliaContext, Generic[THyperParameters, TAugmentationParameters]
+):
     def __init__(
         self,
-        hyperparameters_cls: Type[HyperParameters],
-        augmentation_parameters_cls: Type[AugmentationParameters],
+        hyperparameters_cls: Type[THyperParameters],
+        augmentation_parameters_cls: Type[TAugmentationParameters],
         api_token: Optional[str] = None,
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
@@ -97,7 +105,8 @@ class PicselliaTrainingContext(PicselliaContext):
 
         if not self.experiment_id:
             raise ValueError(
-                "Experiment ID not provided. Please provide it as an argument or set the 'experiment_id' environment variable."
+                "Experiment ID not provided. Please provide it as an argument "
+                "or set the 'experiment_id' environment variable."
             )
 
         self.experiment = self._initialize_experiment()
@@ -138,10 +147,10 @@ class PicselliaTrainingContext(PicselliaContext):
         return self.client.get_experiment_by_id(self.experiment_id)
 
 
-class PicselliaProcessingContext(PicselliaContext):
+class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
     def __init__(
         self,
-        processing_parameters_cls: Type[Parameters],
+        processing_parameters_cls: Type[TParameters],
         api_token: Optional[str] = None,
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
