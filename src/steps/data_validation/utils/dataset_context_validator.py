@@ -56,11 +56,13 @@ class DatasetContextValidator:
         """
         if len(image_path_list) < len(self.dataset_context.multi_asset):
             raise ValueError(
-                f"Some images have not been extracted in {self.dataset_context.dataset_name} dataset"
+                f"Some images have not been extracted in the image directory: {self.dataset_context.image_dir}. "
+                + f"There are {len(image_path_list)} images in the directory and {len(self.dataset_context.multi_asset)} assets in the dataset."
             )
         if len(image_path_list) > len(self.dataset_context.multi_asset):
             raise ValueError(
-                f"There are more images than expected in {self.dataset_context.dataset_name} dataset"
+                f"There are more images than expected in the image directory: {self.dataset_context.image_dir}. "
+                + f"There are {len(image_path_list)} images in the directory and {len(self.dataset_context.multi_asset)} assets in the dataset."
             )
 
     def validate_image_format(self, image_path_list: List[str]) -> None:
