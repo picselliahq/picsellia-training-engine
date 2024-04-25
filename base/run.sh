@@ -1,20 +1,7 @@
 #!/bin/bash
 
 usage() {
-  echo "Usage: $0 <training_script>.py"
-  exit 1
-}
-
-# Depending on the model to train, choose to either use python3.8 or python3.10
-get_python_command() {
-  for version in 3.12 3.11 3.10 3.9 3.8; do
-    if command -v python$version &> /dev/null; then
-      echo "python$version"
-      return 0
-    fi
-  done
-
-  echo "Error: No supported Python version (3.8 to 3.12) is available on the system."
+  echo "Usage: $0 <python_version> <training_script>.py"
   exit 1
 }
 
@@ -26,7 +13,7 @@ monitor_log_handler() {
   while :; do
     if ! kill -0 "$log_handler_pid" 2>/dev/null; then
       kill -9 "$training_script_pid"
-      echo -e "\e[31mError:\e[0m The log handler has terminated unexpectedly. The training script has been stopped to prevent sata loss. Please check the log file or the environment variables provided.\e[0m"
+      echo -e "\e[31mError:\e[0m The log handler has terminated unexpectedly. The training script has been stopped to prevent data loss. Please check the log file or the environment variables provided.\e[0m"
       exit 1
     fi
     sleep 1
@@ -34,30 +21,38 @@ monitor_log_handler() {
 }
 
 # Validate input arguments
-if [ $# -ne 1 ]; then
-  echo "Error: Exactly one argument is required."
+if [ $# -ne 2 ]; then
+  echo "Error: Exactly two arguments are required."
   usage
 fi
 
-if [ "${1: -3}" != ".py" ]; then
-  echo "Error: The argument must be a Python file (.py)."
+python_version=$1
+script_file=$2
+
+if [[ "$python_version" != python3.* ]]; then
+  echo "Error: The first argument must be a valid Python version (e.g., python3.8)."
   usage
 fi
 
-if [ ! -f "$1" ]; then
-  echo "Error: The file $1 does not exist."
+if [ "${script_file: -3}" != ".py" ]; then
+  echo "Error: The second argument must be a Python file (.py)."
+  usage
+fi
+
+if [ ! -f "$script_file" ]; then
+  echo "Error: The file $script_file does not exist."
   usage
 fi
 
 log_file_path="/experiment/training.log"
-python_cmd=$(get_python_command)
+python_cmd=$python_version
 
 # 1. Start the log handler script in the background
 $python_cmd logs/handler.py --log_file_path "$log_file_path" &
 log_handler_pid=$!
 
 # 2. Start the training script in the background and redirect output to log file
-$python_cmd "$1" > "$log_file_path" 2>&1 &
+$python_cmd "$script_file" > "$log_file_path" 2>&1 &
 training_script_pid=$!
 
 # 3. Start the monitor in the background
