@@ -74,7 +74,7 @@ class DatasetContext:
                 use_id=True,
             )
         else:
-            raise ValueError("No assets found in the dataset")
+            return COCOFile(images=[], annotations=[])
 
     def download_assets(self) -> None:
         """
