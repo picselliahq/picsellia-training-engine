@@ -45,7 +45,7 @@ class UltralyticsHyperParameters(HyperParameters):
         self.use_cache = self.extract_parameter(
             keys=["cache", "use_cache"],
             expected_type=bool,
-            default="False",
+            default=False,
         )
         self.save_period = self.extract_parameter(
             keys=["save_period"],
