@@ -19,6 +19,7 @@ permissions:
 
 env:
   PICSELLIA_TEST_TOKEN: ${{ secrets.PICSELLIA_TEST_TOKEN }}
+  PICSELLIA_TEST_HOST: ${{ env.PICSELLIA_TEST_HOST }}
 
 jobs:
   build:
