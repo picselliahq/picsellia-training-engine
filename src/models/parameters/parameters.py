@@ -1,6 +1,6 @@
 import logging
 from abc import ABC
-from typing import Any, Set, Optional, Tuple
+from typing import Any, Set, Optional, Tuple, Dict
 
 from picsellia.types.schemas import LogDataType  # type: ignore
 
@@ -112,7 +112,7 @@ class Parameters(ABC):
 
             raise KeyError(error_string)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the parameters to a dictionary.
 
         This function gathers all of its parameters and returns them as a dictionary.
@@ -128,7 +128,7 @@ class Parameters(ABC):
         }
         return dict(sorted(filtered_dict.items()))
 
-    def validate_log_data(self, log_data: LogDataType) -> dict:
+    def validate_log_data(self, log_data: LogDataType) -> Dict[str, Any]:
         """Validate the log data.
 
         Args:

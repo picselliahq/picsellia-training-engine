@@ -65,7 +65,7 @@ class PicselliaContext(ABC):
         color_code = "\033[33m" if suffix else "\033[34m"
         return f"{color_code}{value}\033[0m{suffix}"
 
-    def _process_parameters(self, parameters_dict: dict, defaulted_keys: set) -> dict:
+    def _process_parameters(self, parameters_dict: dict, defaulted_keys: set) -> Dict:
         """
         Processes parameters by applying color coding and suffixes to their values based on whether they are default.
 
@@ -244,7 +244,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
             ),
         }
 
-    def _initialize_job_context(self) -> dict:
+    def _initialize_job_context(self) -> Dict:
         """Initializes the context by fetching the necessary information from the job."""
         job_context = self.job.sync()["dataset_version_processing_job"]
 
