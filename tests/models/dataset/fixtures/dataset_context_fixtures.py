@@ -1,27 +1,29 @@
-from typing import Callable
+from typing import Callable, Optional
 
 import pytest
+from picsellia import Label
+from picsellia.sdk.asset import MultiAsset
 
 from src.models.dataset.dataset_context import DatasetContext
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
-from tests.steps.fixtures.initialize_integration_tests_fixtures import (
-    get_multi_asset,
-    get_labelmap,
-)
 
 
 @pytest.fixture
 def mock_dataset_context(
     destination_path: str, mock_dataset_version: Callable
 ) -> Callable:
-    def _mock_dataset_context(dataset_metadata: DatasetTestMetadata) -> DatasetContext:
+    def _mock_dataset_context(
+        dataset_metadata: DatasetTestMetadata,
+        multi_asset: Optional[MultiAsset] = None,
+        labelmap: Optional[dict[str, Label]] = None,
+    ) -> DatasetContext:
         dataset_version = mock_dataset_version(dataset_metadata=dataset_metadata)
         dataset_context = DatasetContext(
             dataset_name=dataset_metadata.attached_name,
             dataset_version=dataset_version,
-            multi_asset=get_multi_asset(dataset_version=dataset_version),
-            labelmap=get_labelmap(dataset_version=dataset_version),
             destination_path=destination_path,
+            multi_asset=multi_asset,
+            labelmap=labelmap,
         )
         return dataset_context
 
