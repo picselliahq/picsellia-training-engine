@@ -198,7 +198,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
         )
 
     @property
-    def input_dataset_version_id(self) -> Union[str, None]:
+    def input_dataset_version_id(self) -> str:
         if not self._input_dataset_version_id:
             raise ValueError(
                 "There's not input dataset version ID available. Please ensure the job is correctly configured."
