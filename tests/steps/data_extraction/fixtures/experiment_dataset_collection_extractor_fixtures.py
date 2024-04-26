@@ -3,6 +3,7 @@ from typing import List, Callable
 
 import pytest
 from picsellia import Client, Experiment, Project
+from picsellia.exceptions import ResourceConflictError
 
 from src.steps.data_extraction.utils.experiment_dataset_collection_extractor import (
     ExperimentDatasetCollectionExtractor,
@@ -19,7 +20,10 @@ def mock_train_set_split_ratio() -> float:
 def mock_project(
     picsellia_client: Client,
 ) -> Project:
-    project = picsellia_client.create_project("test-picsellia-training-engine")
+    try:
+        project = picsellia_client.create_project("test-picsellia-training-engine")
+    except ResourceConflictError:
+        project = picsellia_client.get_project("test-picsellia-training-engine")
     return project
 
 
