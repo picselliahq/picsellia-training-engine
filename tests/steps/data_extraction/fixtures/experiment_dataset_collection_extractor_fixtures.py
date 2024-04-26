@@ -4,7 +4,9 @@ from typing import List, Callable
 import pytest
 from picsellia import Client, Experiment, Project
 
-from src.steps.data_extraction.utils.dataset_handler import DatasetHandler
+from src.steps.data_extraction.utils.experiment_dataset_collection_extractor import (
+    ExperimentDatasetCollectionExtractor,
+)
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
@@ -42,15 +44,17 @@ def mock_experiment(
 
 
 @pytest.fixture
-def mock_dataset_handler(
+def mock_experiment_dataset_collection_extractor(
     mock_experiment: Callable, mock_train_set_split_ratio: float
 ) -> Callable:
     def _mock_dataset_handler(
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
-    ) -> DatasetHandler:
+    ) -> ExperimentDatasetCollectionExtractor:
         experiment = mock_experiment(experiment_name, datasets)
-        return DatasetHandler(experiment, mock_train_set_split_ratio)
+        return ExperimentDatasetCollectionExtractor(
+            experiment, mock_train_set_split_ratio
+        )
 
     return _mock_dataset_handler
 
