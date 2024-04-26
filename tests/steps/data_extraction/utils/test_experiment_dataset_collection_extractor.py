@@ -266,11 +266,11 @@ class TestDatasetHandler:
     )
     def test_get_dataset_collection(
         self,
-        mock_dataset_handler: Callable,
+        mock_experiment_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
     ) -> None:
-        dataset_handler = mock_dataset_handler(
+        dataset_handler = mock_experiment_dataset_collection_extractor(
             experiment_name=experiment_name, datasets=datasets
         )
         dataset_collection = dataset_handler.get_dataset_collection()
@@ -284,13 +284,13 @@ class TestDatasetHandler:
     )
     def test_get_split_ratios(
         self,
-        mock_dataset_handler: Callable,
+        mock_experiment_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
         expected_split_ratios: Union[list, None],
         expected_exception: Union[Exception, None],
     ) -> None:
-        dataset_handler = mock_dataset_handler(
+        dataset_handler = mock_experiment_dataset_collection_extractor(
             experiment_name=experiment_name, datasets=datasets
         )
         if expected_exception:
@@ -308,11 +308,11 @@ class TestDatasetHandler:
     )
     def test_handle_datasets(
         self,
-        mock_dataset_handler: Callable,
+        mock_experiment_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
     ):
-        dataset_handler = mock_dataset_handler(
+        dataset_handler = mock_experiment_dataset_collection_extractor(
             experiment_name=experiment_name, datasets=datasets
         )
         nb_dataset = len(datasets)
@@ -359,13 +359,13 @@ class TestDatasetHandler:
     )
     def test_handle_datasets_exceptions(
         self,
-        mock_dataset_handler: Callable,
+        mock_experiment_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
         expected_exception: Exception,
     ):
         with pytest.raises(expected_exception):
-            dataset_handler = mock_dataset_handler(
+            dataset_handler = mock_experiment_dataset_collection_extractor(
                 experiment_name=experiment_name, datasets=datasets
             )
             dataset_handler.get_dataset_collection()
