@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Dict
 
 from picsellia import DatasetVersion, Label
 from picsellia.sdk.asset import MultiAsset
@@ -35,7 +35,7 @@ class DatasetContext:
         dataset_version: DatasetVersion,
         destination_path: str,
         multi_asset: Optional[MultiAsset] = None,
-        labelmap: Optional[dict[str, Label]] = None,
+        labelmap: Optional[Dict[str, Label]] = None,
     ):
         """
         Initializes the DatasetContext with dataset metadata and configuration.
@@ -44,7 +44,7 @@ class DatasetContext:
             dataset_name (str): The name of the dataset.
             dataset_version (DatasetVersion): The dataset version object.
             multi_asset (MultiAsset): The collection of assets for the dataset.
-            labelmap (dict): The mapping of label names to ids.
+            labelmap (Dict): The mapping of label names to ids.
             destination_path (str): The root directory for storing the dataset locally.
         """
         self.dataset_name = dataset_name

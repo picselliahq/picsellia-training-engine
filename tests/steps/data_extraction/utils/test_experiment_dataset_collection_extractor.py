@@ -58,7 +58,7 @@ def generate_general_params(
 
 def generate_params_with_split_ratios(
     nb_datasets: List[int],
-) -> tuple[str, List[DatasetTestMetadata], Union[list, None], Union[Exception, None]]:
+) -> tuple[str, List[DatasetTestMetadata], Union[List, None], Union[Exception, None]]:
     for nb_dataset in nb_datasets:
         experiment_name = get_experiment_name(nb_dataset=nb_dataset)
         if nb_dataset == 1:
@@ -287,7 +287,7 @@ class TestDatasetHandler:
         mock_experiment_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
-        expected_split_ratios: Union[list, None],
+        expected_split_ratios: Union[List, None],
         expected_exception: Union[Exception, None],
     ) -> None:
         dataset_handler = mock_experiment_dataset_collection_extractor(

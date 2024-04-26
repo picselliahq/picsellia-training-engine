@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict
 
 import pytest
 from picsellia import Label
@@ -15,7 +15,7 @@ def mock_dataset_context(
     def _mock_dataset_context(
         dataset_metadata: DatasetTestMetadata,
         multi_asset: Optional[MultiAsset] = None,
-        labelmap: Optional[dict[str, Label]] = None,
+        labelmap: Optional[Dict[str, Label]] = None,
     ) -> DatasetContext:
         dataset_version = mock_dataset_version(dataset_metadata=dataset_metadata)
         dataset_context = DatasetContext(

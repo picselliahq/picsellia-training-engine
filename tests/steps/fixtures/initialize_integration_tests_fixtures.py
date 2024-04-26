@@ -1,7 +1,8 @@
 import os
+from typing import Dict
 
 import pytest
-from picsellia import Client, Dataset, DatasetVersion, Data
+from picsellia import Client, Dataset, DatasetVersion, Data, Label
 from picsellia.types.enums import InferenceType
 from picsellia.sdk.asset import MultiAsset
 
@@ -14,7 +15,7 @@ def get_multi_asset(dataset_version: DatasetVersion) -> MultiAsset:
     return dataset_version.list_assets()
 
 
-def get_labelmap(dataset_version: DatasetVersion) -> dict:
+def get_labelmap(dataset_version: DatasetVersion) -> Dict[str, Label]:
     return {label.name: label for label in dataset_version.list_labels()}
 
 
