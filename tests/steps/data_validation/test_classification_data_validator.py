@@ -11,7 +11,7 @@ from src.steps.data_validation.classification_data_validator import (
 class TestDataValidator:
     def test_data_validator(self, mock_dataset_collection: Callable):
         with patch(
-            "src.steps.data_validation.utils.classification_dataset_validator.ClassificationDatasetValidator"
+            "src.steps.data_validation.utils.classification_dataset_context_validator.ClassificationDatasetContextValidator"
             ".validate"
         ) as mocked_validate:
             dataset_collection = mock_dataset_collection(
@@ -20,4 +20,4 @@ class TestDataValidator:
             classification_data_validator.entrypoint(
                 dataset_collection=dataset_collection
             )
-            assert mocked_validate.call_count == 1
+            assert mocked_validate.call_count == 3

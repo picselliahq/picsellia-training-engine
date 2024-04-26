@@ -1,32 +1,61 @@
 from typing import Callable
 
 import pytest
-from picsellia.types.enums import InferenceType
 
-from src.steps.data_validation.utils.classification_dataset_validator import (
-    ClassificationDatasetValidator,
+from src.models.dataset.dataset_collection import DatasetCollection
+from src.models.dataset.dataset_context import DatasetContext
+from src.steps.data_validation.utils.classification_dataset_context_validator import (
+    ClassificationDatasetContextValidator,
 )
-from src.steps.data_validation.utils.dataset_validator import DatasetValidator
+from src.steps.data_validation.utils.dataset_collection_validator import (
+    DatasetCollectionValidator,
+)
+from src.steps.data_validation.utils.dataset_context_validator import (
+    DatasetContextValidator,
+)
 
 
 @pytest.fixture
-def mock_dataset_validator(mock_dataset_collection: Callable) -> Callable:
-    def _dataset_validator(dataset_type: InferenceType) -> DatasetValidator:
-        dataset_collection = mock_dataset_collection(dataset_type=dataset_type)
-        dataset_collection.download()
-        return DatasetValidator(dataset_collection=dataset_collection)
+def mock_dataset_context_validator() -> Callable:
+    def _dataset_context_validator(
+        dataset_context: DatasetContext,
+    ) -> DatasetContextValidator:
+        return DatasetContextValidator(dataset_context=dataset_context)
 
-    return _dataset_validator
+    return _dataset_context_validator
 
 
 @pytest.fixture
-def classification_dataset_validator(
-    mock_dataset_collection: Callable,
-) -> ClassificationDatasetValidator:
-    classification_dataset_collection = mock_dataset_collection(
-        dataset_type=InferenceType.CLASSIFICATION
-    )
-    classification_dataset_collection.download()
-    return ClassificationDatasetValidator(
-        dataset_collection=classification_dataset_collection
-    )
+def mock_dataset_collection_validator() -> Callable:
+    def _dataset_collection_validator(
+        dataset_collection: DatasetCollection,
+    ) -> DatasetCollectionValidator:
+        return DatasetCollectionValidator(
+            dataset_collection=dataset_collection,
+            dataset_context_validator=DatasetContextValidator,
+        )
+
+    return _dataset_collection_validator
+
+
+@pytest.fixture
+def mock_classification_dataset_context_validator() -> Callable:
+    def _classification_dataset_context_validator(
+        dataset_context: DatasetContext,
+    ) -> ClassificationDatasetContextValidator:
+        return ClassificationDatasetContextValidator(dataset_context=dataset_context)
+
+    return _classification_dataset_context_validator
+
+
+@pytest.fixture
+def mock_classification_dataset_collection_validator() -> Callable:
+    def _classification_dataset_collection_validator(
+        classification_dataset_collection: DatasetCollection,
+    ) -> DatasetCollectionValidator:
+        return DatasetCollectionValidator(
+            dataset_collection=classification_dataset_collection,
+            dataset_context_validator=ClassificationDatasetContextValidator,
+        )
+
+    return _classification_dataset_collection_validator
