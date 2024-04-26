@@ -7,12 +7,16 @@ from src.enums import DatasetSplitName
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
-class TestDatasetOrganizer:
-    def test_extract_categories(self, mock_classification_dataset_organizer: Callable):
-        classification_dataset_organizer = mock_classification_dataset_organizer(
-            dataset_metadata=DatasetTestMetadata(
-                dataset_split_name=DatasetSplitName.TRAIN,
-                dataset_type=InferenceType.CLASSIFICATION,
+class TestClassificationDatasetContextPreparator:
+    def test_extract_categories(
+        self, mock_classification_dataset_context_preparator: Callable
+    ):
+        classification_dataset_organizer = (
+            mock_classification_dataset_context_preparator(
+                dataset_metadata=DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.TRAIN,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                )
             )
         )
 
@@ -28,12 +32,14 @@ class TestDatasetOrganizer:
 
     def test_organizer_creates_category_directories(
         self,
-        mock_classification_dataset_organizer: Callable,
+        mock_classification_dataset_context_preparator: Callable,
     ):
-        classification_dataset_organizer = mock_classification_dataset_organizer(
-            dataset_metadata=DatasetTestMetadata(
-                dataset_split_name=DatasetSplitName.TRAIN,
-                dataset_type=InferenceType.CLASSIFICATION,
+        classification_dataset_organizer = (
+            mock_classification_dataset_context_preparator(
+                dataset_metadata=DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.TRAIN,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                )
             )
         )
         classification_dataset_organizer.organize()
@@ -49,12 +55,14 @@ class TestDatasetOrganizer:
 
     def test_organizer_copies_images_to_correct_directories(
         self,
-        mock_classification_dataset_organizer: Callable,
+        mock_classification_dataset_context_preparator: Callable,
     ):
-        classification_dataset_organizer = mock_classification_dataset_organizer(
-            dataset_metadata=DatasetTestMetadata(
-                dataset_split_name=DatasetSplitName.TRAIN,
-                dataset_type=InferenceType.CLASSIFICATION,
+        classification_dataset_organizer = (
+            mock_classification_dataset_context_preparator(
+                dataset_metadata=DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.TRAIN,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                )
             )
         )
         classification_dataset_organizer.organize()
@@ -80,13 +88,15 @@ class TestDatasetOrganizer:
 
     def test_cleanup_removes_original_images_dir(
         self,
-        mock_classification_dataset_organizer: Callable,
+        mock_classification_dataset_context_preparator: Callable,
         destination_path: str,
     ):
-        classification_dataset_organizer = mock_classification_dataset_organizer(
-            dataset_metadata=DatasetTestMetadata(
-                dataset_split_name=DatasetSplitName.TRAIN,
-                dataset_type=InferenceType.CLASSIFICATION,
+        classification_dataset_organizer = (
+            mock_classification_dataset_context_preparator(
+                dataset_metadata=DatasetTestMetadata(
+                    dataset_split_name=DatasetSplitName.TRAIN,
+                    dataset_type=InferenceType.CLASSIFICATION,
+                )
             )
         )
         original_images_dir = os.path.join(destination_path, "images")
