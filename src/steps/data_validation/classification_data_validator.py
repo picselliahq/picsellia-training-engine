@@ -9,7 +9,7 @@ from src.steps.data_validation.utils.dataset_collection_validator import (
 
 
 @step
-def classification_data_validator(dataset_collection: DatasetCollection):
+def classification_data_validator(dataset_collection: DatasetCollection) -> None:
     """
     Validates a dataset collection for classification tasks.
 
