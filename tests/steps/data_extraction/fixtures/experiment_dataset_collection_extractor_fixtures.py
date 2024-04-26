@@ -1,9 +1,9 @@
 import logging
 from typing import List, Callable
+from uuid import uuid4
 
 import pytest
 from picsellia import Client, Experiment, Project
-from picsellia.exceptions import ResourceConflictError
 
 from src.steps.data_extraction.utils.experiment_dataset_collection_extractor import (
     ExperimentDatasetCollectionExtractor,
@@ -20,11 +20,7 @@ def mock_train_set_split_ratio() -> float:
 def mock_project(
     picsellia_client: Client,
 ) -> Project:
-    try:
-        project = picsellia_client.create_project("test-picsellia-training-engine")
-    except ResourceConflictError:
-        project = picsellia_client.get_project("test-picsellia-training-engine")
-    return project
+    return picsellia_client.create_project(f"test-picsellia-training-engine-{uuid4()}")
 
 
 @pytest.fixture
