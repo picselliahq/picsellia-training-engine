@@ -19,13 +19,13 @@ def training_data_extractor() -> DatasetCollection:
     """
     Extracts datasets from an experiment and prepares them for training.
 
-    This function retrieves the active training context from the pipeline, uses it to initialize a DatasetHandler
+    This function retrieves the active training context from the pipeline, uses it to initialize a ExperimentDatasetCollectionExtractor
     with the current experiment and the proportion of the training split defined in the hyperparameters. It then
     retrieves a DatasetCollection of datasets ready for use in training, validation, and testing, and downloads
     all necessary assets and annotations.
 
     The function is designed to be used as a step in a Picsellia Pipeline, making it part of the automated
-    data preparation and model training process.
+    data preparation and model training pipeline.
 
     Returns:
         - DatasetCollection: A collection of dataset contexts prepared for the training, including training,
@@ -48,6 +48,20 @@ def training_data_extractor() -> DatasetCollection:
 
 @step
 def processing_data_extractor() -> DatasetContext:
+    """
+    Extracts a dataset from a processing job and prepares it for processing.
+
+    This function retrieves the active processing context from the pipeline, uses it to initialize a
+    ProcessingDatasetContextExtractor with the current job and dataset version, and retrieves a DatasetContext
+    for the dataset ready for processing. It then downloads all necessary assets and annotations.
+
+    The function is designed to be used as a step in a Picsellia Pipeline, making it part of the automated
+    data preparation and processing pipeline.
+
+    Returns:
+        - DatasetContext: A dataset context prepared for processing, including all assets and annotations downloaded.
+
+    """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     dataset_context_extractor = ProcessingDatasetContextExtractor(
         job_id=context.job_id, dataset_version=context.input_dataset_version

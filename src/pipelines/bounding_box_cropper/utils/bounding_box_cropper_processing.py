@@ -15,6 +15,10 @@ from src.steps.processing.utils.dataset_version_creation_processing import (
 
 
 class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
+    """
+    This class is used to extract bounding boxes from images in a dataset version for a specific label.
+    """
+
     def __init__(
         self,
         client: Client,
@@ -46,10 +50,21 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         self.label_name_to_extract = label_name_to_extract
 
     def _process_images(self) -> None:
+        """
+        Processes all images in the dataset to extract the bounding boxes for the specified label.
+        Returns:
+
+        """
         for image_filename in os.listdir(self.dataset_context.image_dir):
             self._process_image(image_filename)
 
     def _process_image(self, image_filename: str) -> None:
+        """
+        Processes an image to extract the bounding box for the specified label.
+        If the label is found in the image's annotations, the bounding box is extracted and saved to the processed dataset directory.
+        Args:
+            image_filename (str): The filename of the image to process.
+        """
         image_filepath = os.path.join(self.dataset_context.image_dir, image_filename)
         image = cv2.imread(image_filepath)
         image_id_coco_files = [
@@ -80,6 +95,14 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
     def _extract(
         self, image: np.ndarray, image_filename: str, annotation: Annotation
     ) -> None:
+        """
+        Extracts the bounding box from the image and saves it to the processed dataset directory.
+
+        Args:
+            image (np.ndarray): The image to extract the bounding box from.
+            image_filename (str): The filename of the image.
+            annotation (Annotation): The annotation containing the bounding box.
+        """
         extracted_image = image[
             int(annotation.bbox[1]) : int(annotation.bbox[1]) + int(annotation.bbox[3]),
             int(annotation.bbox[0]) : int(annotation.bbox[0]) + int(annotation.bbox[2]),
@@ -98,6 +121,9 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         cv2.imwrite(processed_image_filepath, extracted_image)
 
     def _add_processed_images_to_dataset_version(self) -> None:
+        """
+        Adds the processed images to the dataset version.
+        """
         for label_folder in os.listdir(self.processed_dataset_context.image_dir):
             full_label_folder_path = os.path.join(
                 self.processed_dataset_context.image_dir, label_folder
@@ -118,6 +144,9 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         conversion_job.wait_for_done()
 
     def process(self) -> None:
+        """
+        Processes the images in the dataset version to extract the bounding boxes for the specified label and adds them to the output dataset version.
+        """
         self._process_images()
         self._add_processed_images_to_dataset_version()
 

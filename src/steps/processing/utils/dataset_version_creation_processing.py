@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import List, Optional, Tuple
 
 from picsellia import Client, DatasetVersion, Data
@@ -6,6 +7,21 @@ from picsellia.types.enums import InferenceType
 
 
 class DatasetVersionCreationProcessing:
+    """
+    Handles the processing of creating a dataset version.
+
+    This class offers all the necessary methods to handle a processing of type DatasetVersionCreation of Picsellia.
+    It allows to upload images to the datalake, add them to a dataset version, and update the dataset version with
+    the necessary information.
+
+    Attributes:
+        client (Client): The Picsellia client to use for the processing.
+        output_dataset_version (DatasetVersion): The dataset version to create.
+        dataset_type (InferenceType): The type of dataset to create.
+        dataset_description (str): The description of the dataset to create.
+        datalake_name (str): The name of the datalake to use for the processing.
+    """
+
     def __init__(
         self,
         client: Client,
@@ -24,6 +40,16 @@ class DatasetVersionCreationProcessing:
     def _upload_data_with_error_manager(
         self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
     ) -> Tuple[Data, List[str]]:
+        """
+        Uploads data to the datalake using an error manager. This method allows to handle errors during the upload process.
+
+        Args:
+            images_to_upload (List[str]): The list of image file paths to upload.
+            images_tags (Optional[List[str]]): The list of tags to associate with the images.
+
+        Returns:
+
+        """
         error_manager = ErrorManager()
         data = self.datalake.upload_data(
             filepaths=images_to_upload, tags=images_tags, error_manager=error_manager
@@ -34,6 +60,16 @@ class DatasetVersionCreationProcessing:
     def _upload_images_to_datalake(
         self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
     ) -> List[Data]:
+        """
+        Uploads images to the datalake.
+
+        Args:
+            images_to_upload (List[str]): The list of image file paths to upload.
+            images_tags (Optional[List[str]]): The list of tags to associate with the images.
+
+        Returns:
+
+        """
         all_uploaded_data = []
         uploaded_data, error_paths = self._upload_data_with_error_manager(
             images_to_upload=images_to_upload, images_tags=images_tags
@@ -49,8 +85,23 @@ class DatasetVersionCreationProcessing:
     def _add_images_to_dataset_version(
         self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
     ) -> None:
+        """
+        Adds images to the dataset version.
+
+        Args:
+            images_to_upload (List[str]): The list of image file paths to upload.
+            images_tags (Optional[List[str]]): The list of tags to associate with the images.
+
+        """
         data = self._upload_images_to_datalake(
             images_to_upload=images_to_upload, images_tags=images_tags
         )
         adding_job = self.output_dataset_version.add_data(data=data)
         adding_job.wait_for_done()
+
+    @abstractmethod
+    def process(self) -> None:
+        """
+        Processes the dataset version creation.
+        """
+        pass

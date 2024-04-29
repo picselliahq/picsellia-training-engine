@@ -5,6 +5,10 @@ from picsellia import DatasetVersion, ModelVersion
 
 
 class TestPicselliaProcessingContext(PicselliaContext):
+    """
+    This class is used to test a processing pipeline without a real job execution on Picsellia (without giving a real job ID).
+    """
+
     def __init__(
         self,
         api_token: Optional[str] = None,
