@@ -35,7 +35,7 @@ def compute_image_tensor(image: Image) -> np.ndarray:
     return model.encode_image(tensor).detach().cpu().numpy()
 
 
-def main(api_token, organization_name, host):
+def main(api_token, organization_name, host, dist_threshold=5):
     client = Client(api_token=api_token, organization_name=organization_name, host=host)
     dataset_name = "test_dataset"
     client.get_dataset(dataset_name).delete()
@@ -53,6 +53,7 @@ def main(api_token, organization_name, host):
         image = fetch_and_prepare_image(data.url)
         if image:
             img_hash = str(phash(image))
+
             if img_hash not in phash_dict:
                 phash_dict[img_hash] = True
                 tensor = compute_image_tensor(image)
@@ -62,8 +63,8 @@ def main(api_token, organization_name, host):
                     data_to_upload.append(data)
                 else:
                     dist, _ = kd_tree.query(tensor)
-                    print(dist)
-                    if dist > 5:  # Example threshold for "new" content
+
+                    if dist > dist_threshold:
                         kd_tree = cKDTree(np.vstack([kd_tree.data, tensor]))
                         tensor_list.append(tensor)
                         data_to_upload.append(data)
@@ -79,6 +80,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upload dataset to Picsellia")
     parser.add_argument(
         "--api_token", required=True, help="API token of the Picsellia account"
+    )
+    parser.add_argument(
+        "--dist_threshold", required=True, help="API token of the Picsellia account"
     )
     parser.add_argument("--organization_name", required=True, help="Organization name")
     parser.add_argument(
