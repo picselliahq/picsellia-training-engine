@@ -8,7 +8,11 @@ from picsellia_annotations.coco import Annotation
 
 from src import Pipeline
 from src import step
+from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.dataset.dataset_context import DatasetContext
+from src.pipelines.bounding_box_cropper.utils.bounding_box_cropper_parameters import (
+    BoundingBoxCropperParameters,
+)
 from src.steps.processing.utils.dataset_version_creation_processing import (
     DatasetVersionCreationProcessing,
 )
@@ -25,7 +29,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         input_dataset_context: DatasetContext,
         label_name_to_extract: str,
         output_dataset_version: DatasetVersion,
-        datalake_name: str,
+        datalake: str,
         destination_path: str,
     ):
         super().__init__(
@@ -37,7 +41,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
             f"(id: {input_dataset_context.dataset_version.id}) "
             f"in dataset '{input_dataset_context.dataset_version.name}' "
             f"with label '{label_name_to_extract}'.",
-            datalake_name=datalake_name,
+            datalake=datalake,
         )
         self.dataset_context = input_dataset_context
         self.processed_dataset_context = DatasetContext(
@@ -67,33 +71,33 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         """
         image_filepath = os.path.join(self.dataset_context.image_dir, image_filename)
         image = cv2.imread(image_filepath)
-        image_id_coco_files = [
-            image_coco_file.id
-            for image_coco_file in self.dataset_context.coco_file.images
-            if image_coco_file.file_name == image_filename
+        coco_files_image_ids = [
+            coco_file_image.id
+            for coco_file_image in self.dataset_context.coco_file.images
+            if coco_file_image.file_name == image_filename
         ]
-        if image_id_coco_files:
-            image_id_coco_file = image_id_coco_files[0]
-            annotations = [
-                annotation
-                for annotation in self.dataset_context.coco_file.annotations
-                if annotation.image_id == image_id_coco_file
+        if coco_files_image_ids:
+            image_id_coco_file = coco_files_image_ids[0]
+            coco_file_annotations = [
+                coco_file_annotation
+                for coco_file_annotation in self.dataset_context.coco_file.annotations
+                if coco_file_annotation.image_id == image_id_coco_file
             ]
-            for annotation in annotations:
+            for coco_file_annotation in coco_file_annotations:
                 label = [
                     category.name
                     for category in self.dataset_context.coco_file.categories
-                    if category.id == annotation.category_id
+                    if category.id == coco_file_annotation.category_id
                 ][0]
                 if label == self.label_name_to_extract:
                     self._extract(
                         image=image,
                         image_filename=image_filename,
-                        annotation=annotation,
+                        coco_file_annotation=coco_file_annotation,
                     )
 
     def _extract(
-        self, image: np.ndarray, image_filename: str, annotation: Annotation
+        self, image: np.ndarray, image_filename: str, coco_file_annotation: Annotation
     ) -> None:
         """
         Extracts the bounding box from the image and saves it to the processed dataset directory.
@@ -101,21 +105,21 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         Args:
             image (np.ndarray): The image to extract the bounding box from.
             image_filename (str): The filename of the image.
-            annotation (Annotation): The annotation containing the bounding box.
+            coco_file_annotation (Annotation): The annotation containing the bounding box.
         """
         extracted_image = image[
-            int(annotation.bbox[1]) : int(annotation.bbox[1]) + int(annotation.bbox[3]),
-            int(annotation.bbox[0]) : int(annotation.bbox[0]) + int(annotation.bbox[2]),
+            int(coco_file_annotation.bbox[1]) : int(coco_file_annotation.bbox[1])
+            + int(coco_file_annotation.bbox[3]),
+            int(coco_file_annotation.bbox[0]) : int(coco_file_annotation.bbox[0])
+            + int(coco_file_annotation.bbox[2]),
         ]
-        if extracted_image.shape[0] == 0 or extracted_image.shape[1] == 0:
-            return
 
         label_folder = os.path.join(
             self.processed_dataset_context.image_dir, self.label_name_to_extract
         )
         os.makedirs(label_folder, exist_ok=True)
 
-        processed_image_filename = f"{os.path.splitext(image_filename)[0]}_{self.label_name_to_extract}_{annotation.id}.{image_filename.split('.')[-1]}"
+        processed_image_filename = f"{os.path.splitext(image_filename)[0]}_{self.label_name_to_extract}_{coco_file_annotation.id}.{image_filename.split('.')[-1]}"
         processed_image_filepath = os.path.join(label_folder, processed_image_filename)
 
         cv2.imwrite(processed_image_filepath, extracted_image)
@@ -153,14 +157,16 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
 
 @step
 def bounding_box_cropper_processing(dataset_context: DatasetContext):
-    context = Pipeline.get_active_context()
+    context: PicselliaProcessingContext[
+        BoundingBoxCropperParameters
+    ] = Pipeline.get_active_context()
 
     processor = BoundingBoxCropperProcessing(
         client=context.client,
         input_dataset_context=dataset_context,
         label_name_to_extract=context.processing_parameters.label_name_to_extract,
         output_dataset_version=context.output_dataset_version,
-        datalake_name=context.processing_parameters.datalake_name,
+        datalake=context.processing_parameters.datalake,
         destination_path=os.path.join(os.getcwd(), str(context.job_id)),
     )
     processor.process()
