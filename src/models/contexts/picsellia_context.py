@@ -156,21 +156,14 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
         organization_id: Optional[str] = None,
         job_id: Optional[str] = None,
     ):
-        # Initialize the Picsellia client from the base class
         super().__init__(api_token, host, organization_id)
 
-        # If job_id is not passed as a parameter, try to get it from the environment variables
-        if not job_id:
-            if not os.environ.get("job_id"):
-                raise ValueError(
-                    "Job ID not provided. Please provide it as an argument or set the 'job_id' environment variable."
-                )
-            else:
-                self.job_id = os.environ.get("job_id")
-        else:
-            self.job_id = job_id
+        self.job_id = job_id or os.environ.get("job_id")
+        if not self.job_id:
+            raise ValueError(
+                "Job ID not provided. Please provide it as an argument or set the 'job_id' environment variable."
+            )
 
-        # Initialize job and context specifics
         self.job = self._initialize_job()
         self.job_type = self.job.sync()["type"]
 
@@ -187,9 +180,10 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
         self.input_dataset_version = self.get_dataset_version(
             self.input_dataset_version_id
         )
-        self.output_dataset_version = self.get_dataset_version(
-            self.output_dataset_version_id
-        )
+        if self._output_dataset_version_id:
+            self.output_dataset_version = self.get_dataset_version(
+                self._output_dataset_version_id
+            )
         if self._model_version_id:
             self.model_version = self.get_model_version()
 
@@ -244,7 +238,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
             ),
         }
 
-    def _initialize_job_context(self) -> Dict:
+    def _initialize_job_context(self) -> Dict[str, Any]:
         """Initializes the context by fetching the necessary information from the job."""
         job_context = self.job.sync()["dataset_version_processing_job"]
 
@@ -262,7 +256,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
         """
         return self.client.get_job_by_id(self.job_id)
 
-    def get_dataset_version(self, dataset_version_id) -> DatasetVersion:
+    def get_dataset_version(self, dataset_version_id: str) -> DatasetVersion:
         """
         Fetches the dataset version from Picsellia using the input dataset version ID.
 
