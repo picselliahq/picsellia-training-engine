@@ -28,20 +28,21 @@ class DatasetVersionCreationProcessing:
         output_dataset_version: DatasetVersion,
         dataset_type: InferenceType,
         dataset_description: str,
-        datalake_name: str = "default",
+        datalake: str = "default",
     ):
         self.client = client
         self.output_dataset_version = output_dataset_version
         self.output_dataset_version.update(
             description=dataset_description, type=dataset_type
         )
-        self.datalake = self.client.get_datalake(name=datalake_name)
+        self.datalake = self.client.get_datalake(name=datalake)
 
     def _upload_data_with_error_manager(
         self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
     ) -> Tuple[Data, List[str]]:
         """
         Uploads data to the datalake using an error manager. This method allows to handle errors during the upload process.
+        It will retry to upload the data that failed to upload.
 
         Args:
             images_to_upload (List[str]): The list of image file paths to upload.
@@ -58,14 +59,18 @@ class DatasetVersionCreationProcessing:
         return data, error_paths
 
     def _upload_images_to_datalake(
-        self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
+        self,
+        images_to_upload: List[str],
+        images_tags: Optional[List[str]] = None,
+        max_retries: int = 5,
     ) -> List[Data]:
         """
-        Uploads images to the datalake.
+        Uploads images to the datalake. This method allows to handle errors during the upload process.
 
         Args:
             images_to_upload (List[str]): The list of image file paths to upload.
             images_tags (Optional[List[str]]): The list of tags to associate with the images.
+            max_retries (int): The maximum number of retries to upload the images.
 
         Returns:
 
@@ -74,16 +79,29 @@ class DatasetVersionCreationProcessing:
         uploaded_data, error_paths = self._upload_data_with_error_manager(
             images_to_upload=images_to_upload, images_tags=images_tags
         )
-        all_uploaded_data.append(uploaded_data)
-        while error_paths:
+        all_uploaded_data.extend(
+            [one_uploaded_data for one_uploaded_data in uploaded_data]
+        )
+        retry_count = 0
+        while error_paths and retry_count < max_retries:
             uploaded_data, error_paths = self._upload_data_with_error_manager(
                 images_to_upload=error_paths, images_tags=images_tags
             )
-            all_uploaded_data.append(uploaded_data)
+            all_uploaded_data.extend(
+                [one_uploaded_data for one_uploaded_data in uploaded_data]
+            )
+            retry_count += 1
+        if error_paths:
+            raise Exception(
+                f"Failed to upload the following images: {error_paths} after {max_retries} retries."
+            )
         return all_uploaded_data
 
     def _add_images_to_dataset_version(
-        self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
+        self,
+        images_to_upload: List[str],
+        images_tags: Optional[List[str]] = None,
+        max_retries: int = 5,
     ) -> None:
         """
         Adds images to the dataset version.
@@ -91,10 +109,13 @@ class DatasetVersionCreationProcessing:
         Args:
             images_to_upload (List[str]): The list of image file paths to upload.
             images_tags (Optional[List[str]]): The list of tags to associate with the images.
+            max_retries (int): The maximum number of retries to upload the images.
 
         """
         data = self._upload_images_to_datalake(
-            images_to_upload=images_to_upload, images_tags=images_tags
+            images_to_upload=images_to_upload,
+            images_tags=images_tags,
+            max_retries=max_retries,
         )
         adding_job = self.output_dataset_version.add_data(data=data)
         adding_job.wait_for_done()
