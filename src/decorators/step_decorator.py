@@ -174,14 +174,14 @@ class Step:
 
 
 @overload
-def step(_func: F) -> Step:
+def step(_func: F) -> Step:  # pragma: no cover
     ...
 
 
 @overload
 def step(
     *, name: Optional[str] = None, continue_on_failure: bool = False
-) -> Callable[[F], Step]:
+) -> Callable[[F], Step]:  # pragma: no cover
     ...
 
 

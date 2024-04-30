@@ -408,7 +408,7 @@ class Pipeline:
 
 
 @overload
-def pipeline(_func: F) -> Pipeline:
+def pipeline(_func: F) -> Pipeline:  # pragma: no cover
     ...
 
 
@@ -419,7 +419,7 @@ def pipeline(
     name: Optional[str] = None,
     log_folder_path: Optional[str] = None,
     remove_logs_on_completion: bool = True,
-) -> Callable[[F], Pipeline]:
+) -> Callable[[F], Pipeline]:  # pragma: no cover
     ...
 
 
