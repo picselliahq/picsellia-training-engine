@@ -44,7 +44,7 @@ class DatasetContext:
             dataset_name (str): The name of the dataset.
             dataset_version (DatasetVersion): The dataset version object.
             multi_asset (MultiAsset): The collection of assets for the dataset.
-            labelmap (Dict): The mapping of label names to ids.
+            labelmap (dict): The mapping of label names to ids.
             destination_path (str): The root directory for storing the dataset locally.
         """
         self.dataset_name = dataset_name
