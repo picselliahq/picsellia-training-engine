@@ -6,8 +6,8 @@ from src.models.contexts.picsellia_context import (
 )
 from src.models.dataset.dataset_collection import DatasetCollection
 from src.models.dataset.dataset_context import DatasetContext
-from src.models.steps.data_extraction.training.experiment_dataset_collection_extractor import (
-    ExperimentDatasetCollectionExtractor,
+from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
+    TrainingDatasetCollectionExtractor,
 )
 from src.models.steps.data_extraction.processing.processing_dataset_context_extractor import (
     ProcessingDatasetContextExtractor,
@@ -37,7 +37,7 @@ def training_data_extractor() -> DatasetCollection:
 
     """
     context: PicselliaTrainingContext = Pipeline.get_active_context()
-    dataset_collection_extractor = ExperimentDatasetCollectionExtractor(
+    dataset_collection_extractor = TrainingDatasetCollectionExtractor(
         experiment=context.experiment,
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )

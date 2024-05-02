@@ -5,8 +5,8 @@ from uuid import uuid4
 import pytest
 from picsellia import Client, Experiment, Project
 
-from src.models.steps.data_extraction.training.experiment_dataset_collection_extractor import (
-    ExperimentDatasetCollectionExtractor,
+from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
+    TrainingDatasetCollectionExtractor,
 )
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
@@ -50,9 +50,9 @@ def mock_experiment_dataset_collection_extractor(
     def _mock_dataset_handler(
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
-    ) -> ExperimentDatasetCollectionExtractor:
+    ) -> TrainingDatasetCollectionExtractor:
         experiment = mock_experiment(experiment_name, datasets)
-        return ExperimentDatasetCollectionExtractor(
+        return TrainingDatasetCollectionExtractor(
             experiment, mock_train_set_split_ratio
         )
 

@@ -9,7 +9,7 @@ from src.models.dataset.dataset_collection import DatasetCollection
 from src.models.dataset.dataset_context import DatasetContext
 
 
-class ExperimentDatasetCollectionExtractor:
+class TrainingDatasetCollectionExtractor:
     """
     Manages dataset versions attached to an experiment and prepares dataset collections for processing.
 
