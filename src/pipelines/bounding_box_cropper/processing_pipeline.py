@@ -4,21 +4,23 @@ from src import pipeline
 from src.models.contexts.picsellia_context import (
     PicselliaProcessingContext,
 )
-from src.models.parameters.processing.bounding_box_cropper_parameters import (
-    BoundingBoxCropperParameters,
+from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
+    ProcessingBoundingBoxCropperParameters,
 )
-from src.steps.data_extraction.data_extractor import processing_data_extractor
-from src.steps.data_validation.processing.bounding_box_cropper_data_validator import (
+from src.steps.data_extraction.processing.processing_data_extractor import (
+    processing_data_extractor,
+)
+from src.steps.data_validation.processing.processing_bounding_box_cropper_data_validator import (
     bounding_box_cropper_data_validator,
 )
-from src.steps.processing.bounding_box_cropper_processing import (
+from src.steps.processing.dataset_version_creation.bounding_box_cropper_processing import (
     bounding_box_cropper_processing,
 )
 
 
-def get_context() -> PicselliaProcessingContext[BoundingBoxCropperParameters]:
+def get_context() -> PicselliaProcessingContext[ProcessingBoundingBoxCropperParameters]:
     return PicselliaProcessingContext(
-        processing_parameters_cls=BoundingBoxCropperParameters,
+        processing_parameters_cls=ProcessingBoundingBoxCropperParameters,
     )
 
 

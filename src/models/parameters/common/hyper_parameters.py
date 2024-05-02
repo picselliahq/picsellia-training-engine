@@ -1,6 +1,6 @@
 import logging
 from picsellia.types.schemas import LogDataType  # type: ignore
-from src.models.parameters.parameters import Parameters
+from src.models.parameters.common.parameters import Parameters
 
 logger = logging.getLogger("picsellia")
 

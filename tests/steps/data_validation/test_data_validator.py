@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from picsellia.types.enums import InferenceType
 
-from src.steps.data_validation.data_validator import training_data_validator
+from src.steps.data_validation.common.data_validator import training_data_validator
 
 
 class TestDataValidator:

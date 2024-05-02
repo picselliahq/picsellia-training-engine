@@ -1,7 +1,7 @@
 from src import step
 from src.enums import DatasetSplitName
 from src.models.dataset.dataset_collection import DatasetCollection
-from src.models.steps.data_preparation.classification_dataset_context_preparator import (
+from src.models.steps.data_preparation.common.classification_dataset_context_preparator import (
     ClassificationDatasetContextPreparator,
 )
 

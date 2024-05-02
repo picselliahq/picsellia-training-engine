@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from picsellia.types.enums import InferenceType
 
-from src.steps.data_validation.classification_data_validator import (
+from src.steps.data_validation.common.classification_data_validator import (
     classification_data_validator,
 )
 

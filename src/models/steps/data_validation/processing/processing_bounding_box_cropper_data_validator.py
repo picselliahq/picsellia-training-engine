@@ -6,7 +6,7 @@ from src.models.steps.data_validation.common.object_detection_dataset_context_va
 from picsellia import Client
 
 
-class BoundingBoxCropperDataValidator(ObjectDetectionDatasetContextValidator):
+class ProcessingBoundingBoxCropperDataValidator(ObjectDetectionDatasetContextValidator):
     def __init__(
         self,
         dataset_context: DatasetContext,

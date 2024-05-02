@@ -1,7 +1,7 @@
-from src.models.parameters.parameters import Parameters
+from src.models.parameters.common.parameters import Parameters
 
 
-class BoundingBoxCropperParameters(Parameters):
+class ProcessingBoundingBoxCropperParameters(Parameters):
     def __init__(self, log_data):
         super().__init__(log_data)
 

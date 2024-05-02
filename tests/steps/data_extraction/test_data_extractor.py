@@ -7,7 +7,9 @@ from src.models.parameters.augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
 from src.models.parameters.hyper_parameters import UltralyticsHyperParameters
-from src.steps.data_extraction.data_extractor import training_data_extractor
+from src.steps.data_extraction.training.training_data_extractor import (
+    training_data_extractor,
+)
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 from picsellia.types.enums import InferenceType

@@ -2,7 +2,7 @@ from typing import Callable
 
 from picsellia.types.enums import InferenceType
 
-from src.steps.data_preparation.classification_data_preparator import (
+from src.steps.data_preparation.common.classification_data_preparator import (
     classification_data_preparator,
 )
 

@@ -4,15 +4,17 @@ from src import pipeline
 from src.models.contexts.picsellia_context import (
     PicselliaTrainingContext,
 )
-from src.models.parameters.augmentation_parameters import (
+from src.models.parameters.common.augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
-from src.models.parameters.hyper_parameters import UltralyticsHyperParameters
-from src.steps.data_extraction.data_extractor import training_data_extractor
-from src.steps.data_preparation.classification_data_preparator import (
+from src.models.parameters.common.hyper_parameters import UltralyticsHyperParameters
+from src.steps.data_extraction.training.training_data_extractor import (
+    training_data_extractor,
+)
+from src.steps.data_preparation.common.classification_data_preparator import (
     classification_data_preparator,
 )
-from src.steps.data_validation.classification_data_validator import (
+from src.steps.data_validation.common.classification_data_validator import (
     classification_data_validator,
 )
 

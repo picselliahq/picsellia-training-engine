@@ -4,8 +4,8 @@ from src import Pipeline
 from src import step
 from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.dataset.dataset_context import DatasetContext
-from src.models.parameters.processing.bounding_box_cropper_parameters import (
-    BoundingBoxCropperParameters,
+from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
+    ProcessingBoundingBoxCropperParameters,
 )
 from src.models.steps.processing.bounding_box_cropper_processing import (
     BoundingBoxCropperProcessing,
@@ -15,7 +15,7 @@ from src.models.steps.processing.bounding_box_cropper_processing import (
 @step
 def bounding_box_cropper_processing(dataset_context: DatasetContext):
     context: PicselliaProcessingContext[
-        BoundingBoxCropperParameters
+        ProcessingBoundingBoxCropperParameters
     ] = Pipeline.get_active_context()
 
     processor = BoundingBoxCropperProcessing(
