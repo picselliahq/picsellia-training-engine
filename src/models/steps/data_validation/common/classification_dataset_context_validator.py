@@ -1,6 +1,6 @@
 import os
 
-from src.steps.data_validation.utils.dataset_collection_validator import (
+from src.models.steps.data_validation.common.dataset_collection_validator import (
     DatasetContextValidator,
 )
 

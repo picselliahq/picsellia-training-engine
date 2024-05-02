@@ -1,7 +1,7 @@
 from typing import Type
 
 from src.models.dataset.dataset_collection import DatasetCollection
-from src.steps.data_validation.utils.dataset_context_validator import (
+from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
 

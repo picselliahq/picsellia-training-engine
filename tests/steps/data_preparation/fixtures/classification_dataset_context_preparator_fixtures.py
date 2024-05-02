@@ -1,7 +1,7 @@
 from typing import Callable
 
 import pytest
-from src.steps.data_preparation.utils.classification_dataset_context_preparator import (
+from src.models.steps.data_preparation.classification_dataset_context_preparator import (
     ClassificationDatasetContextPreparator,
 )
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata

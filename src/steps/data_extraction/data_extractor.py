@@ -6,10 +6,10 @@ from src.models.contexts.picsellia_context import (
 )
 from src.models.dataset.dataset_collection import DatasetCollection
 from src.models.dataset.dataset_context import DatasetContext
-from src.steps.data_extraction.utils.experiment_dataset_collection_extractor import (
+from src.models.steps.data_extraction.training.experiment_dataset_collection_extractor import (
     ExperimentDatasetCollectionExtractor,
 )
-from src.steps.data_extraction.utils.processing_dataset_context_extractor import (
+from src.models.steps.data_extraction.processing.processing_dataset_context_extractor import (
     ProcessingDatasetContextExtractor,
 )
 

@@ -4,13 +4,13 @@ import pytest
 
 from src.models.dataset.dataset_collection import DatasetCollection
 from src.models.dataset.dataset_context import DatasetContext
-from src.steps.data_validation.utils.classification_dataset_context_validator import (
+from src.models.steps.data_validation.common.classification_dataset_context_validator import (
     ClassificationDatasetContextValidator,
 )
-from src.steps.data_validation.utils.dataset_collection_validator import (
+from src.models.steps.data_validation.common.dataset_collection_validator import (
     DatasetCollectionValidator,
 )
-from src.steps.data_validation.utils.dataset_context_validator import (
+from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
 

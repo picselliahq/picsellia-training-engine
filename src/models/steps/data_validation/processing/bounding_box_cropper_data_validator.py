@@ -1,11 +1,5 @@
-from src import Pipeline
-from src import step
-from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.dataset.dataset_context import DatasetContext
-from src.pipelines.bounding_box_cropper.utils.bounding_box_cropper_parameters import (
-    BoundingBoxCropperParameters,
-)
-from src.steps.data_validation.utils.object_detection_dataset_context_validator import (
+from src.models.steps.data_validation.common.object_detection_dataset_context_validator import (
     ObjectDetectionDatasetContextValidator,
 )
 
@@ -54,20 +48,3 @@ class BoundingBoxCropperDataValidator(ObjectDetectionDatasetContextValidator):
         super().validate()
         self._validate_label_name_to_extract()
         self._validate_datalake()
-
-
-@step
-def bounding_box_cropper_data_validator(
-    dataset_context: DatasetContext,
-) -> None:
-    context: PicselliaProcessingContext[
-        BoundingBoxCropperParameters
-    ] = Pipeline.get_active_context()
-
-    validator = BoundingBoxCropperDataValidator(
-        dataset_context=dataset_context,
-        client=context.client,
-        label_name_to_extract=context.processing_parameters.label_name_to_extract,
-        datalake=context.processing_parameters.datalake,
-    )
-    validator.validate()

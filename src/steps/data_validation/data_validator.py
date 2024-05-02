@@ -1,7 +1,7 @@
 from src import step
 from src.models.dataset.dataset_collection import DatasetCollection
 from src.models.dataset.dataset_context import DatasetContext
-from src.steps.data_validation.utils.dataset_collection_validator import (
+from src.models.steps.data_validation.common.dataset_collection_validator import (
     DatasetCollectionValidator,
     DatasetContextValidator,
 )
