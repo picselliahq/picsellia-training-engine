@@ -7,7 +7,7 @@ from src.models.dataset.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
     ProcessingBoundingBoxCropperParameters,
 )
-from src.models.steps.processing.bounding_box_cropper_processing import (
+from src.models.steps.processing.dataset_version_creation.bounding_box_cropper_processing import (
     BoundingBoxCropperProcessing,
 )
 
