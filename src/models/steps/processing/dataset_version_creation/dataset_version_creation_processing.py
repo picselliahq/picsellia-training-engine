@@ -17,9 +17,7 @@ class DatasetVersionCreationProcessing:
     Attributes:
         client (Client): The Picsellia client to use for the processing.
         output_dataset_version (DatasetVersion): The dataset version to create.
-        dataset_type (InferenceType): The type of dataset to create.
-        dataset_description (str): The description of the dataset to create.
-        datalake_name (str): The name of the datalake to use for the processing.
+        datalake(Datalake): The Datalake to use for the processing.
     """
 
     def __init__(
