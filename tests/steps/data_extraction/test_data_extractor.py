@@ -3,18 +3,20 @@ from unittest.mock import patch
 
 from src import Pipeline
 from src.enums import DatasetSplitName
-from src.models.parameters.augmentation_parameters import (
+from src.models.parameters.common.augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
-from src.models.parameters.hyper_parameters import UltralyticsHyperParameters
-from src.steps.data_extraction.data_extractor import data_extractor
+from src.models.parameters.common.hyper_parameters import UltralyticsHyperParameters
+from src.steps.data_extraction.training.training_data_extractor import (
+    training_data_extractor,
+)
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 from picsellia.types.enums import InferenceType
 
 
-class TestDataExtractor:
-    def test_data_extractor(self, mock_picsellia_training_context: Callable):
+class TestTrainingDataExtractor:
+    def test_training_data_extractor(self, mock_picsellia_training_context: Callable):
         picsellia_training_context = mock_picsellia_training_context(
             experiment_name="test_experiment",
             datasets_metadata=[
@@ -28,5 +30,5 @@ class TestDataExtractor:
         )
         with patch.object(Pipeline, "get_active_context") as mock_get_active_context:
             mock_get_active_context.return_value = picsellia_training_context
-            dataset_collection = data_extractor.entrypoint()
+            dataset_collection = training_data_extractor.entrypoint()
             assert dataset_collection is not None

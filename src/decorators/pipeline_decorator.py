@@ -1,6 +1,6 @@
 import ast
 import inspect
-from typing import Optional, Union, Callable, TypeVar, Any, List, Tuple, Dict
+from typing import Optional, Union, Callable, TypeVar, Any, List, Tuple, Dict, overload
 
 from tabulate import tabulate  # type: ignore
 
@@ -8,7 +8,7 @@ from src.enums import PipelineState, StepState
 from src.logger import LoggerManager
 from src.models.steps.step_metadata import StepMetadata
 
-F = TypeVar("F", bound=Callable[..., None])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class Pipeline:
@@ -405,6 +405,22 @@ class Pipeline:
             )
 
         Pipeline.STEPS_REGISTRY[step_name] = step_metadata
+
+
+@overload
+def pipeline(_func: F) -> Pipeline:  # pragma: no cover
+    ...
+
+
+@overload
+def pipeline(
+    *,
+    context: Optional[Any] = None,
+    name: Optional[str] = None,
+    log_folder_path: Optional[str] = None,
+    remove_logs_on_completion: bool = True,
+) -> Callable[[F], Pipeline]:  # pragma: no cover
+    ...
 
 
 def pipeline(

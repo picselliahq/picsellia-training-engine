@@ -1,13 +1,13 @@
 import logging
 import time
 import uuid
-from typing import Callable, Union, TypeVar, Optional, Any
+from typing import Callable, Union, TypeVar, Optional, Any, overload
 
 from src import Pipeline
 from src.enums import StepState, PipelineState
 from src.models.steps.step_metadata import StepMetadata
 
-F = TypeVar("F", bound=Callable[..., None])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class Step:
@@ -171,6 +171,18 @@ class Step:
         return pipeline.logger_manager.prepare_logger(
             log_file_path=self.metadata.log_file_path
         )
+
+
+@overload
+def step(_func: F) -> Step:  # pragma: no cover
+    ...
+
+
+@overload
+def step(
+    *, name: Optional[str] = None, continue_on_failure: bool = False
+) -> Callable[[F], Step]:  # pragma: no cover
+    ...
 
 
 def step(

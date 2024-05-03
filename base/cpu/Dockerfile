@@ -10,11 +10,10 @@ RUN if [ "$PYTHON_VERSION" = "3.10" ]; then \
         python${PYTHON_VERSION} -m ensurepip --upgrade && python${PYTHON_VERSION} -m pip install -U setuptools; \
     fi
 
-RUN pip install uv
+RUN python${PYTHON_VERSION} -m pip install uv
 
 COPY ./base /experiment
 
-RUN ln -s /experiment/run.sh /usr/bin/run
-
-RUN chmod +x /experiment/run.sh
-RUN chown -R 42420:42420 /experiment
+RUN ln -s /experiment/run.sh /usr/bin/run && \
+    chmod +x /experiment/run.sh && \
+    chown -R 42420:42420 /experiment

@@ -67,14 +67,13 @@ class DatasetCollection:
         """
         return iter([self.train, self.val, self.test])
 
-    def download(self):
+    def download_assets(self):
         """
-        Downloads the assets and COCO files for all dataset contexts in the collection.
+        Downloads the assets for all dataset contexts in the collection.
 
         Iterates over each dataset context in the collection and invokes its methods
-        to download assets and COCO files. This is a collective operation that appliess
+        to download assets. This is a collective operation that appliess
         to the training, validation, and testing splits.
         """
         for dataset_context in self:
             dataset_context.download_assets()
-            dataset_context.download_coco_file()

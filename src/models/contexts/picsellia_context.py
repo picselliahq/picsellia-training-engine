@@ -1,12 +1,21 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Type, Optional, Any, Dict
+from typing import Type, Optional, Any, Dict, Union, TypeVar, Generic
 
 import picsellia  # type: ignore
+from picsellia import DatasetVersion, ModelVersion
 from picsellia import Experiment  # type: ignore
+from picsellia.types.enums import ProcessingType
 
-from src.models.parameters.augmentation_parameters import AugmentationParameters
-from src.models.parameters.hyper_parameters import HyperParameters
+from src.models.parameters.common.augmentation_parameters import AugmentationParameters
+from src.models.parameters.common.hyper_parameters import HyperParameters
+from src.models.parameters.common.parameters import Parameters
+
+TParameters = TypeVar("TParameters", bound=Parameters)
+THyperParameters = TypeVar("THyperParameters", bound=HyperParameters)
+TAugmentationParameters = TypeVar(
+    "TAugmentationParameters", bound=AugmentationParameters
+)
 
 
 class PicselliaContext(ABC):
@@ -56,7 +65,7 @@ class PicselliaContext(ABC):
         color_code = "\033[33m" if suffix else "\033[34m"
         return f"{color_code}{value}\033[0m{suffix}"
 
-    def _process_parameters(self, parameters_dict: dict, defaulted_keys: set) -> dict:
+    def _process_parameters(self, parameters_dict: Dict, defaulted_keys: set) -> Dict:
         """
         Processes parameters by applying color coding and suffixes to their values based on whether they are default.
 
@@ -79,11 +88,13 @@ class PicselliaContext(ABC):
         pass
 
 
-class PicselliaTrainingContext(PicselliaContext):
+class PicselliaTrainingContext(
+    PicselliaContext, Generic[THyperParameters, TAugmentationParameters]
+):
     def __init__(
         self,
-        hyperparameters_cls: Type[HyperParameters],
-        augmentation_parameters_cls: Type[AugmentationParameters],
+        hyperparameters_cls: Type[THyperParameters],
+        augmentation_parameters_cls: Type[TAugmentationParameters],
         api_token: Optional[str] = None,
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
@@ -94,7 +105,8 @@ class PicselliaTrainingContext(PicselliaContext):
 
         if not self.experiment_id:
             raise ValueError(
-                "Experiment ID not provided. Please provide it as an argument or set the 'experiment_id' environment variable."
+                "Experiment ID not provided. Please provide it as an argument "
+                "or set the 'experiment_id' environment variable."
             )
 
         self.experiment = self._initialize_experiment()
@@ -135,31 +147,49 @@ class PicselliaTrainingContext(PicselliaContext):
         return self.client.get_experiment_by_id(self.experiment_id)
 
 
-class PicselliaProcessingContext(PicselliaContext):
+class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
     def __init__(
         self,
+        processing_parameters_cls: Type[TParameters],
         api_token: Optional[str] = None,
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
         job_id: Optional[str] = None,
     ):
-        # Initialize the Picsellia client from the base class
         super().__init__(api_token, host, organization_id)
 
-        # If job_id is not passed as a parameter, try to get it from the environment variables
         self.job_id = job_id or os.environ.get("job_id")
         if not self.job_id:
             raise ValueError(
                 "Job ID not provided. Please provide it as an argument or set the 'job_id' environment variable."
             )
 
-        # Initialize job and context specifics
         self.job = self._initialize_job()
-        self._model_version_id: Optional[str] = None
-        self._input_dataset_version_id: Optional[str] = None
-        self._output_dataset_version_id: Optional[str] = None
+        self.job_type = self.job.sync()["type"]
 
-        self._initialize_context()
+        self.job_context = self._initialize_job_context()
+
+        self._model_version_id = self.job_context.get("model_version_id")
+        self._input_dataset_version_id = self.job_context.get(
+            "input_dataset_version_id"
+        )
+        self._output_dataset_version_id = self.job_context.get(
+            "output_dataset_version_id"
+        )
+
+        self.input_dataset_version = self.get_dataset_version(
+            self.input_dataset_version_id
+        )
+        if self._output_dataset_version_id:
+            self.output_dataset_version = self.get_dataset_version(
+                self._output_dataset_version_id
+            )
+        if self._model_version_id:
+            self.model_version = self.get_model_version()
+
+        self.processing_parameters = processing_parameters_cls(
+            log_data=self.job_context["parameters"]
+        )
 
     @property
     def input_dataset_version_id(self) -> str:
@@ -170,19 +200,26 @@ class PicselliaProcessingContext(PicselliaContext):
         return self._input_dataset_version_id
 
     @property
-    def model_version_id(self) -> str:
-        if not self._model_version_id:
+    def model_version_id(self) -> Union[str, None]:
+        if (
+            not self._model_version_id
+            and self.job_type == ProcessingType.PRE_ANNOTATION
+        ):
             raise ValueError(
-                "There's not model version ID available. Please ensure the job is correctly configured."
+                "Model version ID not found. Please ensure the job is correctly configured."
             )
+
         return self._model_version_id
 
     @property
-    def output_dataset_version_id(self) -> str:
+    def output_dataset_version_id(self) -> Union[str, None]:
         if not self._output_dataset_version_id:
-            raise ValueError(
-                "There's not output dataset version ID available. Please ensure the job is correctly configured."
-            )
+            if self.job_type == ProcessingType.DATASET_VERSION_CREATION:
+                raise ValueError(
+                    "Output dataset version ID not found. Please ensure the job is correctly configured."
+                )
+            else:
+                self._output_dataset_version_id = self._input_dataset_version_id
         return self._output_dataset_version_id
 
     def to_dict(self) -> Dict[str, Any]:
@@ -195,20 +232,17 @@ class PicselliaProcessingContext(PicselliaContext):
             "model_version_id": self.model_version_id,
             "input_dataset_version_id": self.input_dataset_version_id,
             "output_dataset_version_id": self.output_dataset_version_id,
+            "processing_parameters": self._process_parameters(
+                parameters_dict=self.processing_parameters.to_dict(),
+                defaulted_keys=self.processing_parameters.defaulted_keys,
+            ),
         }
 
-    def _initialize_context(self) -> None:
+    def _initialize_job_context(self) -> Dict[str, Any]:
         """Initializes the context by fetching the necessary information from the job."""
-        context = self.job.sync()["dataset_version_processing_job"]
+        job_context = self.job.sync()["dataset_version_processing_job"]
 
-        self._model_version_id = context.get("model_version_id")
-        self._input_dataset_version_id = context.get("input_dataset_version_id")
-        self._output_dataset_version_id = context.get("output_dataset_version_id")
-
-        if not self.model_version_id or not self.input_dataset_version_id:
-            raise ValueError(
-                "Failed to retrieve necessary context from the job. Please ensure the job is correctly configured."
-            )
+        return job_context
 
     def _initialize_job(self) -> picsellia.Job:
         """
@@ -221,3 +255,27 @@ class PicselliaProcessingContext(PicselliaContext):
             The job fetched from Picsellia.
         """
         return self.client.get_job_by_id(self.job_id)
+
+    def get_dataset_version(self, dataset_version_id: str) -> DatasetVersion:
+        """
+        Fetches the dataset version from Picsellia using the input dataset version ID.
+
+        The DatasetVersion, in a Picsellia processing context,
+        is the entity that contains all the information needed to process a dataset.
+
+        Returns:
+            The dataset version fetched from Picsellia.
+        """
+        return self.client.get_dataset_version_by_id(dataset_version_id)
+
+    def get_model_version(self) -> ModelVersion:
+        """
+        Fetches the model version from Picsellia using the model version ID.
+
+        The ModelVersion, in a Picsellia processing context,
+        is the entity that contains all the information needed to process a model.
+
+        Returns:
+            The model version fetched from Picsellia.
+        """
+        return self.client.get_model_version_by_id(self.model_version_id)

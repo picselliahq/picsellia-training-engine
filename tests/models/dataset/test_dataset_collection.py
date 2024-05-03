@@ -16,13 +16,10 @@ class TestDatasetCollection:
         dataset_collection = mock_dataset_collection(dataset_type=dataset_type)
         with patch(
             "src.models.dataset.dataset_context.DatasetContext.download_assets"
-        ) as mocked_download_assets, patch(
-            "src.models.dataset.dataset_context.DatasetContext.download_coco_file"
-        ) as mocked_download_coco_file:
-            dataset_collection.download()
+        ) as mocked_download_assets:
+            dataset_collection.download_assets()
 
             assert mocked_download_assets.call_count == 3
-            assert mocked_download_coco_file.call_count == 3
 
     @pytest.mark.parametrize("dataset_type", [InferenceType.CLASSIFICATION])
     def test_getitem(

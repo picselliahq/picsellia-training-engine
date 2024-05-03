@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import List
+
 from picsellia import Experiment
 from picsellia.types.enums import LogType
 from ultralytics.models.yolo.classify import (
@@ -11,49 +14,53 @@ from src import step, Pipeline
 
 def on_train_epoch_end(trainer: ClassificationTrainer, experiment: Experiment):
     """Logs current training progress."""
-    for k, v in trainer.label_loss_items(trainer.tloss, prefix="train").items():
-        experiment.log(k, float(v), LogType.LINE)
-    for k, v in trainer.lr.items():
-        experiment.log(k, float(v), LogType.LINE)
+    for metric_name, loss_value in trainer.label_loss_items(
+        trainer.tloss, prefix="train"
+    ).items():
+        experiment.log(metric_name, float(loss_value), LogType.LINE)
+    for lr_name, lr_value in trainer.lr.items():
+        experiment.log(lr_name, float(lr_value), LogType.LINE)
 
 
 def on_fit_epoch_end(trainer: ClassificationTrainer, experiment: Experiment):
     """Reports model information to logger at the end of an epoch."""
     experiment.log("epoch_time(s)", float(trainer.epoch_time), LogType.LINE)
-    for k, v in trainer.metrics.items():
-        experiment.log(k, float(v), LogType.LINE)
+    for metric_name, metric_value in trainer.metrics.items():
+        experiment.log(metric_name, float(metric_value), LogType.LINE)
     if trainer.epoch == 0:
         from ultralytics.utils.torch_utils import model_info_for_loggers
 
-        for k, v in model_info_for_loggers(trainer).items():
-            experiment.log(k, v, LogType.VALUE)
+        for info_key, info_value in model_info_for_loggers(trainer).items():
+            experiment.log(info_key, info_value, LogType.VALUE)
 
 
 def on_val_end(validator: ClassificationValidator, experiment: Experiment):
     """Logs validation results including labels and predictions."""
-    files = sorted(validator.save_dir.glob("val*.jpg"))
-    for f in files:
-        experiment.log(str(f.stem), str(f), LogType.IMAGE)
+    validation_images_directory = Path(validator.save_dir)
+    image_files = sorted(validation_images_directory.glob("val*.jpg"))
+    for image_file in image_files:
+        experiment.log(image_file.stem, str(image_file), LogType.IMAGE)
 
 
 def on_train_end(trainer: ClassificationTrainer, experiment: Experiment):
     """Logs final model and its name on training completion."""
-    # Log final results, CM matrix + PR plots
-    files = [
+    model_output_directory = Path(trainer.save_dir)
+    visualization_files = [
         "results.png",
         "confusion_matrix.png",
         "confusion_matrix_normalized.png",
-        *(f"{x}_curve.png" for x in ("F1", "PR", "P", "R")),
+        *(f"{metric}_curve.png" for metric in ("F1", "PR", "P", "R")),
     ]
-    files = [
-        (trainer.save_dir / f) for f in files if (trainer.save_dir / f).exists()
-    ]  # filter
-    for f in files:
-        experiment.log(str(f.stem), str(f), LogType.IMAGE)
+    existing_files: List[Path] = [
+        model_output_directory / file_name
+        for file_name in visualization_files
+        if (model_output_directory / file_name).exists()
+    ]
+    for file_path in existing_files:
+        experiment.log(file_path.stem, str(file_path), LogType.IMAGE)
     # Report final metrics
-    for k, v in trainer.validator.metrics.results_dict.items():
-        experiment.log(f"final_val/{k}", v, LogType.VALUE)
-    # Log the final model
+    for metric_key, metric_value in trainer.validator.metrics.results_dict.items():
+        experiment.log(f"final_val/{metric_key}", metric_value, LogType.VALUE)
 
 
 @step

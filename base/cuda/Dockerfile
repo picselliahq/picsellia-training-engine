@@ -15,14 +15,13 @@ RUN apt-get update && apt-get upgrade -y && \
         python${PYTHON_VERSION}-full python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-distutils && \
     rm -rf /var/lib/apt/lists/*
 
-
-RUN if [ "$PYTHON_VERSION" = "3.10" ]; then \
-        python${PYTHON_VERSION} -m ensurepip --upgrade && python${PYTHON_VERSION} -m pip install -U setuptools; \
-    elif [ "$PYTHON_VERSION" = "3.8" ]; then \
-        python${PYTHON_VERSION} -m pip install --upgrade pip && pip3 install -U setuptools; \
+RUN if [ "$PYTHON_VERSION" = "3.8" ]; then \
+        python${PYTHON_VERSION} -m pip install --upgrade pip && python${PYTHON_VERSION} -m pip install -U setuptools; \
+    else \
+        python${PYTHON_VERSION} -m ensurepip --upgrade && python${PYTHON_VERSION} -m pip install --upgrade pip && python${PYTHON_VERSION} -m pip install -U setuptools; \
     fi
 
-RUN pip install uv
+RUN python${PYTHON_VERSION} -m pip install uv
 
 ENV PATH="/usr/local/cuda/bin:${PATH}" \
     LD_LIBRARY_PATH="/usr/local/cuda/lib:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
