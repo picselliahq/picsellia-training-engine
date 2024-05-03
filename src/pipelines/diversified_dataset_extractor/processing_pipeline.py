@@ -1,5 +1,6 @@
 import requests
 import numpy as np
+import math
 import torch
 from PIL import Image, ImageOps
 from tqdm import tqdm
@@ -37,41 +38,73 @@ def compute_image_tensor(image: Image) -> np.ndarray:
 
 def main(api_token, organization_name, host, dist_threshold=5):
     client = Client(api_token=api_token, organization_name=organization_name, host=host)
-    dataset_name = "test_dataset"
-    client.get_dataset(dataset_name).delete()
-    dataset = client.create_dataset(dataset_name)
-    version = dataset.create_version("initial")
-    datalake = client.get_datalake(name="RTE")
-    data_list = datalake.list_data()
+
+    dataset = client.get_dataset("Test_PicselliaTeam")
+    version = dataset.create_version("diversified_datalake")
+    datalake_batch_size = 1000
+    datalake_current_offset = 0
+
+    datalake = client.get_datalake()
+    datalake_size = datalake.sync()["size"]
 
     phash_dict = {}
     tensor_list = []
     kd_tree = None
-    data_to_upload = []
 
-    for data in tqdm(data_list, desc="Processing Images"):
-        image = fetch_and_prepare_image(data.url)
-        if image:
-            img_hash = str(phash(image))
+    skipped_asset_number = 0
 
-            if img_hash not in phash_dict:
-                phash_dict[img_hash] = True
-                tensor = compute_image_tensor(image)
-                if kd_tree is None:
-                    kd_tree = cKDTree(tensor)
-                    tensor_list.append(tensor)
-                    data_to_upload.append(data)
+    while datalake_current_offset < datalake_size:
+        print(
+            f"Starting datalake batch {datalake_current_offset/datalake_batch_size + 1}/{math.ceil(datalake_size/datalake_batch_size)}"
+        )
+        try:
+            data_list = datalake.list_data(
+                limit=datalake_batch_size, offset=datalake_current_offset
+            )
+        except Exception:
+            data_list = datalake.list_data(
+                limit=datalake_batch_size, offset=datalake_current_offset
+            )
+
+        batch_to_upload = []
+
+        for data in tqdm(data_list, desc="Processing Images"):
+            try:
+                image = fetch_and_prepare_image(data.url)
+
+                if image:
+                    img_hash = str(phash(image))
+
+                    if img_hash not in phash_dict:
+                        phash_dict[img_hash] = True
+                        tensor = compute_image_tensor(image)
+                        if kd_tree is None:
+                            kd_tree = cKDTree(tensor)
+                            tensor_list.append(tensor)
+                            batch_to_upload.append(data)
+                        else:
+                            dist, _ = kd_tree.query(tensor)
+
+                            if dist > dist_threshold:
+                                kd_tree = cKDTree(np.vstack([kd_tree.data, tensor]))
+                                tensor_list.append(tensor)
+                                batch_to_upload.append(data)
+                            else:
+                                skipped_asset_number += 1
+                    else:
+                        skipped_asset_number += 1
                 else:
-                    dist, _ = kd_tree.query(tensor)
+                    skipped_asset_number += 1
 
-                    if dist > dist_threshold:
-                        kd_tree = cKDTree(np.vstack([kd_tree.data, tensor]))
-                        tensor_list.append(tensor)
-                        data_to_upload.append(data)
+            except Exception as e:
+                skipped_asset_number += 1
+                print(f"Skipped asset due to exception: {e}")
 
-    if data_to_upload:
-        version.add_data(data_to_upload)
-        print(f"Uploaded {len(data_to_upload)} new items to dataset.")
+        version.add_data(batch_to_upload)
+        datalake_current_offset += datalake_batch_size
+        print(
+            f"Uploaded {datalake_current_offset - skipped_asset_number} | Skipped {skipped_asset_number}"
+        )
 
 
 if __name__ == "__main__":
@@ -87,7 +120,7 @@ if __name__ == "__main__":
     parser.add_argument("--organization_name", required=True, help="Organization name")
     parser.add_argument(
         "--host",
-        default="https://staging.picsellia.com",
+        default="https://app.picsellia.com",
         help="Host of the Picsellia account",
     )
     args = parser.parse_args()
