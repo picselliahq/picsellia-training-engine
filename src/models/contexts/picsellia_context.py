@@ -7,9 +7,9 @@ from picsellia import DatasetVersion, ModelVersion
 from picsellia import Experiment  # type: ignore
 from picsellia.types.enums import ProcessingType
 
-from src.models.parameters.augmentation_parameters import AugmentationParameters
-from src.models.parameters.hyper_parameters import HyperParameters
-from src.models.parameters.parameters import Parameters
+from src.models.parameters.common.augmentation_parameters import AugmentationParameters
+from src.models.parameters.common.hyper_parameters import HyperParameters
+from src.models.parameters.common.parameters import Parameters
 
 TParameters = TypeVar("TParameters", bound=Parameters)
 THyperParameters = TypeVar("THyperParameters", bound=HyperParameters)
