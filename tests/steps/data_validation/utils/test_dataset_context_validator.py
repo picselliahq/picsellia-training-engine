@@ -6,7 +6,7 @@ from picsellia.types.enums import InferenceType
 import pytest
 
 from src.enums import DatasetSplitName
-from src.steps.data_validation.utils.image_utils import get_image_path_list
+from src.steps.data_validation.utils.image_utils import get_images_path_list
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
@@ -51,7 +51,7 @@ class TestDatasetContextValidator:
             dataset_context=dataset_context
         )
         dataset_context_validator.validate_image_corruption(
-            image_path_list=get_image_path_list(
+            image_path_list=get_images_path_list(
                 dataset_context_validator.dataset_context.image_dir
             ),
         )
@@ -128,7 +128,7 @@ class TestDatasetContextValidator:
                 dataset_context_validator, "validate_image_format"
             ) as mock_validate_image_format,
         ):
-            # mock_get_image_path_list.return_value = ["image1.jpg", "image2.jpg"]
+            # mock_get_images_path_list.return_value = ["image1.jpg", "image2.jpg"]
             dataset_context_validator.validate()
 
             assert mock_validate_image_extraction.called

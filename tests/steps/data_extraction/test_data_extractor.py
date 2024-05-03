@@ -3,10 +3,10 @@ from unittest.mock import patch
 
 from src import Pipeline
 from src.enums import DatasetSplitName
-from src.models.parameters.augmentation_parameters import (
+from src.models.parameters.common.augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
-from src.models.parameters.hyper_parameters import UltralyticsHyperParameters
+from src.models.parameters.common.hyper_parameters import UltralyticsHyperParameters
 from src.steps.data_extraction.training.training_data_extractor import (
     training_data_extractor,
 )
