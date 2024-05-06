@@ -34,6 +34,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
             f"(id: {input_dataset_context.dataset_version.id}) "
             f"in dataset '{input_dataset_context.dataset_version.name}' "
             f"with label '{label_name_to_extract}'.",
+            dataset_type=InferenceType.CLASSIFICATION,
             datalake=datalake,
         )
         self.dataset_context = input_dataset_context

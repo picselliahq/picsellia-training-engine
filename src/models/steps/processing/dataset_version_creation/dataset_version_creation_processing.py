@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from picsellia import Client, DatasetVersion, Data
 from picsellia.services.error_manager import ErrorManager
@@ -118,6 +118,16 @@ class DatasetVersionCreationProcessing:
             images_tags=images_tags,
             max_retries=max_retries,
         )
+        self._add_data_to_dataset_version(data=data)
+
+    def _add_data_to_dataset_version(self, data: Union[Data, List[Data]]) -> None:
+        """
+        Adds data to the dataset version.
+
+        Args:
+            data: The data or list of data to add to the dataset version.
+
+        """
         adding_job = self.output_dataset_version.add_data(data=data)
         adding_job.wait_for_done()
 

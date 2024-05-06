@@ -62,6 +62,8 @@ class DatasetContext:
             self.multi_asset = multi_asset
         elif not skip_asset_listing:
             self.list_assets()
+        else:
+            self.multi_asset = None
 
         self.image_dir = os.path.join(destination_path, self.dataset_name, "images")
         self.coco_file = self.build_coco_file()
