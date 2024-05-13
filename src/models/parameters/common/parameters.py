@@ -4,8 +4,9 @@ from typing import Any, Set, Optional, Tuple, Dict
 
 from picsellia.types.schemas import LogDataType  # type: ignore
 
+from src import Colors
 
-logger = logging.getLogger("picsellia")
+logger = logging.getLogger("picsellia-engine")
 
 
 class Parameters(ABC):
@@ -92,7 +93,7 @@ class Parameters(ABC):
         if default is not None:
             logger.warning(
                 f"None of the keys {keys} were found in the provided data. "
-                f"Using default value \033[33m{default}\033[0m."
+                f"Using default value {Colors.YELLOW}{default}{Colors.ENDC}."
             )
             self.defaulted_keys.update(keys)
             return self._flexible_type_check(default, expected_type)

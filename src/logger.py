@@ -20,7 +20,8 @@ class LoggerManager:
 
         self.original_stdout: TextIO = sys.stdout
         self.original_stderr: TextIO = sys.stderr
-        self.logger = logging.getLogger("picsellia")
+        self.logger = logging.getLogger("picsellia-engine")
+        self.logger.setLevel(logging.INFO)
 
     def clean(self) -> None:
         """

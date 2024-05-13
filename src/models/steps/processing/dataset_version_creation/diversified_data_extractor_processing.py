@@ -1,14 +1,16 @@
 import logging
 import math
-from typing import List, Optional, Set
+from typing import List, Optional
 
+import picsellia
 from PIL import Image, ImageOps
 import requests
 import numpy as np
 from picsellia import DatasetVersion, Client, Data
 from scipy.spatial import KDTree
-
+from picsellia.sdk.asset import MultiAsset
 from src.models.dataset.dataset_context import DatasetContext
+from src import Colors
 from src.models.steps.processing.dataset_version_creation.dataset_version_creation_processing import (
     DatasetVersionCreationProcessing,
 )
@@ -16,9 +18,8 @@ from src.steps.model_loader.processing.processing_diversified_data_extractor_mod
     EmbeddingModel,
 )
 from tqdm import tqdm
-from imagehash import phash
 
-logger = logging.getLogger("picsellia")
+logger = logging.getLogger("picsellia-engine")
 
 
 class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
@@ -43,107 +44,237 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
         self.distance_threshold = distance_threshold
 
         self.skipped_similar_asset_number = 0
-        self.skipped_identical_asset_number = 0
         self.skipped_error_asset_number = 0
+        self.uploaded_asset_number = 0
 
     @property
     def input_dataset_version_size(self) -> int:
-        return 34  # self.input_dataset_context.dataset_version.sync()["size"]
+        return self.input_dataset_context.dataset_version.sync()["size"]
 
     @property
     def skipped_asset_number(self) -> int:
-        return (
-            self.skipped_similar_asset_number
-            + self.skipped_identical_asset_number
-            + self.skipped_error_asset_number
-        )
+        return self.skipped_similar_asset_number + self.skipped_error_asset_number
+
+    def compute_image_tensor(self, image: Image) -> np.ndarray:
+        """
+        Computes the tensor representation of an image using the embedding model.
+
+        Args:
+            image: The image to compute the tensor representation of.
+
+        Returns:
+            The tensor representation of the image.
+        """
+        preprocessed_image = self.embedding_model.apply_preprocessing(image)
+        return self.embedding_model.encode_image(image=preprocessed_image)
 
     def fetch_and_prepare_image(self, image_url: str) -> Image:
-        """Fetches and prepares an image for processing."""
+        """
+        Fetches an image from a URL and prepares it for processing.
+
+        Args:
+            image_url: The URL of the image to fetch.
+
+        Returns:
+            The fetched and prepared image.
+        """
         try:
             with requests.get(image_url, stream=True) as response:
                 response.raise_for_status()
                 image = Image.open(response.raw)
+
                 if image.getexif().get(0x0112, 1) != 1:
                     image = ImageOps.exif_transpose(image)
+
                 return image.convert("RGB") if image.mode != "RGB" else image
+
         except requests.RequestException as e:
             print(f"Failed to fetch or process image from {image_url}: {str(e)}")
             return None
 
-    def compute_image_tensor(self, image: Image) -> np.ndarray:
-        """Converts an image to a tensor."""
-        preprocessed_image = self.embedding_model.apply_preprocessing(image)
-        return self.embedding_model.encode_image(image=preprocessed_image)
+    def get_tqdm_description_string(
+        self, current_offset: int, batch_size: int, input_dataset_version_size: int
+    ) -> str:
+        """
+        Returns a string to display in the tqdm progress bar.
+
+        Args:
+            current_offset: The current offset in the dataset version.
+            batch_size: The maximum number of assets to process in a batch.
+            input_dataset_version_size: The size of the dataset version being processed.
+
+        Returns:
+            The string to display in the tqdm progress bar.
+        """
+        current_batch_size = min(
+            batch_size, input_dataset_version_size - current_offset
+        )
+        return (
+            f"Batch {math.ceil(current_offset / batch_size + 1)}/"
+            f"{math.ceil(input_dataset_version_size/batch_size)} "
+            f"(size: {current_batch_size})"
+        )
+
+    def get_tqdm_postfix_string(self, is_batch_uploading: bool = False) -> str:
+        """
+        Returns a string to display in the tqdm progress bar.
+        This string includes the number of added, skipped (errors) and skipped (too similar) assets.
+
+        Args:
+            is_batch_uploading: Whether the current batch is being added.
+                This will add a suffix to the uploaded count.
+
+        Returns:
+            The string to display in the tqdm progress bar.
+        """
+        uploaded_suffix = "(↑)" if is_batch_uploading else ""
+        return (
+            f"Added {Colors.GREEN}{self.uploaded_asset_number}{uploaded_suffix}{Colors.ENDC}, "
+            f"Skipped (errors) {Colors.RED}{self.skipped_error_asset_number}{Colors.ENDC}, "
+            f"Skipped (too similar) {Colors.WARNING}{self.skipped_similar_asset_number}{Colors.ENDC}"
+        )
 
     def process(self) -> None:
-        perceptual_hash_set: Set[str] = set()
-        tensor_list: List[np.ndarray] = []
         kd_tree: Optional[KDTree] = None
 
         input_dataset_version_size = self.input_dataset_version_size
 
         batch_size = 10
         current_offset = 0
+        batch_fetching_retry_number = 3
 
-        while current_offset < input_dataset_version_size:
-            logger.info(
-                f"Starting batch {int(current_offset/batch_size + 1)}"
-                f"/{math.ceil(input_dataset_version_size/batch_size)}:"
+        picsellia_logger_original_level = picsellia.logger.level
+        picsellia.logger.setLevel(logging.WARNING)
+
+        with tqdm(
+            total=input_dataset_version_size, unit="asset", colour="WHITE"
+        ) as pbar:
+            pbar.set_postfix_str(s=self.get_tqdm_postfix_string())
+
+            while current_offset < input_dataset_version_size:
+                pbar.set_description(
+                    self.get_tqdm_description_string(
+                        current_offset=current_offset,
+                        batch_size=batch_size,
+                        input_dataset_version_size=input_dataset_version_size,
+                    )
+                )
+
+                assets_batch = self._get_assets_batch(
+                    limit=batch_size,
+                    offset=current_offset,
+                    retry_number=batch_fetching_retry_number,
+                )
+
+                if assets_batch is None:
+                    logger.error(
+                        f"Failed to fetch batch after {batch_fetching_retry_number} retries. "
+                        f"Skipping to the next batch."
+                    )
+                    current_offset += batch_size
+                    self.skipped_error_asset_number += batch_size
+
+                else:
+                    batch_to_upload: List[Data] = []
+
+                    for asset in assets_batch:
+                        try:
+                            image = self.fetch_and_prepare_image(asset.url)
+
+                            if not image:
+                                self.skipped_error_asset_number += 1
+                                continue
+
+                            tensor = self.compute_image_tensor(image=image)
+
+                            if kd_tree is None:
+                                kd_tree = KDTree(tensor)
+                                batch_to_upload.append(asset.get_data())
+
+                            else:
+                                nearest_neighbour_distance, _ = kd_tree.query(tensor)
+
+                                if self._is_tensor_unique(
+                                    tensor=tensor,
+                                    kd_tree=kd_tree,
+                                    distance_threshold=self.distance_threshold,
+                                ):
+                                    kd_tree = KDTree(np.vstack([kd_tree.data, tensor]))
+                                    batch_to_upload.append(asset.get_data())
+
+                                else:
+                                    self.skipped_similar_asset_number += 1
+
+                        except Exception as e:
+                            self.skipped_error_asset_number += 1
+                            logger.warning(f"Skipped asset due to exception: {e}")
+
+                        finally:
+                            pbar.update(1)
+
+                    pbar.set_postfix_str(
+                        s=self.get_tqdm_postfix_string(is_batch_uploading=True)
+                    )
+                    self._add_data_to_dataset_version(data=batch_to_upload)
+                    self.uploaded_asset_number += len(batch_to_upload)
+
+                    pbar.set_postfix_str(s=self.get_tqdm_postfix_string())
+
+                    current_offset += batch_size
+
+            pbar.set_description(
+                f"Finished uploading {math.ceil(current_offset / batch_size)} batches"
             )
+
+        # Set picsellia logger's level back
+        picsellia.logger.setLevel(picsellia_logger_original_level)
+
+    def _get_assets_batch(
+        self, limit: int, offset: int, retry_number: int
+    ) -> MultiAsset:
+        """
+        Fetches a batch of assets from the dataset version.
+
+        Args:
+            limit: The maximum number of assets to retrieve.
+            offset: The offset from which to start retrieving assets.
+            retry_number: The number of retries to attempt if the batch fetch fails.
+
+        Returns:
+            The fetched batch of assets.
+        """
+        result_batch = None
+        for i in range(0, retry_number):
             try:
-                assets_batch = self.input_dataset_context.get_assets_batch(
-                    limit=batch_size, offset=current_offset
+                result_batch = self.input_dataset_context.get_assets_batch(
+                    limit=limit, offset=offset
                 )
+
             except Exception as e:
-                logger.warning(f"Failed to fetch batch: {e}. Retrying...")
-                assets_batch = self.input_dataset_context.get_assets_batch(
-                    limit=batch_size, offset=current_offset
-                )
+                logger.warning(f"Failed to fetch batch: {e}. Retrying ({i + 1}/3)...")
+                continue
 
-            batch_to_upload: List[Data] = []
+            else:
+                break
 
-            for asset in tqdm(assets_batch, desc="Processing Images"):
-                try:
-                    image = self.fetch_and_prepare_image(asset.url)
+        return result_batch
 
-                    if not image:
-                        self.skipped_error_asset_number += 1
-                        continue
+    def _is_tensor_unique(
+        self, tensor: np.ndarray, kd_tree: KDTree, distance_threshold: float
+    ) -> bool:
+        """
+        Checks if a tensor is unique in a KDTree.
 
-                    img_hash = str(phash(image))
+        Args:
+            tensor: The tensor to check.
+            kd_tree: The KDTree to check against.
+            distance_threshold: The distance threshold to consider a tensor unique.
 
-                    if img_hash in perceptual_hash_set:
-                        self.skipped_identical_asset_number += 1
-                        continue
+        Returns:
+            If the tensor is unique.
+        """
+        if kd_tree is None:
+            return True
 
-                    perceptual_hash_set.add(img_hash)
-                    tensor = self.compute_image_tensor(image=image)
-
-                    if kd_tree is None:
-                        kd_tree = KDTree(tensor)
-                        tensor_list.append(tensor)
-                        batch_to_upload.append(asset.get_data())
-                    else:
-                        nearest_neighbour_distance, _ = kd_tree.query(tensor)
-
-                        if nearest_neighbour_distance > self.distance_threshold:
-                            kd_tree = KDTree(np.vstack([kd_tree.data, tensor]))
-                            tensor_list.append(tensor)
-                            batch_to_upload.append(asset.get_data())
-                        else:
-                            self.skipped_similar_asset_number += 1
-
-                except Exception as e:
-                    self.skipped_error_asset_number += 1
-                    logger.warning(f"Skipped asset due to exception: {e}")
-
-            self._add_data_to_dataset_version(data=batch_to_upload)
-            current_offset += batch_size
-
-            logger.info(
-                f"Uploaded {current_offset - self.skipped_asset_number} | "
-                f"Skipped (errors) {self.skipped_error_asset_number} | "
-                f"Skipped (identical) {self.skipped_identical_asset_number} | "
-                f"Skipped (too similar) {self.skipped_similar_asset_number}"
-            )
+        nearest_neighbour_distance, _ = kd_tree.query(tensor)
+        return nearest_neighbour_distance > distance_threshold
