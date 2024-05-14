@@ -6,8 +6,8 @@ import numpy as np
 from PIL import Image
 import torch
 import open_clip
-from torch._C._te import Tensor
 from open_clip.model import CLIP
+from torch._C._te import Tensor
 from torchvision.transforms import transforms
 from src import step, Pipeline
 from src.models.contexts.picsellia_context import PicselliaProcessingContext
@@ -69,7 +69,7 @@ def is_embedding_model_name_valid(
 
 
 @step
-def diversified_data_extractor_model_loader() -> EmbeddingModel:
+def diversified_data_extractor_model_loader(pretrained_weights: str) -> EmbeddingModel:
     context: PicselliaProcessingContext[
         ProcessingDiversifiedDataExtractorParameters
     ] = Pipeline.get_active_context()
@@ -81,9 +81,7 @@ def diversified_data_extractor_model_loader() -> EmbeddingModel:
         source=embedding_model_name, target=SupportedEmbeddingModels.OPENCLIP
     ):
         available_model_names = open_clip.list_models()
-
         model_architecture = context.processing_parameters.model_architecture
-        pretrained_weights = context.processing_parameters.pretrained_weights
 
         if model_architecture not in available_model_names:
             raise ValueError(
@@ -97,27 +95,18 @@ def diversified_data_extractor_model_loader() -> EmbeddingModel:
                 f"Please provide a model from the list of available models: {available_model_names}."
             )
 
-        available_pretrained_weights = (
-            open_clip.pretrained.list_pretrained_tags_by_model(model=model_architecture)
-        )
-
-        if pretrained_weights not in available_pretrained_weights:
-            raise ValueError(
-                f"The provided pretrained weights '{context.processing_parameters.pretrained_weights}' are not available. "
-                f"Available pretrained weights are {open_clip.pretrained.list_pretrained_tags_by_model(model_architecture)}."
-            )
-
         (
-            open_clip_model,
+            model,
             _,
             preprocessing_transformations,
         ) = open_clip.create_model_and_transforms(
             model_name=model_architecture,
             pretrained=pretrained_weights,
         )
-        open_clip_model.to(device)
-        loaded_model = OpenClipEmbeddingModel(
-            model=open_clip_model,
+
+        model.to(device)
+        embedding_model = OpenClipEmbeddingModel(
+            model=model,
             preprocessing=preprocessing_transformations,
             device=device,
         )
@@ -128,5 +117,4 @@ def diversified_data_extractor_model_loader() -> EmbeddingModel:
             f"Supported models are {[member.name.lower() for member in SupportedEmbeddingModels]}."
         )
 
-    open_clip_model.to(device)
-    return loaded_model
+    return embedding_model
