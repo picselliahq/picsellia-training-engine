@@ -1,0 +1,26 @@
+name: Engine Tests
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'src/decorators/**'
+      - 'src/logger.py'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - 'src/decorators/**'
+      - 'src/logger.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  engine-tests:
+    uses: ./.github/workflows/testing/testing_template.yaml
+    with:
+      test_paths: |
+        tests/decorators
+        tests/logger
