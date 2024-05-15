@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional
-from src.models.contexts.picsellia_context import PicselliaContext
+from src.models.contexts.common.picsellia_context import PicselliaContext
 from picsellia.types.enums import ProcessingType
 from picsellia import DatasetVersion, ModelVersion
 

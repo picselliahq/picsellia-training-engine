@@ -1,4 +1,4 @@
-from src.models.contexts.picsellia_context import PicselliaTrainingContext
+from src.models.contexts.common.picsellia_context import PicselliaTrainingContext
 from src import Pipeline
 from src import step
 

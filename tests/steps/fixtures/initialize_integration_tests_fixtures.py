@@ -6,7 +6,7 @@ from picsellia import Client, Dataset, DatasetVersion, Data, Label
 from picsellia.types.enums import InferenceType
 from picsellia.sdk.asset import MultiAsset
 
-from src.models.contexts.picsellia_context import PicselliaContext
+from src.models.contexts.common.picsellia_context import PicselliaContext
 
 from picsellia.services.error_manager import ErrorManager
 

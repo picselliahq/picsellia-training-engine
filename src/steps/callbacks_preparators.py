@@ -8,7 +8,7 @@ from ultralytics.models.yolo.classify import (
     ClassificationValidator,
 )
 
-from src.models.contexts.picsellia_context import PicselliaTrainingContext
+from src.models.contexts.common.picsellia_context import PicselliaTrainingContext
 from src import step, Pipeline
 
 
