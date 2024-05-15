@@ -1,6 +1,8 @@
 from src.models.parameters.common.parameters import Parameters
 import pytest
 
+from src.models.parameters import Parameters
+
 
 class ConcreteParameters(Parameters):
     """A concrete implementation of the abstract Parameters class for testing."""

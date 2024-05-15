@@ -20,10 +20,10 @@ def bounding_box_cropper_processing(dataset_context: DatasetContext):
 
     processor = BoundingBoxCropperProcessing(
         client=context.client,
+        datalake=context.client.get_datalake(context.processing_parameters.datalake),
         input_dataset_context=dataset_context,
         label_name_to_extract=context.processing_parameters.label_name_to_extract,
         output_dataset_version=context.output_dataset_version,
-        datalake=context.processing_parameters.datalake,
         destination_path=os.path.join(os.getcwd(), str(context.job_id)),
     )
     processor.process()

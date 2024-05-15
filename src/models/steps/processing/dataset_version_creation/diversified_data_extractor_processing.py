@@ -6,7 +6,7 @@ import picsellia
 from PIL import Image, ImageOps
 import requests
 import numpy as np
-from picsellia import DatasetVersion, Client, Data
+from picsellia import DatasetVersion, Client, Data, Datalake
 from scipy.spatial import KDTree
 from picsellia.sdk.asset import MultiAsset
 from src.models.dataset.dataset_context import DatasetContext
@@ -30,6 +30,7 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
     def __init__(
         self,
         client: Client,
+        datalake: Datalake,
         input_dataset_context: DatasetContext,
         output_dataset_version: DatasetVersion,
         embedding_model: EmbeddingModel,
@@ -37,6 +38,7 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
     ):
         super().__init__(
             client=client,
+            datalake=datalake,
             output_dataset_version=output_dataset_version,
         )
         self.input_dataset_context = input_dataset_context

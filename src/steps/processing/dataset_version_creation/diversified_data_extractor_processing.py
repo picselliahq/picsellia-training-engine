@@ -23,6 +23,7 @@ def diversified_data_extractor_processing(
 
     processor = DiversifiedDataExtractorProcessing(
         client=context.client,
+        datalake=context.client.get_datalake(),
         input_dataset_context=dataset_context,
         output_dataset_version=context.output_dataset_version,
         embedding_model=embedding_model,

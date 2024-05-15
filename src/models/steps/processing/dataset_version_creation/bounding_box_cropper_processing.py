@@ -1,7 +1,7 @@
 import os
 
 from PIL import Image
-from picsellia import DatasetVersion, Client
+from picsellia import DatasetVersion, Client, Datalake
 from picsellia.types.enums import TagTarget, InferenceType
 from picsellia_annotations.coco import Annotation
 
@@ -19,10 +19,10 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
     def __init__(
         self,
         client: Client,
+        datalake: Datalake,
         input_dataset_context: DatasetContext,
         label_name_to_extract: str,
         output_dataset_version: DatasetVersion,
-        datalake: str,
         destination_path: str,
     ):
         super().__init__(
@@ -36,6 +36,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
             f"with label '{label_name_to_extract}'.",
             dataset_type=InferenceType.CLASSIFICATION,
             datalake=datalake,
+            output_dataset_version=output_dataset_version,
         )
         self.dataset_context = input_dataset_context
         self.processed_dataset_context = DatasetContext(
@@ -46,6 +47,21 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
             labelmap=None,
         )
         self.label_name_to_extract = label_name_to_extract
+
+    @property
+    def output_dataset_description(self) -> str:
+        """
+        Returns the description of the output dataset version.
+
+        Returns:
+            str: The description of the output dataset version.
+        """
+        return (
+            f"Dataset extracted from dataset version "
+            f"'{self.dataset_context.dataset_version.version}' "
+            f"(id: {self.dataset_context.dataset_version.id}) in dataset "
+            f"'{self.dataset_context.dataset_version.name}' with label '{self.label_name_to_extract}'."
+        )
 
     def _process_images(self) -> None:
         """
@@ -145,5 +161,11 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         """
         Processes the images in the dataset version to extract the bounding boxes for the specified label and adds them to the output dataset version.
         """
+        self.update_output_dataset_version_description(
+            description=self.output_dataset_description
+        )
+        self.update_output_dataset_version_inference_type(
+            inference_type=InferenceType.CLASSIFICATION
+        )
         self._process_images()
         self._add_processed_images_to_dataset_version()
