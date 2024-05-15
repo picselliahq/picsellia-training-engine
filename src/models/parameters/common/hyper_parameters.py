@@ -33,22 +33,3 @@ class HyperParameters(Parameters):
             expected_type=float,
             default=0.8,
         )
-
-
-class UltralyticsHyperParameters(HyperParameters):
-    def __init__(self, log_data: LogDataType):
-        super().__init__(log_data=log_data)
-
-        self.device = self.extract_parameter(
-            keys=["device"], expected_type=str, default="cpu"
-        )
-        self.use_cache = self.extract_parameter(
-            keys=["cache", "use_cache"],
-            expected_type=bool,
-            default=False,
-        )
-        self.save_period = self.extract_parameter(
-            keys=["save_period"],
-            expected_type=int,
-            default=-1,
-        )
