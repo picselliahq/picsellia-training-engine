@@ -1,13 +1,15 @@
 # type: ignore
 
 from src import pipeline
-from src.models.contexts.picsellia_context import (
+from src.models.contexts.common.picsellia_context import (
     PicselliaTrainingContext,
 )
-from src.models.parameters.common.augmentation_parameters import (
+from src.models.parameters.training.ultralytics.augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
-from src.models.parameters.common.hyper_parameters import UltralyticsHyperParameters
+from src.models.parameters.training.ultralytics.hyper_parameters import (
+    UltralyticsHyperParameters,
+)
 from src.steps.data_extraction.training.training_data_extractor import (
     training_data_extractor,
 )
