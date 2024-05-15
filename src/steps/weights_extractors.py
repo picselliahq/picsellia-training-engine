@@ -9,7 +9,7 @@ from src import step
 
 
 @step(name="Extract the weights", continue_on_failure=True)
-def weights_extractor() -> str:
+def weights_extractor():
     context: PicselliaTrainingContext = Pipeline.get_active_context()
 
     model_file = context.experiment.get_artifact("weights")

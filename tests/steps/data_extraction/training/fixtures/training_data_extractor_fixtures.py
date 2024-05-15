@@ -2,7 +2,7 @@ from typing import Callable, Dict, List, Type
 
 import pytest
 
-from src.models.contexts.picsellia_context import PicselliaTrainingContext
+from src.models.contexts.common.picsellia_context import PicselliaTrainingContext
 from src.models.parameters.common.augmentation_parameters import AugmentationParameters
 from src.models.parameters.common.hyper_parameters import HyperParameters
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
