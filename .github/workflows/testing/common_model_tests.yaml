@@ -1,0 +1,33 @@
+name: Common Model Tests
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - src/models/**/common/*
+      - src/models/contexts/**
+      - src/models/datasets/**
+      - src/steps/**/common/*
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - src/models/**/common/*
+      - src/models/contexts/**
+      - src/models/datasets/**
+      - src/steps/**/common/*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  common-model-tests:
+    uses: ./.github/workflows/testing/testing_template.yaml
+    with:
+      test_paths: |
+        tests/models/**/common/*
+        tests/models/contexts/**
+        tests/models/datasets/**
+        tests/models/steps/**/common/*
+        tests/steps/**/common/*

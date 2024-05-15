@@ -1,0 +1,35 @@
+name: YoloV8 Classification Tests
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'src/pipelines/ultralytics/yolov8_classification/**'
+      - 'src/models/**/training/ultralytics/yolov8/classification/**'
+      - 'src/models/**/processing/ultralytics/yolov8/classification/**'
+      - 'src/steps/**/training/ultralytics/yolov8/classification/**'
+      - 'src/steps/**/processing/ultralytics/yolov8/classification/**'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - 'src/pipelines/ultralytics/yolov8_classification/**'
+      - 'src/models/**/training/ultralytics/yolov8/classification/**'
+      - 'src/models/**/processing/ultralytics/yolov8/classification/**'
+      - 'src/steps/**/training/ultralytics/yolov8/classification/**'
+      - 'src/steps/**/processing/ultralytics/yolov8/classification/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  yolov8-classification-tests:
+    uses: ./.github/workflows/testing/testing_template.yaml
+    with:
+      test_paths: |
+        tests/pipelines/ultralytics/yolov8_classification/**
+        tests/models/**/training/ultralytics/yolov8/classification/**
+        tests/models/**/processing/ultralytics/yolov8/classification/**
+        tests/steps/**/training/ultralytics/yolov8/classification/**
+        tests/steps/**/processing/ultralytics/yolov8/classification/**
