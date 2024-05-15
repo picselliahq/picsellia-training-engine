@@ -1,0 +1,58 @@
+name: Testing Workflow Template
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        required: true
+        type: string
+
+jobs:
+  common-test-template:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+    env:
+      PICSELLIA_TEST_TOKEN: ${{ secrets.PICSELLIA_TEST_TOKEN }}
+      PICSELLIA_TEST_HOST: ${{ vars.PICSELLIA_TEST_HOST }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+          pip install picsellia
+          pip install -r requirements-dev.txt
+
+      - name: Lint with flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=tests/ --max-line-length=88
+
+      - name: Test with pytest
+        run:
+          COV_ARGS=""
+          for path in ${{ inputs.test_paths }}; do
+            module_path=$(echo $path | sed 's|tests|src|g')
+            for module in $(find $module_path -type d); do
+              module=${module//\//.}
+              module=${module#src.}
+              COV_ARGS="$COV_ARGS --cov=$module"
+            done
+          done
+
+          pytest ${{ inputs.test_paths }} $COV_ARGS --cov-report=xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: picselliahq/picsellia-training-engine
