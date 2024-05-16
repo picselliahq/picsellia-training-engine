@@ -5,15 +5,15 @@ on:
     branches: [ "master" ]
     paths:
       - src/models/**/common/*
-      - src/models/contexts/**
-      - src/models/datasets/**
+      - src/models/contexts/common/*
+      - src/models/dataset/common/*
       - src/steps/**/common/*
   pull_request:
     branches: [ "master" ]
     paths:
       - src/models/**/common/*
-      - src/models/contexts/**
-      - src/models/datasets/**
+      - src/models/contexts/common/*
+      - src/models/dataset/common/*
       - src/steps/**/common/*
   workflow_dispatch:
 
@@ -23,11 +23,11 @@ permissions:
 
 jobs:
   common-model-tests:
-    uses: ./.github/workflows/testing/testing_template.yaml
+    uses: ./.github/workflows/testing/testing_workflow_template.yaml
     with:
+      use_lfs: true
       test_paths: |
         tests/models/**/common/*
-        tests/models/contexts/**
-        tests/models/datasets/**
+        tests/models/dataset/common/*
         tests/models/steps/**/common/*
         tests/steps/**/common/*

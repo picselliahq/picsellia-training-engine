@@ -4,7 +4,7 @@ from typing import Callable
 from picsellia.types.enums import InferenceType
 
 from src.enums import DatasetSplitName
-from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
+from tests.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 class TestClassificationDatasetContextPreparator:
