@@ -15,7 +15,7 @@ from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters imp
 from src.steps.data_extraction.training.training_data_extractor import (
     training_dataset_collection_extractor,
 )
-from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
+from tests.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 class TestTrainingDataExtractor:

@@ -1,14 +1,14 @@
 import logging
 import os
 import shutil
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
 import pytest
 from picsellia import Client, Data, Dataset, DatasetVersion
 from picsellia.types.enums import InferenceType
 
 from src.enums import DatasetSplitName
-from tests.steps.fixtures.integration_tests_fixtures import (
+from tests.fixtures.initialize_integration_tests_fixtures import (
     create_dataset_version,
     upload_data,
 )
@@ -64,12 +64,12 @@ def get_annotations_path(
 
 @pytest.fixture
 def mock_uploaded_data(picsellia_client: Client) -> Callable:
-    def _mock_uploaded_data(dataset_metadata: DatasetTestMetadata) -> Data:
+    def _mock_uploaded_data(dataset_metadata: DatasetTestMetadata) -> List[Data]:
         uploaded_data = upload_data(
             picsellia_client=picsellia_client,
             images_path=get_images_path(dataset_metadata=dataset_metadata),
         )
-        uploaded_data_registry.append(uploaded_data)
+        uploaded_data_registry.extend([data for data in uploaded_data])
         return uploaded_data
 
     return _mock_uploaded_data

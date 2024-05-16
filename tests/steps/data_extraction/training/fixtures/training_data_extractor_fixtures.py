@@ -8,7 +8,7 @@ from src.models.contexts.training.picsellia_training_context import (
 from src.models.parameters.common.augmentation_parameters import AugmentationParameters
 from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.common.hyper_parameters import HyperParameters
-from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
+from tests.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 @pytest.fixture

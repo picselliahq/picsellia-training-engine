@@ -1,5 +1,6 @@
 import os
-from typing import Dict
+from typing import Dict, List
+from uuid import uuid4
 
 import pytest
 from picsellia import Client, Data, Datalake, Dataset, DatasetVersion, Label
@@ -22,7 +23,7 @@ def create_dataset_version(
     dataset: Dataset,
     version_name: str,
     dataset_type: InferenceType,
-    uploaded_data: Data,
+    uploaded_data: List[Data],
     annotations_path: str,
 ) -> DatasetVersion:
     dataset_version = dataset.create_version(version=version_name, type=dataset_type)
@@ -33,20 +34,32 @@ def create_dataset_version(
     return dataset_version
 
 
-def upload_data(picsellia_client: Client, images_path: str) -> Data:
+def upload_data(picsellia_client: Client, images_path: str) -> List[Data]:
     datalake = picsellia_client.get_datalake()
 
     files = [os.path.join(images_path, file) for file in os.listdir(images_path)]
 
+    all_uploaded_data = []
+
     error_manager = ErrorManager()
-    data = datalake.upload_data(filepaths=files, error_manager=error_manager)
+    data = datalake.upload_data(
+        filepaths=files, error_manager=error_manager, tags=["pytest"]
+    )
+    if isinstance(data, Data):
+        data = [data]
+    all_uploaded_data.extend([one_data for one_data in data])
     error_paths = [error.path for error in error_manager.errors]
     while error_paths:
         error_manager = ErrorManager()
-        data = datalake.upload_data(filepaths=error_paths, error_manager=error_manager)
+        data = datalake.upload_data(
+            filepaths=error_paths, error_manager=error_manager, tags=["pytest"]
+        )
+        if isinstance(data, Data):
+            data = [data]
+        all_uploaded_data.extend([one_data for one_data in data])
         error_paths = [error.path for error in error_manager.errors]
 
-    return data
+    return all_uploaded_data
 
 
 @pytest.fixture
@@ -94,4 +107,4 @@ def destination_path() -> str:
 
 @pytest.fixture
 def dataset(picsellia_client: Client) -> Dataset:
-    return picsellia_client.create_dataset("test-picsellia-training-engine")
+    return picsellia_client.create_dataset(f"test-training-engine-{str(uuid4())[:-10]}")
