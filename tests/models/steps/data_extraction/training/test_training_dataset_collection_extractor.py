@@ -1,4 +1,4 @@
-from typing import Callable, List, Union
+from typing import List, Union, Callable, Tuple
 
 import pytest
 from picsellia.exceptions import ResourceNotFoundError
@@ -6,7 +6,7 @@ from picsellia.types.enums import InferenceType
 
 from src.enums import DatasetSplitName
 from src.models.dataset.common.dataset_collection import DatasetCollection
-from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
+from tests.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 def get_experiment_name(nb_dataset: int) -> str:
@@ -15,7 +15,7 @@ def get_experiment_name(nb_dataset: int) -> str:
 
 def generate_general_params(
     nb_datasets: List[int],
-) -> tuple[str, List[DatasetTestMetadata]]:
+) -> Tuple[str, List[DatasetTestMetadata]]:
     for nb_dataset in nb_datasets:
         experiment_name = get_experiment_name(nb_dataset=nb_dataset)
         if nb_dataset == 1:
@@ -58,7 +58,7 @@ def generate_general_params(
 
 def generate_params_with_split_ratios(
     nb_datasets: List[int],
-) -> tuple[str, List[DatasetTestMetadata], Union[List, None], Union[Exception, None]]:
+) -> Tuple[str, List[DatasetTestMetadata], Union[List, None], Union[Exception, None]]:
     for nb_dataset in nb_datasets:
         experiment_name = get_experiment_name(nb_dataset=nb_dataset)
         if nb_dataset == 1:
@@ -107,7 +107,7 @@ def generate_params_with_split_ratios(
 
 def generate_params_for_nested_datasets(
     nb_datasets: List[int],
-) -> tuple[str, List[DatasetTestMetadata], Exception]:
+) -> Tuple[str, List[DatasetTestMetadata], Exception]:
     for nb_dataset in nb_datasets:
         experiment_name = get_experiment_name(nb_dataset=nb_dataset)
         if nb_dataset == 1:
@@ -194,7 +194,7 @@ def generate_params_for_nested_datasets(
             yield experiment_name, dataset_metadatas, expected_exception
 
 
-def get_nb_assets_after_split(nb_dataset: int) -> tuple[int, int, int]:
+def get_nb_assets_after_split(nb_dataset: int) -> Tuple[int, int, int]:
     if nb_dataset == 1:
         nb_train_assets = 8
         nb_val_assets = 1

@@ -5,14 +5,16 @@ from picsellia.types.enums import InferenceType
 
 from src import Pipeline
 from src.enums import DatasetSplitName
-from src.models.parameters.common.augmentation_parameters import (
+from src.models.parameters.training.ultralytics.augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
-from src.models.parameters.common.hyper_parameters import UltralyticsHyperParameters
+from src.models.parameters.training.ultralytics.hyper_parameters import (
+    UltralyticsHyperParameters,
+)
 from src.steps.data_extraction.training.training_data_extractor import (
     training_data_extractor,
 )
-from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
+from tests.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 class TestTrainingDataExtractor:
