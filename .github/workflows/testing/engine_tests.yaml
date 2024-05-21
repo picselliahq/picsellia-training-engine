@@ -1,16 +1,17 @@
 name: Engine Tests
 
+env:
+  paths:
+    src/decorators/**
+    src/logger.py
+
 on:
   push:
     branches: [ "master" ]
-    paths:
-      - 'src/decorators/**'
-      - 'src/logger.py'
+    paths: ${{ env.paths }}
   pull_request:
     branches: [ "master" ]
-    paths:
-      - 'src/decorators/**'
-      - 'src/logger.py'
+    paths: ${{ env.paths }}
   workflow_dispatch:
 
 permissions:
@@ -19,8 +20,7 @@ permissions:
 
 jobs:
   engine-tests:
-    uses: ./.github/workflows/testing/testing_template.yaml
+    uses: ./.github/workflows/testing/testing_workflow_template.yaml
     with:
-      test_paths: |
-        tests/decorators
-        tests/logger
+      use_lfs: false
+      test_paths: "tests/decorators tests/logger"
