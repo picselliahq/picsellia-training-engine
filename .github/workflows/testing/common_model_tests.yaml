@@ -1,20 +1,19 @@
 name: Common Model Tests
 
+env:
+  paths:
+    src/models/**/common/*
+    src/models/contexts/common/*
+    src/models/dataset/common/*
+    src/steps/**/common/*
+
 on:
   push:
     branches: [ "master" ]
-    paths:
-      - src/models/**/common/*
-      - src/models/contexts/common/*
-      - src/models/dataset/common/*
-      - src/steps/**/common/*
+    paths: ${{ env.paths }}
   pull_request:
     branches: [ "master" ]
-    paths:
-      - src/models/**/common/*
-      - src/models/contexts/common/*
-      - src/models/dataset/common/*
-      - src/steps/**/common/*
+    paths: ${{ env.paths }}
   workflow_dispatch:
 
 permissions:
@@ -26,8 +25,4 @@ jobs:
     uses: ./.github/workflows/testing/testing_workflow_template.yaml
     with:
       use_lfs: true
-      test_paths: |
-        tests/models/**/common/*
-        tests/models/dataset/common/*
-        tests/models/steps/**/common/*
-        tests/steps/**/common/*
+      test_paths: "tests/models/**/common/* tests/models/dataset/common/* tests/models/steps/**/common/* tests/steps/**/common/*"
