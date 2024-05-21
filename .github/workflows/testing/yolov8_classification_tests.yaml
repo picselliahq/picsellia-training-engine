@@ -1,22 +1,20 @@
 name: YoloV8 Classification Tests
 
+env:
+  paths:
+    src/pipelines/ultralytics/yolov8_classification/**
+    src/models/**/training/ultralytics/yolov8/classification/**
+    src/models/**/processing/ultralytics/yolov8/classification/**
+    src/steps/**/training/ultralytics/yolov8/classification/**
+    src/steps/**/processing/ultralytics/yolov8/classification/**
+
 on:
   push:
     branches: [ "master" ]
-    paths:
-      - 'src/pipelines/ultralytics/yolov8_classification/**'
-      - 'src/models/**/training/ultralytics/yolov8/classification/**'
-      - 'src/models/**/processing/ultralytics/yolov8/classification/**'
-      - 'src/steps/**/training/ultralytics/yolov8/classification/**'
-      - 'src/steps/**/processing/ultralytics/yolov8/classification/**'
+    paths: ${{ env.paths }}
   pull_request:
     branches: [ "master" ]
-    paths:
-      - 'src/pipelines/ultralytics/yolov8_classification/**'
-      - 'src/models/**/training/ultralytics/yolov8/classification/**'
-      - 'src/models/**/processing/ultralytics/yolov8/classification/**'
-      - 'src/steps/**/training/ultralytics/yolov8/classification/**'
-      - 'src/steps/**/processing/ultralytics/yolov8/classification/**'
+    paths: ${{ env.paths }}
   workflow_dispatch:
 
 permissions:
@@ -25,11 +23,7 @@ permissions:
 
 jobs:
   yolov8-classification-tests:
-    uses: ./.github/workflows/testing/testing_template.yaml
+    uses: ./.github/workflows/testing/testing_workflow_template.yaml
     with:
-      test_paths: |
-        tests/pipelines/ultralytics/yolov8_classification/**
-        tests/models/**/training/ultralytics/yolov8/classification/**
-        tests/models/**/processing/ultralytics/yolov8/classification/**
-        tests/steps/**/training/ultralytics/yolov8/classification/**
-        tests/steps/**/processing/ultralytics/yolov8/classification/**
+      use_lfs: true
+      test_paths: "tests/pipelines/ultralytics/yolov8_classification/** tests/models/**/training/ultralytics/yolov8/classification/** tests/models/**/processing/ultralytics/yolov8/classification/** tests/steps/**/training/ultralytics/yolov8/classification/** tests/steps/**/processing/ultralytics/yolov8/classification/**"
