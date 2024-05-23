@@ -85,7 +85,13 @@ class ObjectDetectionDatasetContextValidator(DatasetContextValidator):
         coco_file_annotations = self.dataset_context.coco_file.annotations
         for coco_file_annotation in coco_file_annotations:
             if not self._validate_bounding_box_coordinates(coco_file_annotation):
+                image = [
+                    image
+                    for image in self.dataset_context.coco_file.images
+                    if image.id == coco_file_annotation.image_id
+                ][0]
                 raise ValueError(
-                    f"Bounding box coordinates for annotation {coco_file_annotation.id} in dataset {self.dataset_context.dataset_name} are not valid. "
+                    f"Bounding box coordinates for annotation {coco_file_annotation.id} of image {image.file_name} "
+                    f"in dataset {self.dataset_context.dataset_name} are not valid. "
                     f"Bounding box coordinates must be integers and have a width and height greater than 0."
                 )
