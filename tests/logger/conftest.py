@@ -5,6 +5,11 @@ import pytest
 
 from src.logger import LoggerManager
 
+pytest_plugins = [
+    "tests.fixtures.log_fixtures",
+    "tests.decorators.fixtures.step_fixtures",
+]
+
 
 @pytest.fixture
 def logger_manager(temp_log_dir):

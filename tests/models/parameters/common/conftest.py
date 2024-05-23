@@ -1,4 +1,4 @@
-from src.models.parameters.parameters import Parameters
+from src.models.parameters.common.parameters import Parameters
 import pytest
 
 
