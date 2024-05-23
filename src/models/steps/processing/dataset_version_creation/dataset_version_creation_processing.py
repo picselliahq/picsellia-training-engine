@@ -26,14 +26,14 @@ class DatasetVersionCreationProcessing:
         self,
         client: Client,
         output_dataset_version: DatasetVersion,
-        dataset_type: InferenceType,
-        dataset_description: str,
+        output_dataset_type: InferenceType,
+        output_dataset_description: str,
         datalake: str = "default",
     ):
         self.client = client
         self.output_dataset_version = output_dataset_version
         self.output_dataset_version.update(
-            description=dataset_description, type=dataset_type
+            description=output_dataset_description, type=output_dataset_type
         )
         self.datalake = self.client.get_datalake(name=datalake)
 
@@ -79,6 +79,8 @@ class DatasetVersionCreationProcessing:
         uploaded_data, error_paths = self._upload_data_with_error_manager(
             images_to_upload=images_to_upload, images_tags=images_tags
         )
+        if isinstance(uploaded_data, Data):
+            uploaded_data = [uploaded_data]
         all_uploaded_data.extend(
             [one_uploaded_data for one_uploaded_data in uploaded_data]
         )
@@ -87,6 +89,8 @@ class DatasetVersionCreationProcessing:
             uploaded_data, error_paths = self._upload_data_with_error_manager(
                 images_to_upload=error_paths, images_tags=images_tags
             )
+            if isinstance(uploaded_data, Data):
+                uploaded_data = [uploaded_data]
             all_uploaded_data.extend(
                 [one_uploaded_data for one_uploaded_data in uploaded_data]
             )
