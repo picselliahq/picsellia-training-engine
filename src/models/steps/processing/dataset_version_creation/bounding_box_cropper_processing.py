@@ -132,7 +132,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
                 ]
                 self._add_images_to_dataset_version(
                     images_to_upload=filepaths,
-                    images_tags=[f"picsellia_imagette_{label_folder}"],
+                    images_tags=[f"picsellia_tile_{label_folder}"],
                 )
         conversion_job = self.processed_dataset_context.dataset_version.convert_tags_to_classification(
             tag_type=TagTarget.ASSET,
