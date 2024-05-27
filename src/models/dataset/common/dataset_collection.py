@@ -1,4 +1,4 @@
-from src.models.dataset.dataset_context import DatasetContext
+from src.models.dataset.common.dataset_context import DatasetContext
 
 
 class DatasetCollection:
