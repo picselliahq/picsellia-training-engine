@@ -5,7 +5,7 @@ from picsellia import DatasetVersion, Client
 from picsellia.types.enums import TagTarget, InferenceType
 from picsellia_annotations.coco import Annotation
 
-from src.models.dataset.dataset_context import DatasetContext
+from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.processing.dataset_version_creation.dataset_version_creation_processing import (
     DatasetVersionCreationProcessing,
 )
