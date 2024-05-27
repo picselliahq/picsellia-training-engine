@@ -2,7 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
-from tests.models.parameters.conftest import ConcreteParameters
+from tests.models.parameters.common.fixtures.parameters_fixtures import (
+    ConcreteParameters,
+)
 
 
 class TestParameters:

@@ -11,7 +11,8 @@ from src.steps.data_validation.common.classification_data_validator import (
 class TestDataValidator:
     def test_data_validator(self, mock_dataset_collection: Callable):
         with patch(
-            "src.steps.data_validation.utils.classification_dataset_context_validator.ClassificationDatasetContextValidator"
+            "src.models.steps.data_validation.common.classification_dataset_context_validator"
+            ".ClassificationDatasetContextValidator"
             ".validate"
         ) as mocked_validate:
             dataset_collection = mock_dataset_collection(

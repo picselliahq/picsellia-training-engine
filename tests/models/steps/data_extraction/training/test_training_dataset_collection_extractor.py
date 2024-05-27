@@ -5,7 +5,7 @@ from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
 
 from src.enums import DatasetSplitName
-from src.models.dataset.dataset_collection import DatasetCollection
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
@@ -266,14 +266,14 @@ class TestDatasetHandler:
     )
     def test_get_dataset_collection(
         self,
-        mock_experiment_dataset_collection_extractor: Callable,
+        mock_training_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
     ) -> None:
-        dataset_handler = mock_experiment_dataset_collection_extractor(
+        dataset_collection_extractor = mock_training_dataset_collection_extractor(
             experiment_name=experiment_name, datasets=datasets
         )
-        dataset_collection = dataset_handler.get_dataset_collection()
+        dataset_collection = dataset_collection_extractor.get_dataset_collection()
         assert dataset_collection.train.dataset_name == DatasetSplitName.TRAIN.value
         assert dataset_collection.val.dataset_name == DatasetSplitName.VAL.value
         assert dataset_collection.test.dataset_name == DatasetSplitName.TEST.value
@@ -284,20 +284,22 @@ class TestDatasetHandler:
     )
     def test_get_split_ratios(
         self,
-        mock_experiment_dataset_collection_extractor: Callable,
+        mock_training_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
         expected_split_ratios: Union[List, None],
         expected_exception: Union[Exception, None],
     ) -> None:
-        dataset_handler = mock_experiment_dataset_collection_extractor(
+        dataset_collection_extractor = mock_training_dataset_collection_extractor(
             experiment_name=experiment_name, datasets=datasets
         )
         if expected_exception:
             with pytest.raises(expected_exception):
-                dataset_handler._get_split_ratios(nb_attached_datasets=len(datasets))
+                dataset_collection_extractor._get_split_ratios(
+                    nb_attached_datasets=len(datasets)
+                )
         else:
-            split_ratios = dataset_handler._get_split_ratios(
+            split_ratios = dataset_collection_extractor._get_split_ratios(
                 nb_attached_datasets=len(datasets)
             )
             assert split_ratios == expected_split_ratios
@@ -308,39 +310,39 @@ class TestDatasetHandler:
     )
     def test_handle_datasets(
         self,
-        mock_experiment_dataset_collection_extractor: Callable,
+        mock_training_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
     ):
-        dataset_handler = mock_experiment_dataset_collection_extractor(
+        dataset_collection_extractor = mock_training_dataset_collection_extractor(
             experiment_name=experiment_name, datasets=datasets
         )
         nb_dataset = len(datasets)
 
         if nb_dataset == 1:
-            dataset_collection = dataset_handler._handle_one_dataset(
-                train_dataset_version=dataset_handler.experiment.get_dataset(
+            dataset_collection = dataset_collection_extractor._handle_one_dataset(
+                train_dataset_version=dataset_collection_extractor.experiment.get_dataset(
                     name=DatasetSplitName.TRAIN.value
                 )
             )
         elif nb_dataset == 2:
-            dataset_collection = dataset_handler._handle_two_datasets(
-                train_dataset_version=dataset_handler.experiment.get_dataset(
+            dataset_collection = dataset_collection_extractor._handle_two_datasets(
+                train_dataset_version=dataset_collection_extractor.experiment.get_dataset(
                     name=DatasetSplitName.TRAIN.value
                 ),
-                test_dataset_version=dataset_handler.experiment.get_dataset(
+                test_dataset_version=dataset_collection_extractor.experiment.get_dataset(
                     name=DatasetSplitName.TEST.value
                 ),
             )
         elif nb_dataset == 3:
-            dataset_collection = dataset_handler._handle_three_datasets(
-                train_dataset_version=dataset_handler.experiment.get_dataset(
+            dataset_collection = dataset_collection_extractor._handle_three_datasets(
+                train_dataset_version=dataset_collection_extractor.experiment.get_dataset(
                     name=DatasetSplitName.TRAIN.value
                 ),
-                val_dataset_version=dataset_handler.experiment.get_dataset(
+                val_dataset_version=dataset_collection_extractor.experiment.get_dataset(
                     name=DatasetSplitName.VAL.value
                 ),
-                test_dataset_version=dataset_handler.experiment.get_dataset(
+                test_dataset_version=dataset_collection_extractor.experiment.get_dataset(
                     name=DatasetSplitName.TEST.value
                 ),
             )
@@ -359,13 +361,13 @@ class TestDatasetHandler:
     )
     def test_handle_datasets_exceptions(
         self,
-        mock_experiment_dataset_collection_extractor: Callable,
+        mock_training_dataset_collection_extractor: Callable,
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
         expected_exception: Exception,
     ):
         with pytest.raises(expected_exception):
-            dataset_handler = mock_experiment_dataset_collection_extractor(
+            dataset_collection_extractor = mock_training_dataset_collection_extractor(
                 experiment_name=experiment_name, datasets=datasets
             )
-            dataset_handler.get_dataset_collection()
+            dataset_collection_extractor.get_dataset_collection()

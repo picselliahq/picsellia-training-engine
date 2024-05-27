@@ -15,7 +15,7 @@ class TestDatasetCollection:
     ):
         dataset_collection = mock_dataset_collection(dataset_type=dataset_type)
         with patch(
-            "src.models.dataset.dataset_context.DatasetContext.download_assets"
+            "src.models.dataset.common.dataset_context.DatasetContext.download_assets"
         ) as mocked_download_assets:
             dataset_collection.download_assets()
 

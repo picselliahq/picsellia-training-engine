@@ -44,19 +44,19 @@ def mock_experiment(
 
 
 @pytest.fixture
-def mock_experiment_dataset_collection_extractor(
+def mock_training_dataset_collection_extractor(
     mock_experiment: Callable, mock_train_set_split_ratio: float
 ) -> Callable:
-    def _mock_dataset_handler(
+    def _mock_dataset_collection_extractor(
         experiment_name: str,
         datasets: List[DatasetTestMetadata],
     ) -> TrainingDatasetCollectionExtractor:
         experiment = mock_experiment(experiment_name, datasets)
         return TrainingDatasetCollectionExtractor(
-            experiment, mock_train_set_split_ratio
+            experiment=experiment, train_set_split_ratio=mock_train_set_split_ratio
         )
 
-    return _mock_dataset_handler
+    return _mock_dataset_collection_extractor
 
 
 @pytest.fixture(autouse=True)
