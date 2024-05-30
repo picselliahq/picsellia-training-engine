@@ -1,7 +1,7 @@
 from src.models.parameters.common.parameters import Parameters
 
 
-class ProcessingTilingParameters(Parameters):
+class ProcessingSlicerParameters(Parameters):
     def __init__(self, log_data):
         super().__init__(log_data)
 
