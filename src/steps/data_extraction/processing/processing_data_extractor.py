@@ -30,7 +30,9 @@ def processing_data_extractor(skip_asset_listing: bool = False) -> DatasetContex
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     dataset_context_extractor = ProcessingDatasetContextExtractor(
-        job_id=context.job_id, dataset_version=context.input_dataset_version
+        job_id=context.job_id,
+        dataset_version=context.input_dataset_version,
+        use_id=context.use_id,
     )
     dataset_context = dataset_context_extractor.get_dataset_context(
         skip_asset_listing=skip_asset_listing

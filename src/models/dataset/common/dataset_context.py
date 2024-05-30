@@ -64,6 +64,15 @@ class DatasetContext:
             self.multi_asset = multi_asset
         elif not skip_asset_listing:
             self.list_assets()
+    def build_coco_file(self) -> COCOFile:
+        """
+        Builds the COCO file associated with the dataset. Initializes `coco_file` to the COCO file object.
+        """
+        if self.multi_asset:
+            return self.dataset_version.build_coco_file_locally(
+                assets=self.multi_asset,
+                use_id=self.use_id,
+            )
         else:
             self.multi_asset = None
 
@@ -100,6 +109,7 @@ class DatasetContext:
         """
         os.makedirs(self.image_dir, exist_ok=True)
         if self.multi_asset:
+            os.makedirs(self.image_dir, exist_ok=True)
             self.multi_asset.download(target_path=self.image_dir, use_id=self.use_id)
         else:
             raise ValueError("No assets found in the dataset")
