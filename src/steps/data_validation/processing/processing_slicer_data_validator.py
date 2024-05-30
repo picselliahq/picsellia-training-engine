@@ -5,7 +5,7 @@ from src import step
 from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.dataset.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_slicer_parameters import (
-    ProcessingTilingParameters,
+    ProcessingSlicerParameters,
 )
 from src.models.steps.data_validation.common.object_detection_dataset_context_validator import (
     ObjectDetectionDatasetContextValidator,
@@ -23,7 +23,7 @@ def slicer_data_validator(
     dataset_context: DatasetContext,
 ) -> None:
     context: PicselliaProcessingContext[
-        ProcessingTilingParameters
+        ProcessingSlicerParameters
     ] = Pipeline.get_active_context()
 
     if dataset_context.dataset_version.type == InferenceType.OBJECT_DETECTION:
