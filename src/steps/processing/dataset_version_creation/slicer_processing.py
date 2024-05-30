@@ -5,7 +5,7 @@ from src import step
 from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.dataset.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_slicer_parameters import (
-    ProcessingTilingParameters,
+    ProcessingSlicerParameters,
 )
 from src.models.steps.processing.dataset_version_creation.slicer_processing import (
     SlicerProcessing,
@@ -15,7 +15,7 @@ from src.models.steps.processing.dataset_version_creation.slicer_processing impo
 @step
 def slicer_processing(dataset_context: DatasetContext):
     context: PicselliaProcessingContext[
-        ProcessingTilingParameters
+        ProcessingSlicerParameters
     ] = Pipeline.get_active_context()
 
     processor = SlicerProcessing(
