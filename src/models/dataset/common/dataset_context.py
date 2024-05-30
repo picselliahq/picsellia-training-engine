@@ -36,6 +36,7 @@ class DatasetContext:
         destination_path: str,
         multi_asset: Optional[MultiAsset] = None,
         labelmap: Optional[Dict[str, Label]] = None,
+        use_id: Optional[bool] = True,
     ):
         """
         Initializes the DatasetContext with dataset metadata and configuration.
@@ -50,6 +51,7 @@ class DatasetContext:
         self.dataset_name = dataset_name
         self.dataset_version = dataset_version
         self.destination_path = destination_path
+        self.use_id = use_id
         if not labelmap:
             self.labelmap = get_labelmap(dataset_version=dataset_version)
         else:
@@ -71,7 +73,7 @@ class DatasetContext:
         if self.multi_asset:
             return self.dataset_version.build_coco_file_locally(
                 assets=self.multi_asset,
-                use_id=True,
+                use_id=self.use_id,
             )
         else:
             return COCOFile(images=[], annotations=[])
@@ -83,6 +85,6 @@ class DatasetContext:
         """
         if self.multi_asset:
             os.makedirs(self.image_dir, exist_ok=True)
-            self.multi_asset.download(target_path=self.image_dir, use_id=True)
+            self.multi_asset.download(target_path=self.image_dir, use_id=self.use_id)
         else:
             raise ValueError("No assets found in the dataset")

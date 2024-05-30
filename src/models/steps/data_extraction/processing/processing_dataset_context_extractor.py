@@ -7,7 +7,12 @@ from src.models.dataset.common.dataset_context import DatasetContext
 
 
 class ProcessingDatasetContextExtractor:
-    def __init__(self, dataset_version: DatasetVersion, job_id: Optional[str] = None):
+    def __init__(
+        self,
+        dataset_version: DatasetVersion,
+        job_id: Optional[str] = None,
+        use_id: Optional[bool] = True,
+    ):
         """
         Initializes a DatasetHandler with the input dataset version and destination path.
 
@@ -19,6 +24,7 @@ class ProcessingDatasetContextExtractor:
             self.destination_path = os.path.join(os.getcwd(), "current_job")
         else:
             self.destination_path = os.path.join(os.getcwd(), str(job_id))
+        self.use_id = use_id
 
     def get_dataset_context(self) -> DatasetContext:
         """
@@ -36,4 +42,5 @@ class ProcessingDatasetContextExtractor:
             destination_path=self.destination_path,
             multi_asset=None,
             labelmap=None,
+            use_id=self.use_id,
         )

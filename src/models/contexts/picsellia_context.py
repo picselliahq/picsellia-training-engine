@@ -155,6 +155,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
         job_id: Optional[str] = None,
+        use_id: Optional[bool] = True,
     ):
         super().__init__(api_token, host, organization_id)
 
@@ -186,6 +187,8 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
             )
         if self._model_version_id:
             self.model_version = self.get_model_version()
+
+        self.use_id = use_id
 
         self.processing_parameters = processing_parameters_cls(
             log_data=self.job_context["parameters"]

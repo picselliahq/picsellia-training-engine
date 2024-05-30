@@ -18,6 +18,7 @@ class TestPicselliaProcessingContext(PicselliaContext):
         job_type: Optional[ProcessingType] = None,
         input_dataset_version_id: Optional[str] = None,
         output_dataset_version_id: Optional[str] = None,
+        use_id: Optional[bool] = True,
         model_version_id: Optional[str] = None,
         processing_parameters=None,
     ):
@@ -39,6 +40,7 @@ class TestPicselliaProcessingContext(PicselliaContext):
         if self.model_version_id:
             self.model_version = self.get_model_version()
         self.processing_parameters = processing_parameters
+        self.use_id = use_id
 
     def get_dataset_version(self, dataset_version_id) -> DatasetVersion:
         """
@@ -73,6 +75,7 @@ class TestPicselliaProcessingContext(PicselliaContext):
                 "input_dataset_version_id": self.input_dataset_version_id,
                 "output_dataset_version_id": self.output_dataset_version_id,
                 "model_version_id": self.model_version_id,
+                "use_id": self.use_id,
             },
             "processing_parameters": self.processing_parameters,
         }
