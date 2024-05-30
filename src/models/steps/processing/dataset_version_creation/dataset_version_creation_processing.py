@@ -148,6 +148,18 @@ class DatasetVersionCreationProcessing:
         adding_job = self.output_dataset_version.add_data(data=data)
         adding_job.wait_for_done()
 
+    def _add_coco_annotations_to_dataset_version(self, annotation_path: str):
+        """
+        Adds COCO annotations to the dataset version.
+
+        Args:
+            annotation_path (str): The path to the COCO annotations file.
+
+        """
+        self.output_dataset_version.import_annotations_coco_file(
+            file_path=annotation_path
+        )
+
     @abstractmethod
     def process(self) -> None:
         """
