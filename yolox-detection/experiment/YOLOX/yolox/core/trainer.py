@@ -149,7 +149,7 @@ class Trainer:
         model = self.resume_train(model)
 
         # data related init
-        self.no_aug = self.start_epoch >= self.max_epoch - self.exp.no_aug_epochs
+        self.no_aug = True
         self.train_loader = self.exp.get_data_loader(
             batch_size=self.args.batch_size,
             is_distributed=self.is_distributed,
@@ -234,13 +234,19 @@ class Trainer:
                         name="train/" + k, type=LogType.LINE, data=float(v.latest)
                     )
                 except Exception as e:
-                    logger.info(f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}")
+                    logger.info(
+                        f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}"
+                    )
             try:
                 self.picsellia_experiment.log(
-                        name="train/lr", type=LogType.LINE, data=float(self.meter["lr"].latest)
-                    )
+                    name="train/lr",
+                    type=LogType.LINE,
+                    data=float(self.meter["lr"].latest),
+                )
             except Exception as e:
-                logger.info(f"Couldn't log metric 'train/lr' to Picsellia because: {str(e)}")
+                logger.info(
+                    f"Couldn't log metric 'train/lr' to Picsellia because: {str(e)}"
+                )
 
         self.meter.clear_meters()
 
@@ -300,7 +306,7 @@ class Trainer:
                     metrics = {"train/" + k: v.latest for k, v in loss_meter.items()}
                     metrics.update({"train/lr": self.meter["lr"].latest})
                     self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
-                
+
             self.meter.clear_meters()
 
         # random resizing
