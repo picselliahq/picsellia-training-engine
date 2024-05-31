@@ -5,8 +5,8 @@ from picsellia import DatasetVersion, Client
 from picsellia.types.enums import TagTarget, InferenceType
 from picsellia_annotations.coco import Annotation
 
-from src.models.dataset.dataset_context import DatasetContext
-from src.models.steps.processing.dataset_version_creation_processing import (
+from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.steps.processing.dataset_version_creation.dataset_version_creation_processing import (
     DatasetVersionCreationProcessing,
 )
 
@@ -28,8 +28,8 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
         super().__init__(
             client=client,
             output_dataset_version=output_dataset_version,
-            dataset_type=InferenceType.CLASSIFICATION,
-            dataset_description=f"Dataset extracted from dataset version "
+            output_dataset_type=InferenceType.CLASSIFICATION,
+            output_dataset_description=f"Dataset extracted from dataset version "
             f"'{input_dataset_context.dataset_version.version}' "
             f"(id: {input_dataset_context.dataset_version.id}) "
             f"in dataset '{input_dataset_context.dataset_version.name}' "
@@ -132,7 +132,7 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
                 ]
                 self._add_images_to_dataset_version(
                     images_to_upload=filepaths,
-                    images_tags=[label_folder, "processed_dataset"],
+                    images_tags=[f"picsellia_tile_{label_folder}"],
                 )
         conversion_job = self.processed_dataset_context.dataset_version.convert_tags_to_classification(
             tag_type=TagTarget.ASSET,

@@ -5,8 +5,8 @@ from picsellia import DatasetVersion, Experiment
 from picsellia.exceptions import ResourceNotFoundError
 
 from src.enums import DatasetSplitName
-from src.models.dataset.dataset_collection import DatasetCollection
-from src.models.dataset.dataset_context import DatasetContext
+from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.models.dataset.common.dataset_context import DatasetContext
 
 
 class TrainingDatasetCollectionExtractor:

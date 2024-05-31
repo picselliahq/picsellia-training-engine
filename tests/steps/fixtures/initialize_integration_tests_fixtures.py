@@ -27,7 +27,8 @@ def create_dataset_version(
     annotations_path: str,
 ) -> DatasetVersion:
     dataset_version = dataset.create_version(version=version_name, type=dataset_type)
-    dataset_version.add_data(data=uploaded_data).wait_for_done()
+    job = dataset_version.add_data(data=uploaded_data)
+    job.wait_for_done(attempts=50)
     dataset_version.import_annotations_coco_file(file_path=annotations_path)
 
     return dataset_version

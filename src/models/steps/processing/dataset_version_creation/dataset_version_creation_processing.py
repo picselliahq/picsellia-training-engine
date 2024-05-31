@@ -26,20 +26,20 @@ class DatasetVersionCreationProcessing:
         self,
         client: Client,
         output_dataset_version: DatasetVersion,
-        dataset_type: InferenceType,
-        dataset_description: str,
+        output_dataset_type: InferenceType,
+        output_dataset_description: str,
         datalake: str = "default",
     ):
         self.client = client
         self.output_dataset_version = output_dataset_version
         self.output_dataset_version.update(
-            description=dataset_description, type=dataset_type
+            description=output_dataset_description, type=output_dataset_type
         )
         self.datalake = self.client.get_datalake(name=datalake)
 
     def _upload_data_with_error_manager(
         self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
-    ) -> Tuple[Data, List[str]]:
+    ) -> Tuple[List[Data], List[str]]:
         """
         Uploads data to the datalake using an error manager. This method allows to handle errors during the upload process.
         It will retry to upload the data that failed to upload.
@@ -49,14 +49,21 @@ class DatasetVersionCreationProcessing:
             images_tags (Optional[List[str]]): The list of tags to associate with the images.
 
         Returns:
-
+            - List[Data]: The list of uploaded data.
+            - List[str]: The list of file paths that failed to upload.
         """
         error_manager = ErrorManager()
         data = self.datalake.upload_data(
             filepaths=images_to_upload, tags=images_tags, error_manager=error_manager
         )
+
+        if isinstance(data, Data):
+            uploaded_data = [data]
+        else:
+            uploaded_data = [one_uploaded_data for one_uploaded_data in data]
+
         error_paths = [error.path for error in error_manager.errors]
-        return data, error_paths
+        return uploaded_data, error_paths
 
     def _upload_images_to_datalake(
         self,
@@ -79,17 +86,13 @@ class DatasetVersionCreationProcessing:
         uploaded_data, error_paths = self._upload_data_with_error_manager(
             images_to_upload=images_to_upload, images_tags=images_tags
         )
-        all_uploaded_data.extend(
-            [one_uploaded_data for one_uploaded_data in uploaded_data]
-        )
+        all_uploaded_data.extend(uploaded_data)
         retry_count = 0
         while error_paths and retry_count < max_retries:
             uploaded_data, error_paths = self._upload_data_with_error_manager(
                 images_to_upload=error_paths, images_tags=images_tags
             )
-            all_uploaded_data.extend(
-                [one_uploaded_data for one_uploaded_data in uploaded_data]
-            )
+            all_uploaded_data.extend(uploaded_data)
             retry_count += 1
         if error_paths:
             raise Exception(

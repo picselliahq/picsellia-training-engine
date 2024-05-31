@@ -4,7 +4,7 @@ from typing import Dict
 
 from picsellia_annotations.coco import Image
 
-from src.models.dataset.dataset_context import DatasetContext
+from src.models.dataset.common.dataset_context import DatasetContext
 
 
 class ClassificationDatasetContextPreparator:

@@ -2,7 +2,7 @@ from typing import List
 
 from PIL import Image
 
-from src.models.dataset.dataset_context import DatasetContext
+from src.models.dataset.common.dataset_context import DatasetContext
 from src.steps.data_validation.utils.image_utils import get_images_path_list
 
 

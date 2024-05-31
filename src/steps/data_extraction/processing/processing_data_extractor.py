@@ -3,7 +3,7 @@ from src import step
 from src.models.contexts.picsellia_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.dataset_context import DatasetContext
+from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.data_extraction.processing.processing_dataset_context_extractor import (
     ProcessingDatasetContextExtractor,
 )
