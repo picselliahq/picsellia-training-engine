@@ -11,4 +11,4 @@ WORKDIR /experiment
 COPY ./tf2/experiment ./
 COPY ./evaluator ./evaluator
 
-ENTRYPOINT ["run", "main.py"]
+ENTRYPOINT ["run", "python3.8", "main.py"]

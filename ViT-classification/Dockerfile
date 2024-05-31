@@ -21,4 +21,4 @@ COPY ./abstract_trainer ./abstract_trainer
 COPY ./evaluator ./evaluator
 RUN chown -R 42420:42420 /workspace
 
-ENTRYPOINT ["run", "main.py"]
+ENTRYPOINT ["run", "python3.10", "main.py"]

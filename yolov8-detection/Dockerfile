@@ -12,4 +12,4 @@ COPY ./evaluator ./evaluator
 COPY ./abstract_trainer ./abstract_trainer
 COPY ./core_utils ./core_utils
 
-ENTRYPOINT ["run", "main.py"]
+ENTRYPOINT ["run", "python3.10", "main.py"]

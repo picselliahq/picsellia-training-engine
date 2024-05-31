@@ -13,4 +13,4 @@ COPY ./evaluator ./evaluator
 RUN mkdir -p /workspace
 RUN chmod 777 /workspace
 
-ENTRYPOINT ["run", "main.py"]
+ENTRYPOINT ["run", "python3.10", "main.py"]

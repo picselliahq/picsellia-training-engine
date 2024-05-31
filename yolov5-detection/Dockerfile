@@ -13,4 +13,4 @@ WORKDIR /experiment
 
 COPY ./yolov5-detection/experiment ./
 
-ENTRYPOINT ["run", "main.py"]
+ENTRYPOINT ["run", "python3.8", "main.py"]
