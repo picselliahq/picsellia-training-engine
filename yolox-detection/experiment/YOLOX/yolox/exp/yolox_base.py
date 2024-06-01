@@ -61,7 +61,7 @@ class Exp(BaseExp):
         self.translate = 0.1
         self.mosaic_scale = (0.1, 2)
         # apply mixup aug or not
-        self.enable_mixup = True
+        self.enable_mixup = False
         self.mixup_scale = (0.5, 1.5)
         # shear angle range, for example, if set to 2, the true range is (-2, 2)
         self.shear = 2.0
@@ -167,12 +167,12 @@ class Exp(BaseExp):
                 None: Do not use cache, in this case cache_data is also None.
         """
         from YOLOX.yolox.data import (
-            TrainTransform,
             YoloBatchSampler,
             DataLoader,
             InfiniteSampler,
             MosaicDetection,
             worker_init_reset_seed,
+            TrainTransformV2,
         )
         from YOLOX.yolox.utils import wait_for_the_master
 
@@ -189,9 +189,7 @@ class Exp(BaseExp):
             dataset=self.dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
-            preproc=TrainTransform(
-                max_labels=120, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
-            ),
+            preproc=TrainTransformV2(max_labels=120),
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,
@@ -365,3 +363,7 @@ class Exp(BaseExp):
 def check_exp_value(exp: Exp):
     h, w = exp.input_size
     assert h % 32 == 0 and w % 32 == 0, "input size must be multiples of 32"
+
+
+def my_collate_fn(batch):
+    return batch
