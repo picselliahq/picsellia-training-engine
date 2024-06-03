@@ -188,12 +188,7 @@ if num_gpu > 0:
 
 model_path = os.path.join(exp.output_dir, args.experiment_name, "best.onnx")
 
-torch.onnx.export(
-    model,
-    dummy_input,
-    model_path,
-    output_names=["output_yolox"]
-)
+torch.onnx.export(model, dummy_input, model_path, output_names=["output_yolox"])
 experiment.store("model-latest", model_path)
 print("Exported the model best.onnx as model-latest")
 

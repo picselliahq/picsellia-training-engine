@@ -48,23 +48,23 @@ class Exp(BaseExp):
 
         # --------------- transform config ----------------- #
         # prob of applying mosaic aug
-        self.mosaic_prob = 1.0
+        self.mosaic_prob = 0
         # prob of applying mixup aug
-        self.mixup_prob = 1.0
+        self.mixup_prob = 0
         # prob of applying hsv aug
-        self.hsv_prob = 1.0
+        self.hsv_prob = 0
         # prob of applying flip aug
-        self.flip_prob = 0.5
+        self.flip_prob = 0
         # rotation angle range, for example, if set to 2, the true range is (-2, 2)
-        self.degrees = 10.0
+        self.degrees = 0
         # translate range, for example, if set to 0.1, the true range is (-0.1, 0.1)
-        self.translate = 0.1
-        self.mosaic_scale = (0.1, 2)
+        self.translate = 0
+        self.mosaic_scale = (0, 0)
         # apply mixup aug or not
         self.enable_mixup = False
-        self.mixup_scale = (0.5, 1.5)
+        self.mixup_scale = (0, 0)
         # shear angle range, for example, if set to 2, the true range is (-2, 2)
-        self.shear = 2.0
+        self.shear = 0
 
         # --------------  training config --------------------- #
         # epoch number used for warmup
@@ -148,7 +148,7 @@ class Exp(BaseExp):
             json_file=self.train_ann,
             img_size=self.input_size,
             preproc=TrainTransform(
-                max_labels=50, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
+                max_labels=120, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
             ),
             cache=cache,
             cache_type=cache_type,

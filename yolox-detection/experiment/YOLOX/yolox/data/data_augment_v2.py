@@ -35,7 +35,7 @@ class TrainTransformV2:
                         scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
                         # translate by -20 to +20 percent (per axis)
                         translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
-                        shear=(-16, 16),  # shear by -16 to +16 degrees
+                        shear=(-5, 5),  # shear by -16 to +16 degrees
                         # use nearest neighbour or bilinear interpolation (fast)
                         order=[0, 1],
                         # if mode is constant, use a cval between 0 and 255
@@ -54,27 +54,27 @@ class TrainTransformV2:
                         # convert images into their superpixel representation
                         iaa.OneOf(
                             [
-                                # blur images with a sigma between 0 and 3.0
-                                iaa.GaussianBlur((0, 2.0)),
+                                # blur images with a sigma between 0 and 2.0
+                                iaa.GaussianBlur((10, 20.0)),
                                 # blur image using local means with kernel sizes
-                                # between 2 and 7
-                                iaa.AverageBlur(k=(2, 5)),
+                                # between 2 and 5
+                                iaa.AverageBlur(k=(3, 7)),
                                 # blur image using local medians with kernel sizes
-                                # between 2 and 7
-                                iaa.MedianBlur(k=(1, 3)),
+                                # between 1 and 3
+                                iaa.MedianBlur(k=(1, 5)),
                             ]
                         ),
                         iaa.Sharpen(
-                            alpha=(0, 0.5), lightness=(0.9, 1.2)
+                            alpha=(0, 0.6), lightness=(0.9, 1.2)
                         ),  # sharpen images
                         # add gaussian noise to images
                         iaa.AdditiveGaussianNoise(
                             loc=0, scale=(0.0, 0.05 * 255), per_channel=0.5
                         ),
                         # change brightness of images (by -10 to 10 of original value)
-                        iaa.Add((-10, 10), per_channel=0.5),
+                        iaa.Add((-18, 18)),
+                        iaa.Add((-8, 8), per_channel=0.5),
                         # sometimes move parts of the image around
-                        sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.04))),
                         sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.1))),
                         iaa.ElasticTransformation(alpha=(10, 200), sigma=15.0),
                     ],
@@ -87,11 +87,9 @@ class TrainTransformV2:
     def preproc(self, img, input_size, swap=(2, 0, 1)):
         """Resize and normalize the image as per YOLOX standards."""
         if len(img.shape) == 3:
-            padded_img = (
-                np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114
-            )
+            padded_img = np.zeros((input_size[0], input_size[1], 3), dtype=np.uint8)
         else:
-            padded_img = np.ones(input_size, dtype=np.uint8) * 114
+            padded_img = np.zeros(input_size, dtype=np.uint8)
 
         r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
         resized_img = cv2.resize(
@@ -149,7 +147,7 @@ class TrainTransformV2:
 
         # boxes [xyxy] 2 [cx,cy,w,h]
         boxes = xyxy2cxcywh(boxes)
-        boxes *= r_
+        boxes = boxes * r_
 
         mask_b = np.minimum(boxes[:, 2], boxes[:, 3]) > 1
         boxes_t = boxes[mask_b]
@@ -157,7 +155,8 @@ class TrainTransformV2:
 
         if len(boxes_t) == 0:
             image_t, r_o = self.preproc(image_o, input_dim)
-            boxes_o *= r_o
+            boxes_o = boxes_o * r_o
+
             boxes_t = boxes_o
             labels_t = labels_o
 
@@ -176,9 +175,9 @@ class TrainTransformV2:
         ax.imshow(image)
         for box in boxes:
             rect = patches.Rectangle(
-                (box[0], box[1]),
-                box[2] - box[0],
-                box[3] - box[1],
+                (box[0] - box[2] / 2, box[1] - box[3] / 2),
+                box[2],
+                box[3],
                 linewidth=2,
                 edgecolor="r",
                 facecolor="none",
