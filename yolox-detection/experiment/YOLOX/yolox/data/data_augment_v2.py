@@ -18,6 +18,9 @@ class TrainTransformV2:
         def sometimes(aug):
             return iaa.Sometimes(0.5, aug)
 
+        def rarely(aug):
+            return iaa.Sometimes(0.03, aug)
+
         return iaa.Sequential(
             [
                 # apply the following augmenters to most images
@@ -31,20 +34,20 @@ class TrainTransformV2:
                 ),
                 sometimes(
                     iaa.Affine(
-                        # scale images to 80-120% of their size, individually per axis
-                        scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
+                        # scale images to 90-110% of their size, individually per axis
+                        scale={"x": (0.9, 1.1), "y": (0.9, 1.1)},
                         # translate by -20 to +20 percent (per axis)
                         translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
-                        shear=(-5, 5),  # shear by -16 to +16 degrees
+                        shear=(-5, 5),  # shear by -5 to +5 degrees
                         # use nearest neighbour or bilinear interpolation (fast)
                         order=[0, 1],
                         # if mode is constant, use a cval between 0 and 255
                         cval=0,
                         # use any of scikit-image's warping modes
-                        # (see 2nd image from the top for examples)
                         mode="constant",
                     )
                 ),
+                sometimes(iaa.Rotate((-5, 5))),
                 # execute 0 to 5 of the following (less important) augmenters per
                 # image don't execute all of them, as that would often be way too
                 # strong
@@ -54,8 +57,8 @@ class TrainTransformV2:
                         # convert images into their superpixel representation
                         iaa.OneOf(
                             [
-                                # blur images with a sigma between 0 and 2.0
-                                iaa.GaussianBlur((10, 20.0)),
+                                # blur images with a sigma between 10 and 18.0
+                                iaa.GaussianBlur((10, 18.0)),
                                 # blur image using local means with kernel sizes
                                 # between 2 and 5
                                 iaa.AverageBlur(k=(3, 7)),
@@ -71,14 +74,20 @@ class TrainTransformV2:
                         iaa.AdditiveGaussianNoise(
                             loc=0, scale=(0.0, 0.05 * 255), per_channel=0.5
                         ),
-                        # change brightness of images (by -10 to 10 of original value)
-                        iaa.Add((-18, 18)),
+                        # change brightness of images (by -15 to 15 of original value)
+                        iaa.Add((-15, 15)),
+                        iaa.AddToHueAndSaturation((-15, 15)),
                         iaa.Add((-8, 8), per_channel=0.5),
-                        # sometimes move parts of the image around
-                        sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.1))),
-                        iaa.ElasticTransformation(alpha=(10, 200), sigma=15.0),
+                        rarely(iaa.MotionBlur(k=70)),
                     ],
                     random_order=True,
+                ),
+                rarely(
+                    iaa.OneOf(
+                        [
+                            iaa.Snowflakes(flake_size=(0.7, 0.9), speed=(0.001, 0.03)),
+                        ]
+                    )
                 ),
             ],
             random_order=True,
@@ -92,12 +101,22 @@ class TrainTransformV2:
             padded_img = np.zeros(input_size, dtype=np.uint8)
 
         r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
+
+        new_width = int(img.shape[1] * r)
+        new_height = int(img.shape[0] * r)
+
         resized_img = cv2.resize(
             img,
-            (int(img.shape[1] * r), int(img.shape[0] * r)),
+            (new_width, new_height),
             interpolation=cv2.INTER_LINEAR,
         ).astype(np.uint8)
-        padded_img[: int(img.shape[0] * r), : int(img.shape[1] * r)] = resized_img
+
+        start_x = (input_size[1] - new_width) // 2
+        start_y = (input_size[0] - new_height) // 2
+
+        padded_img[
+            start_y : start_y + new_height, start_x : start_x + new_width
+        ] = resized_img
 
         padded_img = padded_img.transpose(swap)
         padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
