@@ -26,16 +26,19 @@ def slicer_data_validator(
         ProcessingSlicerParameters
     ] = Pipeline.get_active_context()
 
-    if dataset_context.dataset_version.type == InferenceType.OBJECT_DETECTION:
-        object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
-            dataset_context=dataset_context
-        )
-        object_detection_dataset_validator.validate()
-    elif dataset_context.dataset_version.type == InferenceType.SEGMENTATION:
+    if dataset_context.dataset_version.type == InferenceType.SEGMENTATION:
         segmentation_dataset_validator = SegmentationDatasetContextValidator(
             dataset_context=dataset_context
         )
         segmentation_dataset_validator.validate()
+    if (
+        dataset_context.dataset_version.type == InferenceType.OBJECT_DETECTION
+        or dataset_context.dataset_version.type == InferenceType.SEGMENTATION
+    ):
+        object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
+            dataset_context=dataset_context
+        )
+        object_detection_dataset_validator.validate()
     else:
         raise ValueError(
             f"Dataset type {dataset_context.dataset_version.type} is not supported."
