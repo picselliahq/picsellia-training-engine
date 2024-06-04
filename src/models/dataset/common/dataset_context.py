@@ -8,6 +8,8 @@ from src.steps.data_extraction.utils.image_utils import get_labelmap
 
 from picsellia.exceptions import NoDataError
 from picsellia_annotations.coco import COCOFile
+from picsellia_annotations.utils import read_coco_file
+from picsellia.types.enums import AnnotationFileType
 
 
 class DatasetContext:
@@ -64,19 +66,30 @@ class DatasetContext:
         else:
             self.multi_asset = multi_asset
         self.image_dir = os.path.join(destination_path, self.dataset_name, "images")
-        self.coco_file = self.build_coco_file()
+        self.coco_file_path = self.download_coco_file()
+        self.coco_file = self.build_coco_file(coco_file_path=self.coco_file_path)
 
-    def build_coco_file(self) -> COCOFile:
+    def download_coco_file(self) -> str:
         """
-        Builds the COCO file associated with the dataset. Initializes `coco_file` to the COCO file object.
+        Downloads the COCO file associated with the dataset to the local filesystem.
         """
-        if self.multi_asset:
-            return self.dataset_version.build_coco_file_locally(
-                assets=self.multi_asset,
-                use_id=self.use_id,
-            )
-        else:
-            return COCOFile(images=[], annotations=[])
+        return self.dataset_version.export_annotation_file(
+            annotation_file_type=AnnotationFileType.COCO,
+            target_path=os.path.join(
+                self.destination_path, self.dataset_name, "annotations"
+            ),
+            assets=self.multi_asset,
+            use_id=self.use_id,
+        )
+
+    def build_coco_file(self, coco_file_path) -> COCOFile:
+        """
+        Builds the COCO file object associated with the dataset.
+
+        Returns:
+            - COCOFile: The COCO file object.
+        """
+        return read_coco_file(coco_file_path)
 
     def download_assets(self) -> None:
         """
