@@ -13,6 +13,8 @@ import math
 import random
 
 import cv2
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import numpy as np
 from YOLOX.yolox.utils import xyxy2cxcywh
 
@@ -211,6 +213,21 @@ class TrainTransform:
         ]
         padded_labels = np.ascontiguousarray(padded_labels, dtype=np.float32)
         return image_t, padded_labels
+
+    def visualize_image_with_boxes(self, image, boxes):
+        fig, ax = plt.subplots(1)
+        ax.imshow(image)
+        for box in boxes:
+            rect = patches.Rectangle(
+                (box[0] - box[2] / 2, box[1] - box[3] / 2),
+                box[2],
+                box[3],
+                linewidth=2,
+                edgecolor="r",
+                facecolor="none",
+            )
+            ax.add_patch(rect)
+        plt.show()
 
 
 class ValTransform:

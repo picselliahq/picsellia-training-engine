@@ -1,5 +1,8 @@
 FROM picsellia/cuda:11.7.1-cudnn8-ubuntu20.04-python3.10
 
+RUN apt-get -y update
+RUN apt-get -y install git
+
 COPY ./yolox-detection/requirements.txt .
 
 ARG REBUILD_ALL

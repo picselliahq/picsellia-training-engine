@@ -299,17 +299,16 @@ class Exp(BaseExp):
         return scheduler
 
     def get_eval_dataset(self, **kwargs):
-        from YOLOX.yolox.data import COCODataset, ValTransform
+        from YOLOX.yolox.data import COCODataset, ValTransformV2
 
         testdev = kwargs.get("testdev", False)
-        legacy = kwargs.get("legacy", False)
 
         return COCODataset(
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
             img_size=self.test_size,
-            preproc=ValTransform(legacy=legacy),
+            preproc=ValTransformV2(),
         )
 
     def get_eval_loader(self, batch_size, is_distributed, **kwargs):
