@@ -22,7 +22,7 @@ class SegmentationDatasetContextValidator(DatasetContextValidator):
     def validate_labelmap(self):
         """
         Validate that the labelmap for the dataset context is valid.
-        An object detection labelmap must have at least 1 class.
+        An segmentation labelmap must have at least 1 class.
 
         Raises:
             ValueError: If the labelmap for the dataset context is not valid.
@@ -30,7 +30,7 @@ class SegmentationDatasetContextValidator(DatasetContextValidator):
         if len(self.dataset_context.labelmap) < 1:
             raise ValueError(
                 f"Labelmap for dataset {self.dataset_context.dataset_name} is not valid. "
-                f"An object detection labelmap must have at least 1 class."
+                f"A segmentation labelmap must have at least 1 class."
             )
 
     def validate_at_least_one_image_with_polygons(self):
