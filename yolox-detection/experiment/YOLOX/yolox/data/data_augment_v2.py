@@ -8,41 +8,22 @@ from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 
 
 def preproc(img, input_size, swap=(2, 0, 1)):
-    """Resize and normalize the image as per YOLOX standards."""
     if len(img.shape) == 3:
-        padded_img = np.zeros((input_size[0], input_size[1], 3), dtype=np.uint8)
+        padded_img = np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114
     else:
-        padded_img = np.zeros(input_size, dtype=np.uint8)
+        padded_img = np.ones(input_size, dtype=np.uint8) * 114
 
     r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
-
-    new_width = int(img.shape[1] * r)
-    new_height = int(img.shape[0] * r)
-
     resized_img = cv2.resize(
         img,
-        (new_width, new_height),
+        (int(img.shape[1] * r), int(img.shape[0] * r)),
         interpolation=cv2.INTER_LINEAR,
     ).astype(np.uint8)
-
-    start_x = (input_size[1] - new_width) // 2
-    start_y = (input_size[0] - new_height) // 2
-
-    padded_img[
-        start_y : start_y + new_height, start_x : start_x + new_width
-    ] = resized_img
+    padded_img[: int(img.shape[0] * r), : int(img.shape[1] * r)] = resized_img
 
     padded_img = padded_img.transpose(swap)
     padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
-    return padded_img, r, start_x, start_y
-
-
-def pad_boxes(boxes, r, start_x, start_y):
-    scaled_boxes = boxes * r
-    scaled_boxes[:, [0, 2]] += start_x  # Adjust x-coordinates
-    scaled_boxes[:, [1, 3]] += start_y  # Adjust y-coordinates
-
-    return scaled_boxes
+    return padded_img, r
 
 
 def get_transformed_image_and_targets(image, targets, input_dim, max_labels, aug):
@@ -51,7 +32,7 @@ def get_transformed_image_and_targets(image, targets, input_dim, max_labels, aug
 
     if len(boxes) == 0:
         targets = np.zeros((max_labels, 5), dtype=np.float32)
-        image, _, _, _ = preproc(image, input_dim)
+        image, _ = preproc(image, input_dim)
         return image, targets
 
     bbs = BoundingBoxesOnImage([BoundingBox(*box) for box in boxes], shape=image.shape)
@@ -77,7 +58,7 @@ def get_transformed_image_and_targets(image, targets, input_dim, max_labels, aug
     )
 
     height, width, _ = image_aug.shape
-    image_t, r_, start_x, start_y = preproc(image_aug, input_dim)
+    image_t, r_ = preproc(image_aug, input_dim)
 
     # All the bbox have disappeared due to a data augmentation
     if len(boxes) == 0:
@@ -85,7 +66,6 @@ def get_transformed_image_and_targets(image, targets, input_dim, max_labels, aug
         return image_t, targets
 
     # boxes [xyxy] 2 [cx,cy,w,h]
-    boxes = pad_boxes(boxes, r_, start_x, start_y)
     boxes = xyxy2cxcywh(boxes)
 
     mask_b = np.minimum(boxes[:, 2], boxes[:, 3]) > 1
@@ -248,7 +228,7 @@ class ValTransformV2:
 
     # assume input is cv2 img for now
     def __call__(self, image, targets, input_dim):
-        image_t, padded_labels = get_transformed_image_and_targets(
+        image_t, _ = get_transformed_image_and_targets(
             image=image,
             targets=targets,
             input_dim=input_dim,
@@ -256,14 +236,4 @@ class ValTransformV2:
             aug=None,
         )
 
-        height, width = input_dim
-
-        # padded_labels format should be [class, xc, yc, w, h]
-        # Normalize xc, yc, w, h by image dimensions
-        if padded_labels.size > 0:  # Ensure there are labels to process
-            padded_labels[:, 1] /= width  # normalized x center
-            padded_labels[:, 2] /= height  # normalized y center
-            padded_labels[:, 3] /= width  # normalized width
-            padded_labels[:, 4] /= height  # normalized height
-
-        return image_t, padded_labels
+        return image_t, np.zeros((1, 5))

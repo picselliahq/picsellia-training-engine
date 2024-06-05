@@ -50,15 +50,15 @@ class Exp(BaseExp):
         # prob of applying mosaic aug
         self.mosaic_prob = 0
         # prob of applying mixup aug
-        self.mixup_prob = 0
+        self.mixup_prob = 1.0
         # prob of applying hsv aug
-        self.hsv_prob = 0
+        self.hsv_prob = 1.0
         # prob of applying flip aug
-        self.flip_prob = 0
+        self.flip_prob = 1.0
         # rotation angle range, for example, if set to 2, the true range is (-2, 2)
-        self.degrees = 0
+        self.degrees = 10.0
         # translate range, for example, if set to 0.1, the true range is (-0.1, 0.1)
-        self.translate = 0
+        self.translate = 0.1
         self.mosaic_scale = (0, 0)
         # apply mixup aug or not
         self.enable_mixup = False
@@ -172,7 +172,7 @@ class Exp(BaseExp):
             InfiniteSampler,
             COCODataset,
             worker_init_reset_seed,
-            TrainTransformV2,
+            TrainTransformV3,
         )
         from YOLOX.yolox.utils import wait_for_the_master
 
@@ -190,7 +190,7 @@ class Exp(BaseExp):
             json_file=self.train_ann,
             name="train2017",
             img_size=self.input_size,
-            preproc=TrainTransformV2(max_labels=120),
+            preproc=TrainTransformV3(max_labels=120),
         )
 
         if is_distributed:
@@ -292,7 +292,7 @@ class Exp(BaseExp):
         return scheduler
 
     def get_eval_dataset(self, **kwargs):
-        from YOLOX.yolox.data import COCODataset, ValTransformV2
+        from YOLOX.yolox.data import COCODataset, ValTransformV3
 
         testdev = kwargs.get("testdev", False)
 
@@ -301,7 +301,7 @@ class Exp(BaseExp):
             json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
             img_size=self.test_size,
-            preproc=ValTransformV2(),
+            preproc=ValTransformV3(),
         )
 
     def get_eval_loader(self, batch_size, is_distributed, **kwargs):
