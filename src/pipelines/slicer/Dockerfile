@@ -8,7 +8,7 @@ ARG REBUILD_ALL
 COPY ./src/pipelines/slicer/requirements.txt ./src/pipelines/slicer/requirements.txt
 ARG REBUILD_PICSELLIA
 
-RUN uv pip install --python=$(which python3.10) --no-cache -r ./src/pipelines/slicer/requirements.txt
+RUN export UV_HTTP_TIMEOUT=600 && uv pip install --python=$(which python3.10) --no-cache -r ./src/pipelines/slicer/requirements.txt
 
 WORKDIR /experiment
 
