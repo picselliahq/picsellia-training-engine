@@ -2,13 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
-<<<<<<< HEAD
 from tests.models.parameters.common.fixtures.parameters_fixtures import (
     ConcreteParameters,
 )
-=======
-from tests.models.parameters.common.conftest import ConcreteParameters
->>>>>>> fb69b06 (fix: adapt tests structure to previous refacto)
 
 
 class TestParameters:
