@@ -45,6 +45,82 @@ def pad_boxes(boxes, r, start_x, start_y):
     return scaled_boxes
 
 
+def get_transformed_image_and_targets(image, targets, input_dim, max_labels, aug):
+    boxes = targets[:, :4].copy()
+    labels = targets[:, 4].copy()
+
+    if len(boxes) == 0:
+        targets = np.zeros((max_labels, 5), dtype=np.float32)
+        image, _, _, _ = preproc(image, input_dim)
+        return image, targets
+
+    bbs = BoundingBoxesOnImage([BoundingBox(*box) for box in boxes], shape=image.shape)
+
+    if aug is not None:
+        image_aug, bbs_aug = aug(image=image, bounding_boxes=bbs)
+    else:
+        image_aug = image
+        bbs_aug = bbs
+
+    bbs_aug = bbs_aug.clip_out_of_image()
+
+    valid_indices = [
+        i
+        for i, bbox in enumerate(bbs_aug.bounding_boxes)
+        if bbox.is_fully_within_image(image)
+    ]
+    labels = labels[valid_indices]
+    bbs_aug = bbs_aug.remove_out_of_image()
+
+    boxes = np.array(
+        [[bbox.x1, bbox.y1, bbox.x2, bbox.y2] for bbox in bbs_aug.bounding_boxes]
+    )
+
+    height, width, _ = image_aug.shape
+    image_t, r_, start_x, start_y = preproc(image_aug, input_dim)
+
+    # All the bbox have disappeared due to a data augmentation
+    if len(boxes) == 0:
+        targets = np.zeros((max_labels, 5), dtype=np.float32)
+        return image_t, targets
+
+    # boxes [xyxy] 2 [cx,cy,w,h]
+    boxes = pad_boxes(boxes, r_, start_x, start_y)
+    boxes = xyxy2cxcywh(boxes)
+
+    mask_b = np.minimum(boxes[:, 2], boxes[:, 3]) > 1
+    boxes_t = boxes[mask_b]
+    labels_t = labels[mask_b]
+
+    if len(boxes_t) == 0:
+        targets = np.zeros((max_labels, 5), dtype=np.float32)
+        return image_t, targets
+
+    labels_t = np.expand_dims(labels_t, 1)
+
+    targets_t = np.hstack((labels_t, boxes_t))
+    padded_labels = np.zeros((max_labels, 5))
+    padded_labels[range(len(targets_t))[:max_labels]] = targets_t[:max_labels]
+    padded_labels = np.ascontiguousarray(padded_labels, dtype=np.float32)
+    return image_t, padded_labels
+
+
+def visualize_image_with_boxes(image, boxes):
+    fig, ax = plt.subplots(1)
+    ax.imshow(image)
+    for box in boxes:
+        rect = patches.Rectangle(
+            (box[0] - box[2] / 2, box[1] - box[3] / 2),
+            box[2],
+            box[3],
+            linewidth=2,
+            edgecolor="r",
+            facecolor="none",
+        )
+        ax.add_patch(rect)
+    plt.show()
+
+
 class TrainTransformV2:
     def __init__(self, max_labels=50):
         self.max_labels = max_labels
@@ -140,83 +216,13 @@ class TrainTransformV2:
         )
 
     def __call__(self, image, targets, input_dim):
-        boxes = targets[:, :4].copy()
-        labels = targets[:, 4].copy()
-
-        if len(boxes) == 0:
-            targets = np.zeros((self.max_labels, 5), dtype=np.float32)
-            image, _, _, _ = preproc(image, input_dim)
-            return image, targets
-
-        image_o = image.copy()
-        targets_o = targets.copy()
-        height_o, width_o, _ = image_o.shape
-        boxes_o = targets_o[:, :4]
-        labels_o = targets_o[:, 4]
-        boxes_o = xyxy2cxcywh(boxes_o)
-
-        bbs = BoundingBoxesOnImage(
-            [BoundingBox(*box) for box in boxes], shape=image.shape
+        return get_transformed_image_and_targets(
+            image=image,
+            targets=targets,
+            input_dim=input_dim,
+            max_labels=self.max_labels,
+            aug=self.aug,
         )
-        image_aug, bbs_aug = self.aug(image=image, bounding_boxes=bbs)
-        bbs_aug = bbs_aug.clip_out_of_image()
-
-        valid_indices = [
-            i
-            for i, bbox in enumerate(bbs_aug.bounding_boxes)
-            if bbox.is_fully_within_image(image)
-        ]
-        labels = labels[valid_indices]
-        bbs_aug = bbs_aug.remove_out_of_image()
-
-        boxes = np.array(
-            [[bbox.x1, bbox.y1, bbox.x2, bbox.y2] for bbox in bbs_aug.bounding_boxes]
-        )
-
-        height, width, _ = image_aug.shape
-        image_t, r_, start_x, start_y = preproc(image_aug, input_dim)
-
-        # All the bbox have disappeared due to a data augmentation
-        if len(boxes) == 0:
-            targets = np.zeros((self.max_labels, 5), dtype=np.float32)
-            return image_t, targets
-
-        # boxes [xyxy] 2 [cx,cy,w,h]
-        boxes = pad_boxes(boxes, r_, start_x, start_y)
-        boxes = xyxy2cxcywh(boxes)
-
-        mask_b = np.minimum(boxes[:, 2], boxes[:, 3]) > 1
-        boxes_t = boxes[mask_b]
-        labels_t = labels[mask_b]
-
-        if len(boxes_t) == 0:
-            targets = np.zeros((self.max_labels, 5), dtype=np.float32)
-            return image_t, targets
-
-        labels_t = np.expand_dims(labels_t, 1)
-
-        targets_t = np.hstack((labels_t, boxes_t))
-        padded_labels = np.zeros((self.max_labels, 5))
-        padded_labels[range(len(targets_t))[: self.max_labels]] = targets_t[
-            : self.max_labels
-        ]
-        padded_labels = np.ascontiguousarray(padded_labels, dtype=np.float32)
-        return image_t, padded_labels
-
-    def visualize_image_with_boxes(self, image, boxes):
-        fig, ax = plt.subplots(1)
-        ax.imshow(image)
-        for box in boxes:
-            rect = patches.Rectangle(
-                (box[0] - box[2] / 2, box[1] - box[3] / 2),
-                box[2],
-                box[3],
-                linewidth=2,
-                edgecolor="r",
-                facecolor="none",
-            )
-            ax.add_patch(rect)
-        plt.show()
 
 
 class ValTransformV2:
@@ -241,6 +247,23 @@ class ValTransformV2:
         self.swap = swap
 
     # assume input is cv2 img for now
-    def __call__(self, img, res, input_size):
-        img, _, _, _ = preproc(img, input_size, self.swap)
-        return img, np.zeros((1, 5))
+    def __call__(self, image, targets, input_dim):
+        image_t, padded_labels = get_transformed_image_and_targets(
+            image=image,
+            targets=targets,
+            input_dim=input_dim,
+            max_labels=150,
+            aug=None,
+        )
+
+        height, width = input_dim
+
+        # padded_labels format should be [class, xc, yc, w, h]
+        # Normalize xc, yc, w, h by image dimensions
+        if padded_labels.size > 0:  # Ensure there are labels to process
+            padded_labels[:, 1] /= width  # normalized x center
+            padded_labels[:, 2] /= height  # normalized y center
+            padded_labels[:, 3] /= width  # normalized width
+            padded_labels[:, 4] /= height  # normalized height
+
+        return image_t, padded_labels

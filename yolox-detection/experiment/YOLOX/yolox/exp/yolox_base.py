@@ -170,7 +170,7 @@ class Exp(BaseExp):
             YoloBatchSampler,
             DataLoader,
             InfiniteSampler,
-            MosaicDetection,
+            COCODataset,
             worker_init_reset_seed,
             TrainTransformV2,
         )
@@ -185,19 +185,12 @@ class Exp(BaseExp):
                 ), "cache_img must be None if you didn't create self.dataset before launch"
                 self.dataset = self.get_dataset(cache=False, cache_type=cache_img)
 
-        self.dataset = MosaicDetection(
-            dataset=self.dataset,
-            mosaic=not no_aug,
+        self.dataset = COCODataset(
+            data_dir=self.data_dir,
+            json_file=self.train_ann,
+            name="train2017",
             img_size=self.input_size,
             preproc=TrainTransformV2(max_labels=120),
-            degrees=self.degrees,
-            translate=self.translate,
-            mosaic_scale=self.mosaic_scale,
-            mixup_scale=self.mixup_scale,
-            shear=self.shear,
-            enable_mixup=self.enable_mixup,
-            mosaic_prob=self.mosaic_prob,
-            mixup_prob=self.mixup_prob,
         )
 
         if is_distributed:
