@@ -144,26 +144,147 @@ When starting a new model, you'll need to create `requirements.in` and generate 
 
 # Configuration 🛠️️
 
-If you create your own Dockerfile, its structure should look like this:
+This section guides you through setting up and customizing your Docker environment using Picsellia Docker images. You can choose from a variety of CPU and CUDA-based images depending on your specific requirements for Python and CUDA versions.
+
+## Selecting the Base Image
+
+Picsellia provides a range of Docker images suitable for various machine learning tasks. These images are pre-configured with essential libraries and Python, making them an starting point for your projects.
+
+### CPU-based Images
+These images are optimized for systems without a GPU and are suitable for less computationally intensive tasks or for development and testing purposes:
+
+- **Python 3.8**: picsellia/cpu:ubuntu20.04-python3.8
+- **Python 3.9**: picsellia/cpu:ubuntu20.04-python3.9
+- **Python 3.10**: picsellia/cpu:ubuntu20.04-python3.10
+- **Python 3.11**: picsellia/cpu:ubuntu20.04-python3.11
+- **Python 3.12**: picsellia/cpu:ubuntu20.04-python3.12
+
+### CUDA-based Images
+These images are equipped with CUDA and cuDNN libraries, making them ideal for GPU-accelerated machine learning tasks:
+
+- **CUDA 11.4.3 with cuDNN 8**:
+  - **Python 3.8**: picsellia/cuda:11.4.3-cudnn8-ubuntu20.04-python3.8
+
+- **CUDA 11.7.1 with cuDNN 8**:
+  - **Python 3.10**: picsellia/cuda:11.7.1-cudnn8-ubuntu20.04-python3.10
+
+- **CUDA 11.8.0 with cuDNN 8**:
+  - **Python 3.9**: picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.9
+  - **Python 3.10**: picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.10
+  - **Python 3.11**: picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.11
+  - **Python 3.12**: picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.12
+
+
+## Customizing the Dockerfile
+
+Below is a template Dockerfile adjusted to use with Picsellia’s provided images, suitable for a bounding box cropping task:
 
 ```Dockerfile
-FROM picsellia/cuda:<base-tag>
+# Select the base image according to your CUDA and Python requirements
+FROM picsellia/cpu:ubuntu20.04-python3.10
 
-COPY your-custom-image/requirements.txt .
-RUN pip install -r requirements. txt
+# Update and install necessary packages
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
 
-# Note: You can also put the picsellia package inside your requirements
-RUN pip install -r picsellia --upgrade
+# Argument to trigger rebuilds
+ARG REBUILD_ALL
+ARG REBUILD_PICSELLIA
 
-WORKDIR /picsellia
+# Copy the requirements file and install dependencies using uv
+COPY ./src/pipelines/bounding_box_cropper/requirements.txt ./src/pipelines/bounding_box_cropper/
+RUN uv pip install --python=$(which python3.10) --no-cache -r ./src/pipelines/bounding_box_cropper/requirements.txt
 
-COPY your-custom-image/picsellia .
+# Set the working directory
+WORKDIR /experiment
 
-ENTRYPOINT ["run", "main.py"]
+# Copy the source code
+COPY ./src/decorators ./src/decorators
+COPY ./src/models ./src/models
+COPY ./src/steps ./src/steps
+COPY ./src/*.py ./src
+
+# Copy the pipeline code
+COPY ./src/pipelines/bounding_box_cropper ./src/pipelines/bounding_box_cropper
+
+# Set environment variable for Python path
+ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
+
+# Specify the entry point for running the pipeline
+ENTRYPOINT ["run", "python3.10", "src/pipelines/bounding_box_cropper/processing_pipeline.py"]
 ```
 
-Using `ENTRYPOINT ["run", "main.py"]` will ensure that the log container's output is automatically directed to your
-Picsellia workspace.
+## Usage
+
+To build the Docker image, navigate to the directory containing the Dockerfile and run the following command:
+
+```bash
+docker build -t bounding-box-cropper .
+```
+
+To push the image to a container registry, you can use the following command:
+
+```bash
+docker push bounding-box-cropper
+```
+
+
+# Tests 🧪
+
+## Pytest integration
+
+We utilize the `pytest` framework for all our testing needs.
+You can install it using the following command:
+
+```bash
+pip install pytest
+```
+
+To run all tests in the repository, you can execute the shell script that wraps our pytest commands:
+
+```bash
+bash run_all_pytest_tests.sh
+```
+
+## Simulating GitHub Actions locally
+
+To replicate GitHub Actions locally, we leverage `act`, a tool that simulates GitHub Actions on your local machine. This allows you to test workflows before committing changes to the repository.
+
+1 - Install `act`:
+
+First, install act using the following command. This script will download and install the latest version of act:
+
+```bash
+curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+```
+
+2 - Prepare the environment file:
+
+Create a .env file in the root directory of your repository with the necessary environment variables. Replace <votre_token_picsellia> with your actual Picsellia test token:
+
+```bash
+PICSELLIA_TEST_TOKEN=<votre_token_picsellia>
+PICSELLIA_TEST_HOST=https://staging.picsellia.com/
+```
+Important: Do not include CODECOV_TOKEN in the .env file unless you intend to upload coverage results to Codecov during local testing.
+
+3 - List available jobs:
+
+Before running the actions, you may want to see a list of all available jobs defined in your GitHub Actions workflows:
+
+```bash
+act -l
+```
+
+4 - Run a specific job:
+
+To execute a specific job, such as common-model-tests from the common_model_tests.yaml workflow, use the following command:
+
+```bash
+act -j common-model-tests
+```
+
 
 # Contributing 🤝
 
