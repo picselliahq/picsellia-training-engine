@@ -116,17 +116,13 @@ class TestDatasetContextValidator:
             dataset_context=dataset_context
         )
 
-        with (
-            patch.object(
-                dataset_context_validator, "validate_images_extraction"
-            ) as mock_validate_images_extraction,
-            patch.object(
-                dataset_context_validator, "validate_images_corruption"
-            ) as mock_validate_images_corruption,
-            patch.object(
-                dataset_context_validator, "validate_images_format"
-            ) as mock_validate_images_format,
-        ):
+        with patch(
+            "dataset_context_validator.validate_images_extraction"
+        ) as mock_validate_images_extraction, patch(
+            "dataset_context_validator.validate_images_corruption"
+        ) as mock_validate_images_corruption, patch(
+            "dataset_context_validator.validate_images_format"
+        ) as mock_validate_images_format:
             # mock_get_images_path_list.return_value = ["image1.jpg", "image2.jpg"]
             dataset_context_validator.validate()
 
