@@ -65,6 +65,8 @@ class Exp(BaseExp):
         self.mixup_scale = (0, 0)
         # shear angle range, for example, if set to 2, the true range is (-2, 2)
         self.shear = 0
+        # enable the weather data augmentations (rain and cloud)
+        self.enable_weather_transform = args.enable_weather_transform
 
         # --------------  training config --------------------- #
         # epoch number used for warmup
@@ -190,7 +192,9 @@ class Exp(BaseExp):
             json_file=self.train_ann,
             name="train2017",
             img_size=self.input_size,
-            preproc=TrainTransformV3(max_labels=120),
+            preproc=TrainTransformV3(
+                enable_weather_transform=self.enable_weather_transform, max_labels=120
+            ),
         )
 
         if is_distributed:

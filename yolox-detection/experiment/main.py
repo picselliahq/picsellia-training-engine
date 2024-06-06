@@ -105,6 +105,7 @@ batch_size = parameters.get("batch_size", 8)
 epochs = int(parameters.get("epochs", 100))
 image_size = int(parameters.get("image_size", 640))
 eval_interval = int(parameters.get("eval_interval", 5))
+enable_weather_transform = bool(parameters.get("enable_weather_transform", False))
 
 # 6 - Launch the training
 # 6A - Args
@@ -126,6 +127,7 @@ args.epochs = epochs
 args.image_size = (image_size, image_size)
 args.picsellia_experiment = experiment
 args.eval_interval = eval_interval
+args.enable_weather_transform = enable_weather_transform
 
 # 6B - Get model architecture
 exp = get_exp_by_name(args)

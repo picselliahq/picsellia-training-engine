@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
-from YOLOX.yolox.data import TrainTransformV2
+from YOLOX.yolox.data import TrainTransformV3
 
 
 # Assuming TrainTransformV2 and other necessary imports are already included here
@@ -33,14 +33,14 @@ def main(image_path):
     boxes = np.array([[50, 50, 200, 200], [150, 150, 300, 300]])
     labels = np.array([1, 2])  # Dummy labels
 
-    transform = TrainTransformV2(max_labels=50)
+    transform = TrainTransformV3(enable_weather_transform=True, max_labels=50)
 
     fig, axes = plt.subplots(
-        2, 3, figsize=(15, 10)
+        2, 4, figsize=(15, 10)
     )  # Adjust subplot grid for 10 images
     axes = axes.ravel()
 
-    for i in tqdm.tqdm(range(6)):
+    for i in tqdm.tqdm(range(8)):
         # Repeatedly apply transformation to visualize different results
         transformed_image, transformed_data = transform(
             image.copy(), np.hstack((boxes, labels[:, None])), (640, 640)
@@ -60,5 +60,5 @@ def main(image_path):
 
 
 if __name__ == "__main__":
-    image_path = "../../test-detection-equipement-1 (yolox S)/images/train2017/images/018fb973-3a0a-7b6d-9aca-26ae014110fc.JPG"
+    image_path = "../../test-yoloxv2_validation-step/images/train2017/images/018fe72d-a345-7fae-99ce-fb8cc94bd5bb.JPG"
     main(image_path)

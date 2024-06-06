@@ -208,17 +208,15 @@ class Trainer:
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
 
-        # if self.epoch + 1 == self.max_epoch - self.exp.no_aug_epochs or self.no_aug:
-        #     logger.info("--->No mosaic aug now!")
-        #     self.train_loader.close_mosaic()
+        # if self.epoch + 1 == self.max_epoch - self.exp.no_aug_epochs:
+        #     logger.info("--->No aug now!")
+        #     os.environ["disable_aug"] = "1"
+        #
         #     logger.info("--->Add additional L1 loss now!")
         #     if self.is_distributed:
         #         self.model.module.head.use_l1 = True
         #     else:
         #         self.model.head.use_l1 = True
-        #     self.exp.eval_interval = 1
-        #     if not self.no_aug:
-        #         self.save_ckpt(ckpt_name="last_mosaic_epoch")
 
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")

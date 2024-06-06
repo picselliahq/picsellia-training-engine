@@ -17,6 +17,7 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 from YOLOX.yolox.utils import xyxy2cxcywh
+from loguru import logger
 
 
 def mirror(image, boxes, prob=0.5):
@@ -47,9 +48,10 @@ def preproc(img, input_size, swap=(2, 0, 1)):
 
 
 class TrainTransformV3:
-    def __init__(self, max_labels=50):
+    def __init__(self, enable_weather_transform: bool, max_labels: int = 50):
         self.max_labels = max_labels
         self.flip_prob = 0.5
+        self.enable_weather_transform = enable_weather_transform
         self.aug = self._load_custom_augmentations()
 
     def _load_custom_augmentations(self):
@@ -60,6 +62,43 @@ class TrainTransformV3:
 
         def rarely(aug):
             return iaa.Sometimes(0.03, aug)
+
+        def get_rare_transforms():
+            transformations = [
+                iaa.MotionBlur(k=15),
+                iaa.OneOf(
+                    [
+                        # blur images with a sigma between 10 and 14.0
+                        iaa.GaussianBlur((2, 4)),
+                        # blur image using local means with kernel sizes
+                        # between 2 and 5
+                        iaa.AverageBlur(k=(2, 5)),
+                        # blur image using local medians with kernel sizes
+                        # between 1 and 3
+                        iaa.MedianBlur(k=(1, 3)),
+                    ]
+                ),
+            ]
+            if self.enable_weather_transform:
+                logger.info(
+                    "Weather data augmentations (Cloud & Rain) have been enabled!"
+                )
+                transformations += [
+                    iaa.CloudLayer(
+                        intensity_mean=(220, 255),
+                        intensity_freq_exponent=(-2.0, -1.5),
+                        intensity_coarse_scale=2,
+                        alpha_min=(0.7, 0.9),
+                        alpha_multiplier=0.3,
+                        alpha_size_px_max=(2, 8),
+                        alpha_freq_exponent=(-4.0, -2.0),
+                        sparsity=0.9,
+                        density_multiplier=(0.3, 0.6),
+                    ),
+                    iaa.Rain(nb_iterations=1, drop_size=0.05, speed=0.2),
+                ]
+
+            return transformations
 
         return iaa.Sequential(
             [
@@ -77,44 +116,14 @@ class TrainTransformV3:
                             # add gaussian noise to images
                             iaa.AdditiveGaussianNoise(scale=(0.0, 0.05 * 255)),
                             # change brightness of images (by -15 to 15 of original value)
-                            iaa.Add((-15, 15)),
-                            iaa.AddToHueAndSaturation((-10, 10)),
+                            iaa.AddToBrightness((-12, 12)),
+                            iaa.AddToHueAndSaturation((-15, 15)),
                             iaa.Add((-8, 8), per_channel=0.5),
                         ],
                         random_order=True,
                     ),
                 ),
-                rarely(
-                    iaa.OneOf(
-                        [
-                            iaa.CloudLayer(
-                                intensity_mean=(220, 255),
-                                intensity_freq_exponent=(-2.0, -1.5),
-                                intensity_coarse_scale=2,
-                                alpha_min=(0.7, 0.9),
-                                alpha_multiplier=0.3,
-                                alpha_size_px_max=(2, 8),
-                                alpha_freq_exponent=(-4.0, -2.0),
-                                sparsity=0.9,
-                                density_multiplier=(0.3, 0.6),
-                            ),
-                            iaa.Rain(nb_iterations=1, drop_size=0.05, speed=0.2),
-                            iaa.MotionBlur(k=15),
-                            iaa.OneOf(
-                                [
-                                    # blur images with a sigma between 10 and 14.0
-                                    iaa.GaussianBlur((2, 4)),
-                                    # blur image using local means with kernel sizes
-                                    # between 2 and 5
-                                    iaa.AverageBlur(k=(2, 5)),
-                                    # blur image using local medians with kernel sizes
-                                    # between 1 and 3
-                                    iaa.MedianBlur(k=(1, 3)),
-                                ]
-                            ),
-                        ]
-                    )
-                ),
+                rarely(iaa.OneOf(get_rare_transforms())),
             ],
             random_order=True,
         )
