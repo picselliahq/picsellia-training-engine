@@ -1,10 +1,13 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Type, Optional, Any, Dict, Union, TypeVar, Generic
+from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union
 
 import picsellia  # type: ignore
-from picsellia import DatasetVersion, ModelVersion
-from picsellia import Experiment  # type: ignore
+from picsellia import (
+    DatasetVersion,
+    Experiment,  # type: ignore
+    ModelVersion,
+)
 from picsellia.types.enums import ProcessingType
 
 from src import Colors

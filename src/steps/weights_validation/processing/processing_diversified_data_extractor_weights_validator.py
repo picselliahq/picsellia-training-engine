@@ -1,14 +1,14 @@
-from src import step, Pipeline
+import open_clip
+
+from src import Pipeline, step
 from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,
 )
 from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
-    is_embedding_model_name_valid,
     SupportedEmbeddingModels,
+    is_embedding_model_name_valid,
 )
-
-import open_clip
 
 
 @step

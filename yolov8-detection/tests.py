@@ -12,7 +12,7 @@ from pycocotools.coco import COCO
 sys.path.append(os.path.join(os.getcwd(), "yolov8-detection"))
 
 from experiment.trainer import Yolov8DetectionTrainer
-from experiment.utils import create_img_label_detection, coco_to_yolo_detection
+from experiment.utils import coco_to_yolo_detection, create_img_label_detection
 
 TOKEN = os.environ["api_token"]
 ORGA_ID = os.environ["organization_id"]

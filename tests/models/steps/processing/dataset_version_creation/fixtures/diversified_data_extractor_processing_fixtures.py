@@ -1,14 +1,15 @@
-import pytest
-
 import open_clip
+import pytest
+from picsellia.types.enums import InferenceType
 
-
+from src.enums import DatasetSplitName
 from src.models.steps.processing.dataset_version_creation.diversified_data_extractor_processing import (
     DiversifiedDataExtractorProcessing,
 )
 from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
     OpenClipEmbeddingModel,
 )
+from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
 @pytest.fixture(scope="session")
@@ -47,8 +48,20 @@ def diversified_data_extractor_processing(
     return DiversifiedDataExtractorProcessing(
         client=picsellia_client,
         datalake=picsellia_default_datalake,
-        input_dataset_context=mock_dataset_context,
-        output_dataset_version=mock_dataset_version,
+        input_dataset_context=mock_dataset_context(
+            dataset_metadata=DatasetTestMetadata(
+                dataset_split_name=DatasetSplitName.TRAIN,
+                dataset_type=InferenceType.CLASSIFICATION,
+                attached_name="input_diversified_data_extractor",
+            )
+        ),
+        output_dataset_version=mock_dataset_version(
+            dataset_metadata=DatasetTestMetadata(
+                dataset_split_name=DatasetSplitName.TRAIN,
+                dataset_type=InferenceType.CLASSIFICATION,
+                attached_name="output_diversified_data_extractor",
+            )
+        ),
         embedding_model=mock_open_clip_embedding_model,
         distance_threshold=5.0,
     )

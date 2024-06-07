@@ -8,10 +8,10 @@
 import sys
 from datetime import timedelta
 
-import YOLOX.yolox.utils.dist as comm
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
+import YOLOX.yolox.utils.dist as comm
 from loguru import logger
 
 __all__ = ["launch"]

@@ -2,8 +2,8 @@ from typing import List
 
 import numpy as np
 import requests
-from PIL import Image, ImageOps
 from picsellia.sdk.asset import Asset
+from PIL import Image, ImageOps
 
 
 def transpose_if_exif_tags(image: Image) -> Image:

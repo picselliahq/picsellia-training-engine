@@ -1,7 +1,7 @@
 import os
 from typing import Union
 
-from picsellia import Client, Job, Project, Experiment
+from picsellia import Client, Experiment, Job, Project
 from picsellia.types.enums import JobRunStatus
 
 

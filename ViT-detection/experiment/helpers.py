@@ -1,33 +1,31 @@
 import os
+
 import picsellia
-
-from picsellia.sdk.experiment import Experiment
-from picsellia.sdk.dataset import DatasetVersion
-from utils.picsellia import download_data, evaluate_asset
-from picsellia.types.enums import InferenceType
-from datasets import load_dataset, DatasetDict
-
 import transformers
+from datasets import DatasetDict, load_dataset
+from picsellia.sdk.dataset import DatasetVersion
+from picsellia.sdk.experiment import Experiment
+from picsellia.types.enums import InferenceType
 from transformers import (
-    AutoModelForObjectDetection,
-    TrainingArguments,
     AutoImageProcessor,
+    AutoModelForObjectDetection,
     Trainer,
+    TrainingArguments,
 )
-
+from utils.picsellia import download_data, evaluate_asset
 from utils.vit import (
     CocoDetection,
-    run_evaluation,
-    get_filenames_by_ids,
-    transform_images_and_annotations,
-    custom_train_test_eval_split,
-    get_id2label_mapping,
     collate_fn,
-    save_annotation_file_images,
+    custom_train_test_eval_split,
+    format_and_write_annotations,
     format_evaluation_results,
     get_dataset_image_ids,
-    format_and_write_annotations,
+    get_filenames_by_ids,
+    get_id2label_mapping,
     log_labelmap,
+    run_evaluation,
+    save_annotation_file_images,
+    transform_images_and_annotations,
 )
 
 
@@ -66,9 +64,7 @@ class TrainingPipeline:
 
             experiment = client.get_experiment_by_id(experiment_id)
         else:
-            raise Exception(
-                "You must set the experiment_id"
-            )
+            raise Exception("You must set the experiment_id")
         return experiment
 
     def prepare_data_for_training(
@@ -131,18 +127,15 @@ class TrainingPipeline:
         self,
         train_test_valid_dataset: DatasetDict,
     ) -> tuple[transformers.models, transformers.models]:
-        image_processor = AutoImageProcessor.from_pretrained(
-            self.output_model_dir)
-        model = AutoModelForObjectDetection.from_pretrained(
-            self.output_model_dir)
+        image_processor = AutoImageProcessor.from_pretrained(self.output_model_dir)
+        model = AutoModelForObjectDetection.from_pretrained(self.output_model_dir)
 
         path_output, path_anno = save_annotation_file_images(
             dataset=train_test_valid_dataset["test"],
             experiment=self.experiment,
             id2label=self.id2label,
         )
-        test_ds_coco_format = CocoDetection(
-            path_output, image_processor, path_anno)
+        test_ds_coco_format = CocoDetection(path_output, image_processor, path_anno)
 
         results = run_evaluation(
             test_ds_coco_format=test_ds_coco_format,
@@ -161,13 +154,13 @@ class TrainingPipeline:
         train_test_valid_dataset: DatasetDict,
         model: transformers.models,
     ):
-        eval_image_ids = get_dataset_image_ids(
-            train_test_valid_dataset, "eval")
+        eval_image_ids = get_dataset_image_ids(train_test_valid_dataset, "eval")
         id2filename_eval = get_filenames_by_ids(
-            image_ids=eval_image_ids, annotations=self.annotations, id_list=eval_image_ids
+            image_ids=eval_image_ids,
+            annotations=self.annotations,
+            id_list=eval_image_ids,
         )
-        image_processor = AutoImageProcessor.from_pretrained(
-            self.output_model_dir)
+        image_processor = AutoImageProcessor.from_pretrained(self.output_model_dir)
 
         for file_path in list(id2filename_eval.values()):
             evaluate_asset(
@@ -176,7 +169,7 @@ class TrainingPipeline:
                 experiment=self.experiment,
                 dataset=dataset,
                 model=model,
-                image_processor=image_processor
+                image_processor=image_processor,
             )
 
         self.experiment.compute_evaluations_metrics(

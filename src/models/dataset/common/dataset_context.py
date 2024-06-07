@@ -1,13 +1,12 @@
 import os
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from picsellia import DatasetVersion, Label
+from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import MultiAsset
+from picsellia_annotations.coco import COCOFile
 
 from src.steps.data_extraction.utils.image_utils import get_labelmap
-
-from picsellia.exceptions import NoDataError
-from picsellia_annotations.coco import COCOFile
 
 
 class DatasetContext:

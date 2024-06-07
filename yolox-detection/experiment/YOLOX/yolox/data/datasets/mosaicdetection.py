@@ -6,7 +6,6 @@ import random
 
 import cv2
 import numpy as np
-
 from YOLOX.yolox.utils import adjust_box_anns, get_local_rank
 
 from ..data_augment import random_affine
@@ -56,7 +55,7 @@ class MosaicDetection(Dataset):
         enable_mixup=True,
         mosaic_prob=1.0,
         mixup_prob=1.0,
-        *args
+        *args,
     ):
         """
 
@@ -123,11 +122,14 @@ class MosaicDetection(Dataset):
                     )
 
                 # suffix l means large image, while s means small image in mosaic aug.
-                (l_x1, l_y1, l_x2, l_y2), (
-                    s_x1,
-                    s_y1,
-                    s_x2,
-                    s_y2,
+                (
+                    (l_x1, l_y1, l_x2, l_y2),
+                    (
+                        s_x1,
+                        s_y1,
+                        s_x2,
+                        s_y2,
+                    ),
                 ) = get_mosaic_coordinate(
                     mosaic_img, i_mosaic, xc, yc, w, h, input_h, input_w
                 )

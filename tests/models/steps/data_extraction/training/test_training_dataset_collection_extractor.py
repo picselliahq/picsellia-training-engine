@@ -1,4 +1,4 @@
-from typing import List, Union, Callable
+from typing import Callable, List, Union
 
 import pytest
 from picsellia.exceptions import ResourceNotFoundError

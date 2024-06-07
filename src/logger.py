@@ -5,7 +5,7 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
-from typing import Optional, TextIO, cast, List
+from typing import List, Optional, TextIO, cast
 
 from src.models.logging.stream_to_logger import StreamToLogger
 from src.models.steps.step_metadata import StepMetadata

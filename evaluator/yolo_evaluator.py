@@ -3,16 +3,20 @@ from abc import abstractmethod
 from typing import List
 
 import numpy as np
-from evaluator.abstract_evaluator import AbstractEvaluator
-from evaluator.framework_formatter import YoloFormatter
-from evaluator.type_formatter import (ClassificationFormatter,
-                                      DetectionFormatter,
-                                      SegmentationFormatter, TypeFormatter)
-from evaluator.utils.general import open_asset_as_array
 from picsellia.exceptions import PicselliaError
 from picsellia.sdk.asset import Asset
 from PIL import UnidentifiedImageError
 from ultralytics import YOLO
+
+from evaluator.abstract_evaluator import AbstractEvaluator
+from evaluator.framework_formatter import YoloFormatter
+from evaluator.type_formatter import (
+    ClassificationFormatter,
+    DetectionFormatter,
+    SegmentationFormatter,
+    TypeFormatter,
+)
+from evaluator.utils.general import open_asset_as_array
 
 
 class YOLOEvaluator(AbstractEvaluator):
@@ -44,7 +48,8 @@ class YOLOEvaluator(AbstractEvaluator):
                 image = open_asset_as_array(asset)
             except UnidentifiedImageError:
                 logging.warning(
-                    f"Can't evaluate {asset.filename}, error opening the image")
+                    f"Can't evaluate {asset.filename}, error opening the image"
+                )
                 continue
             images.append(image)
         return images

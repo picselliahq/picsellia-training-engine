@@ -1,6 +1,8 @@
 from typing import Callable
 from unittest.mock import patch
 
+from picsellia.types.enums import InferenceType
+
 from src import Pipeline
 from src.enums import DatasetSplitName
 from src.models.parameters.common.augmentation_parameters import (
@@ -11,8 +13,6 @@ from src.steps.data_extraction.training.training_data_extractor import (
     training_data_extractor,
 )
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
-
-from picsellia.types.enums import InferenceType
 
 
 class TestTrainingDataExtractor:

@@ -1,10 +1,9 @@
 import io
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import MagicMock, patch
-from PIL import Image
-
 import requests
+from PIL import Image
 
 
 class TestDiversifiedDataExtractorProcessing:

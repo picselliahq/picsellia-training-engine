@@ -1,7 +1,7 @@
 import os
 import shutil
-import time
 import sys
+import time
 import unittest
 from datetime import date
 
@@ -11,15 +11,15 @@ from picsellia import Client
 sys.path.append(os.path.join(os.getcwd(), "unet-instance-segmentation"))
 from experiment.trainer import UnetSegmentationTrainer
 from experiment.utils import (
-    get_classes_mask_dataset,
-    split_train_test_val_filenames,
-    makedirs_images_masks,
-    _find_mask_by_image,
-    _change_mask_filename_to_match_image,
-    get_mask_file_extension,
-    extract_classes_from_mask,
-    Dataset,
     Dataloader,
+    Dataset,
+    _change_mask_filename_to_match_image,
+    _find_mask_by_image,
+    extract_classes_from_mask,
+    get_classes_mask_dataset,
+    get_mask_file_extension,
+    makedirs_images_masks,
+    split_train_test_val_filenames,
 )
 
 TOKEN = os.environ["api_token"]

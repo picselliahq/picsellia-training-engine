@@ -3,13 +3,14 @@ from enum import Enum, auto
 from typing import Any
 
 import numpy as np
-from PIL import Image
-import torch
 import open_clip
+import torch
 from open_clip.model import CLIP
+from PIL import Image
 from torch._C._te import Tensor
 from torchvision.transforms import transforms
-from src import step, Pipeline
+
+from src import Pipeline, step
 from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,

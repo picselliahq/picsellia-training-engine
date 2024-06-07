@@ -10,15 +10,17 @@ def slice_tensor(x, start, stop, axis):
         raise ValueError("Slice axis should be in (1, 3), got {}.".format(axis))
 
 
-def GroupConv2D(filters,
-                kernel_size,
-                strides=(1, 1),
-                groups=32,
-                kernel_initializer='he_uniform',
-                use_bias=True,
-                activation='linear',
-                padding='valid',
-                **kwargs):
+def GroupConv2D(
+    filters,
+    kernel_size,
+    strides=(1, 1),
+    groups=32,
+    kernel_initializer="he_uniform",
+    use_bias=True,
+    activation="linear",
+    padding="valid",
+    **kwargs,
+):
     """
     Grouped Convolution Layer implemented as a Slice,
     Conv2D and Concatenate layers. Split filters to groups, apply Conv2D and concatenate back.
@@ -47,27 +49,31 @@ def GroupConv2D(filters,
     """
 
     backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
-    slice_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    slice_axis = 3 if backend.image_data_format() == "channels_last" else 1
 
     def layer(input_tensor):
-        inp_ch = int(backend.int_shape(input_tensor)[-1] // groups)  # input grouped channels
+        inp_ch = int(
+            backend.int_shape(input_tensor)[-1] // groups
+        )  # input grouped channels
         out_ch = int(filters // groups)  # output grouped channels
 
         blocks = []
         for c in range(groups):
             slice_arguments = {
-                'start': c * inp_ch,
-                'stop': (c + 1) * inp_ch,
-                'axis': slice_axis,
+                "start": c * inp_ch,
+                "stop": (c + 1) * inp_ch,
+                "axis": slice_axis,
             }
             x = layers.Lambda(slice_tensor, arguments=slice_arguments)(input_tensor)
-            x = layers.Conv2D(out_ch,
-                              kernel_size,
-                              strides=strides,
-                              kernel_initializer=kernel_initializer,
-                              use_bias=use_bias,
-                              activation=activation,
-                              padding=padding)(x)
+            x = layers.Conv2D(
+                out_ch,
+                kernel_size,
+                strides=strides,
+                kernel_initializer=kernel_initializer,
+                use_bias=use_bias,
+                activation=activation,
+                padding=padding,
+            )(x)
             blocks.append(x)
 
         x = layers.Concatenate(axis=slice_axis)(blocks)
@@ -82,7 +88,9 @@ def expand_dims(x, channels_axis):
     elif channels_axis == 1:
         return x[:, :, None, None]
     else:
-        raise ValueError("Slice axis should be in (1, 3), got {}.".format(channels_axis))
+        raise ValueError(
+            "Slice axis should be in (1, 3), got {}.".format(channels_axis)
+        )
 
 
 def ChannelSE(reduction=16, **kwargs):
@@ -95,7 +103,7 @@ def ChannelSE(reduction=16, **kwargs):
 
     """
     backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
-    channels_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    channels_axis = 3 if backend.image_data_format() == "channels_last" else 1
 
     def layer(input_tensor):
         # get number of channels/filters
@@ -105,11 +113,13 @@ def ChannelSE(reduction=16, **kwargs):
 
         # squeeze and excitation block in PyTorch style with
         x = layers.GlobalAveragePooling2D()(x)
-        x = layers.Lambda(expand_dims, arguments={'channels_axis': channels_axis})(x)
-        x = layers.Conv2D(channels // reduction, (1, 1), kernel_initializer='he_uniform')(x)
-        x = layers.Activation('relu')(x)
-        x = layers.Conv2D(channels, (1, 1), kernel_initializer='he_uniform')(x)
-        x = layers.Activation('sigmoid')(x)
+        x = layers.Lambda(expand_dims, arguments={"channels_axis": channels_axis})(x)
+        x = layers.Conv2D(
+            channels // reduction, (1, 1), kernel_initializer="he_uniform"
+        )(x)
+        x = layers.Activation("relu")(x)
+        x = layers.Conv2D(channels, (1, 1), kernel_initializer="he_uniform")(x)
+        x = layers.Activation("sigmoid")(x)
 
         # apply attention
         x = layers.Multiply()([input_tensor, x])

@@ -2,26 +2,27 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.getcwd(), "yolov8-classification", "experiment"))
-from sklearn.metrics import classification_report, confusion_matrix
-from pycocotools.coco import COCO
-from ultralytics import YOLO
 from picsellia.types.enums import AnnotationFileType
-from abstract_trainer.trainer import AbstractTrainer
-from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
+from pycocotools.coco import COCO
+from sklearn.metrics import classification_report, confusion_matrix
+from ultralytics import YOLO
 from utils import (
+    create_and_log_labelmap,
     download_triple_dataset,
+    log_confusion_to_experiment,
+    log_split_dataset_repartition_to_experiment,
+    make_train_test_val_dirs,
+    move_all_files_in_class_directories,
     move_files_in_class_directories,
+    move_images_in_train_val_folders,
+    predict_evaluation_images,
     prepare_datasets_with_annotation,
     split_single_dataset,
-    move_all_files_in_class_directories,
-    log_split_dataset_repartition_to_experiment,
-    predict_evaluation_images,
-    log_confusion_to_experiment,
-    create_and_log_labelmap,
-    make_train_test_val_dirs,
-    move_images_in_train_val_folders,
 )
+
+from abstract_trainer.trainer import AbstractTrainer
 from core_utils.yolov8 import get_train_test_eval_datasets_from_experiment
+from evaluator.yolo_evaluator import ClassificationYOLOEvaluator
 
 
 class Yolov8ClassificationTrainer(AbstractTrainer):

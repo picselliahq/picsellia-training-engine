@@ -1,18 +1,18 @@
-import tensorflow as tf
-import zipfile
+import logging
 import os
+import zipfile
 from abc import abstractmethod
 from typing import List
-from evaluator.abstract_evaluator import AbstractEvaluator
-from evaluator.framework_formatter import TensorflowFormatter
-from evaluator.type_formatter import (DetectionFormatter,
-                                      SegmentationFormatter)
-from evaluator.utils.tf import open_asset_as_tensor
 
+import tensorflow as tf
 from picsellia.exceptions import PicselliaError
 from picsellia.sdk.asset import Asset
 from PIL import UnidentifiedImageError
-import logging
+
+from evaluator.abstract_evaluator import AbstractEvaluator
+from evaluator.framework_formatter import TensorflowFormatter
+from evaluator.type_formatter import DetectionFormatter, SegmentationFormatter
+from evaluator.utils.tf import open_asset_as_tensor
 
 
 class TensorflowEvaluator(AbstractEvaluator):
@@ -42,14 +42,16 @@ class TensorflowEvaluator(AbstractEvaluator):
         except Exception as e:
             raise PicselliaError(
                 f"Impossible to load saved model located at: {self._model_weights_path}"
-            )from e
+            ) from e
 
     def _evaluate_asset_list(self, asset_list: List[Asset]) -> None:
         for i, asset in enumerate(asset_list):
             try:
                 inputs = self._preprocess_image(asset)
             except UnidentifiedImageError:
-                logging.warning(f"Can't evaluate {asset.filename}, error opening the image")
+                logging.warning(
+                    f"Can't evaluate {asset.filename}, error opening the image"
+                )
                 continue
             predictions = self._loaded_model(inputs)  # Predict
             evaluations = self._format_prediction_to_evaluations(

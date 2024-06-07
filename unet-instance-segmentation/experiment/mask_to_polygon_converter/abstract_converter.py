@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 import numpy as np
 from skimage.color import rgb2gray

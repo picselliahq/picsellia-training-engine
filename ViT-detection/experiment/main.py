@@ -1,9 +1,8 @@
 import logging
 import os
 
-from transformers import TrainerCallback
-
 from helpers import TrainingPipeline
+from transformers import TrainerCallback
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"

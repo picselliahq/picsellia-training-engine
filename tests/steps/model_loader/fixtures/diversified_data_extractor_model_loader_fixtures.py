@@ -1,6 +1,5 @@
-import torch
-
 import pytest
+import torch
 from torchvision import transforms
 
 from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
@@ -33,7 +32,7 @@ def mock_open_clip_embedding_model(
     mock_open_clip_model, mock_preprocessing, mock_open_clip_model_device
 ):
     return OpenClipEmbeddingModel(
-        model=mock_open_clip_model,
+        model=mock_open_clip_model,  # noqa
         preprocessing=mock_preprocessing,
         device=mock_open_clip_model_device,
     )

@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import List, Optional, Tuple, Union
 
-from picsellia import Client, DatasetVersion, Data, Datalake
+from picsellia import Client, Data, Datalake, DatasetVersion
 from picsellia.services.error_manager import ErrorManager
 from picsellia.types.enums import InferenceType
 

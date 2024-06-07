@@ -2,22 +2,23 @@ import logging
 import math
 from typing import List, Optional
 
-import picsellia
-from PIL import Image, ImageOps
-import requests
 import numpy as np
-from picsellia import DatasetVersion, Client, Data, Datalake
-from scipy.spatial import KDTree
+import picsellia
+import requests
+from picsellia import Client, Data, Datalake, DatasetVersion
 from picsellia.sdk.asset import MultiAsset
-from src.models.dataset.dataset_context import DatasetContext
+from PIL import Image, ImageOps
+from scipy.spatial import KDTree
+from tqdm import tqdm
+
 from src import Colors
+from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.processing.dataset_version_creation.dataset_version_creation_processing import (
     DatasetVersionCreationProcessing,
 )
 from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
     EmbeddingModel,
 )
-from tqdm import tqdm
 
 logger = logging.getLogger("picsellia-engine")
 
@@ -40,6 +41,10 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
             client=client,
             datalake=datalake,
             output_dataset_version=output_dataset_version,
+            output_dataset_type=input_dataset_context.dataset_version.type,
+            output_dataset_description=f"Diversified dataset created from dataset version "
+            f"'{input_dataset_context.dataset_version.version}' "
+            f"(id: {input_dataset_context.dataset_version.id}). The distance threshold used is {distance_threshold}",
         )
         self.input_dataset_context = input_dataset_context
         self.embedding_model = embedding_model

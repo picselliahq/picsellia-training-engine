@@ -1,11 +1,11 @@
 import numpy as np
 import torch
+from PIL import Image
 
 from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
     SupportedEmbeddingModels,
     is_embedding_model_name_valid,
 )
-from PIL import Image
 
 
 class TestDiversifiedDataExtractorModelLoaderStep:

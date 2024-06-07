@@ -94,10 +94,10 @@ class AbstractEvaluator(ABC):
         try:
             return self._experiment.get_log("labelmap").data
         except Exception:
-            raise InsufficientResourcesError(f"Can't find labelmap for this experiment")
+            raise InsufficientResourcesError("Can't find labelmap for this experiment")
 
     def _setup_evaluation_job(self):
-        logging.info(f"Setting up the evaluation for this experiment")
+        logging.info("Setting up the evaluation for this experiment")
         self._model_sanity_check()
         self._dataset_inclusion_check()
         if self.do_download:
@@ -111,7 +111,7 @@ class AbstractEvaluator(ABC):
             logging.info(f"Experiment {self._experiment.name} is sane.")
         except ResourceNotFoundError as e:
             raise ResourceNotFoundError(
-                f"Can't run a pre-annotation job with this model, expected a 'checkpoint-index-latest' file"
+                "Can't run a pre-annotation job with this model, expected a 'checkpoint-index-latest' file"
             ) from e
 
     def _dataset_inclusion_check(self) -> None:
@@ -135,7 +135,7 @@ class AbstractEvaluator(ABC):
         self._model_weights.download(
             target_path=os.path.split(self._model_weights_path)[0]
         )
-        logging.info(f"experiment weights downloaded.")
+        logging.info("experiment weights downloaded.")
 
     @abstractmethod
     def _load_saved_model(self):

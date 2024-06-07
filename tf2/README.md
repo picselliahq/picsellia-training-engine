@@ -7,7 +7,7 @@ Whether you're an AI enthusiast, a top researcher or an AI Start-up building you
 
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
-This repo is a soft wrapper around Tensorflow Object Detection API 
+This repo is a soft wrapper around Tensorflow Object Detection API
 
 Use the 3 Notebooks in Colab or locally to freely:
 
@@ -16,5 +16,5 @@ Use the 3 Notebooks in Colab or locally to freely:
   - Train a classification Model with Tensorflow 2 and Transfer Learning
   - Send results and checkpoints to our back to version everything
 
-To launch training within a container, run the following command : 
+To launch training within a container, run the following command :
   docker run --rm -d -e api_token=<api_token> -e experiment_id=<experiment_id> -e project_token=<project_token> --gpus all --name training picsellpn/trainingtf2:capture

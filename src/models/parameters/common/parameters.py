@@ -1,6 +1,6 @@
 import logging
 from abc import ABC
-from typing import Any, Set, Optional, Tuple, Dict
+from typing import Any, Dict, Optional, Set, Tuple
 
 from picsellia.types.schemas import LogDataType  # type: ignore
 

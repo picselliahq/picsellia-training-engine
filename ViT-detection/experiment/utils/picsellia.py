@@ -1,12 +1,12 @@
-from picsellia.sdk.dataset import DatasetVersion
+import os
+
+import torch
+import transformers
 from picsellia.sdk.asset import Asset
+from picsellia.sdk.dataset import DatasetVersion
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.label import Label
-
-import os
-import torch
 from PIL import Image
-import transformers
 
 
 def download_data(experiment: Experiment) -> DatasetVersion:
@@ -23,13 +23,17 @@ def evaluate_asset(
     experiment: Experiment,
     model: transformers.models,
     image_processor: transformers.models,
-    dataset: DatasetVersion
+    dataset: DatasetVersion,
 ):
     dataset_labels = {label.name: label for label in dataset.list_labels()}
     image_path = os.path.join(data_dir, file_path)
     asset = find_asset_from_path(image_path=image_path, dataset=dataset)
-    results = predict_image(image_path=image_path, threshold=0.4,
-                            model=model, image_processor=image_processor)
+    results = predict_image(
+        image_path=image_path,
+        threshold=0.4,
+        model=model,
+        image_processor=image_processor,
+    )
     rectangle_list = create_rectangle_list(
         results, dataset_labels, model.config.id2label
     )

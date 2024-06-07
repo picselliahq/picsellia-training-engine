@@ -1,12 +1,12 @@
 import ast
 import inspect
-from typing import Optional, Union, Callable, TypeVar, Any, List, Tuple, Dict, overload
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, overload
 
 from tabulate import tabulate  # type: ignore
 
+from src import Colors
 from src.enums import PipelineState, StepState
 from src.logger import LoggerManager
-from src import Colors
 from src.models.steps.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., Any])

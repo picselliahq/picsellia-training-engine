@@ -1,8 +1,7 @@
 from ultralytics import YOLO
 
+from src import Pipeline, step
 from src.models.contexts.picsellia_context import PicselliaTrainingContext
-from src import Pipeline
-from src import step
 
 
 @step

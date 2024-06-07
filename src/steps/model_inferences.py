@@ -1,9 +1,8 @@
 from picsellia import Label
 from ultralytics import YOLO
 
+from src import Pipeline, step
 from src.models.contexts.picsellia_context import PicselliaTrainingContext
-from src import Pipeline
-from src import step
 
 
 def postprocess(results: list, labelmap: dict[str, Label]) -> list[tuple[Label, float]]:
