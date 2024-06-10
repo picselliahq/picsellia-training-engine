@@ -48,23 +48,25 @@ class Exp(BaseExp):
 
         # --------------- transform config ----------------- #
         # prob of applying mosaic aug
-        self.mosaic_prob = 1.0
+        self.mosaic_prob = 0
         # prob of applying mixup aug
         self.mixup_prob = 1.0
         # prob of applying hsv aug
         self.hsv_prob = 1.0
         # prob of applying flip aug
-        self.flip_prob = 0.5
+        self.flip_prob = 1.0
         # rotation angle range, for example, if set to 2, the true range is (-2, 2)
         self.degrees = 10.0
         # translate range, for example, if set to 0.1, the true range is (-0.1, 0.1)
         self.translate = 0.1
-        self.mosaic_scale = (0.1, 2)
+        self.mosaic_scale = (0, 0)
         # apply mixup aug or not
-        self.enable_mixup = True
-        self.mixup_scale = (0.5, 1.5)
+        self.enable_mixup = False
+        self.mixup_scale = (0, 0)
         # shear angle range, for example, if set to 2, the true range is (-2, 2)
-        self.shear = 2.0
+        self.shear = 0
+        # enable the weather data augmentations (rain and cloud)
+        self.enable_weather_transform = args.enable_weather_transform
 
         # --------------  training config --------------------- #
         # epoch number used for warmup
@@ -148,7 +150,7 @@ class Exp(BaseExp):
             json_file=self.train_ann,
             img_size=self.input_size,
             preproc=TrainTransform(
-                max_labels=50, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
+                max_labels=120, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
             ),
             cache=cache,
             cache_type=cache_type,
@@ -167,12 +169,12 @@ class Exp(BaseExp):
                 None: Do not use cache, in this case cache_data is also None.
         """
         from YOLOX.yolox.data import (
-            TrainTransform,
             YoloBatchSampler,
             DataLoader,
             InfiniteSampler,
-            MosaicDetection,
+            COCODataset,
             worker_init_reset_seed,
+            TrainTransformV3,
         )
         from YOLOX.yolox.utils import wait_for_the_master
 
@@ -185,21 +187,14 @@ class Exp(BaseExp):
                 ), "cache_img must be None if you didn't create self.dataset before launch"
                 self.dataset = self.get_dataset(cache=False, cache_type=cache_img)
 
-        self.dataset = MosaicDetection(
-            dataset=self.dataset,
-            mosaic=not no_aug,
+        self.dataset = COCODataset(
+            data_dir=self.data_dir,
+            json_file=self.train_ann,
+            name="train2017",
             img_size=self.input_size,
-            preproc=TrainTransform(
-                max_labels=120, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
+            preproc=TrainTransformV3(
+                enable_weather_transform=self.enable_weather_transform, max_labels=120
             ),
-            degrees=self.degrees,
-            translate=self.translate,
-            mosaic_scale=self.mosaic_scale,
-            mixup_scale=self.mixup_scale,
-            shear=self.shear,
-            enable_mixup=self.enable_mixup,
-            mosaic_prob=self.mosaic_prob,
-            mixup_prob=self.mixup_prob,
         )
 
         if is_distributed:
@@ -301,17 +296,16 @@ class Exp(BaseExp):
         return scheduler
 
     def get_eval_dataset(self, **kwargs):
-        from YOLOX.yolox.data import COCODataset, ValTransform
+        from YOLOX.yolox.data import COCODataset, ValTransformV3
 
         testdev = kwargs.get("testdev", False)
-        legacy = kwargs.get("legacy", False)
 
         return COCODataset(
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
             img_size=self.test_size,
-            preproc=ValTransform(legacy=legacy),
+            preproc=ValTransformV3(),
         )
 
     def get_eval_loader(self, batch_size, is_distributed, **kwargs):
@@ -365,3 +359,7 @@ class Exp(BaseExp):
 def check_exp_value(exp: Exp):
     h, w = exp.input_size
     assert h % 32 == 0 and w % 32 == 0, "input size must be multiples of 32"
+
+
+def my_collate_fn(batch):
+    return batch

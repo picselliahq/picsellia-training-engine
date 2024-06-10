@@ -63,6 +63,7 @@ class Trainer:
 
         # Picsellia
         self.picsellia_experiment = args.picsellia_experiment
+        self.metrics_dict = {}
 
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
@@ -129,6 +130,10 @@ class Trainer:
             lr=lr,
             **outputs,
         )
+
+        metrics_to_record = ["lr", "total_loss", "iou_loss", "conf_loss", "cls_loss"]
+        for metric in metrics_to_record:
+            self.metrics_dict.setdefault(metric, []).append(self.meter[metric].latest)
 
     def before_train(self):
         logger.info("args: {}".format(self.args))
@@ -208,17 +213,15 @@ class Trainer:
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
 
-        if self.epoch + 1 == self.max_epoch - self.exp.no_aug_epochs or self.no_aug:
-            logger.info("--->No mosaic aug now!")
-            self.train_loader.close_mosaic()
-            logger.info("--->Add additional L1 loss now!")
-            if self.is_distributed:
-                self.model.module.head.use_l1 = True
-            else:
-                self.model.head.use_l1 = True
-            self.exp.eval_interval = 1
-            if not self.no_aug:
-                self.save_ckpt(ckpt_name="last_mosaic_epoch")
+        # if self.epoch + 1 == self.max_epoch - self.exp.no_aug_epochs:
+        #     logger.info("--->No aug now!")
+        #     os.environ["disable_aug"] = "1"
+        #
+        #     logger.info("--->Add additional L1 loss now!")
+        #     if self.is_distributed:
+        #         self.model.module.head.use_l1 = True
+        #     else:
+        #         self.model.head.use_l1 = True
 
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
@@ -227,28 +230,17 @@ class Trainer:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
 
-            loss_meter = self.meter.get_filtered_meter("loss")
-            for k, v in loss_meter.items():
+            for k, v in self.metrics_dict.items():
                 try:
                     self.picsellia_experiment.log(
-                        name="train/" + k, type=LogType.LINE, data=float(v.latest)
+                        name="train/" + k, type=LogType.LINE, data=float(v[0])
                     )
                 except Exception as e:
                     logger.info(
                         f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}"
                     )
-            try:
-                self.picsellia_experiment.log(
-                    name="train/lr",
-                    type=LogType.LINE,
-                    data=float(self.meter["lr"].latest),
-                )
-            except Exception as e:
-                logger.info(
-                    f"Couldn't log metric 'train/lr' to Picsellia because: {str(e)}"
-                )
 
-        self.meter.clear_meters()
+        self.metrics_dict = {}
 
     def before_iter(self):
         pass
