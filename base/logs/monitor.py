@@ -66,7 +66,7 @@ class LogMonitor:
             if replace_log and is_first_line:
                 self.progress_line_nb = self.job.line_nb
 
-            replace_log = self.process_line_prefixes(line, replace_log)
+            self.process_line_prefixes(line)
             self.process_buffers(line, section_header)
 
             if self.start_buffer:
@@ -75,17 +75,10 @@ class LogMonitor:
                 self.handle_log(line, section_header, replace_log)
         return end_execution
 
-    def process_line_prefixes(self, line: str, replace_log: bool):
+    def process_line_prefixes(self, line: str):
         """Process line prefixes and updates logs."""
         if line.startswith("--#--"):
             self.initialize_log_section(line)
-        elif line.startswith("-----"):
-            self.progress_line_nb = self.job.line_nb
-            replace_log = True
-            line += "\r"
-        elif line.startswith("--*--"):
-            replace_log = False
-        return replace_log
 
     def initialize_log_section(self, line: str):
         """Initialize a new log section."""
@@ -158,6 +151,8 @@ class LogMonitor:
             json.dump(self.logs, json_log_file)
 
         self.job.store_logging_file("{}-logs.json".format(self.job.id))
+        if self.experiment:
+            self.experiment.store_logging_file("{}-logs.json".format(self.job.id))
         self.job.send_logging(str(exit_code), section_header, special="exit_code")
         if exit_code == 0:
             if not os.environ.get("DEBUG"):
