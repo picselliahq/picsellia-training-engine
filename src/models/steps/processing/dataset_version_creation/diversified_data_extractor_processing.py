@@ -5,9 +5,9 @@ from typing import List, Optional
 import numpy as np
 import picsellia
 import requests
+from PIL import Image, ImageOps
 from picsellia import Client, Data, Datalake, DatasetVersion
 from picsellia.sdk.asset import MultiAsset
-from PIL import Image, ImageOps
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
@@ -118,7 +118,7 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
         )
         return (
             f"Batch {math.ceil(current_offset / batch_size + 1)}/"
-            f"{math.ceil(input_dataset_version_size/batch_size)} "
+            f"{math.ceil(input_dataset_version_size / batch_size)} "
             f"(size: {current_batch_size})"
         )
 
@@ -222,8 +222,10 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
                     pbar.set_postfix_str(
                         s=self.get_tqdm_postfix_string(is_batch_uploading=True)
                     )
-                    self._add_data_to_dataset_version(data=batch_to_upload)
-                    self.uploaded_asset_number += len(batch_to_upload)
+
+                    if len(batch_to_upload) > 0:
+                        self._add_data_to_dataset_version(data=batch_to_upload)
+                        self.uploaded_asset_number += len(batch_to_upload)
 
                     pbar.set_postfix_str(s=self.get_tqdm_postfix_string())
 
