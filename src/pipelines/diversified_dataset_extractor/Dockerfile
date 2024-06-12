@@ -1,4 +1,4 @@
-FROM picsellia/uda:11.8.0-cudnn8-ubuntu20.04-python3.11
+FROM picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.11
 
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
