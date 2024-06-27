@@ -105,7 +105,6 @@ class DatasetContext:
         """
         os.makedirs(self.image_dir, exist_ok=True)
         if self.multi_asset:
-            os.makedirs(self.image_dir, exist_ok=True)
             self.multi_asset.download(target_path=self.image_dir, use_id=self.use_id)
         else:
             print(f"No assets found for dataset {self.dataset_name}!")
