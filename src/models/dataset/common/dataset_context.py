@@ -96,8 +96,8 @@ class DatasetContext:
         Downloads the dataset assets to a local directory. Initializes `image_dir`
         to the path where images are stored.
         """
+        os.makedirs(self.image_dir, exist_ok=True)
         if self.multi_asset:
-            os.makedirs(self.image_dir, exist_ok=True)
             self.multi_asset.download(target_path=self.image_dir, use_id=self.use_id)
         else:
-            raise ValueError("No assets found in the dataset")
+            print(f"No assets found for dataset {self.dataset_name}!")
