@@ -4,7 +4,7 @@ from src.models.contexts.picsellia_context import PicselliaProcessingContext
 from src.models.dataset.common.processing.processing_dataset_collection import (
     ProcessingDatasetCollection,
 )
-from src.models.parameters.processing.processing_slicer_parameters import (
+from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingSlicerParameters,
 )
 from src.models.steps.processing.dataset_version_creation.slicer_processing import (
