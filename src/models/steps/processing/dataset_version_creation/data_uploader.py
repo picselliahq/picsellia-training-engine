@@ -91,6 +91,7 @@ class DataUploader:
         images_to_upload: List[str],
         images_tags: Optional[List[str]] = None,
         max_retries: int = 5,
+        attempts: int = 150,
     ) -> None:
         """
         Adds images to the dataset version.
@@ -107,7 +108,7 @@ class DataUploader:
             max_retries=max_retries,
         )
         adding_job = self.dataset_version.add_data(data=data)
-        adding_job.wait_for_done(attempts=100)
+        adding_job.wait_for_done(attempts=attempts)
 
     def _add_coco_annotations_to_dataset_version(self, annotation_path: str):
         """
