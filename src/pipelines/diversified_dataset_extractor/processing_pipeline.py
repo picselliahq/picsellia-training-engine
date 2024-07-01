@@ -41,6 +41,7 @@ def diversified_data_extractor_pipeline() -> None:
     embedding_model = diversified_data_extractor_model_loader(
         pretrained_weights=pretrained_weights
     )
+
     diversified_data_extractor_processing(
         dataset_context=dataset_context, embedding_model=embedding_model
     )

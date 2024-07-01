@@ -81,20 +81,7 @@ def diversified_data_extractor_model_loader(pretrained_weights: str) -> Embeddin
     if is_embedding_model_name_valid(
         source=embedding_model_name, target=SupportedEmbeddingModels.OPENCLIP
     ):
-        available_model_names = open_clip.list_models()
         model_architecture = context.processing_parameters.model_architecture
-
-        if model_architecture not in available_model_names:
-            raise ValueError(
-                f"The provided model '{context.processing_parameters.model_architecture}' is not available. "
-                f"Available models are {available_model_names}."
-            )
-        elif model_architecture.startswith(open_clip.factory.HF_HUB_PREFIX):
-            raise ValueError(
-                f"The provided model '{context.processing_parameters.model_architecture}' is a "
-                f"HuggingFace model and is not supported yet. "
-                f"Please provide a model from the list of available models: {available_model_names}."
-            )
 
         (
             model,

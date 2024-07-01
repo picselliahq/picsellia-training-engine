@@ -26,6 +26,7 @@ class ProcessingDiversifiedDataExtractorParameters(Parameters):
             expected_type=str,
             default="ViT-B-16-plus-240",
         )
+
         self.pretrained_weights = self.extract_parameter(
             keys=["pretrained_weights", "weights"],
             expected_type=str,
