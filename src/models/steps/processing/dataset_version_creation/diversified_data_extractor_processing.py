@@ -41,10 +41,6 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
             client=client,
             datalake=datalake,
             output_dataset_version=output_dataset_version,
-            output_dataset_type=input_dataset_context.dataset_version.type,
-            output_dataset_description=f"Diversified dataset created from dataset version "
-            f"'{input_dataset_context.dataset_version.version}' "
-            f"(id: {input_dataset_context.dataset_version.id}). The distance threshold used is {distance_threshold}",
         )
         self.input_dataset_context = input_dataset_context
         self.embedding_model = embedding_model
@@ -57,6 +53,21 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
     @property
     def input_dataset_version_size(self) -> int:
         return self.input_dataset_context.dataset_version.sync()["size"]
+
+    @property
+    def output_dataset_description(self) -> str:
+        """
+        Returns the description of the output dataset version.
+
+        Returns:
+            str: The description of the output dataset version.
+        """
+        return (
+            f"Diversified dataset created from dataset version "
+            f"'{self.input_dataset_context.dataset_version.version}' "
+            f"(id: {self.input_dataset_context.dataset_version.id}). "
+            f"The distance threshold used is {self.distance_threshold}"
+        )
 
     @property
     def skipped_asset_number(self) -> int:
@@ -75,7 +86,7 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
         preprocessed_image = self.embedding_model.apply_preprocessing(image)
         return self.embedding_model.encode_image(image=preprocessed_image)
 
-    def fetch_and_prepare_image(self, image_url: str) -> Image:
+    def fetch_and_prepare_image(self, image_url: str) -> Optional[Image]:
         """
         Fetches an image from a URL and prepares it for processing.
 
@@ -96,7 +107,7 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
                 return image.convert("RGB") if image.mode != "RGB" else image
 
         except requests.RequestException as e:
-            print(f"Failed to fetch or process image from {image_url}: {str(e)}")
+            logger.error(f"Failed to fetch or process image from {image_url}: {str(e)}")
             return None
 
     def get_tqdm_description_string(
@@ -142,101 +153,13 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
         )
 
     def process(self) -> None:
-        kd_tree: Optional[KDTree] = None
-
-        input_dataset_version_size = self.input_dataset_version_size
-
-        batch_size = 10
-        current_offset = 0
-        batch_fetching_retry_number = 3
-
-        picsellia_logger_original_level = picsellia.logger.level
-        picsellia.logger.setLevel(logging.WARNING)
-
-        with tqdm(
-            total=input_dataset_version_size, unit="asset", colour="WHITE"
-        ) as pbar:
-            pbar.set_postfix_str(s=self.get_tqdm_postfix_string())
-
-            while current_offset < input_dataset_version_size:
-                pbar.set_description(
-                    self.get_tqdm_description_string(
-                        current_offset=current_offset,
-                        batch_size=batch_size,
-                        input_dataset_version_size=input_dataset_version_size,
-                    )
-                )
-
-                assets_batch = self._get_assets_batch(
-                    limit=batch_size,
-                    offset=current_offset,
-                    retry_number=batch_fetching_retry_number,
-                )
-
-                if assets_batch is None:
-                    logger.error(
-                        f"Failed to fetch batch after {batch_fetching_retry_number} retries. "
-                        f"Skipping to the next batch."
-                    )
-                    current_offset += batch_size
-                    self.skipped_error_asset_number += batch_size
-
-                else:
-                    batch_to_upload: List[Data] = []
-
-                    for asset in assets_batch:
-                        try:
-                            image = self.fetch_and_prepare_image(asset.url)
-
-                            if not image:
-                                self.skipped_error_asset_number += 1
-                                continue
-
-                            tensor = self.compute_image_tensor(image=image)
-
-                            if kd_tree is None:
-                                kd_tree = KDTree(tensor)
-                                batch_to_upload.append(asset.get_data())
-
-                            else:
-                                nearest_neighbour_distance, _ = kd_tree.query(tensor)
-
-                                if self._is_tensor_unique(
-                                    tensor=tensor,
-                                    kd_tree=kd_tree,
-                                    distance_threshold=self.distance_threshold,
-                                ):
-                                    kd_tree = KDTree(np.vstack([kd_tree.data, tensor]))
-                                    batch_to_upload.append(asset.get_data())
-
-                                else:
-                                    self.skipped_similar_asset_number += 1
-
-                        except Exception as e:
-                            self.skipped_error_asset_number += 1
-                            logger.warning(f"Skipped asset due to exception: {e}")
-
-                        finally:
-                            pbar.update(1)
-
-                    pbar.set_postfix_str(
-                        s=self.get_tqdm_postfix_string(is_batch_uploading=True)
-                    )
-
-                    if len(batch_to_upload) > 0:
-                        self._add_data_to_dataset_version(data=batch_to_upload)
-                        self.uploaded_asset_number += len(batch_to_upload)
-
-                    pbar.set_postfix_str(s=self.get_tqdm_postfix_string())
-
-                    current_offset += batch_size
-
-            pbar.set_description(
-                f"Finished uploading {math.ceil(current_offset / batch_size)} batches"
-            )
-
-        # Set picsellia logger's level back
-        picsellia.logger.setLevel(picsellia_logger_original_level)
+        self.update_output_dataset_version_description(
+            description=self.output_dataset_description
+        )
+        self.update_output_dataset_version_inference_type(
+            inference_type=self.input_dataset_context.dataset_version.type
+        )
+        self._process_dataset_version()
 
     def _get_assets_batch(
         self, limit: int, offset: int, retry_number: int
@@ -287,3 +210,130 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
 
         nearest_neighbour_distance, _ = kd_tree.query(tensor)
         return nearest_neighbour_distance > distance_threshold
+
+    def _process_batch(
+        self, assets_batch: MultiAsset, kd_tree: Optional[KDTree], pbar: tqdm
+    ) -> None:
+        """
+        Processes a batch of assets to filter out similar images and uploads them to the output dataset version.
+
+        Args:
+            assets_batch: The batch of assets to process.
+        """
+        batch_to_upload: List[Data] = []
+
+        for asset in assets_batch:
+            success = False
+            attempts = 0
+            max_retries = 2
+
+            while not success and attempts < max_retries:
+                try:
+                    image = self.fetch_and_prepare_image(asset.url)
+
+                    if not image:
+                        self.skipped_error_asset_number += 1
+                        break
+
+                    tensor = self.compute_image_tensor(image=image)
+
+                    if kd_tree is None:
+                        kd_tree = KDTree(tensor)
+                        batch_to_upload.append(asset.get_data())
+                        success = True
+
+                    else:
+                        nearest_neighbour_distance, _ = kd_tree.query(tensor)
+
+                        if self._is_tensor_unique(
+                            tensor=tensor,
+                            kd_tree=kd_tree,
+                            distance_threshold=self.distance_threshold,
+                        ):
+                            kd_tree = KDTree(np.vstack([kd_tree.data, tensor]))
+                            batch_to_upload.append(asset.get_data())
+                            success = True
+
+                        else:
+                            self.skipped_similar_asset_number += 1
+                            break
+
+                except Exception as e:
+                    self.skipped_error_asset_number += 1
+                    attempts += 1
+
+                    if attempts < 2:
+                        logger.warning(f"Retrying asset due to exception: {e}")
+                    else:
+                        logger.warning(
+                            f"Skipped asset due to exception after retry: {e}"
+                        )
+
+                finally:
+                    if success or attempts >= 2:
+                        pbar.update(1)
+
+        pbar.set_postfix_str(s=self.get_tqdm_postfix_string(is_batch_uploading=True))
+
+        if len(batch_to_upload) > 0:
+            self._add_data_to_dataset_version(data=batch_to_upload)
+            self.uploaded_asset_number += len(batch_to_upload)
+
+        pbar.set_postfix_str(s=self.get_tqdm_postfix_string())
+
+    def _process_dataset_version(self) -> None:
+        """
+        Processes the images in the dataset version to filter out similar images and uploads them to
+        the output dataset version.
+        """
+        kd_tree: Optional[KDTree] = None
+
+        input_dataset_version_size = self.input_dataset_version_size
+
+        batch_size = 10
+        current_offset = 0
+        batch_fetching_retry_number = 3
+
+        picsellia_logger_original_level = picsellia.logger.level
+        picsellia.logger.setLevel(logging.WARNING)
+
+        with tqdm(
+            total=input_dataset_version_size, unit="asset", colour="WHITE"
+        ) as pbar:
+            pbar.set_postfix_str(s=self.get_tqdm_postfix_string())
+
+            while current_offset < input_dataset_version_size:
+                pbar.set_description(
+                    self.get_tqdm_description_string(
+                        current_offset=current_offset,
+                        batch_size=batch_size,
+                        input_dataset_version_size=input_dataset_version_size,
+                    )
+                )
+
+                assets_batch = self._get_assets_batch(
+                    limit=batch_size,
+                    offset=current_offset,
+                    retry_number=batch_fetching_retry_number,
+                )
+
+                if assets_batch is None:
+                    logger.error(
+                        f"Failed to fetch batch after {batch_fetching_retry_number} retries. "
+                        f"Skipping to the next batch."
+                    )
+                    self.skipped_error_asset_number += batch_size
+
+                else:
+                    self._process_batch(
+                        assets_batch=assets_batch, kd_tree=kd_tree, pbar=pbar
+                    )
+
+                current_offset += batch_size
+
+            pbar.set_description(
+                f"Finished uploading {math.ceil(current_offset / batch_size)} batches"
+            )
+
+        # Set picsellia logger's level back
+        picsellia.logger.setLevel(picsellia_logger_original_level)

@@ -25,14 +25,9 @@ class DatasetVersionCreationProcessing:
         client: Client,
         datalake: Datalake,
         output_dataset_version: DatasetVersion,
-        output_dataset_type: InferenceType,
-        output_dataset_description: str,
     ):
         self.client = client
         self.output_dataset_version = output_dataset_version
-        self.output_dataset_version.update(
-            description=output_dataset_description, type=output_dataset_type
-        )
         self.datalake = datalake
 
     def update_output_dataset_version_description(self, description: str) -> None:

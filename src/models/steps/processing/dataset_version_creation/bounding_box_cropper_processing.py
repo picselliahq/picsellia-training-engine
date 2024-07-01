@@ -1,9 +1,9 @@
 import os
 
+from PIL import Image
 from picsellia import Client, Datalake, DatasetVersion
 from picsellia.types.enums import InferenceType, TagTarget
 from picsellia_annotations.coco import Annotation
-from PIL import Image
 
 from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.processing.dataset_version_creation.dataset_version_creation_processing import (
@@ -29,12 +29,6 @@ class BoundingBoxCropperProcessing(DatasetVersionCreationProcessing):
             client=client,
             datalake=datalake,
             output_dataset_version=output_dataset_version,
-            output_dataset_type=InferenceType.CLASSIFICATION,
-            output_dataset_description=f"Dataset extracted from dataset version "
-            f"'{input_dataset_context.dataset_version.version}' "
-            f"(id: {input_dataset_context.dataset_version.id}) "
-            f"in dataset '{input_dataset_context.dataset_version.name}' "
-            f"with label '{label_name_to_extract}'.",
         )
         self.dataset_context = input_dataset_context
         self.processed_dataset_context = DatasetContext(
