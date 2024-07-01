@@ -1,5 +1,5 @@
 import os
-from typing import Type, Optional, Any, Dict, Union, Generic
+from typing import Type, Optional, Any, Dict, Union, TypeVar, Generic
 
 import picsellia  # type: ignore
 from picsellia import DatasetVersion, ModelVersion
