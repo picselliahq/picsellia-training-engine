@@ -8,6 +8,7 @@ class ProcessingSlicerParameters(Parameters):
         self.datalake = self.extract_parameter(
             keys=["datalake"], expected_type=str, default="default"
         )
+        self.images_tag = self.extract_parameter(keys=["images_tag"], expected_type=str)
         self.slice_height = self.extract_parameter(
             keys=["slice_height"], expected_type=int
         )

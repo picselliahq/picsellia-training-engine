@@ -1,22 +1,22 @@
 # type: ignore
 
 from src import pipeline
-from src.models.contexts.picsellia_context import (
+from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.parameters.processing.processing_slicer_parameters import (
+from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingSlicerParameters,
 )
 from src.steps.data_extraction.processing.processing_data_extractor import (
     processing_dataset_collection_extractor,
 )
-from src.steps.data_validation.processing.processing_slicer_data_validator import (
-    slicer_data_validator,
+from src.steps.data_validation.processing.processing_tiler_data_validator import (
+    tiler_data_validator,
 )
 from src.steps.processing.dataset_version_creation.dataset_context_uploader import (
     dataset_context_uploader,
 )
-from src.steps.processing.dataset_version_creation.slicer_processing import (
+from src.steps.processing.dataset_version_creation.tiler_processing import (
     slicer_processing,
 )
 
@@ -34,7 +34,7 @@ def get_context() -> PicselliaProcessingContext[ProcessingSlicerParameters]:
 )
 def slicer_processing_pipeline() -> None:
     dataset_collection = processing_dataset_collection_extractor()
-    slicer_data_validator(dataset_context=dataset_collection.input)
+    tiler_data_validator(dataset_context=dataset_collection.input)
     dataset_collection = slicer_processing(dataset_collection=dataset_collection)
     dataset_context_uploader(dataset_context=dataset_collection.output)
 

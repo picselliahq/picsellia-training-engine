@@ -3,8 +3,8 @@ from picsellia.types.enums import InferenceType
 from src import Pipeline
 from src import step
 from src.models.contexts.picsellia_context import PicselliaProcessingContext
-from src.models.dataset.dataset_context import DatasetContext
-from src.models.parameters.processing.processing_slicer_parameters import (
+from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingSlicerParameters,
 )
 from src.models.steps.data_validation.common.object_detection_dataset_context_validator import (
@@ -19,7 +19,7 @@ from src.models.steps.data_validation.processing.processing_slicer_data_validato
 
 
 @step
-def slicer_data_validator(
+def tiler_data_validator(
     dataset_context: DatasetContext,
 ) -> None:
     context: PicselliaProcessingContext[
