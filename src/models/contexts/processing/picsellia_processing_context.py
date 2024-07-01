@@ -1,10 +1,20 @@
 import os
-from typing import Type, Optional, Any, Dict, Union, Generic
+from typing import Type, Optional, Any, Dict, Union, TypeVar, Generic
 
 import picsellia  # type: ignore
 from picsellia import DatasetVersion, ModelVersion
 from picsellia.types.enums import ProcessingType
-from src.models.contexts.common.picsellia_context import PicselliaContext, TParameters
+
+from src.models.contexts.common.picsellia_context import PicselliaContext
+from src.models.parameters.common.augmentation_parameters import AugmentationParameters
+from src.models.parameters.common.hyper_parameters import HyperParameters
+from src.models.parameters.common.parameters import Parameters
+
+TParameters = TypeVar("TParameters", bound=Parameters)
+THyperParameters = TypeVar("THyperParameters", bound=HyperParameters)
+TAugmentationParameters = TypeVar(
+    "TAugmentationParameters", bound=AugmentationParameters
+)
 
 
 class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
@@ -15,6 +25,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
         job_id: Optional[str] = None,
+        use_id: Optional[bool] = True,
     ):
         super().__init__(api_token, host, organization_id)
 
@@ -46,6 +57,8 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
             )
         if self._model_version_id:
             self.model_version = self.get_model_version()
+
+        self.use_id = use_id
 
         self.processing_parameters = processing_parameters_cls(
             log_data=self.job_context["parameters"]
