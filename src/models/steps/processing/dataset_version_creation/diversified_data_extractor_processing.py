@@ -243,8 +243,6 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
                         success = True
 
                     else:
-                        nearest_neighbour_distance, _ = kd_tree.query(tensor)
-
                         if self._is_tensor_unique(
                             tensor=tensor,
                             kd_tree=kd_tree,
