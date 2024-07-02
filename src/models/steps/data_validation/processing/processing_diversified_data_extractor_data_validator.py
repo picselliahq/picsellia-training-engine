@@ -13,10 +13,10 @@ class ProcessingDiversifiedDataExtractorDataValidator(DatasetContextValidator):
 
     def _validate_dataset_version_size(self) -> None:
         """
-        Validate that the dataset version size is greater than .
+        Validate that the dataset version size is strictly greater than 1.
 
         Raises:
-            ValueError: If the dataset version size is less than or equal to 0.
+            ValueError: If the dataset version size is equal to 0 or 1.
         """
         dataset_version_size = self.dataset_context.dataset_version.sync()["size"]
         if dataset_version_size == 0:
