@@ -1,8 +1,8 @@
+from picsellia_annotations.coco import Annotation
+
 from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
-
-from picsellia_annotations.coco import Annotation
 
 
 class ObjectDetectionDatasetContextValidator(DatasetContextValidator):

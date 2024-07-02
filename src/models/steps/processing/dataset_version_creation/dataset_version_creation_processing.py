@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
-from picsellia import Client, DatasetVersion, Data
+from picsellia import Client, Data, Datalake, DatasetVersion
 from picsellia.services.error_manager import ErrorManager
 from picsellia.types.enums import InferenceType
 
@@ -16,26 +16,41 @@ class DatasetVersionCreationProcessing:
 
     Attributes:
         client (Client): The Picsellia client to use for the processing.
+        datalake(Datalake): The Datalake to use for the processing.
         output_dataset_version (DatasetVersion): The dataset version to create.
-        dataset_type (InferenceType): The type of dataset to create.
-        dataset_description (str): The description of the dataset to create.
-        datalake_name (str): The name of the datalake to use for the processing.
     """
 
     def __init__(
         self,
         client: Client,
+        datalake: Datalake,
         output_dataset_version: DatasetVersion,
-        output_dataset_type: InferenceType,
-        output_dataset_description: str,
-        datalake: str = "default",
     ):
         self.client = client
         self.output_dataset_version = output_dataset_version
-        self.output_dataset_version.update(
-            description=output_dataset_description, type=output_dataset_type
-        )
-        self.datalake = self.client.get_datalake(name=datalake)
+        self.datalake = datalake
+
+    def update_output_dataset_version_description(self, description: str) -> None:
+        """
+        Updates the description of the output dataset version.
+
+        Args:
+            description (str): The new description to set for the dataset version.
+
+        """
+        self.output_dataset_version.update(description=description)
+
+    def update_output_dataset_version_inference_type(
+        self, inference_type: InferenceType
+    ) -> None:
+        """
+        Updates the inference type of the output dataset version.
+
+        Args:
+            inference_type (InferenceType): The new inference type to set for the dataset version.
+
+        """
+        self.output_dataset_version.update(type=inference_type)
 
     def _upload_data_with_error_manager(
         self, images_to_upload: List[str], images_tags: Optional[List[str]] = None
@@ -120,6 +135,16 @@ class DatasetVersionCreationProcessing:
             images_tags=images_tags,
             max_retries=max_retries,
         )
+        self._add_data_to_dataset_version(data=data)
+
+    def _add_data_to_dataset_version(self, data: Union[Data, List[Data]]) -> None:
+        """
+        Adds data to the dataset version.
+
+        Args:
+            data: The data or list of data to add to the dataset version.
+
+        """
         adding_job = self.output_dataset_version.add_data(data=data)
         adding_job.wait_for_done()
 

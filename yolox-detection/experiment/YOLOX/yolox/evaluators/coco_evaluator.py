@@ -12,6 +12,9 @@ from collections import ChainMap, defaultdict
 
 import numpy as np
 import torch
+from loguru import logger
+from tabulate import tabulate
+from tqdm import tqdm
 from YOLOX.yolox.data.datasets import COCO_CLASSES
 from YOLOX.yolox.utils import (
     gather,
@@ -21,9 +24,6 @@ from YOLOX.yolox.utils import (
     time_synchronized,
     xyxy2xywh,
 )
-from loguru import logger
-from tabulate import tabulate
-from tqdm import tqdm
 
 
 def per_class_AR_table(

@@ -9,16 +9,15 @@ import picsellia
 import requests
 import torch
 import tqdm
-from PIL import Image
-from PIL import UnidentifiedImageError
-from picsellia import Job, Asset, Label
+from picsellia import Asset, Job, Label
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.experiment import Experiment
 from picsellia.types.enums import InferenceType
+from PIL import Image, UnidentifiedImageError
 from pycocotools.coco import COCO
-
 from YOLOX.tools.demo import Predictor
+
 from evaluator.type_formatter import TypeFormatter
 from evaluator.utils.general import transpose_if_exif_tags
 

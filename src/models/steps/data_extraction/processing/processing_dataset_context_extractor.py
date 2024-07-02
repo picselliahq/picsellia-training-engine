@@ -20,15 +20,18 @@ class ProcessingDatasetContextExtractor:
         else:
             self.destination_path = os.path.join(os.getcwd(), str(job_id))
 
-    def get_dataset_context(self) -> DatasetContext:
+    def get_dataset_context(self, skip_asset_listing: bool = False) -> DatasetContext:
         """
         Retrieves the input dataset version and prepares a dataset context for extraction.
 
         This method downloads all necessary assets and annotations from the dataset version
         and organizes them into a dataset context for extraction.
 
+        Args:
+            skip_asset_listing (bool): Whether to skip listing the dataset's assets.
+
         Returns:
-            - DatasetContext: A dataset context prepared for extraction, including all assets and annotations downloaded.
+            A dataset context prepared for extraction, including all assets and annotations downloaded.
         """
         return DatasetContext(
             dataset_name="dataset_to_process",
@@ -36,4 +39,5 @@ class ProcessingDatasetContextExtractor:
             destination_path=self.destination_path,
             multi_asset=None,
             labelmap=None,
+            skip_asset_listing=skip_asset_listing,
         )

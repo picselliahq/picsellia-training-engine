@@ -1,6 +1,6 @@
 import os
 import time
-from typing import TextIO, Generator, Any, Tuple
+from typing import Any, Generator, TextIO, Tuple
 
 
 def is_string_valid(line: str) -> bool:
@@ -56,7 +56,7 @@ class LogTailer:
 
         if is_progress_line(line):
             replace_log = True
-            if not ("100%" in line) and wait_for_done:
+            if "100%" not in line and wait_for_done:
                 self.progress_bar = []
                 wait_for_done = False
             if not self.progress_bar:

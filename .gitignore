@@ -156,3 +156,9 @@ yolox-detection-test/*
 
 # MacOS files
 .DS_Store
+
+# Engine logs folder
+/logs
+
+# Ruff
+/.ruff_cache

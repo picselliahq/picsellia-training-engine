@@ -1,4 +1,4 @@
-from typing import Callable, Type, List, Dict
+from typing import Callable, Dict, List, Type
 
 import pytest
 

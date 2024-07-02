@@ -5,7 +5,6 @@
 import os
 
 import torch.nn as nn
-
 from YOLOX.yolox.exp import Exp as MyExp
 
 
@@ -24,7 +23,7 @@ class Exp(MyExp):
                     m.momentum = 0.03
 
         if "model" not in self.__dict__:
-            from YOLOX.yolox.models import YOLOX, YOLOFPN, YOLOXHead
+            from YOLOX.yolox.models import YOLOFPN, YOLOX, YOLOXHead
 
             backbone = YOLOFPN()
             head = YOLOXHead(

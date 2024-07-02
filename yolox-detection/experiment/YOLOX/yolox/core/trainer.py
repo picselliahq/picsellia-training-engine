@@ -6,6 +6,10 @@ import os
 import time
 
 import torch
+from loguru import logger
+from picsellia.types.enums import LogType
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.tensorboard import SummaryWriter
 from YOLOX.yolox.data import DataPrefetcher
 from YOLOX.yolox.exp import Exp
 from YOLOX.yolox.utils import (
@@ -27,10 +31,6 @@ from YOLOX.yolox.utils import (
     setup_logger,
     synchronize,
 )
-from loguru import logger
-from picsellia.types.enums import LogType
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.tensorboard import SummaryWriter
 
 
 class Trainer:

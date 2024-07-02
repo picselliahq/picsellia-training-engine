@@ -1,46 +1,47 @@
 import logging
 import os
 import sys
+
 import keras
 import matplotlib.image
 import numpy as np
-import tensorflow as tf
 import segmentation_models as sm
+import tensorflow as tf
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset import DatasetVersion
-from picsellia.types.enums import AnnotationFileType
-from picsellia.types.enums import InferenceType
+from picsellia.types.enums import AnnotationFileType, InferenceType
 from pycocotools.coco import COCO
 from skimage.measure import approximate_polygon, find_contours
 
 sys.path.append(os.path.join(os.getcwd(), "unet-instance-segmentation", "experiment"))
 
-from abstract_trainer.trainer import AbstractTrainer
 from mask_to_polygon_converter.custom_converter import CustomConverter
 from utils import (
-    split_train_test_val_filenames,
-    makedirs_images_masks,
-    move_images_and_masks_to_directories,
-    Dataset,
-    get_training_augmentation,
-    get_preprocessing,
-    get_validation_augmentation,
     Dataloader,
-    log_training_sample_to_picsellia,
+    Dataset,
+    convert_mask_to_binary,
+    find_asset_by_dataset_index,
+    format_and_log_eval_metrics,
+    format_polygons,
+    get_classes_mask_dataset,
+    get_classes_segmentation_dataset,
+    get_filename_from_fullpath,
     get_image_annotations,
     get_mask_from_annotations,
-    convert_mask_to_binary,
-    format_polygons,
-    shift_x_and_y_coordinates,
+    get_preprocessing,
+    get_training_augmentation,
+    get_validation_augmentation,
+    log_training_sample_to_picsellia,
+    makedirs_images_masks,
     move_files_for_polygon_creation,
-    get_filename_from_fullpath,
-    format_and_log_eval_metrics,
+    move_images_and_masks_to_directories,
     predict_and_log_mask,
-    find_asset_by_dataset_index,
     predict_mask_from_image,
-    get_classes_segmentation_dataset,
-    get_classes_mask_dataset,
+    shift_x_and_y_coordinates,
+    split_train_test_val_filenames,
 )
+
+from abstract_trainer.trainer import AbstractTrainer
 
 
 class UnetSegmentationTrainer(AbstractTrainer):

@@ -4,10 +4,9 @@
 
 import argparse
 import os
-from loguru import logger
 
 import torch
-
+from loguru import logger
 from YOLOX.yolox.exp import get_exp
 
 

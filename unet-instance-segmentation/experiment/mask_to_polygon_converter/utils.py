@@ -1,12 +1,11 @@
-from typing import List
-from typing import Tuple
+import os
+from typing import List, Tuple
 
+import cv2
 import numpy as np
 import orjson
-from fuzzywuzzy import fuzz
 import tqdm
-import cv2
-import os
+from fuzzywuzzy import fuzz
 from picsellia import DatasetVersion
 from picsellia.types.enums import InferenceType
 

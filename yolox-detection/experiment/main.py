@@ -3,22 +3,20 @@ import os
 
 import picsellia
 import torch
-from picsellia.exceptions import ResourceNotFoundError
-
+from utils import (
+    evaluate_model,
+    extract_dataset_assets,
+    get_experiment,
+)
 from YOLOX.tools.demo import Predictor
-from YOLOX.tools.train import make_parser, main
+from YOLOX.tools.train import main, make_parser
 from YOLOX.yolox.exp import check_exp_value
 from YOLOX.yolox.exp.build import get_exp_by_name
 from YOLOX.yolox.models.network_blocks import SiLU
-from YOLOX.yolox.utils import configure_module, get_num_devices
-from YOLOX.yolox.utils import replace_module
+from YOLOX.yolox.utils import configure_module, get_num_devices, replace_module
+
 from evaluator.framework_formatter import YoloFormatter
 from evaluator.type_formatter import DetectionFormatter
-from utils import (
-    get_experiment,
-    extract_dataset_assets,
-    evaluate_model,
-)
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"

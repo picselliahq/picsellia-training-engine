@@ -1,42 +1,47 @@
-from PIL import Image
-from tensorflow.keras.utils import to_categorical
-import numpy as np
-from typing import Tuple, List
 import os
-from picsellia.sdk.experiment import Experiment
-from picsellia.sdk.dataset_version import DatasetVersion
-from picsellia.types.enums import LogType
-import sys
-import picsellia
-from pycocotools.coco import COCO
 import shutil
-from keras import backend as K
-from sklearn.metrics import classification_report
-from sklearn.metrics import f1_score, recall_score, precision_score
+import sys
+from typing import List, Tuple
+
+import numpy as np
+import picsellia
 import tensorflow as tf
+from keras import backend as K
+from picsellia.sdk.dataset_version import DatasetVersion
+from picsellia.sdk.experiment import Experiment
+from picsellia.types.enums import LogType
+from PIL import Image
+from pycocotools.coco import COCO
+from sklearn.metrics import (
+    f1_score,
+    precision_score,
+    recall_score,
+)
+from tensorflow.keras.utils import to_categorical
 
 
 def dataset(experiment, assets, count, split_type, new_size, n_classes):
     X = []
     for i in range(len(assets)):
         path = os.path.join(experiment.png_dir, split_type, assets[i].filename)
-        x = Image.open(path).convert('RGB')
+        x = Image.open(path).convert("RGB")
         x = x.resize(new_size)
         x = np.array(x)
         X.append(x)
 
     y = np.zeros(len(assets))
-    indices = np.cumsum(count['y'])
+    indices = np.cumsum(count["y"])
     for i in range(len(indices) - 1):
-        y[indices[i]:indices[i + 1]
-        ] = np.ones(len(y[indices[i]:indices[i + 1]])) * (i)
+        y[indices[i] : indices[i + 1]] = np.ones(
+            len(y[indices[i] : indices[i + 1]])
+        ) * (i)
     y = to_categorical(y, n_classes)
 
     return np.asarray(X), y
 
 
 def get_experiment() -> Experiment:
-    if 'api_token' not in os.environ:
+    if "api_token" not in os.environ:
         raise Exception("You must set an api_token to run this image")
     api_token = os.environ["api_token"]
 
@@ -51,9 +56,7 @@ def get_experiment() -> Experiment:
         organization_id = os.environ["organization_id"]
 
     client = picsellia.Client(
-        api_token=api_token,
-        host=host,
-        organization_id=organization_id
+        api_token=api_token, host=host, organization_id=organization_id
     )
 
     if "experiment_name" in os.environ:
@@ -66,23 +69,26 @@ def get_experiment() -> Experiment:
             project = client.get_project(project_name)
         experiment = project.get_experiment(experiment_name)
     else:
-        Exception(
-            "You must set the project_token or project_name and experiment_name")
+        Exception("You must set the project_token or project_name and experiment_name")
     return experiment
 
 
-def get_train_test_eval_datasets_from_experiment(experiment: Experiment) -> Tuple[DatasetVersion]:
+def get_train_test_eval_datasets_from_experiment(
+    experiment: Experiment,
+) -> Tuple[DatasetVersion]:
     is_split = _is_train_test_eval_dataset(experiment)
     if is_split:
         print("We found 3 datasets:")
-        train: DatasetVersion = experiment.get_dataset('train')
+        train: DatasetVersion = experiment.get_dataset("train")
         print(f"{train.name}/{train.version} for training")
-        test: DatasetVersion = experiment.get_dataset('test')
+        test: DatasetVersion = experiment.get_dataset("test")
         print(f"{test.name}/{test.version} for testing")
-        eval_dataset: DatasetVersion = experiment.get_dataset('eval')
+        eval_dataset: DatasetVersion = experiment.get_dataset("eval")
         print(f"{eval_dataset.name}/{eval_dataset.version} for evaluation")
     else:
-        print("We only found one dataset inside your experiment, the train/test/split will be performed automatically.")
+        print(
+            "We only found one dataset inside your experiment, the train/test/split will be performed automatically."
+        )
         train: DatasetVersion = experiment.list_attached_dataset_versions()[0]
         test = None
         eval_dataset = None
@@ -120,12 +126,12 @@ def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None
         if len(ann) > 1:
             print(f"{im['file_name']} has more than one class. Skipping")
         ann = ann[0]
-        cat = coco.loadCats(ann['category_id'])[0]
-        fpath = os.path.join(base_imdir, im['file_name'])
-        new_fpath = os.path.join(base_imdir, cat['name'], im['file_name'])
+        cat = coco.loadCats(ann["category_id"])[0]
+        fpath = os.path.join(base_imdir, im["file_name"])
+        new_fpath = os.path.join(base_imdir, cat["name"], im["file_name"])
         try:
             shutil.move(fpath, new_fpath)
-        except Exception as e:
+        except Exception:
             print(f"{im['file_name']} skipped.")
     print(f"Formatting {base_imdir} .. OK")
     return base_imdir
@@ -139,14 +145,15 @@ def order_repartition_according_labelmap(labelmap, repartition):
 
 
 def recall_m(y_true, y_pred):
-    '''
+    """
     This function returns recall_score between y_true and y_pred
     This function is ported as a metric to the Neural Network Models
-    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred 
+    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred
     as input and returns recall score of the batch
-    '''
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1))
-                           )  # calculates number of true positives
+    """
+    true_positives = K.sum(
+        K.round(K.clip(y_true * y_pred, 0, 1))
+    )  # calculates number of true positives
     # calculates number of actual positives
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
     # K.epsilon takes care of non-zero divisions
@@ -155,14 +162,15 @@ def recall_m(y_true, y_pred):
 
 
 def precision_m(y_true, y_pred):
-    '''
+    """
     This function returns precison_score between y_true and y_pred
     This function is ported as a metric to the Neural Network Models
-    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred 
+    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred
     as input and returns prediction score of the batch
-    '''
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1))
-                           )  # calculates number of true positives
+    """
+    true_positives = K.sum(
+        K.round(K.clip(y_true * y_pred, 0, 1))
+    )  # calculates number of true positives
     # calculates number of predicted positives
     predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
     # K.epsilon takes care of non-zero divisions
@@ -171,25 +179,22 @@ def precision_m(y_true, y_pred):
 
 
 def f1_micro(y_true, y_pred):
-    '''
+    """
     This function returns f1_score between y_true and y_pred
-    This 
+    This
     This function is ported as a metric to the Neural Network Models
-    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred 
+    Keras backend is used to take care of batch type training, the metric takes in a batch of y_pred and corresponding y_pred
     as input and returns f1 score of the batch
-    '''
+    """
     precision = precision_m(
-        y_true, y_pred)  # calls precision metric and takes the score of precision of the batch
+        y_true, y_pred
+    )  # calls precision metric and takes the score of precision of the batch
     # calls recall metric and takes the score of precision of the batch
     recall = recall_m(y_true, y_pred)
     return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
 
 
-dependencies = {
-    'recall_m': recall_m,
-    'precision_m': precision_m,
-    'f1_micro': f1_micro
-}
+dependencies = {"recall_m": recall_m, "precision_m": precision_m, "f1_micro": f1_micro}
 
 
 class Metrics(tf.keras.callbacks.Callback):
@@ -216,34 +221,37 @@ class Metrics(tf.keras.callbacks.Callback):
             val_pred_batch = np.zeros((len(xVal)))
             val_true_batch = np.zeros((len(xVal)))
 
-            val_pred_batch = np.argmax(np.asarray(
-                self.model.predict(xVal)), axis=1)
+            val_pred_batch = np.argmax(np.asarray(self.model.predict(xVal)), axis=1)
             val_true_batch = np.argmax(yVal, axis=1)
 
             val_pred.append(val_pred_batch)
             val_true.append(val_true_batch)
 
         import itertools
+
         val_pred = np.asarray(list(itertools.chain.from_iterable(val_pred)))
         val_true = np.asarray(list(itertools.chain.from_iterable(val_true)))
 
-        _val_f1 = f1_score(val_true, val_pred, average='macro')
-        _val_precision = precision_score(val_true, val_pred, average='macro')
-        _val_recall = recall_score(val_true, val_pred, average='macro')
+        _val_f1 = f1_score(val_true, val_pred, average="macro")
+        _val_precision = precision_score(val_true, val_pred, average="macro")
+        _val_recall = recall_score(val_true, val_pred, average="macro")
 
-        logs['val_f1'] = _val_f1
-        logs['val_recall'] = _val_recall
-        logs['val_precision'] = _val_precision
-        print(" - val_f1_macro: %f - val_precision_macro: %f - val_recall_macro: %f" %
-              (_val_f1, _val_precision, _val_recall))
+        logs["val_f1"] = _val_f1
+        logs["val_recall"] = _val_recall
+        logs["val_precision"] = _val_precision
+        print(
+            " - val_f1_macro: %f - val_precision_macro: %f - val_recall_macro: %f"
+            % (_val_f1, _val_precision, _val_recall)
+        )
 
         if self.experiment is not None:
-            self.experiment.log(name='val_f1', data=[
-                float(_val_f1)], type=LogType.LINE)
-            self.experiment.log(name='val_recall', data=[
-                float(_val_recall)], type=LogType.LINE)
-            self.experiment.log(name='val_precision', data=[
-                float(_val_precision)], type=LogType.LINE)
+            self.experiment.log(name="val_f1", data=[float(_val_f1)], type=LogType.LINE)
+            self.experiment.log(
+                name="val_recall", data=[float(_val_recall)], type=LogType.LINE
+            )
+            self.experiment.log(
+                name="val_precision", data=[float(_val_precision)], type=LogType.LINE
+            )
 
         predIdxs = self.model.predict(self.validation_data)
         predIdxs = np.argmax(predIdxs, axis=1)

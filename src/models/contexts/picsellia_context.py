@@ -1,12 +1,16 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Type, Optional, Any, Dict, Union, TypeVar, Generic
+from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union
 
 import picsellia  # type: ignore
-from picsellia import DatasetVersion, ModelVersion
-from picsellia import Experiment  # type: ignore
+from picsellia import (
+    DatasetVersion,
+    Experiment,  # type: ignore
+    ModelVersion,
+)
 from picsellia.types.enums import ProcessingType
 
+from src import Colors
 from src.models.parameters.common.augmentation_parameters import AugmentationParameters
 from src.models.parameters.common.hyper_parameters import HyperParameters
 from src.models.parameters.common.parameters import Parameters
@@ -62,8 +66,8 @@ class PicselliaContext(ABC):
             The value formatted as a string with appropriate color coding and suffix.
         """
         suffix = " (default)" if key in defaulted_keys else ""
-        color_code = "\033[33m" if suffix else "\033[34m"
-        return f"{color_code}{value}\033[0m{suffix}"
+        color_code = Colors.YELLOW if suffix else Colors.BLUE
+        return f"{color_code}{value}{Colors.ENDC}{suffix}"
 
     def _process_parameters(self, parameters_dict: Dict, defaulted_keys: set) -> Dict:
         """

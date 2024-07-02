@@ -1,5 +1,6 @@
 import logging
 import os
+
 from trainer import Yolov8DetectionTrainer
 
 os.environ["PYTHONUNBUFFERED"] = "1"

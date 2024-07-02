@@ -1,7 +1,8 @@
 import logging
 import os
-from transformers import TrainerCallback
+
 from trainer import VitClassificationTrainer
+from transformers import TrainerCallback
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
@@ -11,8 +12,11 @@ logging.getLogger("picsellia").setLevel(logging.INFO)
 class LogMetricsCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         if state.is_local_process_zero:
-            filtered_logs = {metric_name: float(value) for metric_name, value in logs.items() if
-                             metric_name != "total_flos"}
+            filtered_logs = {
+                metric_name: float(value)
+                for metric_name, value in logs.items()
+                if metric_name != "total_flos"
+            }
             for metric_name, value in filtered_logs.items():
                 if metric_name in [
                     "train_loss",

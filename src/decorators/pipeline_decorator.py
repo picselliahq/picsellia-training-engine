@@ -1,9 +1,10 @@
 import ast
 import inspect
-from typing import Optional, Union, Callable, TypeVar, Any, List, Tuple, Dict, overload
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, overload
 
 from tabulate import tabulate  # type: ignore
 
+from src import Colors
 from src.enums import PipelineState, StepState
 from src.logger import LoggerManager
 from src.models.steps.step_metadata import StepMetadata
@@ -278,7 +279,7 @@ class Pipeline:
         | batch_size        | 32       |
         """
         self.log_pipeline_info(
-            log_content=f"Pipeline \033[94m{self.name}\033[0m is starting with the following context:"
+            log_content=f"Pipeline {Colors.BLUE}{self.name}{Colors.ENDC} is starting with the following context:"
         )
 
         context_dict = self._parse_context_to_dict(self._context)

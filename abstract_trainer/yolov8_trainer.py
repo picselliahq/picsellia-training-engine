@@ -8,14 +8,14 @@ from pycocotools.coco import COCO
 
 from abstract_trainer.trainer import AbstractTrainer
 from core_utils.yolov8 import (
-    get_train_test_eval_datasets_from_experiment,
-    write_annotation_file,
-    get_prop_parameter,
-    log_split_dataset_repartition_to_experiment,
-    make_annotation_dict_by_dataset,
-    get_metrics_curves,
     extract_file_name,
     get_batch_mosaics,
+    get_metrics_curves,
+    get_prop_parameter,
+    get_train_test_eval_datasets_from_experiment,
+    log_split_dataset_repartition_to_experiment,
+    make_annotation_dict_by_dataset,
+    write_annotation_file,
 )
 
 

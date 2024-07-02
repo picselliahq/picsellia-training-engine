@@ -1,8 +1,8 @@
 import uuid
 from typing import List
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from src import Pipeline
 from src import pipeline as pipeline_decorator

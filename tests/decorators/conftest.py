@@ -1,11 +1,12 @@
 import os
 import shutil
 
+import pytest
+
 from src import Pipeline
 from tests.decorators.fixtures.pipeline_fixtures import (
     reset_pipeline_entrypoint_call_tracker,
 )
-import pytest
 
 pytest_plugins = [
     "tests.decorators.fixtures.pipeline_fixtures",

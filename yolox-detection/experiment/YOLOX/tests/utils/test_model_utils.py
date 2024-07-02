@@ -6,9 +6,8 @@ import unittest
 
 import torch
 from torch import nn
-
-from YOLOX.yolox.utils import adjust_status, freeze_module
 from YOLOX.yolox.exp import get_exp
+from YOLOX.yolox.utils import adjust_status, freeze_module
 
 
 class TestModelUtils(unittest.TestCase):

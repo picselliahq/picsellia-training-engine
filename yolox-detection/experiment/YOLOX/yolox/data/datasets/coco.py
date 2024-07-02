@@ -8,8 +8,8 @@ import cv2
 import numpy as np
 from pycocotools.coco import COCO
 
-from .datasets_wrapper import CacheDataset, cache_read_img
 from ..dataloading import get_yolox_datadir
+from .datasets_wrapper import CacheDataset, cache_read_img
 
 
 def remove_useless_info(coco):

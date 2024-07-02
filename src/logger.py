@@ -5,7 +5,7 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
-from typing import Optional, TextIO, cast, List
+from typing import List, Optional, TextIO, cast
 
 from src.models.logging.stream_to_logger import StreamToLogger
 from src.models.steps.step_metadata import StepMetadata
@@ -20,7 +20,8 @@ class LoggerManager:
 
         self.original_stdout: TextIO = sys.stdout
         self.original_stderr: TextIO = sys.stderr
-        self.logger = logging.getLogger("picsellia")
+        self.logger = logging.getLogger("picsellia-engine")
+        self.logger.setLevel(logging.INFO)
 
     def clean(self) -> None:
         """

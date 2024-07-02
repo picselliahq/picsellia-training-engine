@@ -13,7 +13,6 @@ import xml.etree.ElementTree as ET
 
 import cv2
 import numpy as np
-
 from YOLOX.yolox.evaluators.voc_eval import voc_eval
 
 from .datasets_wrapper import CacheDataset, cache_read_img

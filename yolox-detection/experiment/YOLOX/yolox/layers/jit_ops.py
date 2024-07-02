@@ -95,8 +95,8 @@ class JitOp:
                 return self.jit_load(verbose)
 
     def jit_load(self, verbose=True):
-        from torch.utils.cpp_extension import load
         from loguru import logger
+        from torch.utils.cpp_extension import load
 
         try:
             import ninja  # noqa

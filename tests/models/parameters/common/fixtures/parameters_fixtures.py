@@ -1,5 +1,6 @@
-from src.models.parameters.common.parameters import Parameters
 import pytest
+
+from src.models.parameters.common.parameters import Parameters
 
 
 class ConcreteParameters(Parameters):

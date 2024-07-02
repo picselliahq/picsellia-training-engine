@@ -6,15 +6,14 @@ import keras
 import numpy as np
 import tensorflow as tf
 import tqdm
-from picsellia.sdk.experiment import Experiment
-from picsellia.types.enums import LogType, AnnotationFileType, InferenceType
-from pycocotools.coco import COCO
-from sklearn.metrics import confusion_matrix, accuracy_score
-from sklearn.utils import class_weight
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-
 import utils
 from classification_models.keras import Classifiers
+from picsellia.sdk.experiment import Experiment
+from picsellia.types.enums import AnnotationFileType, InferenceType, LogType
+from pycocotools.coco import COCO
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.utils import class_weight
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from utils import (
     _move_files_in_class_directories,
     get_experiment,
@@ -241,7 +240,7 @@ history = model.fit(
 for k, v in history.history.items():
     try:
         experiment.log(k, list(map(float, v)), LogType.LINE)
-    except Exception as e:
+    except Exception:
         print(f"can't send {v}")
 
 model.save(os.path.join(experiment.exported_model_dir, "model.h5"))

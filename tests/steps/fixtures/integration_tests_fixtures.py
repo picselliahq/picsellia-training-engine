@@ -2,13 +2,12 @@ import os
 from typing import Dict
 
 import pytest
-from picsellia import Client, Dataset, DatasetVersion, Data, Label
-from picsellia.types.enums import InferenceType
+from picsellia import Client, Data, Datalake, Dataset, DatasetVersion, Label
 from picsellia.sdk.asset import MultiAsset
+from picsellia.services.error_manager import ErrorManager
+from picsellia.types.enums import InferenceType
 
 from src.models.contexts.picsellia_context import PicselliaContext
-
-from picsellia.services.error_manager import ErrorManager
 
 
 def get_multi_asset(dataset_version: DatasetVersion) -> MultiAsset:
@@ -76,6 +75,11 @@ def host() -> str:
 @pytest.fixture
 def picsellia_client(api_token: str, host: str) -> Client:
     return Client(api_token=api_token, host=host)
+
+
+@pytest.fixture
+def picsellia_default_datalake(api_token: str, host: str) -> Datalake:
+    return Client(api_token=api_token, host=host).get_datalake()
 
 
 @pytest.fixture
