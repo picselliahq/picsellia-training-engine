@@ -5,6 +5,7 @@ from picsellia import DatasetVersion, Label
 from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import MultiAsset
 from picsellia_annotations.coco import COCOFile
+from picsellia_annotations.type.enums import AnnotationFileType
 
 from src.steps.data_extraction.utils.image_utils import get_labelmap
 
@@ -36,6 +37,7 @@ class DatasetContext:
         multi_asset: Optional[MultiAsset] = None,
         labelmap: Optional[Dict[str, Label]] = None,
         skip_asset_listing: bool = False,
+        use_id: Optional[bool] = True,
     ):
         """
         Initializes the DatasetContext with dataset metadata and configuration.
@@ -51,7 +53,7 @@ class DatasetContext:
         self.dataset_name = dataset_name
         self.dataset_version = dataset_version
         self.destination_path = destination_path
-
+        self.use_id = use_id
         if not labelmap:
             self.labelmap = get_labelmap(dataset_version=dataset_version)
         else:
@@ -65,28 +67,39 @@ class DatasetContext:
             self.multi_asset = None
 
         self.image_dir = os.path.join(destination_path, self.dataset_name, "images")
-        self.coco_file = self.build_coco_file()
+        self.coco_file_path = self.download_coco_file()
+        self.coco_file = self.build_coco_file(coco_file_path=self.coco_file_path)
 
-    def build_coco_file(self) -> COCOFile:
+    def download_coco_file(self) -> str:
         """
-        Builds the COCO file associated with the dataset. Initializes `coco_file` to the COCO file object.
+        Downloads the COCO file associated with the dataset to the local filesystem.
         """
-        if self.multi_asset:
-            return self.dataset_version.build_coco_file_locally(
-                assets=self.multi_asset,
-                use_id=True,
-            )
-        else:
-            return COCOFile(images=[], annotations=[])
+        return self.dataset_version.export_annotation_file(
+            annotation_file_type=AnnotationFileType.COCO,
+            target_path=os.path.join(
+                self.destination_path, self.dataset_name, "annotations"
+            ),
+            assets=self.multi_asset,
+            use_id=self.use_id,
+        )
+
+    def build_coco_file(self, coco_file_path) -> COCOFile:
+        """
+        Builds the COCO file object associated with the dataset.
+
+        Returns:
+            - COCOFile: The COCO file object.
+        """
+        return read_coco_file(coco_file_path)
 
     def download_assets(self) -> None:
         """
         Downloads the dataset assets to a local directory. Initializes `image_dir`
         to the path where images are stored.
         """
+        os.makedirs(self.image_dir, exist_ok=True)
         if self.multi_asset:
-            os.makedirs(self.image_dir, exist_ok=True)
-            self.multi_asset.download(target_path=self.image_dir, use_id=True)
+            self.multi_asset.download(target_path=self.image_dir, use_id=self.use_id)
         else:
             raise ValueError("No assets found in the dataset")
 
