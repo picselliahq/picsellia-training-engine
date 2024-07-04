@@ -35,3 +35,6 @@ class PaddleOCRHyperParameters(Parameters):
         self.text_save_epoch_step = self.extract_parameter(
             keys=["text_save_epoch_step"], expected_type=int, default=10
         )
+        self.max_text_length = self.extract_parameter(
+            keys=["max_text_length"], expected_type=int, default=25
+        )
