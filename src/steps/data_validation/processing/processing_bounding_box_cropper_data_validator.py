@@ -1,5 +1,8 @@
-from src import Pipeline, step
-from src.models.contexts.picsellia_context import PicselliaProcessingContext
+from src import Pipeline
+from src import step
+from src.models.contexts.processing.picsellia_processing_context import (
+    PicselliaProcessingContext,
+)
 from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
     ProcessingBoundingBoxCropperParameters,
