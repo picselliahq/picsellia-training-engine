@@ -16,6 +16,7 @@ from src.steps.data_extraction.training.training_data_extractor import (
 from src.steps.data_preparation.training.paddle_ocr_data_preparator import (
     paddle_ocr_data_preparator,
 )
+from src.steps.model_export.paddle_ocr_model_exporter import paddle_ocr_model_exporter
 from src.steps.model_training.paddle_ocr_trainer import paddle_ocr_trainer
 from src.steps.weights_extraction.training.paddle_ocr_weights_extractor import (
     paddle_ocr_weights_extractor,
@@ -49,6 +50,7 @@ def paddle_ocr_training_pipeline():
         model_collection=model_collection, dataset_collection=dataset_collection
     )
     model_collection = paddle_ocr_trainer(model_collection)
+    model_collection = paddle_ocr_model_exporter(model_collection)
 
 
 if __name__ == "__main__":
