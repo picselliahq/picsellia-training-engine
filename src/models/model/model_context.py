@@ -26,7 +26,7 @@ class ModelContext:
         model_version: ModelVersion,
         destination_path: str,
         labelmap: Optional[Dict[str, Label]] = None,
-        prefixed_model_name: Optional[str] = None,
+        prefix_model_name: Optional[str] = None,
     ):
         """
         Initializes the ModelContext with model metadata and configuration.
@@ -38,7 +38,7 @@ class ModelContext:
             labelmap (dict): The mapping of label names to ids.
         """
         self.model_name = model_name
-        self.prefixed_model_name = prefixed_model_name
+        self.prefix_model_name = prefix_model_name
         self.model_version = model_version
         self.destination_path = destination_path
         self.labelmap = labelmap
@@ -59,29 +59,27 @@ class ModelContext:
             self.download_model_file(model_file)
 
     def download_model_file(self, model_file):
-        if self.prefixed_model_name:
-            if model_file.name == f"{self.prefixed_model_name}-config":
-                self.config_file_path = os.path.join(
-                    self.model_weights_path, model_file.filename
-                )
-            elif model_file.name == f"{self.prefixed_model_name}-pretrained-model":
-                self.pretrained_model_path = os.path.join(
-                    self.model_weights_path, model_file.filename
-                )
-            if model_file.name.startswith(f"{self.prefixed_model_name}-"):
+        if self.prefix_model_name:
+            if model_file.name.startswith(f"{self.prefix_model_name}-"):
                 model_file.download(self.model_weights_path)
                 self.extract_weights(model_file=model_file)
+            if model_file.name == f"{self.prefix_model_name}-config":
+                self.config_file_path = self.get_extracted_path(model_file)
+            elif model_file.name == f"{self.prefix_model_name}-pretrained-model":
+                self.pretrained_model_path = self.get_extracted_path(model_file)
         else:
-            if model_file.name == "config":
-                self.config_file_path = os.path.join(
-                    self.model_weights_path, model_file.filename
-                )
-            elif model_file.name == "pretrained-model":
-                self.pretrained_model_path = os.path.join(
-                    self.model_weights_path, model_file.filename
-                )
             model_file.download(self.model_weights_path)
             self.extract_weights(model_file=model_file)
+            if model_file.name == "config":
+                self.config_file_path = self.get_extracted_path(model_file)
+            elif model_file.name == "pretrained-model":
+                self.pretrained_model_path = self.get_extracted_path(model_file)
+
+    def get_extracted_path(self, model_file):
+        if model_file.filename.endswith(".tar") or model_file.filename.endswith(".zip"):
+            return os.path.join(self.model_weights_path, model_file.filename[:-4])
+        else:
+            return os.path.join(self.model_weights_path, model_file.filename)
 
     def extract_weights(self, model_file):
         if model_file.filename.endswith(".tar"):
@@ -99,32 +97,32 @@ class ModelContext:
             os.remove(os.path.join(self.model_weights_path, model_file.filename))
 
     def get_model_weights_path(self):
-        if self.prefixed_model_name:
+        if self.prefix_model_name:
             return os.path.join(
                 self.destination_path,
                 self.model_name,
-                self.prefixed_model_name,
+                self.prefix_model_name,
                 "weights",
             )
         else:
             return os.path.join(self.destination_path, self.model_name, "weights")
 
     def get_trained_model_path(self):
-        if self.prefixed_model_name:
+        if self.prefix_model_name:
             return os.path.join(
                 self.destination_path,
                 self.model_name,
-                self.prefixed_model_name,
+                self.prefix_model_name,
                 "trained_model",
             )
         else:
             return os.path.join(self.destination_path, self.model_name, "trained_model")
 
     def get_results_path(self):
-        if self.prefixed_model_name:
+        if self.prefix_model_name:
             return os.path.join(
                 self.destination_path,
-                self.prefixed_model_name,
+                self.prefix_model_name,
                 self.model_name,
                 "results",
             )
@@ -132,11 +130,11 @@ class ModelContext:
             return os.path.join(self.destination_path, self.model_name, "results")
 
     def get_inference_model_path(self):
-        if self.prefixed_model_name:
+        if self.prefix_model_name:
             return os.path.join(
                 self.destination_path,
                 self.model_name,
-                self.prefixed_model_name,
+                self.prefix_model_name,
                 "inference_model",
             )
         else:
@@ -145,9 +143,9 @@ class ModelContext:
             )
 
     def get_config_file_path(self):
-        if self.prefixed_model_name:
+        if self.prefix_model_name:
             return os.path.join(
-                self.model_weights_path, f"{self.prefixed_model_name}-config"
+                self.model_weights_path, f"{self.prefix_model_name}-config"
             )
         else:
             return os.path.join(self.model_weights_path, "config")

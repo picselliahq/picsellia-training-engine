@@ -12,7 +12,7 @@ class TrainingModelContextExtractor:
         self.destination_path = os.path.join(os.getcwd(), self.experiment.name)
 
     def get_model_context(
-        self, prefixed_model_name: Optional[str] = None
+        self, prefix_model_name: Optional[str] = None
     ) -> ModelContext:
         """
         Retrieves the model context from the active Picsellia context.
@@ -26,5 +26,5 @@ class TrainingModelContextExtractor:
             model_name=model_name,
             model_version=model_version,
             destination_path=self.destination_path,
-            prefixed_model_name=prefixed_model_name,
+            prefix_model_name=prefix_model_name,
         )
