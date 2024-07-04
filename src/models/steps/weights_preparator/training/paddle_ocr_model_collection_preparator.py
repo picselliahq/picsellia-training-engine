@@ -1,3 +1,5 @@
+import os
+
 import yaml
 
 from src.models.dataset.common.dataset_collection import DatasetCollection
@@ -33,7 +35,7 @@ def generate_bbox_yaml_config(
     config["Train"]["dataset"]["name"] = "SimpleDataSet"
     config["Train"]["dataset"]["data_dir"] = dataset_collection.train.image_dir
     config["Train"]["dataset"]["label_file_list"] = [
-        dataset_collection.train.paddle_ocr_annotations_path
+        dataset_collection.train.paddle_ocr_bbox_annotations_path
     ]
     config["Train"]["loader"]["batch_size_per_card"] = hyperparameters.bbox_batch_size
     config["Train"]["loader"]["shuffle"] = True
@@ -41,7 +43,7 @@ def generate_bbox_yaml_config(
     config["Eval"]["dataset"]["name"] = "SimpleDataSet"
     config["Eval"]["dataset"]["data_dir"] = dataset_collection.val.image_dir
     config["Eval"]["dataset"]["label_file_list"] = [
-        dataset_collection.val.paddle_ocr_annotations_path
+        dataset_collection.val.paddle_ocr_bbox_annotations_path
     ]
     config["Eval"]["loader"]["batch_size_per_card"] = hyperparameters.bbox_batch_size
     config["Eval"]["loader"]["shuffle"] = True
@@ -62,26 +64,42 @@ def generate_text_yaml_config(
 
     config["Global"]["use_gpu"] = False
     config["Global"]["epoch_num"] = hyperparameters.text_epochs
-    config["Global"]["pretrained_model"] = model_context.pretrained_model_path
+    config["Global"]["pretrained_model"] = os.path.join(
+        model_context.pretrained_model_path, "best_accuracy"
+    )
     config["Global"]["save_model_dir"] = model_context.trained_model_path
     config["Global"]["save_res_path"] = model_context.results_path
     config["Global"]["save_inference_dir"] = model_context.inference_model_path
     config["Global"]["save_epoch_step"] = hyperparameters.text_save_epoch_step
+    config["Global"]["max_text_length"] = hyperparameters.max_text_length
+    config["Global"]["character_dict_path"] = os.path.join(
+        model_context.model_weights_path, "en_dict.txt"
+    )
+
+    if "SARHead" in config["Architecture"]["Head"]["head_list"]:
+        config["Architecture"]["Head"]["head_list"]["SARHead"][
+            "max_text_length"
+        ] = hyperparameters.max_text_length
 
     config["Optimizer"]["lr"]["learning_rate"] = hyperparameters.text_learning_rate
 
     config["Train"]["dataset"]["name"] = "SimpleDataSet"
-    config["Train"]["dataset"]["data_dir"] = dataset_collection.train.image_dir
+    config["Train"]["dataset"]["data_dir"] = dataset_collection.train.text_image_dir
     config["Train"]["dataset"]["label_file_list"] = [
-        dataset_collection.train.paddle_ocr_annotations_path
+        dataset_collection.train.paddle_ocr_text_annotations_path
     ]
     config["Train"]["loader"]["batch_size_per_card"] = hyperparameters.text_batch_size
     config["Train"]["loader"]["shuffle"] = True
 
+    if "RecConAug" in config["Train"]["dataset"]["transforms"]:
+        config["Train"]["dataset"]["transforms"]["RecConAug"][
+            "max_text_length"
+        ] = hyperparameters.max_text_length
+
     config["Eval"]["dataset"]["name"] = "SimpleDataSet"
-    config["Eval"]["dataset"]["data_dir"] = dataset_collection.val.image_dir
+    config["Eval"]["dataset"]["data_dir"] = dataset_collection.val.text_image_dir
     config["Eval"]["dataset"]["label_file_list"] = [
-        dataset_collection.val.paddle_ocr_annotations_path
+        dataset_collection.val.paddle_ocr_text_annotations_path
     ]
     config["Eval"]["loader"]["batch_size_per_card"] = hyperparameters.text_batch_size
     config["Eval"]["loader"]["shuffle"] = True
@@ -103,7 +121,6 @@ class PaddleOCRModelCollectionPreparator:
     ):
         self.model_collection = model_collection
         self.dataset_collection = dataset_collection
-        self.destination_path = model_collection.bbox_model.destination_path
         self.hyperparameters = hyperparameters
 
     def prepare(self):
