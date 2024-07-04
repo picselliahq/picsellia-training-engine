@@ -10,8 +10,6 @@ from src.models.dataset.common.dataset_context import DatasetContext
 class PaddleOCRDatasetContext(DatasetContext):
     def __init__(
         self,
-        paddle_ocr_annotations_path: str,
-        paddle_ocr_class_path: str,
         dataset_name: str,
         dataset_version: DatasetVersion,
         destination_path: str,
@@ -27,7 +25,27 @@ class PaddleOCRDatasetContext(DatasetContext):
             labelmap=labelmap,
             use_id=use_id,
         )
-        self.paddle_ocr_annotations_path = paddle_ocr_annotations_path
-        self.paddle_ocr_class_path = paddle_ocr_class_path
-        os.makedirs(os.path.dirname(self.paddle_ocr_annotations_path), exist_ok=True)
-        os.makedirs(os.path.dirname(self.paddle_ocr_class_path), exist_ok=True)
+        self.paddle_ocr_bbox_annotations_path = os.path.join(
+            self.destination_path,
+            self.dataset_name,
+            "annotations",
+            "bbox",
+            "annotations.txt",
+        )
+        self.paddle_ocr_text_annotations_path = os.path.join(
+            self.destination_path,
+            self.dataset_name,
+            "annotations",
+            "text",
+            "annotations.txt",
+        )
+        self.text_image_dir = os.path.join(
+            os.path.dirname(self.image_dir), "paddleocr_images"
+        )
+        os.makedirs(
+            os.path.dirname(self.paddle_ocr_bbox_annotations_path), exist_ok=True
+        )
+        os.makedirs(
+            os.path.dirname(self.paddle_ocr_text_annotations_path), exist_ok=True
+        )
+        os.makedirs(self.text_image_dir, exist_ok=True)
