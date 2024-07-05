@@ -1,27 +1,27 @@
 from picsellia import Client
 
 
-class ProcessingTilingDataValidator:
+class ProcessingTilerDataValidator:
     def __init__(
         self,
         client: Client,
-        slice_height: int,
-        slice_width: int,
+        tile_height: int,
+        tile_width: int,
         datalake: str,
     ):
         self.client = client
-        self.slice_height = slice_height
-        self.slice_width = slice_width
+        self.tile_height = tile_height
+        self.tile_width = tile_width
         self.datalake = datalake
 
-    def _validate_slice_size(self) -> None:
+    def _validate_tile_size(self) -> None:
         """
         Validate that the slice size is valid.
 
         Raises:
             ValueError: If the slice size is not valid.
         """
-        if self.slice_height <= 0 or self.slice_width <= 0:
+        if self.tile_height <= 0 or self.tile_width <= 0:
             raise ValueError("Slice size must be greater than 0")
 
     def _validate_datalake(self) -> None:
@@ -38,5 +38,5 @@ class ProcessingTilingDataValidator:
             )
 
     def validate(self) -> None:
-        self._validate_slice_size()
+        self._validate_tile_size()
         self._validate_datalake()

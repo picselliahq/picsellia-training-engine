@@ -25,7 +25,7 @@ from sahi.utils.cv import (
 from shapely.geometry import box, MultiPolygon, GeometryCollection, Polygon
 from shapely.validation import make_valid
 
-from src.models.dataset.common.processing.processing_dataset_collection import (
+from src.models.dataset.processing.processing_dataset_collection import (
     ProcessingDatasetCollection,
 )
 
@@ -238,7 +238,7 @@ def custom_slice_image(
 sahi.slicing.slice_image = custom_slice_image
 
 
-class SlicerProcessing:
+class TilerProcessing:
     """
     This class is used to extract bounding boxes from images in a dataset version for a specific label.
     """
@@ -246,15 +246,15 @@ class SlicerProcessing:
     def __init__(
         self,
         dataset_collection: ProcessingDatasetCollection,
-        slice_height: int,
-        slice_width: int,
+        tile_height: int,
+        tile_width: int,
         overlap_height_ratio: float,
         overlap_width_ratio: float,
         min_area_ratio: float,
     ):
         self.dataset_collection = dataset_collection
-        self.slice_height = slice_height
-        self.slice_width = slice_width
+        self.tile_height = tile_height
+        self.tile_width = tile_width
         self.overlap_height_ratio = overlap_height_ratio
         self.overlap_width_ratio = overlap_width_ratio
         self.min_area_ratio = min_area_ratio
@@ -269,8 +269,8 @@ class SlicerProcessing:
         slice_coco(
             coco_annotation_file_path=self.dataset_collection.input.coco_file_path,
             image_dir=self.dataset_collection.input.image_dir,
-            slice_height=self.slice_height,
-            slice_width=self.slice_width,
+            slice_height=self.tile_height,
+            slice_width=self.tile_width,
             overlap_height_ratio=self.overlap_height_ratio,
             overlap_width_ratio=self.overlap_width_ratio,
             min_area_ratio=self.min_area_ratio,
@@ -279,14 +279,14 @@ class SlicerProcessing:
         )
 
         output_files = os.listdir(self.dataset_collection.output.image_dir)
-        sliced_annotations_path = [
+        tiled_annotations_path = [
             os.path.join(self.dataset_collection.output.image_dir, file)
             for file in output_files
             if file.endswith(".json")
         ][0]
         os.remove(self.dataset_collection.output.coco_file_path)
         shutil.move(
-            sliced_annotations_path, self.dataset_collection.output.coco_file_path
+            tiled_annotations_path, self.dataset_collection.output.coco_file_path
         )
         self.dataset_collection.output.build_coco_file(
             coco_file_path=self.dataset_collection.output.coco_file_path
@@ -299,7 +299,7 @@ class SlicerProcessing:
             f"'{self.dataset_collection.input.dataset_version.version}' "
             f"(id: {self.dataset_collection.input.dataset_version.id}) "
             f"in dataset '{self.dataset_collection.input.dataset_version.name}' "
-            f"with slice size {self.slice_height}x{self.slice_width}."
+            f"with slice size {self.tile_height}x{self.tile_width}."
         )
         self.dataset_collection.output.dataset_version.update(
             description=output_dataset_description, type=output_dataset_type
