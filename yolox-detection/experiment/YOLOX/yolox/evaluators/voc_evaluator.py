@@ -6,13 +6,11 @@ import sys
 import tempfile
 import time
 from collections import ChainMap
-from loguru import logger
-from tqdm import tqdm
 
 import numpy as np
-
 import torch
-
+from loguru import logger
+from tqdm import tqdm
 from YOLOX.yolox.utils import (
     gather,
     is_main_process,

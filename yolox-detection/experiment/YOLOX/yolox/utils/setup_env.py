@@ -4,9 +4,9 @@
 
 import os
 import subprocess
-from loguru import logger
 
 import cv2
+from loguru import logger
 
 from .dist import get_world_size, is_main_process
 

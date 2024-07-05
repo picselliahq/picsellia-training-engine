@@ -8,6 +8,7 @@ Usage example:
     model = torch.hub.load("Megvii-BaseDetection/YOLOX", "yolox_custom",
                            exp_path="exp.py", ckpt_path="ckpt.pth")
 """
+
 dependencies = ["torch"]
 
 from YOLOX.yolox.models import (  # isort:skip  # noqa: F401, E402

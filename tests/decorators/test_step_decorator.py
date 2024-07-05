@@ -1,9 +1,9 @@
-from src import step as step_decorator, Pipeline
-from src import Step
 from unittest.mock import patch
 
 import pytest
 
+from src import Pipeline, Step
+from src import step as step_decorator
 from src.enums import PipelineState, StepState
 
 

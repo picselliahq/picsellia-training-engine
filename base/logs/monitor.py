@@ -2,15 +2,14 @@ import json
 import os
 import re
 from datetime import datetime
-from typing import Match, Optional, List, Union
+from typing import List, Match, Optional, Union
 
-from picsellia.types.enums import JobRunStatus, ExperimentStatus
-
+from picsellia.types.enums import ExperimentStatus, JobRunStatus
 from tailer import LogTailer
 from utils.picsellia import (
-    get_picsellia_job,
     get_picsellia_client,
     get_picsellia_experiment,
+    get_picsellia_job,
 )
 
 BUFFER_START_PATTERN = re.compile(r"--[0-9]--")
@@ -131,7 +130,7 @@ class LogMonitor:
         try:
             self.job.send_logging(content, section_header, special=special)
             self.logs[section_header]["logs"][str(self.job.line_nb)] = content
-        except Exception as e:
+        except Exception:
             pass
 
     def end_log_monitoring(self, exit_code: int, section_header: str):

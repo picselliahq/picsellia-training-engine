@@ -1,7 +1,9 @@
 import random
 import string
 import uuid
+
 import pytest
+
 from src.decorators.step_decorator import Step
 from src.enums import StepState
 from src.models.steps.step_metadata import StepMetadata

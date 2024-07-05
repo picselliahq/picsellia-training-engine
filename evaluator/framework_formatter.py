@@ -3,8 +3,8 @@ from typing import List
 
 import cv2
 import numpy as np
-from PIL import Image
 from picsellia.sdk.asset import Asset
+from PIL import Image
 
 from evaluator.utils.general import (
     cast_type_list_to_float,

@@ -18,13 +18,13 @@ sys.path.append(os.path.join(os.getcwd(), "yolov8-classification"))
 
 from experiment.trainer import Yolov8ClassificationTrainer
 from experiment.utils import (
-    get_prop_parameter,
-    _create_coco_objects,
     _create_class_directories,
-    get_image_annotation,
+    _create_coco_objects,
     format_confusion_matrix,
-    order_repartition_according_labelmap,
+    get_image_annotation,
+    get_prop_parameter,
     move_image,
+    order_repartition_according_labelmap,
 )
 
 TOKEN = os.environ["api_token"]

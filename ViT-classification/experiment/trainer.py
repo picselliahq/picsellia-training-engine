@@ -5,28 +5,28 @@ from optimum.onnxruntime import ORTModelForImageClassification
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.types.enums import InferenceType
-from torchvision.transforms import RandomResizedCrop, Compose, Normalize, ToTensor
+from torchvision.transforms import Compose, Normalize, RandomResizedCrop, ToTensor
 from transformers import (
-    pipeline,
     AutoImageProcessor,
-    DefaultDataCollator,
     AutoModelForImageClassification,
-    TrainingArguments,
+    DefaultDataCollator,
     Trainer,
+    TrainingArguments,
+    pipeline,
+)
+from utils import (
+    _move_all_files_in_class_directories,
+    compute_metrics,
+    find_asset_by_filename,
+    get_asset_filename_from_path,
+    get_predicted_label_confidence,
+    get_train_test_eval_datasets_from_experiment,
+    log_labelmap,
+    prepare_datasets_with_annotation,
+    split_single_dataset,
 )
 
 from abstract_trainer.trainer import AbstractTrainer
-from utils import (
-    get_train_test_eval_datasets_from_experiment,
-    prepare_datasets_with_annotation,
-    split_single_dataset,
-    _move_all_files_in_class_directories,
-    compute_metrics,
-    get_asset_filename_from_path,
-    find_asset_by_filename,
-    get_predicted_label_confidence,
-    log_labelmap,
-)
 
 
 class VitClassificationTrainer(AbstractTrainer):

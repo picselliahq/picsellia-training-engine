@@ -1,26 +1,21 @@
 import unittest
 import uuid
-from datasets import DatasetDict
 
+from picsellia.sdk.label import Label
+from torch import tensor
 from utils.picsellia import (
-    get_filename_from_fullpath,
     create_rectangle_list,
+    get_filename_from_fullpath,
     reformat_box_to_coco,
 )
 from utils.vit import (
-    read_annotation_file,
     format_coco_annot_to_jsonlines_format,
     format_evaluation_results,
-    get_id2label_mapping,
-    get_category_names,
-    write_metadata_file,
     formatted_annotations,
+    get_category_names,
+    get_id2label_mapping,
+    read_annotation_file,
 )
-
-from torch import tensor
-from picsellia.sdk.label import Label
-from transformers import AutoImageProcessor, AutoModelForObjectDetection
-from picsellia.sdk.connexion import Connexion
 
 
 class TestDetectionVit(unittest.TestCase):
@@ -245,5 +240,5 @@ class TestDetectionVit(unittest.TestCase):
         self.assertEqual(formatted_annotation_list, expected_results)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

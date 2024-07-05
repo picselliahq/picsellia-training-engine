@@ -1,10 +1,10 @@
 import logging
 import time
 import uuid
-from typing import Callable, Union, TypeVar, Optional, Any, overload
+from typing import Any, Callable, Optional, TypeVar, Union, overload
 
 from src import Pipeline
-from src.enums import StepState, PipelineState
+from src.enums import PipelineState, StepState
 from src.models.steps.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., Any])

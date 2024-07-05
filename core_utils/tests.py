@@ -1,7 +1,7 @@
 import json
 import os
-import sys
 import shutil
+import sys
 import time
 import unittest
 from datetime import date
@@ -13,18 +13,18 @@ from picsellia import Client
 sys.path.append(os.path.join(os.getcwd(), "core_utils"))
 
 from yolov8 import (
-    get_train_test_eval_datasets_from_experiment,
-    write_annotation_file,
-    get_prop_parameter,
-    order_repartition_according_labelmap,
-    generate_data_yaml,
-    find_final_run,
-    get_weights_and_config,
     extract_file_name,
-    make_annotation_dict_by_dataset,
-    setup_hyp,
-    get_metrics_curves,
+    find_final_run,
+    generate_data_yaml,
     get_batch_mosaics,
+    get_metrics_curves,
+    get_prop_parameter,
+    get_train_test_eval_datasets_from_experiment,
+    get_weights_and_config,
+    make_annotation_dict_by_dataset,
+    order_repartition_according_labelmap,
+    setup_hyp,
+    write_annotation_file,
 )
 
 TOKEN = os.environ["api_token"]

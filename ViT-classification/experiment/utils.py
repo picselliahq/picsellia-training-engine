@@ -232,7 +232,7 @@ def move_image(filename: str, old_location_path: str, new_location_path: str) ->
     new_path = os.path.join(new_location_path, filename)
     try:
         shutil.move(old_path, new_path)
-    except Exception as e:
+    except Exception:
         logging.info(f"{filename} skipped.")
 
 

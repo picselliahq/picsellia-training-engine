@@ -4,12 +4,12 @@ import shutil
 
 import numpy
 import numpy as np
-from PIL import Image
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.dataset_version import DatasetVersion
 from picsellia.sdk.experiment import Experiment
 from picsellia.sdk.label import Label
 from picsellia.types.enums import AnnotationFileType
+from PIL import Image
 from pycocotools.coco import COCO
 from ultralytics.yolo.engine.model import YOLO
 
@@ -183,7 +183,7 @@ def move_image(filename: str, old_location_path: str, new_location_path: str) ->
     new_path = os.path.join(new_location_path, filename)
     try:
         shutil.move(old_path, new_path)
-    except Exception as e:
+    except Exception:
         logging.info(f"{filename} skipped.")
 
 

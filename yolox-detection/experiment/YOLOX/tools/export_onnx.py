@@ -4,11 +4,10 @@
 
 import argparse
 import os
-from loguru import logger
 
 import torch
+from loguru import logger
 from torch import nn
-
 from YOLOX.yolox.exp import get_exp
 from YOLOX.yolox.models.network_blocks import SiLU
 from YOLOX.yolox.utils import replace_module

@@ -3,16 +3,16 @@ import sys
 
 sys.path.append(os.path.join(os.getcwd(), "yolov8-detection", "experiment"))
 
+from detection_trainer import PicselliaDetectionTrainer
 from picsellia.sdk.asset import MultiAsset
+from utils import create_yolo_detection_label
 
 from abstract_trainer.yolov8_trainer import Yolov8Trainer
 from core_utils.yolov8 import (
     generate_data_yaml,
     setup_hyp,
 )
-from detection_trainer import PicselliaDetectionTrainer
 from evaluator.yolo_evaluator import DetectionYOLOEvaluator
-from utils import create_yolo_detection_label
 
 
 class Yolov8DetectionTrainer(Yolov8Trainer):

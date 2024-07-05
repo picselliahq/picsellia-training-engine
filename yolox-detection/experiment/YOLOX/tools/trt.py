@@ -5,12 +5,11 @@
 import argparse
 import os
 import shutil
-from loguru import logger
 
 import tensorrt as trt
 import torch
+from loguru import logger
 from torch2trt import torch2trt
-
 from YOLOX.yolox.exp import get_exp
 
 

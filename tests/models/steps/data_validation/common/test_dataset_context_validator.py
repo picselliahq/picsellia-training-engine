@@ -1,9 +1,8 @@
 from collections.abc import Callable
 from unittest.mock import patch
 
-from picsellia.types.enums import InferenceType
-
 import pytest
+from picsellia.types.enums import InferenceType
 
 from src.enums import DatasetSplitName
 from src.steps.data_validation.utils.image_utils import get_images_path_list

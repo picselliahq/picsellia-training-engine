@@ -12,9 +12,9 @@ from pycocotools.coco import COCO
 sys.path.append(os.path.join(os.getcwd(), "yolov8-segmentation"))
 from experiment.trainer import Yolov8SegmentationTrainer
 from experiment.utils import (
-    interleave_lists,
-    create_img_label_segmentation,
     coco_to_yolo_segmentation,
+    create_img_label_segmentation,
+    interleave_lists,
 )
 
 TOKEN = os.environ["api_token"]

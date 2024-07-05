@@ -1,13 +1,12 @@
 import os
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from picsellia import DatasetVersion, Label
+from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import MultiAsset
+from picsellia_annotations.coco import COCOFile
 
 from src.steps.data_extraction.utils.image_utils import get_labelmap
-
-from picsellia.exceptions import NoDataError
-from picsellia_annotations.coco import COCOFile
 
 
 class DatasetContext:
@@ -36,6 +35,7 @@ class DatasetContext:
         destination_path: str,
         multi_asset: Optional[MultiAsset] = None,
         labelmap: Optional[Dict[str, Label]] = None,
+        skip_asset_listing: bool = False,
     ):
         """
         Initializes the DatasetContext with dataset metadata and configuration.
@@ -46,21 +46,24 @@ class DatasetContext:
             multi_asset (MultiAsset): The collection of assets for the dataset.
             labelmap (dict): The mapping of label names to ids.
             destination_path (str): The root directory for storing the dataset locally.
+            skip_asset_listing (bool): Whether to skip listing the dataset's assets.
         """
         self.dataset_name = dataset_name
         self.dataset_version = dataset_version
         self.destination_path = destination_path
+
         if not labelmap:
             self.labelmap = get_labelmap(dataset_version=dataset_version)
         else:
             self.labelmap = labelmap or {}
-        if not multi_asset:
-            try:
-                self.multi_asset = dataset_version.list_assets()
-            except NoDataError:
-                self.multi_asset = None
-        else:
+
+        if multi_asset:
             self.multi_asset = multi_asset
+        elif not skip_asset_listing:
+            self.list_assets()
+        else:
+            self.multi_asset = None
+
         self.image_dir = os.path.join(destination_path, self.dataset_name, "images")
         self.coco_file = self.build_coco_file()
 
@@ -86,3 +89,25 @@ class DatasetContext:
             self.multi_asset.download(target_path=self.image_dir, use_id=True)
         else:
             raise ValueError("No assets found in the dataset")
+
+    def list_assets(self) -> None:
+        """
+        Lists the assets in the dataset.
+        """
+        try:
+            self.multi_asset = self.dataset_version.list_assets()
+        except NoDataError:
+            self.multi_asset = None
+
+    def get_assets_batch(self, limit: int, offset: int) -> MultiAsset:
+        """
+        Lists the assets in the dataset in batches.
+
+        Args:
+            limit: The maximum number of assets to retrieve.
+            offset: The offset from which to start retrieving assets.
+
+        Returns:
+            A MultiAsset object containing the assets retrieved, limited by the `limit` and `offset` parameters.
+        """
+        return self.dataset_version.list_assets(limit=limit, offset=offset)

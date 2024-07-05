@@ -8,8 +8,8 @@ from ultralytics.models.yolo.classify import (
     ClassificationValidator,
 )
 
+from src import Pipeline, step
 from src.models.contexts.picsellia_context import PicselliaTrainingContext
-from src import step, Pipeline
 
 
 def on_train_epoch_end(trainer: ClassificationTrainer, experiment: Experiment):

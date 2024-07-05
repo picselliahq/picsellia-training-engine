@@ -3,7 +3,6 @@ import os
 
 import keras
 from picsellia.types.enums import LogType
-
 from trainer import UnetSegmentationTrainer
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
