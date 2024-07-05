@@ -2,6 +2,7 @@ import logging
 import math
 from typing import List, Optional
 
+import PIL
 import numpy as np
 import picsellia
 import requests
@@ -86,7 +87,7 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
         preprocessed_image = self.embedding_model.apply_preprocessing(image)
         return self.embedding_model.encode_image(image=preprocessed_image)
 
-    def fetch_and_prepare_image(self, image_url: str) -> Optional[Image]:
+    def fetch_and_prepare_image(self, image_url: str) -> Optional[PIL.Image.Image]:
         """
         Fetches an image from a URL and prepares it for processing.
 

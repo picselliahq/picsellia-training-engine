@@ -54,6 +54,9 @@ class DatasetContextValidator:
         Raises:
             ValueError: If the number of extracted images does not match the expected number of assets.
         """
+        if self.dataset_context.multi_asset is None:
+            return
+
         if len(images_path_list) < len(self.dataset_context.multi_asset):
             raise ValueError(
                 f"Some images have not been extracted in the image directory: {self.dataset_context.image_dir}. "
