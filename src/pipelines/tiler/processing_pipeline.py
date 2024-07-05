@@ -32,7 +32,7 @@ def get_context() -> PicselliaProcessingContext[ProcessingTilerParameters]:
     log_folder_path="logs/",
     remove_logs_on_completion=False,
 )
-def slicer_processing_pipeline() -> None:
+def tiler_processing_pipeline() -> None:
     dataset_collection = processing_dataset_collection_extractor()
     tiler_data_validator(dataset_context=dataset_collection.input)
     dataset_collection = tiler_processing(dataset_collection=dataset_collection)
@@ -40,4 +40,4 @@ def slicer_processing_pipeline() -> None:
 
 
 if __name__ == "__main__":
-    slicer_processing_pipeline()
+    tiler_processing_pipeline()
