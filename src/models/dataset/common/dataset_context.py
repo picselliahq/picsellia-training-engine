@@ -38,6 +38,7 @@ class DatasetContext:
         labelmap: Optional[Dict[str, Label]] = None,
         skip_asset_listing: bool = False,
         use_id: Optional[bool] = True,
+        skip_asset_listing: bool = False,
     ):
         """
         Initializes the DatasetContext with dataset metadata and configuration.
