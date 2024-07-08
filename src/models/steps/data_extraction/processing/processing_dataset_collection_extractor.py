@@ -4,7 +4,7 @@ from typing import Optional
 from picsellia import DatasetVersion
 
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.dataset.common.processing.processing_dataset_collection import (
+from src.models.dataset.processing.processing_dataset_collection import (
     ProcessingDatasetCollection,
 )
 

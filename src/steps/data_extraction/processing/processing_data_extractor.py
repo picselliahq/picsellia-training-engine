@@ -4,9 +4,10 @@ from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.dataset.common.processing.processing_dataset_collection import (
+from src.models.dataset.processing.processing_dataset_collection import (
     ProcessingDatasetCollection,
 )
+
 from src.models.steps.data_extraction.processing.processing_dataset_collection_extractor import (
     ProcessingDatasetCollectionExtractor,
 )

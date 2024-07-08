@@ -3,6 +3,7 @@ from src import step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
+from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.dataset.processing.processing_dataset_collection import (
     ProcessingDatasetCollection,
 )
@@ -17,7 +18,7 @@ from src.models.steps.processing.dataset_version_creation.tiler_processing impor
 @step
 def tiler_processing(
     dataset_collection: ProcessingDatasetCollection,
-) -> ProcessingDatasetCollection:
+) -> DatasetContext:
     context: PicselliaProcessingContext[
         ProcessingTilerParameters
     ] = Pipeline.get_active_context()
@@ -31,4 +32,4 @@ def tiler_processing(
         min_area_ratio=context.processing_parameters.min_area_ratio,
     )
     dataset_collection = processor.process()
-    return dataset_collection
+    return dataset_collection.output
