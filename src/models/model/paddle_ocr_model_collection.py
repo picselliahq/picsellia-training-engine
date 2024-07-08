@@ -1,7 +1,8 @@
+from src.models.model.model_collection import ModelCollection
 from src.models.model.model_context import ModelContext
 
 
-class PaddleOCRModelCollection:
+class PaddleOCRModelCollection(ModelCollection):
     """
     A specialized collection for Paddle OCR models that contains two models:
     one for bounding box detection and one for text recognition.
