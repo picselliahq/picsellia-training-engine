@@ -5,10 +5,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 ARG REBUILD_ALL
-COPY ./src/pipelines/slicer/requirements.txt ./src/pipelines/slicer/requirements.txt
+COPY ./src/pipelines/dataset_tiler/requirements.txt ./src/pipelines/dataset_tiler/requirements.txt
 ARG REBUILD_PICSELLIA
 
-RUN export UV_HTTP_TIMEOUT=600 && uv pip install --python=$(which python3.10) --no-cache -r ./src/pipelines/slicer/requirements.txt
+RUN uv pip install --python=$(which python3.10) --no-cache -r ./src/pipelines/dataset_tiler/requirements.txt
 
 WORKDIR /experiment
 
@@ -16,7 +16,7 @@ COPY ./src/decorators ./src/decorators
 COPY ./src/models ./src/models
 COPY ./src/steps ./src/steps
 COPY ./src/*.py ./src
-COPY ./src/pipelines/slicer ./src/pipelines/slicer
+COPY ./src/pipelines/dataset_tiler ./src/pipelines/dataset_tiler
 
 ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
 
