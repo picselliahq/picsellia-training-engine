@@ -1,12 +1,16 @@
+import logging
 import os
 from typing import List, Optional
 
 from picsellia import Client
+from picsellia.types.enums import InferenceType
 
 from src.models.steps.processing.dataset_version_creation.data_uploader import (
     DataUploader,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
+
+logger = logging.getLogger("picsellia")
 
 
 class DatasetContextUploader(DataUploader):
@@ -34,6 +38,14 @@ class DatasetContextUploader(DataUploader):
             ],
             images_tags=self.images_tags,
         )
-        self._add_coco_annotations_to_dataset_version(
-            annotation_path=self.dataset_context.coco_file_path
-        )
+
+        if self.dataset_context.dataset_version.type != InferenceType.NOT_CONFIGURED:
+            self._add_coco_annotations_to_dataset_version(
+                annotation_path=self.dataset_context.coco_file_path
+            )
+
+        else:
+            logger.info(
+                f"👉 Since the dataset's type is set to {InferenceType.NOT_CONFIGURED.name}, "
+                f"no annotations will be uploaded."
+            )
