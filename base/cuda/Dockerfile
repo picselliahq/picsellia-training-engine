@@ -4,6 +4,7 @@ FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu20.04 as base
 ARG PYTHON_VERSION=3.10
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    UV_HTTP_TIMEOUT=600 \
     DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get upgrade -y && \
