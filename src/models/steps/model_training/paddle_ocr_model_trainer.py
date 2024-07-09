@@ -1,4 +1,5 @@
 import os
+from typing import Dict, Union
 
 from src.models.model.model_context import ModelContext
 from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
@@ -9,26 +10,26 @@ from picsellia import Experiment
 from picsellia.sdk.log import LogType
 
 
-def extract_and_log_metrics(log_line):
+def extract_and_log_metrics(log_line: str) -> Dict[str, Union[str, int, float]]:
     """
     Extract metrics from a log line by stripping unnecessary prefixes and parsing key-value pairs.
 
     Args:
         log_line (str): A single line of log output from the training process.
-    """
-    # Remove the timestamp and logger info
-    log_line = log_line.split("ppocr INFO:")[-1].strip()
 
-    # Now, split the log line on commas to get each metric as a key-value pair
-    metrics = {}
+    Returns:
+        Dict[str, Union[str, int, float]]: Extracted metrics as a dictionary.
+    """
+    log_line = log_line.split("ppocr INFO:")[-1].strip()
+    metrics: Dict[str, Union[str, int, float]] = {}
     key_value_pairs = log_line.split(",")
+
     for pair in key_value_pairs:
         if ":" in pair:
             key, value = pair.split(":", 1)
             key = key.strip()
             value = value.strip()
             try:
-                # Convert numeric values
                 if "." in value:
                     metrics[key] = float(value)
                 else:
@@ -36,9 +37,16 @@ def extract_and_log_metrics(log_line):
                 if key == "epoch":
                     metrics[key] = int(value.replace("[", "").split("/")[0])
             except ValueError:
-                metrics[key] = value  # Keep as string if it can't be converted
+                metrics[key] = value
 
     return metrics
+
+
+def handle_training_failure(process: subprocess.Popen):
+    print("Training failed with errors")
+    if process.stderr:
+        errors = process.stderr.read()
+        print(errors)
 
 
 class PaddleOCRModelTrainer:
@@ -47,6 +55,7 @@ class PaddleOCRModelTrainer:
     ):
         self.model_collection = model_collection
         self.experiment = experiment
+        self.last_logged_epoch: Union[int, None] = None  # Last epoch that was logged
 
     def train(self):
         """
@@ -65,14 +74,15 @@ class PaddleOCRModelTrainer:
         Trains a Paddle OCR model given a configuration path and captures the output metrics line by line.
 
         Args:
-            prefix_model_name: The prefix of the model name to train (either "bbox" or "text").
+            model_context (ModelContext): The model context containing the configuration path.
         """
-        current_pythonpath = os.environ.get("PYTHONPATH", "")
-        os.environ["PYTHONPATH"] = f".:{current_pythonpath}"
+        print(f"Starting training for {model_context.prefix_model_name} model...")
 
         config_path = model_context.config_file_path
         if not config_path:
-            raise ValueError("No configuration file path found in model context")
+            raise ValueError(
+                f"No configuration file path found in {model_context.prefix_model_name} model context"
+            )
 
         command = [
             "python3",
@@ -81,32 +91,49 @@ class PaddleOCRModelTrainer:
             config_path,
         ]
 
-        joined_command = " ".join(command)
+        current_pythonpath = os.environ.get("PYTHONPATH", "")
+        os.environ["PYTHONPATH"] = f".:{current_pythonpath}"
 
         process = subprocess.Popen(
-            joined_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
         try:
-            if process.stdout:
-                for line in iter(process.stdout.readline, ""):
-                    if "epoch:" in line:
-                        metrics = extract_and_log_metrics(line)
+            self._process_training_output(process, model_context)
+        except Exception as e:
+            print("Error during model training:", e)
+        finally:
+            process.wait()
+            if process.returncode != 0:
+                handle_training_failure(process)
+
+            os.environ["PYTHONPATH"] = current_pythonpath
+
+    def _process_training_output(
+        self, process: subprocess.Popen, model_context: ModelContext
+    ):
+        if process.stdout:
+            for line in iter(process.stdout.readline, ""):
+                if "epoch:" in line:
+                    metrics = extract_and_log_metrics(line)
+                    current_epoch = metrics.get("epoch")
+                    if (
+                        current_epoch is not None
+                        and isinstance(
+                            current_epoch, int
+                        )  # Ensure current_epoch is an int
+                        and current_epoch != self.last_logged_epoch
+                    ):
+                        self.last_logged_epoch = current_epoch
+                        metrics = {
+                            k: v
+                            for k, v in metrics.items()
+                            if k not in ["epoch", "global_step"]
+                        }
                         for key, value in metrics.items():
                             if isinstance(value, (int, float)):
                                 self.experiment.log(
-                                    name=f"{model_context.prefix_model_name}_{key}",
+                                    name=f"{model_context.prefix_model_name}/{key}",
                                     data=value,
                                     type=LogType.LINE,
                                 )
-        except Exception as e:
-            print("Error during model training:", e)
-
-        process.wait()
-        if process.returncode != 0:
-            print("Training failed with errors")
-            if process.stderr:
-                errors = process.stderr.read()
-                print(errors)
-
-        os.environ["PYTHONPATH"] = current_pythonpath
