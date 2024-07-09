@@ -1,13 +1,12 @@
 import os
-from typing import Dict, Union
-
-from src.models.model.model_context import ModelContext
-from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
-
 import subprocess
+from typing import Dict, Union
 
 from picsellia import Experiment
 from picsellia.sdk.log import LogType
+
+from src.models.model.model_context import ModelContext
+from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
 
 
 def extract_and_log_metrics(log_line: str) -> Dict[str, Union[str, int, float]]:
@@ -30,12 +29,12 @@ def extract_and_log_metrics(log_line: str) -> Dict[str, Union[str, int, float]]:
             key = key.strip()
             value = value.strip()
             try:
-                if "." in value:
+                if key == "epoch":
+                    metrics[key] = int(value.replace("[", "").split("/")[0])
+                elif "." in value:
                     metrics[key] = float(value)
                 else:
                     metrics[key] = int(value)
-                if key == "epoch":
-                    metrics[key] = int(value.replace("[", "").split("/")[0])
             except ValueError:
                 metrics[key] = value
 
@@ -119,9 +118,7 @@ class PaddleOCRModelTrainer:
                     current_epoch = metrics.get("epoch")
                     if (
                         current_epoch is not None
-                        and isinstance(
-                            current_epoch, int
-                        )  # Ensure current_epoch is an int
+                        and isinstance(current_epoch, int)
                         and current_epoch != self.last_logged_epoch
                     ):
                         self.last_logged_epoch = current_epoch
