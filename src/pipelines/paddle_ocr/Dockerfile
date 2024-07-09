@@ -1,17 +1,35 @@
-FROM picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.10
+FROM registry.baidubce.com/paddlepaddle/paddle:2.6.1-gpu-cuda11.7-cudnn8.4-trt8.4
 
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install --no-install-recommends -y build-essential software-properties-common wget && \
+    wget -q -O - https://packages.sury.org/php/apt.gpg | apt-key add - && \
+    echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-focal.list && \
+    apt-get update && \
+    apt-get install --no-install-recommends -y \
+        python3-pip libpq-dev libgtk2.0-dev libgl1-mesa-dev gcc \
+        python3.10 python3.10-dev python3.10-distutils && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python3.10 -m pip install --upgrade pip && python3.10 -m pip install -U setuptools
+
+ENV PATH="/usr/local/cuda/bin:${PATH}" \
+    LD_LIBRARY_PATH="/usr/local/cuda/lib64:/usr/local/cuda/lib:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+
+COPY ./base /experiment
+
+RUN ln -s /experiment/run.sh /usr/bin/run && \
+    chmod +x /experiment/run.sh && \
+    chown -R 42420:42420 /experiment
+
 
 ARG REBUILD_ALL
 COPY ./src/pipelines/paddle_ocr/requirements.txt ./src/pipelines/paddle_ocr/requirements.txt
 ARG REBUILD_PICSELLIA
 
-RUN uv pip install --python=$(which python3.10) --no-cache -r ./src/pipelines/paddle_ocr/requirements.txt
+RUN $(which python3.10) -m pip install --no-cache -r ./src/pipelines/paddle_ocr/requirements.txt
 
-RUN git clone --branch release/2.6 https://github.com/PaddlePaddle/PaddleOCR
+RUN mkdir -p /workspace && chmod -R 777 /workspace
+RUN mkdir -p /root/.cache && chmod -R 777 /root/.cache
 
 WORKDIR /experiment
 
@@ -23,4 +41,4 @@ COPY ./src/pipelines/paddle_ocr ./src/pipelines/paddle_ocr
 
 ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
 
-ENTRYPOINT ["run", "python3.10", "src/pipelines/paddle_ocr/processing_pipeline.py"]
+ENTRYPOINT ["run", "python3.10", "src/pipelines/paddle_ocr/training_pipeline.py"]
