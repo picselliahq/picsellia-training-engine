@@ -84,7 +84,7 @@ class PaddleOCRModelTrainer:
             )
 
         command = [
-            "python3",
+            "python3.10",
             "src/pipelines/paddle_ocr/PaddleOCR/tools/train.py",
             "-c",
             config_path,
@@ -113,6 +113,7 @@ class PaddleOCRModelTrainer:
     ):
         if process.stdout:
             for line in iter(process.stdout.readline, ""):
+                print(line.strip())
                 if "epoch:" in line:
                     metrics = extract_and_log_metrics(line)
                     current_epoch = metrics.get("epoch")
