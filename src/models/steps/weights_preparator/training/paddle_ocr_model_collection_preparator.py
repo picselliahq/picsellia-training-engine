@@ -22,7 +22,7 @@ def generate_bbox_yaml_config(
     with open(model_context.config_file_path, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
-    config["Global"]["use_gpu"] = False
+    config["Global"]["use_gpu"] = True
     config["Global"]["epoch_num"] = hyperparameters.bbox_epochs
     config["Global"]["pretrained_model"] = model_context.pretrained_model_path
     config["Global"]["save_model_dir"] = model_context.trained_model_path
@@ -62,7 +62,7 @@ def generate_text_yaml_config(
     with open(model_context.config_file_path, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
-    config["Global"]["use_gpu"] = False
+    config["Global"]["use_gpu"] = True
     config["Global"]["epoch_num"] = hyperparameters.text_epochs
     config["Global"]["pretrained_model"] = os.path.join(
         model_context.pretrained_model_path, "best_accuracy"
