@@ -11,4 +11,5 @@ imgaug==0.4.0
 lmdb==1.5.1
 black==24.4.2
 rapidfuzz==3.9.4
+PyYAML==6.0.1
 #python -m pip install paddlepaddle-gpu==2.6.1.post117 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
