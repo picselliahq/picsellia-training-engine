@@ -20,7 +20,7 @@ class PaddleOCRModelContextExporter(ModelContextExporter):
             raise ValueError("No configuration file path found in model context")
 
         command = [
-            "python3",
+            "python3.10",
             "src/pipelines/paddle_ocr/PaddleOCR/tools/export_model.py",
             "-c",
             config_path,
