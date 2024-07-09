@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from src.models.dataset.common.dataset_collection import TDatasetContext
 from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
 from src.models.model.picsellia_prediction import (
@@ -19,6 +19,9 @@ def get_annotations_from_result(
     result,
 ) -> Tuple[List[PicselliaRectangle], List[PicselliaText], List[PicselliaConfidence]]:
     result = result[0]
+    print(f"result: {result}")
+    if not result:
+        return [], [], []
     boxes = [get_picsellia_rectangle(line[0]) for line in result]
     texts = [get_picsellia_text(line[1][0]) for line in result]
     confidences = [get_picsellia_confidence(line[1][1]) for line in result]
@@ -63,17 +66,21 @@ class PaddleOCRModelCollectionInference(
 
     def get_evaluation(
         self, image_path: str, dataset_context: TDatasetContext
-    ) -> PicselliaOCRPrediction:
+    ) -> Union[PicselliaOCRPrediction, None]:
         prediction = self.model.ocr(image_path)
         boxes, texts, confidences = get_annotations_from_result(prediction)
-        asset = dataset_context.dataset_version.find_all_assets(
-            ids=[os.path.basename(image_path).split(".")[0]]
-        )[0]
-        classes = [
-            PicselliaLabel(dataset_context.dataset_version.get_or_create_label("text"))
-            for _ in texts
-        ]
-        return PicselliaOCRPrediction(asset, boxes, classes, texts, confidences)
+        if boxes:
+            asset = dataset_context.dataset_version.find_all_assets(
+                ids=[os.path.basename(image_path).split(".")[0]]
+            )[0]
+            classes = [
+                PicselliaLabel(
+                    dataset_context.dataset_version.get_or_create_label("text")
+                )
+                for _ in texts
+            ]
+            return PicselliaOCRPrediction(asset, boxes, classes, texts, confidences)
+        return None
 
     def predict_on_dataset_context(
         self, dataset_context: TDatasetContext
@@ -82,8 +89,9 @@ class PaddleOCRModelCollectionInference(
             os.path.join(dataset_context.image_dir, image_name)
             for image_name in os.listdir(dataset_context.image_dir)
         ]
-        evaluations = [
-            self.get_evaluation(image_path, dataset_context)
-            for image_path in image_paths
-        ]
+        evaluations = []
+        for image_path in image_paths:
+            evaluation = self.get_evaluation(image_path, dataset_context)
+            if evaluation:
+                evaluations.append(evaluation)
         return evaluations

@@ -19,7 +19,7 @@ class PicselliaRectangle:
     value: List[int]
 
     def __init__(self, x: int, y: int, w: int, h: int):
-        self.value = [x, y, w, h]
+        self.value = [int(x), int(y), int(w), int(h)]
 
 
 @dataclass
@@ -30,6 +30,9 @@ class PicselliaText:
 @dataclass
 class PicselliaPolygon:
     value: List[int]
+
+    def __init__(self, points: List[int]):
+        self.value = [int(point) for point in points]
 
 
 @dataclass

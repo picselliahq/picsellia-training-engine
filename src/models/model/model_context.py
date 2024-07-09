@@ -48,6 +48,10 @@ class ModelContext:
         self.trained_model_path = self.get_trained_model_path()
         self.results_path = self.get_results_path()
         self.inference_model_path = self.get_inference_model_path()
+        os.makedirs(self.model_weights_path, exist_ok=True)
+        os.makedirs(self.trained_model_path, exist_ok=True)
+        os.makedirs(self.results_path, exist_ok=True)
+        os.makedirs(self.inference_model_path, exist_ok=True)
 
     def download_weights(self) -> None:
         """
@@ -122,8 +126,8 @@ class ModelContext:
         if self.prefix_model_name:
             return os.path.join(
                 self.destination_path,
-                self.prefix_model_name,
                 self.model_name,
+                self.prefix_model_name,
                 "results",
             )
         else:
