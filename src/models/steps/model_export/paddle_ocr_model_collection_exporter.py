@@ -28,3 +28,4 @@ class PaddleOCRModelCollectionExporter:
             model_context=self.model_collection.text_model, experiment=self.experiment
         )
         model_context_exporter.export_and_save_model()
+        return self.model_collection

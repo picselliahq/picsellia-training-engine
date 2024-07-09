@@ -26,10 +26,8 @@ class PaddleOCRModelContextExporter(ModelContextExporter):
             config_path,
         ]
 
-        joined_command = " ".join(command)
-
         process = subprocess.Popen(
-            joined_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
         process.wait()

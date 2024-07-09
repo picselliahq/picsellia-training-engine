@@ -1,3 +1,4 @@
+import os
 from abc import abstractmethod
 
 from src.models.model.model_context import ModelContext
@@ -20,9 +21,19 @@ class ModelContextExporter:
             if self.model_context.prefix_model_name
             else "model-latest"
         )
-        self.experiment.store(
-            name=saved_model_name, path=self.model_context.inference_model_path
-        )
+        inference_model_files = os.listdir(self.model_context.inference_model_path)
+        if not inference_model_files:
+            raise ValueError("No model files found in inference model path")
+        elif len(inference_model_files) > 1:
+            self.experiment.store(
+                name=saved_model_name,
+                path=self.model_context.inference_model_path,
+                do_zip=True,
+            )
+        else:
+            self.experiment.store(
+                name=saved_model_name, path=self.model_context.inference_model_path
+            )
         return self.model_context
 
     def export_and_save_model(self):
