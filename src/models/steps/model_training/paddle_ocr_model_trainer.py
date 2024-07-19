@@ -56,15 +56,21 @@ class PaddleOCRModelTrainer:
         self.experiment = experiment
         self.last_logged_epoch: Union[int, None] = None  # Last epoch that was logged
 
-    def train(self):
+    def train(self, bbox_epochs: int, text_epochs: int):
         """
         Trains both the bounding box detection and text recognition models in the model collection.
         """
-        print("Starting training for bounding box model...")
-        self.train_model(model_context=self.model_collection.bbox_model)
+        if bbox_epochs > 0:
+            print("Starting training for bounding box model...")
+            self.train_model(model_context=self.model_collection.bbox_model)
+        else:
+            print("Skipping training for bounding box model...")
 
-        print("Starting training for text recognition model...")
-        self.train_model(model_context=self.model_collection.text_model)
+        if text_epochs > 0:
+            print("Starting training for text recognition model...")
+            self.train_model(model_context=self.model_collection.text_model)
+        else:
+            print("Skipping training for text recognition model...")
 
         return self.model_collection
 
