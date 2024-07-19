@@ -19,7 +19,6 @@ def get_annotations_from_result(
     result,
 ) -> Tuple[List[PicselliaRectangle], List[PicselliaText], List[PicselliaConfidence]]:
     result = result[0]
-    print(f"result: {result}")
     if not result:
         return [], [], []
     boxes = [get_picsellia_rectangle(line[0]) for line in result]
