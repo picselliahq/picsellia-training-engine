@@ -50,6 +50,26 @@ class ModelEvaluator(ABC, Generic[TModelInference]):
                     evaluation.boxes, evaluation.classes, evaluation.confidences
                 )
             ]
+            rectangles_with_text = [
+                (
+                    rectangle.value[0],
+                    rectangle.value[1],
+                    rectangle.value[2],
+                    rectangle.value[3],
+                    label.value,
+                    conf.value,
+                    text.value,
+                )
+                for rectangle, label, conf, text in zip(
+                    evaluation.boxes,
+                    evaluation.classes,
+                    evaluation.confidences,
+                    evaluation.texts,
+                )
+            ]
+            print(
+                f"Adding evaluation for asset {asset.filename} with rectangles {rectangles_with_text}"
+            )
             self.experiment.add_evaluation(
                 asset, add_type=AddEvaluationType.REPLACE, rectangles=rectangles
             )
@@ -68,6 +88,9 @@ class ModelEvaluator(ABC, Generic[TModelInference]):
                     evaluation.boxes, evaluation.classes, evaluation.confidences
                 )
             ]
+            print(
+                f"Adding evaluation for asset {asset.filename} with rectangles {rectangles}"
+            )
             self.experiment.add_evaluation(
                 asset, add_type=AddEvaluationType.REPLACE, rectangles=rectangles
             )
