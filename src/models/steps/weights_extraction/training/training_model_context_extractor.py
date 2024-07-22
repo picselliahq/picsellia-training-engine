@@ -1,6 +1,6 @@
 import os
+from typing import Optional
 
-from black import Optional
 from picsellia import Experiment
 
 from src.models.model.model_context import ModelContext
