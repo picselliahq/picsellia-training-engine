@@ -7,7 +7,7 @@ import tqdm
 
 from src.models.dataset.common.dataset_context import DatasetContext
 
-gpu = False
+gpu = True
 
 
 class EasyOcrProcessing:
@@ -37,7 +37,8 @@ class EasyOcrProcessing:
     def process(self):
         images = {name: os.path.join(self.dataset_context.image_dir, name) for name in
                   os.listdir(self.dataset_context.image_dir)}
-        for object in tqdm.tqdm(self.dataset_context.coco_file.annotations):
+        print("Starting OCR processing")
+        for i, object in enumerate(self.dataset_context.coco_file.annotations):
             image_id = object.image_id
             image = self.dataset_context.coco_file.images[image_id]
             if image.file_name in images.keys():
@@ -45,6 +46,8 @@ class EasyOcrProcessing:
                 box = object.bbox
                 prediction = self.predict(box, image)
                 object.utf8_string = prediction
+            if i % 100 == 0:
+                print(f"Processed {int(self.dataset_context.coco_file.annotations / i)}% of the shapes")
         coco_json = self.dataset_context.coco_file.model_dump_json()
         with open("annotations_updated.json", "w") as f:
             f.write(coco_json)
