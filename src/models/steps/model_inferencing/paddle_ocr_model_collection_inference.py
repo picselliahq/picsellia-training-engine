@@ -63,11 +63,14 @@ class PaddleOCRModelCollectionInference(
             show_log=False,
         )
 
-    def get_evaluation(
-        self, image_path: str, dataset_context: TDatasetContext
-    ) -> Union[PicselliaOCRPrediction, None]:
+    def predict_image(self, image_path: str):
         prediction = self.model.ocr(image_path)
         boxes, texts, confidences = get_annotations_from_result(prediction)
+        return boxes, texts, confidences
+
+    def get_picsellia_prediction(
+        self, dataset_context, image_path, boxes, texts, confidences
+    ):
         if boxes:
             asset = dataset_context.dataset_version.find_all_assets(
                 ids=[os.path.basename(image_path).split(".")[0]]
@@ -80,6 +83,18 @@ class PaddleOCRModelCollectionInference(
             ]
             return PicselliaOCRPrediction(asset, boxes, classes, texts, confidences)
         return None
+
+    def get_evaluation(
+        self, image_path: str, dataset_context: TDatasetContext
+    ) -> Union[PicselliaOCRPrediction, None]:
+        boxes, texts, confidences = self.predict_image(image_path)
+        return (
+            self.get_picsellia_prediction(
+                dataset_context, image_path, boxes, texts, confidences
+            )
+            if boxes
+            else None
+        )
 
     def predict_on_dataset_context(
         self, dataset_context: TDatasetContext
