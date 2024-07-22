@@ -73,7 +73,9 @@ def get_bbox_annotations(coco: Dict, image_directory: str):
             group_image_id = current_image_id
 
         paddle_ocr_annotation = {
-            "transcription": annotation["utf8_string"],
+            "transcription": find_category_name(
+                coco["categories"], annotation["category_id"]
+            ),
             "points": get_points_from_bbox(annotation["bbox"]),
         }
         paddle_ocr_annotations.append(paddle_ocr_annotation)
