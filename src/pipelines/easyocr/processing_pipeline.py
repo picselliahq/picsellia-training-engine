@@ -7,16 +7,8 @@ from src.steps.data_extraction.processing.processing_data_extractor import (
 )
 
 from src.steps.data_validation.processing.processing_easyocr_data_validator import easyocr_data_validator
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
-    diversified_data_extractor_model_loader,
-)
-from src.steps.processing.dataset_version_creation.diversified_data_extractor_processing import (
-    diversified_data_extractor_processing,
-)
+
 from src.steps.processing.pre_annotation.easyocr_processing import easyocr_processing
-from src.steps.weights_validation.processing.processing_diversified_data_extractor_weights_validator import (
-    diversified_data_extractor_weights_validator,
-)
 
 
 def get_context() -> (
@@ -33,12 +25,12 @@ def get_context() -> (
     remove_logs_on_completion=False,
 )
 def easyocr_pipeline() -> None:
-    dataset_context = processing_data_extractor(skip_asset_listing=True)
+    dataset_context = processing_data_extractor()
 
     easyocr_data_validator(dataset_context=dataset_context)
 
     easyocr_processing(
-        dataset_context=dataset_context, embedding_model=embedding_model
+        dataset_context=dataset_context
     )
 
 

@@ -30,21 +30,22 @@ class EasyOcrProcessing:
     def predict(self, box: list[int, int, int, int], image: np.array):
         roi = self._crop(image, box)
         results = self.reader.readtext(roi)
+        if len(results) == 0:
+            return ""
         return results[0][1]
 
     def process(self):
-        self.dataset_context.download_assets()
         images = {name: os.path.join(self.dataset_context.image_dir, name) for name in
                   os.listdir(self.dataset_context.image_dir)}
         for object in tqdm.tqdm(self.dataset_context.coco_file.annotations):
             image_id = object.image_id
             image = self.dataset_context.coco_file.images[image_id]
             if image.file_name in images.keys():
-                image = Image.open(image.file_name)
+                image = Image.open(images[image.file_name])
                 box = object.bbox
                 prediction = self.predict(box, image)
                 object.utf8_string = prediction
         coco_json = self.dataset_context.coco_file.model_dump_json()
         with open("annotations_updated.json", "w") as f:
             f.write(coco_json)
-        self.dataset_context.dataset_version.import_annotations_coco_file("annotations_updated.json")
+        self.dataset_context.dataset_version.import_annotations_coco_file("annotations_updated.json", use_id=True)
