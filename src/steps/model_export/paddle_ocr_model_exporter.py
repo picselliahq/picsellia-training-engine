@@ -13,5 +13,5 @@ def paddle_ocr_model_exporter(model_collection):
     model_collection_exporter = PaddleOCRModelCollectionExporter(
         model_collection=model_collection, experiment=context.experiment
     )
-    model_collection = model_collection_exporter.export()
+    model_collection = model_collection_exporter.export_model_collection()
     return model_collection

@@ -13,7 +13,7 @@ class PaddleOCRModelCollectionExporter:
         self.model_collection = model_collection
         self.experiment = experiment
 
-    def export(self):
+    def export_model_collection(self):
         """
         Exports the trained models in the model collection.
         """

@@ -12,7 +12,7 @@ class PaddleOCRModelContextExporter(ModelContextExporter):
     def __init__(self, model_context: ModelContext, experiment: Experiment):
         super().__init__(model_context=model_context, experiment=experiment)
 
-    def export_model(self):
+    def export_model_context(self):
         current_pythonpath = os.environ.get("PYTHONPATH", "")
         os.environ["PYTHONPATH"] = f".:{current_pythonpath}"
 

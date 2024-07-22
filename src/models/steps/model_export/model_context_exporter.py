@@ -12,7 +12,7 @@ class ModelContextExporter:
         self.experiment = experiment
 
     @abstractmethod
-    def export_model(self):
+    def export_model_context(self):
         pass
 
     def save_model_to_experiment(self):
@@ -37,5 +37,5 @@ class ModelContextExporter:
         return self.model_context
 
     def export_and_save_model(self):
-        self.export_model()
+        self.export_model_context()
         self.save_model_to_experiment()
