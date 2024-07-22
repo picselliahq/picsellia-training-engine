@@ -36,6 +36,7 @@ class ModelContextExporter:
             )
         return self.model_context
 
-    def export_and_save_model(self):
+    def export_and_save_model_context(self):
         self.export_model_context()
-        self.save_model_to_experiment()
+        self.model_context = self.save_model_to_experiment()
+        return self.model_context

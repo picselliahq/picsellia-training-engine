@@ -13,7 +13,7 @@ class PaddleOCRModelCollectionExporter:
         self.model_collection = model_collection
         self.experiment = experiment
 
-    def export_model_collection(self):
+    def export_and_save_model_collection(self):
         """
         Exports the trained models in the model collection.
         """
@@ -21,11 +21,15 @@ class PaddleOCRModelCollectionExporter:
         model_context_exporter = PaddleOCRModelContextExporter(
             model_context=self.model_collection.bbox_model, experiment=self.experiment
         )
-        model_context_exporter.export_and_save_model()
+        self.model_collection.bbox_model = (
+            model_context_exporter.export_and_save_model_context()
+        )
 
         print("Exporting text recognition model...")
         model_context_exporter = PaddleOCRModelContextExporter(
             model_context=self.model_collection.text_model, experiment=self.experiment
         )
-        model_context_exporter.export_and_save_model()
+        self.model_collection.text_model = (
+            model_context_exporter.export_and_save_model_context()
+        )
         return self.model_collection
