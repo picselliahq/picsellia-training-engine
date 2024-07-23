@@ -48,9 +48,9 @@ class EasyOcrProcessing:
         print("Starting OCR processing")
         for i, object in enumerate(self.dataset_context.coco_file.annotations):
             image_id = object.image_id
-            image = image_map[image_id]
-            if image.file_name in images.keys():
-                image = Image.open(images[image.file_name])
+            filename = image_map[image_id]
+            if filename in images.keys():
+                image = Image.open(images[filename])
                 box = object.bbox
                 prediction = self.predict(box, image)
                 object.utf8_string = prediction
