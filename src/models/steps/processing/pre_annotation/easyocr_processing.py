@@ -16,7 +16,8 @@ class EasyOcrProcessing:
         self.client = client
         self.dataset_context: DatasetContext = input_dataset_context
 
-        self.reader = easyocr.Reader(lang_list=[language], gpu=gpu)
+        self.reader = easyocr.Reader(lang_list=[language], gpu=gpu,
+                                     model_storage_directory="src/pipelines/easyocr/model")
         self.image_width = 0
         self.image_height = 0
 
