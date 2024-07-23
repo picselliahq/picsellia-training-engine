@@ -20,6 +20,7 @@ COPY ./src/pipelines/easyocr ./src/pipelines/easyocr
 
 RUN mkdir -p /workspace
 RUN chmod 777 /workspace
+RUN chmod 777 ./src/pipelines/easyocr/model
 
 ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
 
