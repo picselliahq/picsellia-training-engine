@@ -35,13 +35,20 @@ class EasyOcrProcessing:
             return ""
         return results[0][1]
 
+    def prepare_image_map(self):
+        image_map = {}
+        for image in self.dataset_context.coco_file.images:
+            image_map[image.id] = image.file_name
+        return image_map
+
     def process(self):
         images = {name: os.path.join(self.dataset_context.image_dir, name) for name in
                   os.listdir(self.dataset_context.image_dir)}
+        image_map = self.prepare_image_map()
         print("Starting OCR processing")
         for i, object in enumerate(self.dataset_context.coco_file.annotations):
             image_id = object.image_id
-            image = self.dataset_context.coco_file.images[image_id]
+            image = image_map[image_id]
             if image.file_name in images.keys():
                 image = Image.open(images[image.file_name])
                 box = object.bbox
