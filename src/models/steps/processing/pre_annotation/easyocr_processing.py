@@ -47,8 +47,8 @@ class EasyOcrProcessing:
                 box = object.bbox
                 prediction = self.predict(box, image)
                 object.utf8_string = prediction
-            if i % 100 and i > 0 == 0:
-                print(f"Processed {int(len(self.dataset_context.coco_file.annotations) / i)}% of the shapes")
+            if i % 100 == 0:
+                print(f"Processed {int(i / len(self.dataset_context.coco_file.annotations))}% of the shapes")
         coco_json = self.dataset_context.coco_file.model_dump_json()
         with open("annotations_updated.json", "w") as f:
             f.write(coco_json)
