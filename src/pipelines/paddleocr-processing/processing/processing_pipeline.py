@@ -1,5 +1,5 @@
 from src import pipeline
-from src.models.contexts.picsellia_context import PicselliaProcessingContext
+from src.models.contexts.processing.picsellia_processing_context import PicselliaProcessingContext
 
 from src.models.parameters.processing.processing_paddleocr_parameters import ProcessingPaddleOcrParameters
 from src.steps.data_extraction.processing.processing_data_extractor import (
@@ -7,6 +7,7 @@ from src.steps.data_extraction.processing.processing_data_extractor import (
 )
 from src.steps.data_validation.processing.processing_paddleocr_data_validator import paddleocr_processing_data_validator
 from src.steps.processing.pre_annotation.paddleocr_processing import paddleocr_processing
+from src.steps.weights_extraction.processing.paddle_ocr_weights_extractor import paddle_ocr_weights_extractor
 
 
 def get_context() -> (
@@ -26,9 +27,9 @@ def paddleocr_processing_pipeline() -> None:
     dataset_context = processing_data_extractor()
 
     paddleocr_processing_data_validator(dataset_context=dataset_context)
-
+    model_collection = paddle_ocr_weights_extractor()
     paddleocr_processing(
-        dataset_context=dataset_context
+        dataset_context=dataset_context, model_collection=model_collection
     )
 
 

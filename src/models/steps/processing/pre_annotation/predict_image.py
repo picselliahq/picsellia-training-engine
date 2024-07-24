@@ -11,19 +11,6 @@ def load_model():
     return ocr
 
 
-# def load_model(self) -> PaddleOCR:
-#     return PaddleOCR(
-#         use_angle_cls=True,
-#         rec_model_dir=self.model_collection.text_model.inference_model_path,
-#         det_model_dir=self.model_collection.bbox_model.inference_model_path,
-#         rec_char_dict_path=os.path.join(
-#             self.model_collection.text_model.model_weights_path, "en_dict.txt"
-#         ),
-#         use_gpu=True,
-#         show_log=False,
-#     )
-
-
 def print_result(result):
     for idx in range(len(result)):
         res = result[idx]

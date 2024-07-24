@@ -11,16 +11,16 @@ class TestPicselliaProcessingContext(PicselliaContext):
     """
 
     def __init__(
-        self,
-        api_token: Optional[str] = None,
-        host: Optional[str] = None,
-        organization_id: Optional[str] = None,
-        job_id: Optional[str] = None,
-        job_type: Optional[ProcessingType] = None,
-        input_dataset_version_id: Optional[str] = None,
-        output_dataset_version_id: Optional[str] = None,
-        model_version_id: Optional[str] = None,
-        processing_parameters=None,
+            self,
+            api_token: Optional[str] = None,
+            host: Optional[str] = None,
+            organization_id: Optional[str] = None,
+            job_id: Optional[str] = None,
+            job_type: Optional[ProcessingType] = None,
+            input_dataset_version_id: Optional[str] = None,
+            output_dataset_version_id: Optional[str] = None,
+            model_version_id: Optional[str] = None,
+            processing_parameters=None,
     ):
         # Initialize the Picsellia client from the base class
         super().__init__(api_token, host, organization_id)
@@ -29,6 +29,7 @@ class TestPicselliaProcessingContext(PicselliaContext):
         self.input_dataset_version_id = input_dataset_version_id
         self.output_dataset_version_id = output_dataset_version_id
         self.model_version_id = model_version_id
+        print(self.model_version_id)
         if self.input_dataset_version_id:
             self.input_dataset_version = self.get_dataset_version(
                 self.input_dataset_version_id

@@ -2,18 +2,22 @@ import json
 import os
 from typing import Union
 
+from paddleocr import PaddleOCR
+
 from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
 
 from .predict_image import load_model, predict_image, get_annotations_from_result
 
 
 class PaddleOcrProcessing:
 
-    def __init__(self, client, input_dataset_context):
+    def __init__(self, client, input_dataset_context, model_collection: PaddleOCRModelCollection):
         self.client = client
         self.dataset_context: DatasetContext = input_dataset_context
         self.image_width = 0
         self.image_height = 0
+        self.model_collection = model_collection
 
     def process(self):
         annotations_path = "annotations_updated.json"
@@ -24,7 +28,7 @@ class PaddleOcrProcessing:
         self.dataset_context.dataset_version.import_annotations_coco_file(annotations_path, use_id=True)
 
     def predict_dataset_version(self, images_dir, annotations_path):
-        ocr_model = load_model()
+        ocr_model = self.load_model()
         with open(annotations_path) as f:
             cocotext = json.load(f)
         cocotext["categories"] = [{"id": 0, "name": "text", "supercategory": "text"}]
@@ -50,6 +54,21 @@ class PaddleOcrProcessing:
                     )
         with open(annotations_path, "w") as f:
             json.dump(cocotext, f)
+
+    def load_model(self) -> PaddleOCR:
+        print(self.model_collection.text_model.pretrained_model_path)
+        print(self.model_collection.bbox_model.pretrained_model_path)
+        return PaddleOCR(
+            lang="en",
+            use_angle_cls=True,
+            rec_model_dir=self.model_collection.text_model.pretrained_model_path,
+            det_model_dir=self.model_collection.bbox_model.pretrained_model_path,
+            rec_char_dict_path=os.path.join(
+                self.model_collection.text_model.model_weights_path, "en_dict.txt"
+            ),
+            use_gpu=False,
+            show_log=False,
+        )
 
     @staticmethod
     def download_dataset_version(dataset_version):
