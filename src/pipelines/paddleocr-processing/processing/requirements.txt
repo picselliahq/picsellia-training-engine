@@ -2,12 +2,19 @@
 #    uv pip compile requirements.in -o requirements.txt
 annotated-types==0.7.0
     # via pydantic
+anyio==4.4.0
+    # via httpx
+astor==0.8.1
+    # via paddlepaddle
 beartype==0.17.2
     # via picsellia
 beautifulsoup4==4.12.3
     # via paddleocr
 certifi==2024.2.2
-    # via requests
+    # via
+    #   httpcore
+    #   httpx
+    #   requests
 charset-normalizer==3.3.2
     # via requests
 contourpy==1.2.1
@@ -16,6 +23,8 @@ cycler==0.12.1
     # via matplotlib
 cython==3.0.10
     # via paddleocr
+decorator==5.1.1
+    # via paddlepaddle
 deprecation==2.1.0
     # via picsellia
 fire==0.6.0
@@ -24,8 +33,17 @@ fonttools==4.53.1
     # via
     #   matplotlib
     #   paddleocr
+h11==0.14.0
+    # via httpcore
+httpcore==1.0.5
+    # via httpx
+httpx==0.27.0
+    # via paddlepaddle
 idna==3.7
-    # via requests
+    # via
+    #   anyio
+    #   httpx
+    #   requests
 imageio==2.34.2
     # via
     #   imgaug
@@ -52,7 +70,9 @@ numpy==1.26.4
     #   matplotlib
     #   opencv-contrib-python
     #   opencv-python
+    #   opt-einsum
     #   paddleocr
+    #   paddlepaddle
     #   scikit-image
     #   scipy
     #   shapely
@@ -63,6 +83,8 @@ opencv-python==4.10.0.84
     # via
     #   imgaug
     #   paddleocr
+opt-einsum==3.3.0
+    # via paddlepaddle
 orjson==3.10.1
     # via picsellia
 packaging==24.0
@@ -72,6 +94,8 @@ packaging==24.0
     #   matplotlib
     #   scikit-image
 paddleocr==2.8.1
+    # via -r requirements.in
+paddlepaddle==2.6.1
     # via -r requirements.in
 picsellia==6.16.0
     # via -r requirements.in
@@ -85,8 +109,11 @@ pillow==9.5.0
     #   imgaug
     #   matplotlib
     #   paddleocr
+    #   paddlepaddle
     #   picsellia
     #   scikit-image
+protobuf==5.27.2
+    # via paddlepaddle
 pyclipper==1.3.0.post5
     # via paddleocr
 pydantic==2.8.0
@@ -120,6 +147,8 @@ scipy==1.14.0
     # via
     #   imgaug
     #   scikit-image
+setuptools==71.1.0
+    # via -r requirements.in
 shapely==2.0.5
     # via
     #   imgaug
@@ -129,6 +158,10 @@ six==1.16.0
     #   fire
     #   imgaug
     #   python-dateutil
+sniffio==1.3.1
+    # via
+    #   anyio
+    #   httpx
 soupsieve==2.5
     # via beautifulsoup4
 tabulate==0.9.0

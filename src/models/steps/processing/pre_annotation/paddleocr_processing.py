@@ -21,7 +21,7 @@ class PaddleOcrProcessing:
         with open(annotations_path, "w") as f:
             f.write(coco_json)
         self.predict_dataset_version(self.dataset_context.image_dir, annotations_path)
-        self.dataset_context.dataset_version.import_annotations_coco_file(annotations_path)
+        self.dataset_context.dataset_version.import_annotations_coco_file(annotations_path, use_id=True)
 
     def predict_dataset_version(self, images_dir, annotations_path):
         ocr_model = load_model()
