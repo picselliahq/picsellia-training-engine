@@ -1,7 +1,7 @@
 # type: ignore
 
 from src import pipeline
-from src.models.contexts.common.picsellia_context import (
+from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
 from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
