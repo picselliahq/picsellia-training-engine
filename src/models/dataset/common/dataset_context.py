@@ -5,7 +5,8 @@ from picsellia import DatasetVersion, Label
 from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import MultiAsset
 from picsellia_annotations.coco import COCOFile
-from picsellia_annotations.type.enums import AnnotationFileType
+from picsellia_annotations.utils import read_coco_file
+from picsellia.types.enums import AnnotationFileType
 
 from src.steps.data_extraction.utils.image_utils import get_labelmap
 
@@ -38,7 +39,6 @@ class DatasetContext:
         labelmap: Optional[Dict[str, Label]] = None,
         skip_asset_listing: bool = False,
         use_id: Optional[bool] = True,
-        skip_asset_listing: bool = False,
     ):
         """
         Initializes the DatasetContext with dataset metadata and configuration.
