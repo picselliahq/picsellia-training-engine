@@ -1,5 +1,9 @@
-from src import Pipeline, step
-from src.models.contexts.picsellia_context import PicselliaTrainingContext
+# type: ignore
+
+from src import step, Pipeline
+from src.models.contexts.training.picsellia_training_context import (
+    PicselliaTrainingContext,
+)
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
     TrainingDatasetCollectionExtractor,

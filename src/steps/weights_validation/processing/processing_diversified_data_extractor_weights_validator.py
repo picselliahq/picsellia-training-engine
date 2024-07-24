@@ -1,7 +1,9 @@
 import open_clip
 
 from src import Pipeline, step
-from src.models.contexts.picsellia_context import PicselliaProcessingContext
+from src.models.contexts.processing.picsellia_processing_context import (
+    PicselliaProcessingContext,
+)
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,
 )

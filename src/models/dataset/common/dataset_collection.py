@@ -1,7 +1,11 @@
+from typing import TypeVar, Generic
+
 from src.models.dataset.common.dataset_context import DatasetContext
 
+TDatasetContext = TypeVar("TDatasetContext", bound=DatasetContext)
 
-class DatasetCollection:
+
+class DatasetCollection(Generic[TDatasetContext]):
     """
     A collection of dataset contexts for different splits of a dataset.
 
@@ -19,9 +23,9 @@ class DatasetCollection:
 
     def __init__(
         self,
-        train_dataset_context: DatasetContext,
-        val_dataset_context: DatasetContext,
-        test_dataset_context: DatasetContext,
+        train_dataset_context: TDatasetContext,
+        val_dataset_context: TDatasetContext,
+        test_dataset_context: TDatasetContext,
     ):
         """
         Initializes a new DatasetCollection with specified dataset contexts for training,
