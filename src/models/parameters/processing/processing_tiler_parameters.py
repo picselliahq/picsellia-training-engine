@@ -8,7 +8,7 @@ class ProcessingTilerParameters(Parameters):
         self.datalake = self.extract_parameter(
             keys=["datalake"], expected_type=str, default="default"
         )
-        self.images_tag = self.extract_parameter(keys=["images_tag"], expected_type=str)
+        self.data_tag = self.extract_parameter(keys=["data_tag"], expected_type=str)
         self.tile_height = self.extract_parameter(
             keys=["tile_height"], expected_type=int
         )
