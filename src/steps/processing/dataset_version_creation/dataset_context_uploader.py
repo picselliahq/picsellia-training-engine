@@ -16,10 +16,9 @@ def dataset_context_uploader(dataset_context: DatasetContext):
         client=context.client,
         dataset_context=dataset_context,
         datalake=context.processing_parameters.datalake,
-        images_tags=[
+        data_tags=[
             context.processing_parameters.images_tag,
             dataset_context.dataset_version.version,
-            "picsellia_sliced",
         ],
     )
     uploader.upload_dataset_context()
