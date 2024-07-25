@@ -8,13 +8,16 @@ from src.models.parameters.processing.processing_bounding_box_cropper_parameters
     ProcessingBoundingBoxCropperParameters,
 )
 from src.steps.data_extraction.processing.processing_data_extractor import (
-    processing_data_extractor,
+    processing_dataset_collection_extractor,
 )
 from src.steps.data_validation.processing.processing_bounding_box_cropper_data_validator import (
     bounding_box_cropper_data_validator,
 )
 from src.steps.processing.dataset_version_creation.bounding_box_cropper_processing import (
     bounding_box_cropper_processing,
+)
+from src.steps.processing.dataset_version_creation.classification_dataset_context_uploader import (
+    classification_dataset_context_uploader,
 )
 
 
@@ -30,9 +33,12 @@ def get_context() -> PicselliaProcessingContext[ProcessingBoundingBoxCropperPara
     remove_logs_on_completion=False,
 )
 def bounding_box_cropper_processing_pipeline() -> None:
-    dataset_context = processing_data_extractor()
-    bounding_box_cropper_data_validator(dataset_context=dataset_context)
-    bounding_box_cropper_processing(dataset_context=dataset_context)
+    dataset_collection = processing_dataset_collection_extractor()
+    bounding_box_cropper_data_validator(dataset_context=dataset_collection.input)
+    output_dataset_context = bounding_box_cropper_processing(
+        dataset_collection=dataset_collection
+    )
+    classification_dataset_context_uploader(dataset_context=output_dataset_context)
 
 
 if __name__ == "__main__":
