@@ -1,7 +1,8 @@
 from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
 
-from src.models.steps.weights_extraction.processing.processing_model_context_extractor import \
-    ProcessingModelContextExtractor
+from src.models.steps.weights_extraction.processing.processing_model_context_extractor import (
+    ProcessingModelContextExtractor,
+)
 
 
 class PaddleOCRModelCollectionExtractor(ProcessingModelContextExtractor):

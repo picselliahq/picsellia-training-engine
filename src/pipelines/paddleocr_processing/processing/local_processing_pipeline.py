@@ -2,16 +2,21 @@ import argparse
 import os
 
 from src import pipeline
-from src.models.contexts.processing.test_picsellia_processing_context import TestPicselliaProcessingContext
-
+from src.models.contexts.processing.test_picsellia_processing_context import (
+    TestPicselliaProcessingContext,
+)
 from src.steps.data_extraction.processing.processing_data_extractor import (
     processing_data_extractor,
 )
-
-from src.steps.data_validation.processing.processing_paddleocr_data_validator import paddleocr_processing_data_validator
-
-from src.steps.processing.pre_annotation.paddleocr_processing import paddleocr_processing
-from src.steps.weights_extraction.processing.paddle_ocr_weights_extractor import paddle_ocr_weights_extractor
+from src.steps.data_validation.processing.processing_paddleocr_data_validator import (
+    paddleocr_processing_data_validator,
+)
+from src.steps.processing.pre_annotation.paddleocr_processing import (
+    paddleocr_processing,
+)
+from src.steps.weights_extraction.processing.paddle_ocr_weights_extractor import (
+    paddle_ocr_weights_extractor,
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--api_token", type=str, help="Picsellia API token")

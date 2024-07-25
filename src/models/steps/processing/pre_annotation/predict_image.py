@@ -1,13 +1,12 @@
 import argparse
 import os.path
 
-from paddleocr import PaddleOCR
-
 import cv2
+from paddleocr import PaddleOCR
 
 
 def load_model():
-    ocr = PaddleOCR(use_angle_cls=True, lang='en')
+    ocr = PaddleOCR(use_angle_cls=True, lang="en")
     return ocr
 
 
@@ -15,7 +14,7 @@ def print_result(result):
     for idx in range(len(result)):
         res = result[idx]
         for line in res:
-            print(f'box: {line[0]}, text: {line[1]}')
+            print(f"box: {line[0]}, text: {line[1]}")
 
 
 def write_result_on_image(image, boxes, txts, scores, result_image_path):
@@ -23,10 +22,23 @@ def write_result_on_image(image, boxes, txts, scores, result_image_path):
         box = boxes[i]
         txt = txts[i]
         score = scores[i]
-        cv2.rectangle(image, (int(box[0][0]), int(box[0][1])), (int(box[2][0]), int(box[2][1])), (0, 255, 0), 2)
-        combined_text = f'{txt} ({score:.2f})'
-        cv2.putText(image, combined_text, (int(box[0][0]), int(box[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255),
-                    1)
+        cv2.rectangle(
+            image,
+            (int(box[0][0]), int(box[0][1])),
+            (int(box[2][0]), int(box[2][1])),
+            (0, 255, 0),
+            2,
+        )
+        combined_text = f"{txt} ({score:.2f})"
+        cv2.putText(
+            image,
+            combined_text,
+            (int(box[0][0]), int(box[0][1])),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 0, 255),
+            1,
+        )
     cv2.imwrite(result_image_path, image)
 
 
@@ -60,10 +72,10 @@ def predict_image_dir(image_dir, result_dir=None):
             save_result(result, image_path, result_image_path)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='PaddleOCR inference')
-    parser.add_argument('--image_dir', type=str, default='images', help='image dir')
-    parser.add_argument('--result_dir', type=str, default='results', help='result dir')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="PaddleOCR inference")
+    parser.add_argument("--image_dir", type=str, default="images", help="image dir")
+    parser.add_argument("--result_dir", type=str, default="results", help="result dir")
     args = parser.parse_args()
 
     predict_image_dir(args.image_dir, args.result_dir)

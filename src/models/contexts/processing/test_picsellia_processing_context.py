@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional
 from src.models.contexts.common.picsellia_context import PicselliaContext
 from picsellia.types.enums import ProcessingType
 from picsellia import DatasetVersion, ModelVersion
-from picsellia.types.enums import ProcessingType
 
 
 class TestPicselliaProcessingContext(PicselliaContext):
@@ -11,16 +10,16 @@ class TestPicselliaProcessingContext(PicselliaContext):
     """
 
     def __init__(
-            self,
-            api_token: Optional[str] = None,
-            host: Optional[str] = None,
-            organization_id: Optional[str] = None,
-            job_id: Optional[str] = None,
-            job_type: Optional[ProcessingType] = None,
-            input_dataset_version_id: Optional[str] = None,
-            output_dataset_version_id: Optional[str] = None,
-            model_version_id: Optional[str] = None,
-            processing_parameters=None,
+        self,
+        api_token: Optional[str] = None,
+        host: Optional[str] = None,
+        organization_id: Optional[str] = None,
+        job_id: Optional[str] = None,
+        job_type: Optional[ProcessingType] = None,
+        input_dataset_version_id: Optional[str] = None,
+        output_dataset_version_id: Optional[str] = None,
+        model_version_id: Optional[str] = None,
+        processing_parameters=None,
     ):
         # Initialize the Picsellia client from the base class
         super().__init__(api_token, host, organization_id)

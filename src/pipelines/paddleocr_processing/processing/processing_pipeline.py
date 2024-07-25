@@ -1,18 +1,26 @@
 from src import pipeline
-from src.models.contexts.processing.picsellia_processing_context import PicselliaProcessingContext
+from src.models.contexts.processing.picsellia_processing_context import (
+    PicselliaProcessingContext,
+)
 
-from src.models.parameters.processing.processing_paddleocr_parameters import ProcessingPaddleOcrParameters
+from src.models.parameters.processing.processing_paddleocr_parameters import (
+    ProcessingPaddleOcrParameters,
+)
 from src.steps.data_extraction.processing.processing_data_extractor import (
     processing_data_extractor,
 )
-from src.steps.data_validation.processing.processing_paddleocr_data_validator import paddleocr_processing_data_validator
-from src.steps.processing.pre_annotation.paddleocr_processing import paddleocr_processing
-from src.steps.weights_extraction.processing.paddle_ocr_weights_extractor import paddle_ocr_weights_extractor
+from src.steps.data_validation.processing.processing_paddleocr_data_validator import (
+    paddleocr_processing_data_validator,
+)
+from src.steps.processing.pre_annotation.paddleocr_processing import (
+    paddleocr_processing,
+)
+from src.steps.weights_extraction.processing.paddle_ocr_weights_extractor import (
+    paddle_ocr_weights_extractor,
+)
 
 
-def get_context() -> (
-        PicselliaProcessingContext[ProcessingPaddleOcrParameters]
-):
+def get_context() -> PicselliaProcessingContext[ProcessingPaddleOcrParameters]:
     return PicselliaProcessingContext(
         processing_parameters_cls=ProcessingPaddleOcrParameters,
     )
