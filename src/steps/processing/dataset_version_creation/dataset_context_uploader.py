@@ -17,7 +17,7 @@ def dataset_context_uploader(dataset_context: DatasetContext):
         dataset_context=dataset_context,
         datalake=context.processing_parameters.datalake,
         data_tags=[
-            context.processing_parameters.images_tag,
+            context.processing_parameters.data_tag,
             dataset_context.dataset_version.version,
         ],
     )
