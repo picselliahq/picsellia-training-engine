@@ -1,5 +1,7 @@
 from src import step, Pipeline
-from src.models.contexts.processing.picsellia_processing_context import PicselliaProcessingContext
+from src.models.contexts.processing.picsellia_processing_context import (
+    PicselliaProcessingContext,
+)
 from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
 from src.models.steps.weights_extraction.processing.paddle_ocr_model_collection_extractor import (
     PaddleOCRModelCollectionExtractor,
@@ -9,8 +11,10 @@ from src.models.steps.weights_extraction.processing.paddle_ocr_model_collection_
 @step
 def paddle_ocr_weights_extractor() -> PaddleOCRModelCollection:
     context: PicselliaProcessingContext = Pipeline.get_active_context()
+
     model_collection_extractor = PaddleOCRModelCollectionExtractor(
-        model_version=context.model_version
+        model_version=context.model_version,
+        job_id=context.job_id,
     )
     model_collection = model_collection_extractor.get_model_collection()
     model_collection.download_weights()

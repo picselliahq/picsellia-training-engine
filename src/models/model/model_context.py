@@ -90,12 +90,20 @@ class ModelContext:
             with tarfile.open(
                 os.path.join(self.model_weights_path, model_file.filename), "r:*"
             ) as tar:
-                tar.extractall(path=self.model_weights_path)
+                tar.extractall(
+                    path=os.path.join(
+                        self.model_weights_path, self.get_extracted_path(model_file)
+                    )
+                )
         elif model_file.filename.endswith(".zip"):
             with zipfile.ZipFile(
                 os.path.join(self.model_weights_path, model_file.filename), "r"
             ) as zipf:
-                zipf.extractall(path=self.model_weights_path)
+                zipf.extractall(
+                    path=os.path.join(
+                        self.model_weights_path, self.get_extracted_path(model_file)
+                    )
+                )
 
         if model_file.filename.endswith((".tar", ".zip")):
             os.remove(os.path.join(self.model_weights_path, model_file.filename))
