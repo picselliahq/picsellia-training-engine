@@ -19,13 +19,13 @@ class DatasetContextUploader(DataUploader):
         client: Client,
         dataset_context: DatasetContext,
         datalake: str = "default",
-        images_tags: Optional[List[str]] = None,
+        data_tags: Optional[List[str]] = None,
     ):
         super().__init__(client, dataset_context.dataset_version, datalake)
         self.client = client
         self.dataset_context = dataset_context
         self.datalake = self.client.get_datalake(name=datalake)
-        self.images_tags = images_tags
+        self.data_tags = data_tags
 
     def upload_dataset_context(self) -> None:
         """
@@ -36,7 +36,7 @@ class DatasetContextUploader(DataUploader):
                 os.path.join(self.dataset_context.image_dir, image_filename)
                 for image_filename in os.listdir(self.dataset_context.image_dir)
             ],
-            images_tags=self.images_tags,
+            data_tags=self.data_tags,
         )
 
         if self.dataset_context.dataset_version.type != InferenceType.NOT_CONFIGURED:
