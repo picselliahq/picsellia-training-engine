@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import Union
 
@@ -7,16 +8,13 @@ from picsellia.types.enums import InferenceType
 
 from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
-from .predict_image import predict_image, get_annotations_from_result
+
+from .predict_image import load_model, predict_image, get_annotations_from_result
 
 
 class PaddleOcrProcessing:
-    def __init__(
-        self,
-        client,
-        input_dataset_context: DatasetContext,
-        model_collection: PaddleOCRModelCollection,
-    ):
+
+    def __init__(self, client, input_dataset_context, model_collection: PaddleOCRModelCollection):
         self.client = client
         self.dataset_context: DatasetContext = input_dataset_context
         self.image_width = 0
@@ -24,19 +22,16 @@ class PaddleOcrProcessing:
         self.model_collection = model_collection
 
     def process(self):
-        annotations_path = os.path.join(
-            self.dataset_context.destination_path,
-            self.dataset_context.dataset_name,
-            "annotations_updated.json",
-        )
+        annotations_path = "annotations_updated.json"
         coco_json = self.dataset_context.coco_file.model_dump_json()
         with open(annotations_path, "w") as f:
             f.write(coco_json)
         self.predict_dataset_version(self.dataset_context.image_dir, annotations_path)
-        self.dataset_context.dataset_version.set_type(InferenceType.OBJECT_DETECTION)
-        self.dataset_context.dataset_version.import_annotations_coco_file(
-            annotations_path, use_id=True
-        )
+        try:
+            self.dataset_context.dataset_version.set_type(InferenceType.OBJECT_DETECTION)
+        except Exception:
+            logging.info("Failed to set dataset version type to object detection")
+        self.dataset_context.dataset_version.import_annotations_coco_file(annotations_path, use_id=True)
 
     def predict_dataset_version(self, images_dir, annotations_path):
         ocr_model = self.load_model()
@@ -49,28 +44,24 @@ class PaddleOcrProcessing:
             if result[0]:
                 bboxes, texts, scores = get_annotations_from_result(result)
                 for bbox, text, score in zip(bboxes, texts, scores):
-                    print(f"bbox: {bbox}, text: {text}, score: {score}")
+                    print(f'bbox: {bbox}, text: {text}, score: {score}')
                     coco_bbox = self.oriented_to_aligned_bbox(bbox)
-                    print(f"coco_bbox: {coco_bbox}")
+                    print(f'coco_bbox: {coco_bbox}')
                     cocotext["annotations"].append(
                         {
                             "id": len(cocotext["annotations"]),
-                            "image_id": self.find_image_id(
-                                cocotext["images"], image_filename
-                            ),
+                            "image_id": self.find_image_id(cocotext["images"], image_filename),
                             "category_id": 0,
                             "bbox": coco_bbox,
                             "utf8_string": text,
                             "area": coco_bbox[2] * coco_bbox[3],
-                            "segmentation": [],
+                            "segmentation": []
                         }
                     )
         with open(annotations_path, "w") as f:
             json.dump(cocotext, f)
 
     def load_model(self) -> PaddleOCR:
-        print(self.model_collection.text_model.pretrained_model_path)
-        print(self.model_collection.bbox_model.pretrained_model_path)
         return PaddleOCR(
             lang="en",
             use_angle_cls=True,
@@ -90,9 +81,7 @@ class PaddleOcrProcessing:
         images_dir = f"{dataset_dir}/images"
         annotations_dir = f"{dataset_dir}/annotations"
         dataset_version.download(target_path=images_dir)
-        annotations_path = dataset_version.export_annotation_file(
-            "coco", annotations_dir
-        )
+        annotations_path = dataset_version.export_annotation_file("coco", annotations_dir)
         return images_dir, annotations_path
 
     @staticmethod
