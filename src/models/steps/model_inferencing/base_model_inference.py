@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 
-from src.models.dataset.common.dataset_collection import TDatasetContext
+from src.models.dataset.training.training_dataset_collection import TDatasetContext
 
 
 class BaseModelInference(ABC):

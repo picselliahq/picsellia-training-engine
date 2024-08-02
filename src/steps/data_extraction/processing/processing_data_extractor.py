@@ -17,7 +17,9 @@ from src.models.steps.data_extraction.processing.processing_dataset_context_extr
 
 
 @step
-def processing_data_extractor(skip_asset_listing: bool = False) -> DatasetContext:
+def processing_dataset_context_extractor(
+    skip_asset_listing: bool = False,
+) -> DatasetContext:
     """
     Extracts a dataset from a processing job and prepares it for processing.
 

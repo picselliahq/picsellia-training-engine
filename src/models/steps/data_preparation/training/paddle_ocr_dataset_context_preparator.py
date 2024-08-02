@@ -4,7 +4,7 @@ from typing import Union, Dict, List
 
 import numpy as np
 
-from src.models.dataset.common.dataset_collection import TDatasetContext
+from src.models.dataset.training.training_dataset_collection import TDatasetContext
 from src.models.dataset.common.paddle_ocr_dataset_context import PaddleOCRDatasetContext
 
 from imutils import perspective

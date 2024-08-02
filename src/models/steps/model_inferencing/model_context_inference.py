@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import TypeVar, Generic
 
-from src.models.dataset.common.dataset_collection import TDatasetContext
+from src.models.dataset.training.training_dataset_collection import TDatasetContext
 from src.models.model.model_context import ModelContext
 from src.models.steps.model_inferencing.base_model_inference import BaseModelInference
 

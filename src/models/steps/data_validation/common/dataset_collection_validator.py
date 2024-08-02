@@ -1,6 +1,6 @@
 from typing import Type
 
-from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import DatasetCollection
 from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )

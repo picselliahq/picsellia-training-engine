@@ -1,6 +1,7 @@
 import os
 from typing import List, Tuple, Union
-from src.models.dataset.common.dataset_collection import TDatasetContext
+
+from src.models.dataset.training.training_dataset_collection import TDatasetContext
 from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
 from src.models.model.picsellia_prediction import (
     PicselliaRectangle,
