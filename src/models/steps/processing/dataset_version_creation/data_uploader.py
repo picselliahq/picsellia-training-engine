@@ -116,4 +116,6 @@ class DataUploader:
             annotation_path (str): The path to the COCO annotations file.
 
         """
-        self.dataset_version.import_annotations_coco_file(file_path=annotation_path)
+        self.dataset_version.import_annotations_coco_file(
+            file_path=annotation_path, use_id=True
+        )
