@@ -1,5 +1,5 @@
 from src import step
-from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.data_validation.common.dataset_collection_validator import (
     DatasetCollectionValidator,
