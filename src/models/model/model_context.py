@@ -60,6 +60,7 @@ class ModelContext:
         os.makedirs(self.model_weights_path, exist_ok=True)
         model_files = self.model_version.list_files()
         for model_file in model_files:
+            print(f"Downloading model file: {model_file.name}")
             self.download_model_file(model_file)
 
     def download_model_file(self, model_file):
@@ -71,12 +72,20 @@ class ModelContext:
                 self.config_file_path = self.get_extracted_path(model_file)
             elif model_file.name == f"{self.prefix_model_name}-pretrained-model":
                 self.pretrained_model_path = self.get_extracted_path(model_file)
+            elif (
+                model_file.name == f"{self.prefix_model_name}-model-latest"
+                and not self.pretrained_model_path
+            ):
+                self.pretrained_model_path = self.get_extracted_path(model_file)
         else:
             model_file.download(self.model_weights_path)
+            print(f"Downloaded model file: {model_file.name}")
             self.extract_weights(model_file=model_file)
             if model_file.name == "config":
                 self.config_file_path = self.get_extracted_path(model_file)
             elif model_file.name == "pretrained-model":
+                self.pretrained_model_path = self.get_extracted_path(model_file)
+            elif model_file.name == "model-latest" and not self.pretrained_model_path:
                 self.pretrained_model_path = self.get_extracted_path(model_file)
 
     def get_extracted_path(self, model_file):
