@@ -1,5 +1,4 @@
 [tool.poetry]
-name = "yolox-detection"
 version = "0.1.0"
 description = ""
 authors = ["picsalex <132259399+picsalex@users.noreply.github.com>", "SoniaGrh <sonia.garrouch@hotmail.fr>"]

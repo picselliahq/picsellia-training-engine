@@ -104,6 +104,7 @@ epochs = int(parameters.get("epochs", 100))
 image_size = int(parameters.get("image_size", 640))
 eval_interval = int(parameters.get("eval_interval", 5))
 enable_weather_transform = bool(parameters.get("enable_weather_transform", False))
+enable_dynamic_axis = bool(parameters.get("enable_dynamic_axis", False))
 
 # 6 - Launch the training
 # 6A - Args
@@ -188,7 +189,21 @@ if num_gpu > 0:
 
 model_path = os.path.join(exp.output_dir, args.experiment_name, "best.onnx")
 
-torch.onnx.export(model, dummy_input, model_path, output_names=["output_yolox"])
+input_names = ["input"]
+output_names = ["output_yolox"]
+dynamic_axes = None
+
+if enable_dynamic_axis:
+    dynamic_axes = {"input": {0: "batch_size"}, "output": {0: "batch_size"}}
+
+torch.onnx.export(
+    model,
+    dummy_input,
+    model_path,
+    input_names=input_names,
+    output_names=output_names,
+    dynamic_axes=dynamic_axes,
+)
 experiment.store("model-latest", model_path)
 print("Exported the model best.onnx as model-latest")
 
