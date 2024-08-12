@@ -1,7 +1,7 @@
 # type: ignore
 
 from src import pipeline
-from src.models.contexts.picsellia_context import (
+from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
 from src.models.parameters.common.augmentation_parameters import (
