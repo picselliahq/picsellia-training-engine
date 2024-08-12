@@ -18,6 +18,6 @@ COPY ./src/steps ./src/steps
 COPY ./src/*.py ./src
 COPY ./src/pipelines/dataset_tiler ./src/pipelines/dataset_tiler
 
-ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
+ENV PYTHONPATH=":/experiment/src"
 
-ENTRYPOINT ["run", "python3.10", "src/pipelines/slicer/processing_pipeline.py"]
+ENTRYPOINT ["run", "python3.10", "src/pipelines/dataset_tiler/processing_pipeline.py"]
