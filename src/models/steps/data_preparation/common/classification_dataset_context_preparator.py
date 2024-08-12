@@ -17,7 +17,7 @@ class ClassificationDatasetContextPreparator:
 
     Attributes:
         dataset_context (DatasetContext): The context of the dataset to organize, including paths and COCO file.
-        destination_path (str): The root directory where the organized dataset will be stored.
+        dataset_path (str): The root directory where the organized dataset will be stored.
     """
 
     def __init__(self, dataset_context: DatasetContext):
@@ -28,9 +28,8 @@ class ClassificationDatasetContextPreparator:
             dataset_context (DatasetContext): The dataset context to organize.
         """
         self.dataset_context = dataset_context
-        self.destination_path = dataset_context.destination_path
 
-    def organize(self) -> None:
+    def organize(self) -> DatasetContext:
         """
         Organizes the dataset by creating category directories and moving images.
 
@@ -41,7 +40,7 @@ class ClassificationDatasetContextPreparator:
         categories = self._extract_categories()
         image_categories = self._map_image_to_category()
         self._organize_images(categories, image_categories)
-        self._cleanup()
+        return self.dataset_context
 
     def _extract_categories(self) -> Dict[int, str]:
         """
@@ -99,19 +98,9 @@ class ClassificationDatasetContextPreparator:
             FileNotFoundError: If the source image file to copy is not found.
             shutil.SameFileError: If the source and destination paths are the same.
         """
-        category_dir = os.path.join(self.destination_path, category_name)
+        category_dir = os.path.join(self.dataset_context.image_dir, category_name)
         if not os.path.exists(category_dir):
             os.makedirs(category_dir)
         src_image_path = os.path.join(self.dataset_context.image_dir, image.file_name)
         dest_image_path = os.path.join(category_dir, image.file_name)
-        shutil.copy(src_image_path, dest_image_path)
-
-    def _cleanup(self) -> None:
-        """
-        Cleans up the original image directory after organizing the images.
-
-        Removes the original image directory and updates the `image_dir` attribute in the dataset context
-        to point to the new, organized directory structure.
-        """
-        shutil.rmtree(self.dataset_context.image_dir)
-        self.dataset_context.image_dir = self.destination_path
+        shutil.move(src_image_path, dest_image_path)

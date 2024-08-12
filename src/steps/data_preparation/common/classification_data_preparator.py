@@ -66,5 +66,5 @@ def classification_data_preparator(
             organizer = ClassificationDatasetContextPreparator(
                 dataset_context=dataset_context
             )
-            organizer.organize()
+            dataset_collection[dataset_context.dataset_name] = organizer.organize()
     return dataset_collection
