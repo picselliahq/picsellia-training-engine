@@ -11,7 +11,7 @@ from src.models.steps.data_extraction.training.training_dataset_collection_extra
 
 
 @step
-def training_data_extractor() -> DatasetCollection:
+def training_data_extractor(random_seed=None) -> DatasetCollection:
     """
     Extracts datasets from an experiment and prepares them for training.
 
@@ -37,6 +37,8 @@ def training_data_extractor() -> DatasetCollection:
         experiment=context.experiment,
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
-    dataset_collection = dataset_collection_extractor.get_dataset_collection()
+    dataset_collection = dataset_collection_extractor.get_dataset_collection(
+        random_seed=random_seed
+    )
     dataset_collection.download_assets()
     return dataset_collection

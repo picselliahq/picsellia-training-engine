@@ -35,7 +35,7 @@ class TrainingDatasetCollectionExtractor:
         self.train_set_split_ratio = train_set_split_ratio
         self.destination_path = os.path.join(os.getcwd(), self.experiment.name)
 
-    def get_dataset_collection(self) -> DatasetCollection:
+    def get_dataset_collection(self, random_seed=None) -> DatasetCollection:
         """
         Retrieves dataset versions attached to the experiment and organizes them into a DatasetCollection.
 
@@ -100,9 +100,12 @@ class TrainingDatasetCollectionExtractor:
             return self._handle_two_datasets(
                 train_dataset_version=train_dataset_version,
                 test_dataset_version=test_dataset_version,
+                random_seed=random_seed,
             )
         elif nb_attached_datasets == 1:
-            return self._handle_one_dataset(train_dataset_version=train_dataset_version)
+            return self._handle_one_dataset(
+                train_dataset_version=train_dataset_version, random_seed=random_seed
+            )
         else:
             raise RuntimeError(
                 "Invalid number of datasets attached to the experiment: "
@@ -154,6 +157,7 @@ class TrainingDatasetCollectionExtractor:
         self,
         train_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
+        random_seed=None,
     ) -> DatasetCollection:
         """
         Handles the scenario where two datasets are attached to the experiment, requiring a split of the first for training and validation.
@@ -167,7 +171,7 @@ class TrainingDatasetCollectionExtractor:
         """
         split_ratios = self._get_split_ratios(nb_attached_datasets=2)
         split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
-            ratios=split_ratios
+            ratios=split_ratios, random_seed=random_seed
         )
         train_assets, val_assets = split_assets
         return DatasetCollection(
@@ -195,7 +199,9 @@ class TrainingDatasetCollectionExtractor:
         )
 
     def _handle_one_dataset(
-        self, train_dataset_version: DatasetVersion
+        self,
+        train_dataset_version: DatasetVersion,
+        random_seed=None,
     ) -> DatasetCollection:
         """
         Handles the scenario where a single dataset is attached to the experiment, requiring splitting into training, validation, and test splits.
@@ -208,7 +214,7 @@ class TrainingDatasetCollectionExtractor:
         """
         split_ratios = self._get_split_ratios(nb_attached_datasets=1)
         split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
-            ratios=split_ratios
+            ratios=split_ratios, random_seed=random_seed
         )
         train_assets, val_assets, test_assets = split_assets
         return DatasetCollection(
