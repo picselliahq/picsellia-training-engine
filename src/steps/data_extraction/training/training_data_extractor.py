@@ -4,7 +4,7 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import DatasetCollection
 from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
     TrainingDatasetCollectionExtractor,
 )
