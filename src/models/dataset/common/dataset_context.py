@@ -10,11 +10,6 @@ from picsellia.types.enums import AnnotationFileType
 
 from src.steps.data_extraction.utils.image_utils import get_labelmap
 
-from picsellia.exceptions import NoDataError
-from picsellia_annotations.coco import COCOFile
-from picsellia_annotations.utils import read_coco_file
-from picsellia.types.enums import AnnotationFileType
-
 
 class DatasetContext:
     """
@@ -64,13 +59,13 @@ class DatasetContext:
             self.labelmap = get_labelmap(dataset_version=dataset_version)
         else:
             self.labelmap = labelmap or {}
-        if not multi_asset:
-            try:
-                self.multi_asset = dataset_version.list_assets()
-            except NoDataError:
-                self.multi_asset = None
-        else:
+
+        if multi_asset:
             self.multi_asset = multi_asset
+        elif not skip_asset_listing:
+            self.list_assets()
+        else:
+            self.multi_asset = None
         self.image_dir = os.path.join(destination_path, self.dataset_name, "images")
         self.coco_file_path = self.download_coco_file()
         self.coco_file = self.build_coco_file(coco_file_path=self.coco_file_path)
@@ -107,3 +102,25 @@ class DatasetContext:
             self.multi_asset.download(target_path=self.image_dir, use_id=self.use_id)
         else:
             print(f"No assets found for dataset {self.dataset_name}!")
+
+    def list_assets(self) -> None:
+        """
+        Lists the assets in the dataset.
+        """
+        try:
+            self.multi_asset = self.dataset_version.list_assets()
+        except NoDataError:
+            self.multi_asset = None
+
+    def get_assets_batch(self, limit: int, offset: int) -> MultiAsset:
+        """
+        Lists the assets in the dataset in batches.
+
+        Args:
+            limit: The maximum number of assets to retrieve.
+            offset: The offset from which to start retrieving assets.
+
+        Returns:
+            A MultiAsset object containing the assets retrieved, limited by the `limit` and `offset` parameters.
+        """
+        return self.dataset_version.list_assets(limit=limit, offset=offset)
