@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 from typing import Dict
 
 from picsellia_annotations.coco import Image
@@ -20,7 +21,7 @@ class ClassificationDatasetContextPreparator:
         dataset_path (str): The root directory where the organized dataset will be stored.
     """
 
-    def __init__(self, dataset_context: DatasetContext):
+    def __init__(self, dataset_context: DatasetContext, dataset_path: str):
         """
         Initializes the organizer with a given dataset context.
 
@@ -28,6 +29,7 @@ class ClassificationDatasetContextPreparator:
             dataset_context (DatasetContext): The dataset context to organize.
         """
         self.dataset_context = dataset_context
+        self.dataset_path = dataset_path
 
     def organize(self) -> DatasetContext:
         """
@@ -40,6 +42,9 @@ class ClassificationDatasetContextPreparator:
         categories = self._extract_categories()
         image_categories = self._map_image_to_category()
         self._organize_images(categories, image_categories)
+        self.dataset_context.update_image_dir(
+            Path(os.path.join(self.dataset_path, self.dataset_context.dataset_name))
+        )
         return self.dataset_context
 
     def _extract_categories(self) -> Dict[int, str]:
@@ -98,9 +103,11 @@ class ClassificationDatasetContextPreparator:
             FileNotFoundError: If the source image file to copy is not found.
             shutil.SameFileError: If the source and destination paths are the same.
         """
-        category_dir = os.path.join(self.dataset_context.image_dir, category_name)
+        category_dir = os.path.join(
+            self.dataset_path, self.dataset_context.dataset_name, category_name
+        )
         if not os.path.exists(category_dir):
             os.makedirs(category_dir)
         src_image_path = os.path.join(self.dataset_context.image_dir, image.file_name)
         dest_image_path = os.path.join(category_dir, image.file_name)
-        shutil.move(src_image_path, dest_image_path)
+        shutil.copy(src_image_path, dest_image_path)

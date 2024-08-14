@@ -42,8 +42,8 @@ class DatasetContext:
         )
 
         self._initialize_paths()
-        self.coco_file_path: Optional[Path] = None
-        self.coco_file: Optional[COCOFile] = None
+        self.coco_file: COCOFile
+        self._initialize_coco_file()
 
     def _initialize_paths(self):
         """Initializes the dataset, image, and annotations paths."""
@@ -80,6 +80,14 @@ class DatasetContext:
         coco_file = read_coco_file(str(coco_file_path))
         self.coco_file_manager = COCOFileManager(coco_file)
         return coco_file
+
+    def _initialize_coco_file(self):
+        coco_file_path = self._download_coco_file()
+        if coco_file_path is None:
+            raise ValueError(
+                "Failed to download COCO file. Dataset context cannot be initialized."
+            )
+        self.coco_file = self._build_coco_file(coco_file_path)
 
     def download_assets(self) -> None:
         """Downloads the dataset assets to the local filesystem."""
@@ -133,10 +141,12 @@ class DatasetContext:
         self.annotations_dir = Path(new_annotations_dir)
         self._move_directory_if_empty(old_annotations_dir, self.annotations_dir)
 
-        # Update COCO file path after moving the annotations directory
-        if self.coco_file_path:
-            self.coco_file_path = self.annotations_dir / self.coco_file_path.name
-            self._update_coco_file(self.coco_file_path)
+        # Update COCO file after moving the annotations directory
+        coco_files = list(self.annotations_dir.glob("*.json"))
+        if coco_files:
+            self._update_coco_file(coco_files[0])
+        else:
+            logger.warning("No COCO file found in the new annotations directory.")
 
         return self._verify_dataset_integrity()
 
@@ -158,14 +168,12 @@ class DatasetContext:
 
     def _update_coco_file(self, new_coco_file_path: Optional[Path]):
         if new_coco_file_path and new_coco_file_path.exists():
-            self.coco_file_path = new_coco_file_path
-            self.coco_file = self._build_coco_file(self.coco_file_path)
+            self.coco_file = self._build_coco_file(new_coco_file_path)
         else:
             logger.warning(
                 f"COCO file not found or path is None at {new_coco_file_path}"
             )
-            self.coco_file = None
-            self.coco_file_path = None
+            raise ValueError("Failed to update COCO file. New file path is invalid.")
 
     def _verify_dataset_integrity(self) -> Dict[str, bool]:
         """Verifies the integrity of the dataset."""
