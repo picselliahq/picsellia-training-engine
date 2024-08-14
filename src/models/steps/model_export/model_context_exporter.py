@@ -32,7 +32,10 @@ class ModelContextExporter:
             )
         else:
             self.experiment.store(
-                name=saved_model_name, path=self.model_context.inference_model_path
+                name=saved_model_name,
+                path=os.path.join(
+                    self.model_context.inference_model_path, inference_model_files[0]
+                ),
             )
         return self.model_context
 
