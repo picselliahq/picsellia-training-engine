@@ -4,14 +4,16 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.training.training_dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import (
+    TrainingDatasetCollection,
+)
 from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
     TrainingDatasetCollectionExtractor,
 )
 
 
 @step
-def training_data_extractor(random_seed=None) -> DatasetCollection:
+def training_data_extractor(random_seed=None) -> TrainingDatasetCollection:
     """
     Extracts datasets from an experiment and prepares them for training.
 
@@ -40,5 +42,5 @@ def training_data_extractor(random_seed=None) -> DatasetCollection:
     dataset_collection = dataset_collection_extractor.get_dataset_collection(
         random_seed=random_seed
     )
-    dataset_collection.download_assets()
+    dataset_collection.download_all()
     return dataset_collection

@@ -1,6 +1,8 @@
 from typing import Type
 
-from src.models.dataset.training.training_dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import (
+    TrainingDatasetCollection,
+)
 from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
@@ -19,7 +21,7 @@ class DatasetCollectionValidator:
 
     def __init__(
         self,
-        dataset_collection: DatasetCollection,
+        dataset_collection: TrainingDatasetCollection,
         dataset_context_validator: Type[DatasetContextValidator],
     ):
         """

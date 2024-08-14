@@ -5,7 +5,9 @@ from picsellia import DatasetVersion, Experiment
 from picsellia.exceptions import ResourceNotFoundError
 
 from src.enums import DatasetSplitName
-from src.models.dataset.training.training_dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import (
+    TrainingDatasetCollection,
+)
 from src.models.dataset.common.dataset_context import DatasetContext
 
 
@@ -35,7 +37,7 @@ class TrainingDatasetCollectionExtractor:
         self.train_set_split_ratio = train_set_split_ratio
         self.destination_path = os.path.join(os.getcwd(), self.experiment.name)
 
-    def get_dataset_collection(self, random_seed=None) -> DatasetCollection:
+    def get_dataset_collection(self, random_seed=None) -> TrainingDatasetCollection:
         """
         Retrieves dataset versions attached to the experiment and organizes them into a DatasetCollection.
 
@@ -117,7 +119,7 @@ class TrainingDatasetCollectionExtractor:
         train_dataset_version: DatasetVersion,
         val_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
-    ) -> DatasetCollection:
+    ) -> TrainingDatasetCollection:
         """
         Handles the scenario where three distinct datasets (train, validation, and test) are attached to the experiment.
 
@@ -129,28 +131,30 @@ class TrainingDatasetCollectionExtractor:
         Returns:
             DatasetCollection: A collection with distinct contexts for training, validation, and testing splits.
         """
-        return DatasetCollection(
-            train_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.TRAIN.value,
-                dataset_version=train_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=None,
-                labelmap=None,
-            ),
-            val_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.VAL.value,
-                dataset_version=val_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=None,
-                labelmap=None,
-            ),
-            test_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.TEST.value,
-                dataset_version=test_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=None,
-                labelmap=None,
-            ),
+        return TrainingDatasetCollection(
+            [
+                DatasetContext(
+                    dataset_name=DatasetSplitName.TRAIN.value,
+                    dataset_version=train_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=None,
+                    labelmap=None,
+                ),
+                DatasetContext(
+                    dataset_name=DatasetSplitName.VAL.value,
+                    dataset_version=val_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=None,
+                    labelmap=None,
+                ),
+                DatasetContext(
+                    dataset_name=DatasetSplitName.TEST.value,
+                    dataset_version=test_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=None,
+                    labelmap=None,
+                ),
+            ]
         )
 
     def _handle_two_datasets(
@@ -158,7 +162,7 @@ class TrainingDatasetCollectionExtractor:
         train_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
         random_seed=None,
-    ) -> DatasetCollection:
+    ) -> TrainingDatasetCollection:
         """
         Handles the scenario where two datasets are attached to the experiment, requiring a split of the first for training and validation.
 
@@ -174,35 +178,37 @@ class TrainingDatasetCollectionExtractor:
             ratios=split_ratios, random_seed=random_seed
         )
         train_assets, val_assets = split_assets
-        return DatasetCollection(
-            train_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.TRAIN.value,
-                dataset_version=train_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=train_assets,
-                labelmap=None,
-            ),
-            val_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.VAL.value,
-                dataset_version=train_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=val_assets,
-                labelmap=None,
-            ),
-            test_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.TEST.value,
-                dataset_version=test_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=None,
-                labelmap=None,
-            ),
+        return TrainingDatasetCollection(
+            [
+                DatasetContext(
+                    dataset_name=DatasetSplitName.TRAIN.value,
+                    dataset_version=train_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=train_assets,
+                    labelmap=None,
+                ),
+                DatasetContext(
+                    dataset_name=DatasetSplitName.VAL.value,
+                    dataset_version=train_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=val_assets,
+                    labelmap=None,
+                ),
+                DatasetContext(
+                    dataset_name=DatasetSplitName.TEST.value,
+                    dataset_version=test_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=None,
+                    labelmap=None,
+                ),
+            ]
         )
 
     def _handle_one_dataset(
         self,
         train_dataset_version: DatasetVersion,
         random_seed=None,
-    ) -> DatasetCollection:
+    ) -> TrainingDatasetCollection:
         """
         Handles the scenario where a single dataset is attached to the experiment, requiring splitting into training, validation, and test splits.
 
@@ -217,28 +223,30 @@ class TrainingDatasetCollectionExtractor:
             ratios=split_ratios, random_seed=random_seed
         )
         train_assets, val_assets, test_assets = split_assets
-        return DatasetCollection(
-            train_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.TRAIN.value,
-                dataset_version=train_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=train_assets,
-                labelmap=None,
-            ),
-            val_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.VAL.value,
-                dataset_version=train_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=val_assets,
-                labelmap=None,
-            ),
-            test_dataset_context=DatasetContext(
-                dataset_name=DatasetSplitName.TEST.value,
-                dataset_version=train_dataset_version,
-                destination_path=self.destination_path,
-                multi_asset=test_assets,
-                labelmap=None,
-            ),
+        return TrainingDatasetCollection(
+            [
+                DatasetContext(
+                    dataset_name=DatasetSplitName.TRAIN.value,
+                    dataset_version=train_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=train_assets,
+                    labelmap=None,
+                ),
+                DatasetContext(
+                    dataset_name=DatasetSplitName.VAL.value,
+                    dataset_version=train_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=val_assets,
+                    labelmap=None,
+                ),
+                DatasetContext(
+                    dataset_name=DatasetSplitName.TEST.value,
+                    dataset_version=train_dataset_version,
+                    destination_path=self.destination_path,
+                    multi_asset=test_assets,
+                    labelmap=None,
+                ),
+            ]
         )
 
     def _get_split_ratios(self, nb_attached_datasets: int) -> List[float]:
