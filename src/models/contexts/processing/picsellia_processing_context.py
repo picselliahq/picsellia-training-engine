@@ -1,20 +1,12 @@
 import os
-from typing import Type, Optional, Any, Dict, Union, TypeVar, Generic
+from typing import Type, Optional, Any, Dict, Union, Generic
 
 import picsellia  # type: ignore
 from picsellia import DatasetVersion, ModelVersion
 from picsellia.types.enums import ProcessingType
 
 from src.models.contexts.common.picsellia_context import PicselliaContext
-from src.models.parameters.common.augmentation_parameters import AugmentationParameters
-from src.models.parameters.common.hyper_parameters import HyperParameters
-from src.models.parameters.common.parameters import Parameters
-
-TParameters = TypeVar("TParameters", bound=Parameters)
-THyperParameters = TypeVar("THyperParameters", bound=HyperParameters)
-TAugmentationParameters = TypeVar(
-    "TAugmentationParameters", bound=AugmentationParameters
-)
+from src.models.parameters.common.parameters import TParameters
 
 
 class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):

@@ -1,6 +1,6 @@
 import logging
 from abc import ABC
-from typing import Any, Dict, Optional, Set, Tuple
+from typing import Any, Dict, Optional, Set, Tuple, TypeVar
 
 from picsellia.types.schemas import LogDataType  # type: ignore
 
@@ -231,3 +231,6 @@ class Parameters(ABC):
             "It must be a tuple of two numbers (int or float) "
             "where the first is strictly less than the second."
         )
+
+
+TParameters = TypeVar("TParameters", bound=Parameters)
