@@ -16,7 +16,7 @@ from src.steps.data_validation.processing.processing_bounding_box_cropper_data_v
 from src.steps.processing.dataset_version_creation.bounding_box_cropper_processing import (
     bounding_box_cropper_processing,
 )
-from src.steps.processing.dataset_version_creation.classification_dataset_context_uploader import (
+from src.steps.processing.common.classification_dataset_context_uploader import (
     classification_dataset_context_uploader,
 )
 

@@ -6,7 +6,7 @@ from picsellia import Client
 from picsellia.types.enums import TagTarget
 
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.steps.processing.dataset_version_creation.data_uploader import (
+from src.models.steps.processing.common.data_uploader import (
     DataUploader,
 )
 

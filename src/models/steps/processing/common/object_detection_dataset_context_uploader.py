@@ -5,7 +5,7 @@ from typing import List, Optional
 from picsellia import Client
 from picsellia.types.enums import InferenceType
 
-from src.models.steps.processing.dataset_version_creation.data_uploader import (
+from src.models.steps.processing.common.data_uploader import (
     DataUploader,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
@@ -13,7 +13,7 @@ from src.models.dataset.common.dataset_context import DatasetContext
 logger = logging.getLogger("picsellia")
 
 
-class DatasetContextUploader(DataUploader):
+class ObjectDetectionDatasetContextUploader(DataUploader):
     def __init__(
         self,
         client: Client,

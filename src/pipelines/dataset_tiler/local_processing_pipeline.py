@@ -14,7 +14,7 @@ from src.steps.data_extraction.processing.processing_data_extractor import (
 from src.steps.data_validation.processing.processing_tiler_data_validator import (
     tiler_data_validator,
 )
-from src.steps.processing.dataset_version_creation.dataset_context_uploader import (
+from src.steps.processing.common.dataset_context_uploader import (
     dataset_context_uploader,
 )
 from src.steps.processing.dataset_version_creation.tiler_processing import (

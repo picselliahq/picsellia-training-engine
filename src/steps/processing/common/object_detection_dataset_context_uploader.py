@@ -4,15 +4,15 @@ from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.steps.processing.dataset_version_creation.dataset_context_uploader import (
-    DatasetContextUploader,
+from src.models.steps.processing.common.object_detection_dataset_context_uploader import (
+    ObjectDetectionDatasetContextUploader,
 )
 
 
 @step
-def dataset_context_uploader(dataset_context: DatasetContext):
+def object_detection_dataset_context_uploader(dataset_context: DatasetContext):
     context: PicselliaProcessingContext = Pipeline.get_active_context()
-    uploader = DatasetContextUploader(
+    uploader = ObjectDetectionDatasetContextUploader(
         client=context.client,
         dataset_context=dataset_context,
         datalake=context.processing_parameters.datalake,

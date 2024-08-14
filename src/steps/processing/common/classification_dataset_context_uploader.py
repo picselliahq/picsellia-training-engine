@@ -4,7 +4,7 @@ from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.steps.processing.dataset_version_creation.classification_dataset_context_uploader import (
+from src.models.steps.processing.common.classification_dataset_context_uploader import (
     ClassificationDatasetContextUploader,
 )
 
