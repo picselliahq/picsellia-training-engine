@@ -2,7 +2,7 @@ import os
 import tarfile
 import zipfile
 from abc import abstractmethod
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 from picsellia import ModelVersion, Label
 
@@ -43,9 +43,9 @@ class ModelContext:
         self.model_version = model_version
         self.destination_path = destination_path
         self.labelmap = labelmap
-        self.pretrained_model_path = None
-        self.config_file_path = None
-        self.loaded_model = None
+        self.pretrained_model_path: Optional[str] = None
+        self.config_file_path: Optional[str] = None
+        self._loaded_model: Optional[Any] = None
         self.model_weights_path = self.get_model_weights_path()
         self.trained_model_path = self.get_trained_model_path()
         self.results_path = self.get_results_path()
@@ -55,11 +55,18 @@ class ModelContext:
         os.makedirs(self.results_path, exist_ok=True)
         os.makedirs(self.inference_model_path, exist_ok=True)
 
+    @property
+    def loaded_model(self) -> Any:
+        if self._loaded_model is None:
+            raise ValueError("Model is not loaded")
+        return self._loaded_model
+
+    @loaded_model.setter
+    def loaded_model(self, value: Any):
+        self._loaded_model = value
+
     @abstractmethod
-    def load_model(self):
-        """
-        Loads the model from the model weights.
-        """
+    def load_model(self) -> None:
         pass
 
     def download_weights(self) -> None:
