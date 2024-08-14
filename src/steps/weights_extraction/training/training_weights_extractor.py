@@ -9,11 +9,12 @@ from src.models.steps.weights_extraction.training.training_model_context_extract
 
 
 @step
-def weights_extractor() -> ModelContext:
+def training_weights_extractor() -> ModelContext:
     context: PicselliaTrainingContext = Pipeline.get_active_context()
     model_context_extractor = TrainingModelContextExtractor(
         experiment=context.experiment
     )
     model_context = model_context_extractor.get_model_context()
     model_context.download_weights()
+    model_context.load_model()
     return model_context
