@@ -1,6 +1,7 @@
 import os
 import tarfile
 import zipfile
+from abc import abstractmethod
 from typing import Optional, Dict
 
 from picsellia import ModelVersion, Label
@@ -44,6 +45,7 @@ class ModelContext:
         self.labelmap = labelmap
         self.pretrained_model_path = None
         self.config_file_path = None
+        self.loaded_model = None
         self.model_weights_path = self.get_model_weights_path()
         self.trained_model_path = self.get_trained_model_path()
         self.results_path = self.get_results_path()
@@ -53,6 +55,13 @@ class ModelContext:
         os.makedirs(self.results_path, exist_ok=True)
         os.makedirs(self.inference_model_path, exist_ok=True)
 
+    @abstractmethod
+    def load_model(self):
+        """
+        Loads the model from the model weights.
+        """
+        pass
+
     def download_weights(self) -> None:
         """
         Downloads the model weights to a local directory.
@@ -60,6 +69,7 @@ class ModelContext:
         os.makedirs(self.model_weights_path, exist_ok=True)
         model_files = self.model_version.list_files()
         for model_file in model_files:
+            print(f"Downloading model file: {model_file.name}")
             self.download_model_file(model_file)
 
     def download_model_file(self, model_file):
@@ -71,12 +81,27 @@ class ModelContext:
                 self.config_file_path = self.get_extracted_path(model_file)
             elif model_file.name == f"{self.prefix_model_name}-pretrained-model":
                 self.pretrained_model_path = self.get_extracted_path(model_file)
+            elif (
+                model_file.name == f"{self.prefix_model_name}-model-latest"
+                and not self.pretrained_model_path
+            ):
+                self.pretrained_model_path = self.get_extracted_path(model_file)
+            elif (
+                model_file.name == f"{self.prefix_model_name}-weights"
+                and not self.pretrained_model_path
+            ):
+                self.pretrained_model_path = self.get_extracted_path(model_file)
         else:
             model_file.download(self.model_weights_path)
+            print(f"Downloaded model file: {model_file.name}")
             self.extract_weights(model_file=model_file)
             if model_file.name == "config":
                 self.config_file_path = self.get_extracted_path(model_file)
             elif model_file.name == "pretrained-model":
+                self.pretrained_model_path = self.get_extracted_path(model_file)
+            elif model_file.name == "model-latest" and not self.pretrained_model_path:
+                self.pretrained_model_path = self.get_extracted_path(model_file)
+            elif model_file.name == "weights" and not self.pretrained_model_path:
                 self.pretrained_model_path = self.get_extracted_path(model_file)
 
     def get_extracted_path(self, model_file):
