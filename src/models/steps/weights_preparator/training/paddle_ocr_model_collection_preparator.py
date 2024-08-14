@@ -2,11 +2,11 @@ import os
 
 import yaml
 
-from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import DatasetCollection
 from src.models.dataset.common.paddle_ocr_dataset_context import PaddleOCRDatasetContext
 from src.models.model.model_context import ModelContext
 from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
-from src.models.parameters.common.paddle_ocr.paddle_ocr_hyper_parameters import (
+from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters import (
     PaddleOCRHyperParameters,
 )
 
