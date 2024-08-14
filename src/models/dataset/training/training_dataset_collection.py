@@ -1,11 +1,12 @@
-from typing import TypeVar, Generic
+import os
+from typing import TypeVar, Generic, List
 
 from src.models.dataset.common.dataset_context import DatasetContext
 
 TDatasetContext = TypeVar("TDatasetContext", bound=DatasetContext)
 
 
-class DatasetCollection(Generic[TDatasetContext]):
+class TrainingDatasetCollection(Generic[TDatasetContext]):
     """
     A collection of dataset contexts for different splits of a dataset.
 
@@ -23,61 +24,28 @@ class DatasetCollection(Generic[TDatasetContext]):
 
     def __init__(
         self,
-        train_dataset_context: TDatasetContext,
-        val_dataset_context: TDatasetContext,
-        test_dataset_context: TDatasetContext,
+        datasets: List[TDatasetContext],
     ):
-        """
-        Initializes a new DatasetCollection with specified dataset contexts for training,
-        validation, and testing splits.
+        self.datasets = {dataset.dataset_name: dataset for dataset in datasets}
+        self.dataset_path = self._unify_dataset_paths(
+            os.path.join(self.datasets["train"].destination_path, "dataset")
+        )
 
-        Args:
-            train_dataset_context (DatasetContext): The dataset context for the training split.
-            val_dataset_context (DatasetContext): The dataset context for the validation split.
-            test_dataset_context (DatasetContext): The dataset context for the testing split.
-        """
-        self.train = train_dataset_context
-        self.val = val_dataset_context
-        self.test = test_dataset_context
+    def _unify_dataset_paths(self, dataset_path: str) -> str:
+        for dataset in self:
+            dataset.update_destination_path(dataset_path)
+        return dataset_path
 
-    def __getitem__(self, key):
-        """
-        Allows direct access to a dataset context via its split name.
+    def __getitem__(self, key: str) -> TDatasetContext:
+        return self.datasets[key]
 
-        Args:
-            key (str): The split name ('train', 'val', or 'test') of the dataset context to access.
-
-        Returns:
-            DatasetContext: The dataset context associated with the given split name.
-        """
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        """
-        Allows setting a dataset context for a specific split via its split name.
-
-        Args:
-            key (str): The split name ('train', 'val', or 'test') for which to set the dataset context.
-            value (DatasetContext): The dataset context to set for the given split.
-        """
-        setattr(self, key, value)
+    def __setitem__(self, key: str, value: TDatasetContext):
+        self.datasets[key] = value
 
     def __iter__(self):
-        """
-        Enables iteration over the dataset contexts in the collection.
+        return iter(self.datasets.values())
 
-        Returns:
-            iterator: An iterator over the dataset contexts (train, val, test) in the collection.
-        """
-        return iter([self.train, self.val, self.test])
-
-    def download_assets(self):
-        """
-        Downloads the assets for all dataset contexts in the collection.
-
-        Iterates over each dataset context in the collection and invokes its methods
-        to download assets. This is a collective operation that appliess
-        to the training, validation, and testing splits.
-        """
+    def download_all(self):
         for dataset_context in self:
             dataset_context.download_assets()
+            dataset_context.download_and_build_coco_file()
