@@ -26,7 +26,7 @@ from src.models.steps.data_validation.processing.processing_tiler_data_validator
 @step
 def tiler_data_validator(
     dataset_context: DatasetContext,
-) -> None:
+) -> DatasetContext:
     context: PicselliaProcessingContext[
         ProcessingTilerParameters
     ] = Pipeline.get_active_context()
@@ -39,22 +39,25 @@ def tiler_data_validator(
             not_configured_dataset_validator.validate()
 
         case InferenceType.SEGMENTATION:
-            object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
-                dataset_context=dataset_context
-            )
-            segmentation_dataset_validator = SegmentationDatasetContextValidator(
-                dataset_context=dataset_context
-            )
-
             # SAHI requires both the bounding boxes and the polygons to be valid
-            object_detection_dataset_validator.validate()
-            segmentation_dataset_validator.validate()
+            object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
+                dataset_context=dataset_context,
+                fix_annotation=context.processing_parameters.fix_annotation,
+            )
+            dataset_context = object_detection_dataset_validator.validate()
+
+            segmentation_dataset_validator = SegmentationDatasetContextValidator(
+                dataset_context=dataset_context,
+                fix_annotation=context.processing_parameters.fix_annotation,
+            )
+            dataset_context = segmentation_dataset_validator.validate()
 
         case InferenceType.OBJECT_DETECTION:
             object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
-                dataset_context=dataset_context
+                dataset_context=dataset_context,
+                fix_annotation=context.processing_parameters.fix_annotation,
             )
-            object_detection_dataset_validator.validate()
+            dataset_context = object_detection_dataset_validator.validate()
 
         case _:
             raise ValueError(
@@ -65,6 +68,11 @@ def tiler_data_validator(
         client=context.client,
         tile_height=context.processing_parameters.tile_height,
         tile_width=context.processing_parameters.tile_width,
+        overlap_height_ratio=context.processing_parameters.overlap_height_ratio,
+        overlap_width_ratio=context.processing_parameters.overlap_width_ratio,
+        min_area_ratio=context.processing_parameters.min_area_ratio,
         datalake=context.processing_parameters.datalake,
     )
     processing_validator.validate()
+
+    return dataset_context

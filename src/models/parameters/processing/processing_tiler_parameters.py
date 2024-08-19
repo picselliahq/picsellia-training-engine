@@ -33,3 +33,6 @@ class ProcessingTilerParameters(Parameters):
             default=0.1,
             range_value=(0, 0.99),
         )
+        self.fix_annotation = self.extract_parameter(
+            keys=["fix_annotation"], expected_type=bool, default=True
+        )

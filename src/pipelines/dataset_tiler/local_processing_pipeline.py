@@ -31,6 +31,7 @@ class ProcessingTilerParameters:
     min_area_ratio: float = 0.1
     datalake: str = "default"
     data_tag: str = None
+    fix_annotation: bool = True
 
 
 parser = ArgumentParser()
@@ -46,6 +47,7 @@ parser.add_argument("--overlap_width_ratio", type=float, default=0.1)
 parser.add_argument("--min_area_ratio", type=float, default=0.1)
 parser.add_argument("--datalake", type=str, default="default")
 parser.add_argument("--data_tag", type=str)
+parser.add_argument("--fix_annotation", action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -66,6 +68,7 @@ def get_context() -> TestPicselliaProcessingContext:
             min_area_ratio=args.min_area_ratio,
             datalake=args.datalake,
             data_tag=args.data_tag,
+            fix_annotation=args.fix_annotation,
         ),
     )
 
@@ -77,7 +80,9 @@ def get_context() -> TestPicselliaProcessingContext:
 )
 def tiler_processing_pipeline() -> None:
     dataset_collection = processing_dataset_collection_extractor()
-    tiler_data_validator(dataset_context=dataset_collection.input)
+    dataset_collection.input = tiler_data_validator(
+        dataset_context=dataset_collection.input
+    )
     output_dataset_context = tiler_processing(dataset_collection=dataset_collection)
     dataset_context_uploader(dataset_context=output_dataset_context)
 

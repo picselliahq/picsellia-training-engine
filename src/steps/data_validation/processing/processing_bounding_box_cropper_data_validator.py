@@ -15,7 +15,7 @@ from src.models.steps.data_validation.processing.processing_bounding_box_cropper
 @step
 def bounding_box_cropper_data_validator(
     dataset_context: DatasetContext,
-) -> None:
+) -> DatasetContext:
     context: PicselliaProcessingContext[
         ProcessingBoundingBoxCropperParameters
     ] = Pipeline.get_active_context()
@@ -26,4 +26,5 @@ def bounding_box_cropper_data_validator(
         label_name_to_extract=context.processing_parameters.label_name_to_extract,
         datalake=context.processing_parameters.datalake,
     )
-    validator.validate()
+    dataset_context = validator.validate()
+    return dataset_context
