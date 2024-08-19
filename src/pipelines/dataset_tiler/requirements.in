@@ -1,6 +1,6 @@
-imagecodecs
-picsellia
+imagecodecs~=2024.1
+picsellia~=6.17
 sahi==0.11.16
-scikit-image
-tabulate
-torch
+scikit-image~=0.23
+tabulate~=0.9
+torch~=2.3
