@@ -46,7 +46,7 @@ def tiler_data_validator(
                 dataset_context=dataset_context
             )
 
-            # SAHI requires bot the bounding boxes and the polygons to be valid
+            # SAHI requires both the bounding boxes and the polygons to be valid
             object_detection_dataset_validator.validate()
             segmentation_dataset_validator.validate()
 
