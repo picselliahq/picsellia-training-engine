@@ -45,9 +45,7 @@ def custom_get_sliced_coco_annotation(self, slice_bbox: List[int]):
                 if polygons:
                     valid = MultiPolygon(polygons)
                 else:
-                    raise ValueError(
-                        "Aucun polygone valide trouvé dans la GeometryCollection"
-                    )
+                    raise ValueError("No valid polygon found in the GeometryCollection")
             else:
                 valid = MultiPolygon([valid])
         self._shapely_annotation.multipolygon = valid
