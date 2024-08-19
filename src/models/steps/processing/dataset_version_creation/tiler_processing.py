@@ -1,4 +1,5 @@
 import concurrent.futures
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -10,7 +11,6 @@ from PIL import Image
 from sahi.slicing import (
     slice_coco,
     SliceImageResult,
-    logger,
     get_slice_bboxes,
     process_coco_annotations,
     SlicedImage,
@@ -29,8 +29,32 @@ from src.models.dataset.processing.processing_dataset_collection import (
     ProcessingDatasetCollection,
 )
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 def custom_get_sliced_coco_annotation(self, slice_bbox: List[int]):
+    """
+    Returns a COCO annotation object corresponding to the intersection of the original annotation with the given slice bounding box.
+
+    This method processes the original COCO annotation, represented as a multipolygon, and computes its intersection with a specified
+    rectangular bounding box (`slice_bbox`). If the original multipolygon is invalid, it attempts to fix it using the `make_valid` method.
+    The intersection is then converted back to a COCO annotation format, which is returned.
+
+    Args:
+        self: An instance of a class that contains COCO annotation details, including the multipolygon geometry, category information,
+              and crowd status.
+        slice_bbox (List[int]): A list of four integers representing the bounding box for the slice. The format is [min_x, min_y, max_x, max_y].
+
+    Returns:
+        CocoAnnotation: A new COCO annotation object corresponding to the intersection of the original annotation with the slice bounding box.
+                        The returned object includes the updated geometry, category ID, category name, and crowd status.
+
+    Raises:
+        ValueError: If the original multipolygon is invalid and cannot be converted to a valid multipolygon (e.g., if it consists of an empty
+                    GeometryCollection with no valid polygons).
+    """
     shapely_polygon = box(slice_bbox[0], slice_bbox[1], slice_bbox[2], slice_bbox[3])
     samp = self._shapely_annotation.multipolygon
     if not samp.is_valid:
@@ -72,7 +96,6 @@ def custom_slice_image(
     auto_slice_resolution: bool = True,
     min_area_ratio: float = 0.1,
     out_ext: Optional[str] = None,
-    verbose: bool = False,
 ) -> SliceImageResult:
     """Slice a large image into smaller windows. If output_file_name is given export
     sliced images.
@@ -97,8 +120,6 @@ def custom_slice_image(
             ratio is smaller than this value, the annotation is filtered out. Default 0.1.
         out_ext (str, optional): Extension of saved images. Default is the
             original suffix for lossless image formats and png for lossy formats ('.jpg','.jpeg').
-        verbose (bool, optional): Switch to print relevant values to screen.
-            Default 'False'.
 
     Returns:
         sliced_image_result: SliceImageResult:
@@ -111,9 +132,6 @@ def custom_slice_image(
             Number of invalid segmentation annotations.
     """
 
-    # define verboseprint
-    verboselog = logger.info if verbose else lambda *a, **k: None
-
     def _export_single_slice(image: np.ndarray, output_dir: str, slice_file_name: str):
         image_pil = read_image_as_pil(image)
         slice_file_path = str(Path(output_dir) / slice_file_name)
@@ -122,7 +140,7 @@ def custom_slice_image(
         # image_pil.save(slice_file_path, quality="keep")
         image_pil.save(slice_file_path)
         image_pil.close()  # to fix https://github.com/obss/sahi/issues/565
-        verboselog("sliced image path: " + slice_file_path)
+        logging.info("sliced image path: " + slice_file_path)
 
     # create outdir if not present
     if output_dir is not None:
@@ -130,7 +148,7 @@ def custom_slice_image(
 
     # read image
     image_pil = read_image_as_pil(image)
-    verboselog("image.shape: " + str(image_pil.size))
+    logging.info("image.shape: " + str(image_pil.size))
 
     image_width, image_height = image_pil.size
     if not (image_width != 0 and image_height != 0):
@@ -221,7 +239,7 @@ def custom_slice_image(
             sliced_image_result.filenames,
         )
 
-    verboselog(
+    logging.info(
         "Num slices: "
         + str(n_ims)
         + " slice_height: "
