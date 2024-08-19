@@ -96,6 +96,7 @@ def custom_slice_image(
     auto_slice_resolution: bool = True,
     min_area_ratio: float = 0.1,
     out_ext: Optional[str] = None,
+    verbose: bool = False,
 ) -> SliceImageResult:
     """Slice a large image into smaller windows. If output_file_name is given export
     sliced images.
@@ -120,6 +121,7 @@ def custom_slice_image(
             ratio is smaller than this value, the annotation is filtered out. Default 0.1.
         out_ext (str, optional): Extension of saved images. Default is the
             original suffix for lossless image formats and png for lossy formats ('.jpg','.jpeg').
+        verbose (bool): If True, print log messages. Default False.
 
     Returns:
         sliced_image_result: SliceImageResult:
