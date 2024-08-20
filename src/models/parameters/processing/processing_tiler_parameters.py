@@ -10,10 +10,10 @@ class ProcessingTilerParameters(Parameters):
         )
         self.data_tag = self.extract_parameter(keys=["data_tag"], expected_type=str)
         self.tile_height = self.extract_parameter(
-            keys=["tile_height"], expected_type=int, range_value=(0, int("inf"))
+            keys=["tile_height"], expected_type=int, range_value=(0, float("inf"))
         )
         self.tile_width = self.extract_parameter(
-            keys=["tile_width"], expected_type=int, range_value=(0, int("inf"))
+            keys=["tile_width"], expected_type=int, range_value=(0, float("inf"))
         )
         self.overlap_height_ratio = self.extract_parameter(
             keys=["overlap_height_ratio"],
