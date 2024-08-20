@@ -137,18 +137,13 @@ def custom_slice_image(
     def _export_single_slice(image: np.ndarray, output_dir: str, slice_file_name: str):
         image_pil = read_image_as_pil(image)
         slice_file_path = str(Path(output_dir) / slice_file_name)
-        # export sliced image
-        # quaility is removed due to discussions/973,981, pull/956
-        # image_pil.save(slice_file_path, quality="keep")
         image_pil.save(slice_file_path)
-        image_pil.close()  # to fix https://github.com/obss/sahi/issues/565
+        image_pil.close()
         logging.info("sliced image path: " + slice_file_path)
 
-    # create outdir if not present
     if output_dir is not None:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    # read image
     image_pil = read_image_as_pil(image)
     logging.info("image.shape: " + str(image_pil.size))
 
@@ -167,24 +162,20 @@ def custom_slice_image(
 
     n_ims = 0
 
-    # init images and annotations lists
     sliced_image_result = SliceImageResult(
         original_image_size=[image_height, image_width], image_dir=output_dir
     )
 
     image_pil_arr = np.asarray(image_pil)
-    # iterate over slices
     for slice_bbox in slice_bboxes:
         n_ims += 1
 
-        # extract image
         tlx = slice_bbox[0]
         tly = slice_bbox[1]
         brx = slice_bbox[2]
         bry = slice_bbox[3]
         image_pil_slice = image_pil_arr[tly:bry, tlx:brx]
 
-        # set image file suffixes
         slice_suffixes = "_".join(map(str, slice_bbox))
         if out_ext:
             suffix = out_ext
@@ -197,17 +188,14 @@ def custom_slice_image(
         else:
             suffix = ".png"
 
-        # set image file name and path
         slice_file_name = f"{output_file_name}_{slice_suffixes}{suffix}"
 
-        # create coco image
         slice_width = slice_bbox[2] - slice_bbox[0]
         slice_height = slice_bbox[3] - slice_bbox[1]
         coco_image = CocoImage(
             file_name=slice_file_name, height=slice_height, width=slice_width
         )
 
-        # append coco annotations (if present) to coco image
         if coco_annotation_list:
             coco_annotation_list = [
                 coco_annotation
@@ -223,7 +211,6 @@ def custom_slice_image(
             ):
                 coco_image.add_annotation(sliced_coco_annotation)
 
-        # create sliced image and append to sliced_image_result
         sliced_image = SlicedImage(
             image=image_pil_slice,
             coco_image=coco_image,
@@ -231,7 +218,6 @@ def custom_slice_image(
         )
         sliced_image_result.add_sliced_image(sliced_image)
 
-    # export slices if output directory is provided
     if output_file_name and output_dir:
         conc_exec = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS)
         conc_exec.map(
