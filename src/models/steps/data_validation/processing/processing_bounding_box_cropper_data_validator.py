@@ -44,7 +44,8 @@ class ProcessingBoundingBoxCropperDataValidator(ObjectDetectionDatasetContextVal
                 f"Datalake {self.datalake} is not valid, available datalakes are {datalakes_name}"
             )
 
-    def validate(self) -> None:
-        super().validate()
+    def validate(self) -> DatasetContext:
+        self.dataset_context = super().validate()
         self._validate_label_name_to_extract()
         self._validate_datalake()
+        return self.dataset_context

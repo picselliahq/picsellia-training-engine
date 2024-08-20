@@ -66,7 +66,6 @@ class DatasetContext:
             self.list_assets()
         else:
             self.multi_asset = None
-
         self.image_dir = os.path.join(destination_path, self.dataset_name, "images")
         self.coco_file_path = self.download_coco_file()
         self.coco_file = self.build_coco_file(coco_file_path=self.coco_file_path)
@@ -102,7 +101,7 @@ class DatasetContext:
         if self.multi_asset:
             self.multi_asset.download(target_path=self.image_dir, use_id=self.use_id)
         else:
-            raise ValueError("No assets found in the dataset")
+            print(f"No assets found for dataset {self.dataset_name}!")
 
     def list_assets(self) -> None:
         """

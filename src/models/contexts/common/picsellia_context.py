@@ -1,17 +1,8 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Optional, Any, Dict, TypeVar
+from typing import Optional, Any, Dict
 
 import picsellia  # type: ignore
-from src.models.parameters.common.augmentation_parameters import AugmentationParameters
-from src.models.parameters.common.hyper_parameters import HyperParameters
-from src.models.parameters.common.parameters import Parameters
-
-TParameters = TypeVar("TParameters", bound=Parameters)
-THyperParameters = TypeVar("THyperParameters", bound=HyperParameters)
-TAugmentationParameters = TypeVar(
-    "TAugmentationParameters", bound=AugmentationParameters
-)
 
 
 class PicselliaContext(ABC):
