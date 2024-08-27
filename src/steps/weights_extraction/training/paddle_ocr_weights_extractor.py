@@ -2,7 +2,9 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
+from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
+    PaddleOCRModelCollection,
+)
 from src.models.steps.weights_extraction.training.paddle_ocr_model_collection_extractor import (
     PaddleOCRModelCollectionExtractor,
 )

@@ -2,7 +2,9 @@ from typing import Union
 
 from picsellia import Experiment
 
-from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
+from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
+    PaddleOCRModelCollection,
+)
 from src.models.steps.model_training.paddle_ocr_model_context_trainer import (
     PaddleOCRModelContextTrainer,
 )

@@ -2,17 +2,21 @@ import os
 
 import yaml
 
-from src.models.dataset.training.training_dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import (
+    TrainingDatasetCollection,
+)
 from src.models.dataset.common.paddle_ocr_dataset_context import PaddleOCRDatasetContext
-from src.models.model.model_context import ModelContext
-from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
+from src.models.model.common.model_context import ModelContext
+from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
+    PaddleOCRModelCollection,
+)
 from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters import (
     PaddleOCRHyperParameters,
 )
 
 
 def generate_bbox_yaml_config(
-    dataset_collection: DatasetCollection[PaddleOCRDatasetContext],
+    dataset_collection: TrainingDatasetCollection[PaddleOCRDatasetContext],
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
@@ -33,17 +37,17 @@ def generate_bbox_yaml_config(
     config["Optimizer"]["lr"]["learning_rate"] = hyperparameters.bbox_learning_rate
 
     config["Train"]["dataset"]["name"] = "SimpleDataSet"
-    config["Train"]["dataset"]["data_dir"] = dataset_collection.train.image_dir
+    config["Train"]["dataset"]["data_dir"] = dataset_collection["train"].image_dir
     config["Train"]["dataset"]["label_file_list"] = [
-        dataset_collection.train.paddle_ocr_bbox_annotations_path
+        dataset_collection["train"].paddle_ocr_bbox_annotations_path
     ]
     config["Train"]["loader"]["batch_size_per_card"] = hyperparameters.bbox_batch_size
     config["Train"]["loader"]["shuffle"] = True
 
     config["Eval"]["dataset"]["name"] = "SimpleDataSet"
-    config["Eval"]["dataset"]["data_dir"] = dataset_collection.val.image_dir
+    config["Eval"]["dataset"]["data_dir"] = dataset_collection["val"].image_dir
     config["Eval"]["dataset"]["label_file_list"] = [
-        dataset_collection.val.paddle_ocr_bbox_annotations_path
+        dataset_collection["val"].paddle_ocr_bbox_annotations_path
     ]
     config["Eval"]["loader"]["batch_size_per_card"] = hyperparameters.bbox_batch_size
     config["Eval"]["loader"]["shuffle"] = True
@@ -52,7 +56,7 @@ def generate_bbox_yaml_config(
 
 
 def generate_text_yaml_config(
-    dataset_collection: DatasetCollection[PaddleOCRDatasetContext],
+    dataset_collection: TrainingDatasetCollection[PaddleOCRDatasetContext],
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
@@ -64,9 +68,10 @@ def generate_text_yaml_config(
 
     config["Global"]["use_gpu"] = True
     config["Global"]["epoch_num"] = hyperparameters.text_epochs
-    config["Global"]["pretrained_model"] = os.path.join(
-        model_context.pretrained_model_path, "best_accuracy"
-    )
+    if model_context.pretrained_model_path is not None:
+        config["Global"]["pretrained_model"] = os.path.join(
+            model_context.pretrained_model_path, "best_accuracy"
+        )
     config["Global"]["save_model_dir"] = model_context.trained_model_path
     config["Global"]["save_res_path"] = model_context.results_path
     config["Global"]["save_inference_dir"] = model_context.inference_model_path
@@ -84,9 +89,9 @@ def generate_text_yaml_config(
     config["Optimizer"]["lr"]["learning_rate"] = hyperparameters.text_learning_rate
 
     config["Train"]["dataset"]["name"] = "SimpleDataSet"
-    config["Train"]["dataset"]["data_dir"] = dataset_collection.train.text_image_dir
+    config["Train"]["dataset"]["data_dir"] = dataset_collection["train"].text_image_dir
     config["Train"]["dataset"]["label_file_list"] = [
-        dataset_collection.train.paddle_ocr_text_annotations_path
+        dataset_collection["train"].paddle_ocr_text_annotations_path
     ]
     config["Train"]["loader"]["batch_size_per_card"] = hyperparameters.text_batch_size
     config["Train"]["loader"]["shuffle"] = True
@@ -97,9 +102,9 @@ def generate_text_yaml_config(
         ] = hyperparameters.max_text_length
 
     config["Eval"]["dataset"]["name"] = "SimpleDataSet"
-    config["Eval"]["dataset"]["data_dir"] = dataset_collection.val.text_image_dir
+    config["Eval"]["dataset"]["data_dir"] = dataset_collection["val"].text_image_dir
     config["Eval"]["dataset"]["label_file_list"] = [
-        dataset_collection.val.paddle_ocr_text_annotations_path
+        dataset_collection["val"].paddle_ocr_text_annotations_path
     ]
     config["Eval"]["loader"]["batch_size_per_card"] = hyperparameters.text_batch_size
     config["Eval"]["loader"]["shuffle"] = True
@@ -116,7 +121,7 @@ class PaddleOCRModelCollectionPreparator:
     def __init__(
         self,
         model_collection: PaddleOCRModelCollection,
-        dataset_collection: DatasetCollection,
+        dataset_collection: TrainingDatasetCollection,
         hyperparameters: PaddleOCRHyperParameters,
     ):
         self.model_collection = model_collection

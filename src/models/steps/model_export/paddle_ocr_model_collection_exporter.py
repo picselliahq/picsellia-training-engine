@@ -1,4 +1,6 @@
-from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
+from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
+    PaddleOCRModelCollection,
+)
 from src.models.steps.model_export.paddle_ocr_model_context_exporter import (
     PaddleOCRModelContextExporter,
 )

@@ -2,8 +2,10 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.common.dataset_collection import TDatasetContext
-from src.models.model.paddle_ocr_model_collection import PaddleOCRModelCollection
+from src.models.dataset.training.training_dataset_collection import TDatasetContext
+from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
+    PaddleOCRModelCollection,
+)
 from src.models.steps.model_evaluation.model_evaluator import ModelEvaluator
 from src.models.steps.model_inferencing.paddle_ocr_model_collection_inference import (
     PaddleOCRModelCollectionInference,

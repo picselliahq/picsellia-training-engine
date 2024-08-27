@@ -1,5 +1,5 @@
-from src.models.model.model_collection import ModelCollection
-from src.models.model.model_context import ModelContext
+from src.models.model.common.model_collection import ModelCollection
+from src.models.model.common.model_context import ModelContext
 
 
 class PaddleOCRModelCollection(ModelCollection):

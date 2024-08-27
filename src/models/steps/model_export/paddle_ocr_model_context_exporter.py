@@ -4,7 +4,7 @@ import subprocess
 import yaml
 from picsellia import Experiment
 
-from src.models.model.model_context import ModelContext
+from src.models.model.common.model_context import ModelContext
 from src.models.steps.model_export.model_context_exporter import ModelContextExporter
 
 
@@ -28,11 +28,17 @@ class PaddleOCRModelContextExporter(ModelContextExporter):
         found_best_accuracy = False
         found_latest = False
         if config["Global"]["save_model_dir"]:
-            for file in os.listdir(save_model_dir):
-                if file.startswith("best_accuracy"):
-                    found_best_accuracy = True
-                if file.startswith("latest"):
-                    found_latest = True
+            model_files = [
+                f
+                for f in os.listdir(save_model_dir)
+                if os.path.isfile(os.path.join(save_model_dir, f))
+            ]
+            for file in model_files:
+                if isinstance(file, str):
+                    if file.startswith("best_accuracy"):
+                        found_best_accuracy = True
+                    if file.startswith("latest"):
+                        found_latest = True
 
         if not found_best_accuracy and not found_latest:
             print(f"No model found in {save_model_dir}, skipping export...")
