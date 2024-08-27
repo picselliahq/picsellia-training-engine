@@ -8,7 +8,7 @@ class UltralyticsHyperParameters(HyperParameters):
         super().__init__(log_data=log_data)
 
         self.device = self.extract_parameter(
-            keys=["device"], expected_type=str, default="cpu"
+            keys=["device"], expected_type=str, default="0"
         )
         self.use_cache = self.extract_parameter(
             keys=["cache", "use_cache"],
