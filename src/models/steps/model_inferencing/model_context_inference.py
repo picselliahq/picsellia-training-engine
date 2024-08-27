@@ -3,8 +3,8 @@ from abc import abstractmethod
 from typing import TypeVar, Generic, List
 
 from src.models.dataset.training.training_dataset_collection import TDatasetContext
-from src.models.model.model_context import ModelContext
-from src.models.model.picsellia_prediction import (
+from src.models.model.common.model_context import ModelContext
+from src.models.model.common.picsellia_prediction import (
     PicselliaClassificationPrediction,
     PredictionClassificationResult,
     PicselliaRectanglePrediction,

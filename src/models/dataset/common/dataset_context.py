@@ -145,8 +145,6 @@ class DatasetContext:
         coco_files = list(self.annotations_dir.glob("*.json"))
         if coco_files:
             self._update_coco_file(coco_files[0])
-        else:
-            logger.warning("No COCO file found in the new annotations directory.")
 
         return self._verify_dataset_integrity()
 

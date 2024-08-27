@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from typing import TypeVar, Generic
 
-from src.models.dataset.common.dataset_collection import TDatasetContext
-from src.models.model.model_collection import ModelCollection
+from src.models.dataset.training.training_dataset_collection import TDatasetContext
+from src.models.model.common.model_collection import ModelCollection
 from src.models.steps.model_inferencing.base_model_inference import BaseModelInference
 
 TModelCollection = TypeVar("TModelCollection", bound=ModelCollection)

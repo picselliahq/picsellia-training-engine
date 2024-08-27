@@ -2,7 +2,7 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.model.model_context import ModelContext
+from src.models.model.common.model_context import ModelContext
 from src.models.steps.weights_extraction.training.training_model_context_extractor import (
     TrainingModelContextExtractor,
 )

@@ -4,7 +4,7 @@ from typing import Optional, Dict
 from picsellia import ModelVersion, Label
 from ultralytics import YOLO
 
-from src.models.model.model_context import ModelContext
+from src.models.model.common.model_context import ModelContext
 
 
 class UltralyticsModelContext(ModelContext, ABC):

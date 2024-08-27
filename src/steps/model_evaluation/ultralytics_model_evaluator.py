@@ -5,7 +5,9 @@ from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
 from src.models.dataset.training.training_dataset_collection import TDatasetContext
-from src.models.model.ultralytics_model_context import UltralyticsModelContext
+from src.models.model.ultralytics.ultralytics_model_context import (
+    UltralyticsModelContext,
+)
 from src.models.steps.model_evaluation.model_evaluator import ModelEvaluator
 from src.models.steps.model_inferencing.ultralytics.classification_model_context_inference import (
     UltralyticsClassificationModelContextInference,

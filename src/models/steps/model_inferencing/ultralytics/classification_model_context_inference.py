@@ -1,12 +1,14 @@
 from typing import List, Tuple
 
 from src.models.dataset.training.training_dataset_collection import TDatasetContext
-from src.models.model.picsellia_prediction import (
+from src.models.model.common.picsellia_prediction import (
     PredictionClassificationResult,
     PicselliaLabel,
     PicselliaConfidence,
 )
-from src.models.model.ultralytics_model_context import UltralyticsModelContext
+from src.models.model.ultralytics.ultralytics_model_context import (
+    UltralyticsModelContext,
+)
 from src.models.steps.model_inferencing.model_context_inference import (
     ClassificationModelContextInference,
 )

@@ -6,11 +6,13 @@ from src.models.contexts.training.picsellia_training_context import (
 from src.models.dataset.training.training_dataset_collection import (
     TrainingDatasetCollection,
 )
-from src.models.model.model_context import ModelContext
-from src.models.parameters.common.augmentation_parameters import (
+from src.models.model.common.model_context import ModelContext
+from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
-from src.models.parameters.common.hyper_parameters import UltralyticsHyperParameters
+from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters import (
+    UltralyticsHyperParameters,
+)
 from src.models.steps.model_training.ultralytics_model_context_trainer import (
     UltralyticsModelContextTrainer,
 )

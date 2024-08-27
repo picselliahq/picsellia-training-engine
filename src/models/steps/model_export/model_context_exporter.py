@@ -1,7 +1,7 @@
 import os
 from abc import abstractmethod
 
-from src.models.model.model_context import ModelContext
+from src.models.model.common.model_context import ModelContext
 
 from picsellia import Experiment
 

@@ -3,7 +3,9 @@ from typing import Optional
 
 from picsellia import Experiment
 
-from src.models.model.ultralytics_model_context import UltralyticsModelContext
+from src.models.model.ultralytics.ultralytics_model_context import (
+    UltralyticsModelContext,
+)
 
 
 class UltralyticsModelContextExtractor:

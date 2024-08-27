@@ -5,7 +5,7 @@ from picsellia import Experiment
 from picsellia.types.enums import AddEvaluationType
 
 from src.models.dataset.training.training_dataset_collection import TDatasetContext
-from src.models.model.picsellia_prediction import (
+from src.models.model.common.picsellia_prediction import (
     PicselliaOCRPrediction,
     PicselliaRectanglePrediction,
     PicselliaClassificationPrediction,
