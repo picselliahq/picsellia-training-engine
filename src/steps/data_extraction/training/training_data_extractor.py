@@ -13,7 +13,7 @@ from src.models.steps.data_extraction.training.training_dataset_collection_extra
 
 
 @step
-def training_data_extractor(random_seed=None) -> TrainingDatasetCollection:
+def training_data_extractor() -> TrainingDatasetCollection:
     """
     Extracts datasets from an experiment and prepares them for training.
 
@@ -40,7 +40,7 @@ def training_data_extractor(random_seed=None) -> TrainingDatasetCollection:
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
     dataset_collection = dataset_collection_extractor.get_dataset_collection(
-        random_seed=random_seed
+        random_seed=context.hyperparameters.seed
     )
     dataset_collection.download_all()
     return dataset_collection
