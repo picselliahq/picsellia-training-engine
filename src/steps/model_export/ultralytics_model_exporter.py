@@ -2,13 +2,14 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
+from src.models.model.common.model_context import ModelContext
 from src.models.steps.model_export.ultralytics_model_context_exporter import (
     UltralyticsModelContextExporter,
 )
 
 
 @step
-def ultralytics_model_exporter(model_context):
+def ultralytics_model_exporter(model_context: ModelContext) -> ModelContext:
     context: PicselliaTrainingContext = Pipeline.get_active_context()
     model_context_exporter = UltralyticsModelContextExporter(
         model_context=model_context, experiment=context.experiment
