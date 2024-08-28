@@ -8,5 +8,5 @@ from src.models.steps.model_loading.ultralytics.ultralytics_model_context_loader
 @step
 def ultralytics_model_context_loader(model_context: ModelContext) -> ModelContext:
     model_context_loader = UltralyticsModelContextLoader(model_context=model_context)
-    model_context = model_context_loader.load_model()
+    model_context.load_model(model_context_loader.load_model)
     return model_context
