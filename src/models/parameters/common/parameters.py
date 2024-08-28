@@ -1,6 +1,6 @@
 import logging
 from abc import ABC
-from typing import Any, Dict, Optional, Set, Tuple, TypeVar
+from typing import Any, Dict, Optional, Set, Tuple, TypeVar, get_origin, get_args, Union
 
 from picsellia.types.schemas import LogDataType  # type: ignore
 
@@ -18,7 +18,7 @@ class Parameters(ABC):
         self,
         keys: list,
         expected_type: type,
-        default: Any = None,
+        default: Any = ...,
         range_value: Optional[Tuple[Any, Any]] = None,
     ) -> Any:
         """Extract a parameter from the log data.
@@ -27,42 +27,63 @@ class Parameters(ABC):
         Additional constraints can be provided, such as the expected type, a default value, and a value range.
 
         Examples:
-            Extract a string parameter that can either have the key "key1" or "key2":
+            Extract a required string parameter that cannot be None:
             ```
             parameter = self.extract_parameter(keys=["key1", "key2"], expected_type=str)
             ```
 
-            Extract an integer parameter with a default value:
+            Extract a required integer parameter that can be None:
             ```
-            parameter = self.extract_parameter(keys=["key1"], expected_type=int, default=42)
+            parameter = self.extract_parameter(keys=["key1"], expected_type=int | None)
             ```
 
-            Extract a float parameter within a specific range:
+            Extract an optional float parameter within a specific range:
             ```
-            parameter = self.extract_parameter(keys=["key1"], expected_type=float, range_value=[0.0, 1.0])
+            parameter = self.extract_parameter(keys=["key1"], expected_type=float, default=0.5, range_value=(0.0, 1.0))
+            ```
+
+            Extract an optional string parameter with a default value:
+            ```
+            parameter = self.extract_parameter(keys=["key1"], expected_type=str, default="default_value")
+            ```
+
+            Extract an optional string parameter that can be None:
+            ```
+            parameter = self.extract_parameter(keys=["key1"], expected_type=Union[str, None], default=None)
             ```
 
         Args:
             keys: A list of possible keys to extract the parameter.
-            expected_type: The expected type of the parameter.
-            default: The default value if the parameter is not found.
+            expected_type: The expected type of the parameter, can use Union for optional types.
+            default: The default value if the parameter is not found. Use ... for required parameters.
             range_value: A tuple of two numbers representing the allowed range of the parameter.
 
         Returns:
             The extracted parameter.
 
         Raises:
-            ValueError: If no keys are provided.
-            ValueError: If the value is out of the allowed range.
+            ValueError: If no keys are provided or if the value is out of the allowed range.
             TypeError: If the parameter is not of the expected type.
             KeyError: If no parameter is found and no default value is provided.
         """
+
         if len(keys) == 0:
             raise ValueError(
                 "Cannot extract a parameter without any keys. One or more keys must be provided."
             )
 
-        if default is not None and not isinstance(default, expected_type):
+        # Determine if the type is optional
+        origin = get_origin(expected_type)
+        args = get_args(expected_type)
+        is_optional = origin is Union and any(isinstance(None, arg) for arg in args)
+        base_type = (
+            next((arg for arg in args if not isinstance(None, arg)), expected_type)
+            if is_optional
+            else expected_type
+        )
+
+        # Check if the default value matches the expected type
+        if default is not ... and not isinstance(default, (base_type, type(None))):
             raise TypeError(
                 f"The provided default value {default} does not match the expected type {expected_type}."
             )
@@ -70,46 +91,50 @@ class Parameters(ABC):
         for key in keys:
             if key in self.parameters_data:
                 value = self.parameters_data[key]
-                parsed_value = self._flexible_type_check(value, expected_type)
+                parsed_value = self._flexible_type_check(
+                    value, base_type, is_optional=is_optional
+                )
+
+                if parsed_value is None and not is_optional:
+                    raise TypeError(
+                        f"The value for key '{key}' cannot be None as it's not an optional type."
+                    )
 
                 if parsed_value is not None:
-                    if range_value and expected_type in [int, float]:
+                    if range_value and base_type in [int, float]:
                         checked_value_range = self._validate_range(range_value)
                         if not (
                             checked_value_range[0]
-                            < parsed_value
-                            < checked_value_range[1]
+                            <= parsed_value
+                            <= checked_value_range[1]
                         ):
                             raise ValueError(
                                 f"Value for key '{key}' is out of the allowed range {range_value}."
                             )
                     return parsed_value
+
+                elif is_optional:
+                    return parsed_value
+
                 else:
                     raise RuntimeError(
                         f"The value {value} for key {key} has been parsed to None and therefore cannot be used. "
-                        f"The key {key} except as value of type {expected_type}."
+                        f"The key {key} expects a value of type {expected_type}."
                     )
 
-        if default is not None:
+        if default is not ...:
             logger.warning(
                 f"None of the keys {keys} were found in the provided data. "
                 f"Using default value {Colors.YELLOW}{default}{Colors.ENDC}."
             )
             self.defaulted_keys.update(keys)
-            return self._flexible_type_check(default, expected_type)
+            return default
 
         else:
-            error_string = (
-                f"Some parameters are missing. "
-                f"At least one parameter with a key from {keys}"
-            )
+            error_string = f"Required parameter with key(s) {keys} of type {expected_type} not found."
 
             if range_value is not None:
-                error_string += f", of type `{expected_type.__name__}` and within the range {range_value}"
-            else:
-                error_string += f" and of type `{expected_type.__name__}`"
-
-            error_string += " must be provided."
+                error_string += f" Expected value within the range {range_value}."
 
             raise KeyError(error_string)
 
@@ -146,12 +171,15 @@ class Parameters(ABC):
 
         raise ValueError("The provided parameters must be a dictionary.")
 
-    def _flexible_type_check(self, value: Any, expected_type: type) -> Any:
+    def _flexible_type_check(
+        self, value: Any, expected_type: type, is_optional: bool
+    ) -> Any:
         """Check if a value can be converted to a given type.
 
         Args:
             value: The value to check.
             expected_type: The type to check against.
+            is_optional: Whether the type is optional.
 
         Returns:
             The value converted to the expected type if possible, otherwise None.
@@ -202,6 +230,17 @@ class Parameters(ABC):
                     raise ValueError(
                         f"Value {value} cannot be converted to int without losing precision."
                     ) from e
+
+        elif value is None and not is_optional:
+            raise TypeError(
+                f"Value {value} cannot be None as it's not an optional type."
+            )
+
+        elif is_optional:
+            if value is None:
+                return value
+            elif str(value).lower() in ["none", "null"]:
+                return None
 
         return value
 
