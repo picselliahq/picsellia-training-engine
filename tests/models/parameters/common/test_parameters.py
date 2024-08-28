@@ -157,6 +157,30 @@ class TestParameters:
                 parameters._validate_range(value_range) == expected_outcome
             ), f"Expected range {expected_outcome}, got {parameters._validate_range(value_range)}"
 
+    @pytest.mark.parametrize(
+        # The "key2" parameter, used in this test, is an integer with a value of 100
+        "value_range, expected_outcome",
+        [
+            ((0, 100), 100),
+            ((0, 99), ValueError),
+            ((100, 101), 100),
+            ((101, 102), ValueError),
+        ],
+    )
+    def test_range_validation_on_value(self, value_range, expected_outcome, parameters):
+        if expected_outcome is ValueError:
+            with pytest.raises(ValueError):
+                parameters.extract_parameter(
+                    keys=["key2"], expected_type=int, range_value=value_range
+                )
+        else:
+            assert (
+                parameters.extract_parameter(
+                    keys=["key2"], expected_type=int, range_value=value_range
+                )
+                == expected_outcome
+            )
+
     def test_optional_parameter(self, parameters):
         assert (
             parameters.extract_parameter(keys=["key5"], expected_type=Union[str, None])
