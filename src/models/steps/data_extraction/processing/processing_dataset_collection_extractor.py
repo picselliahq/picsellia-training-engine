@@ -16,6 +16,7 @@ class ProcessingDatasetCollectionExtractor:
         output_dataset_version: DatasetVersion,
         job_id: Optional[str] = None,
         use_id: Optional[bool] = True,
+        download_annotations: Optional[bool] = True,
     ):
         self.input_dataset_version = input_dataset_version
         self.output_dataset_version = output_dataset_version
@@ -24,6 +25,7 @@ class ProcessingDatasetCollectionExtractor:
         else:
             self.destination_path = os.path.join(os.getcwd(), str(job_id))
         self.use_id = use_id
+        self.download_annotations = download_annotations
 
     def get_dataset_collection(self) -> ProcessingDatasetCollection:
         # get input and output dataset versions
@@ -34,6 +36,7 @@ class ProcessingDatasetCollectionExtractor:
             multi_asset=None,
             labelmap=None,
             use_id=self.use_id,
+            download_annotations=self.download_annotations,
         )
         output_dataset_context = DatasetContext(
             dataset_name="output",
@@ -42,6 +45,7 @@ class ProcessingDatasetCollectionExtractor:
             multi_asset=None,
             labelmap=None,
             use_id=self.use_id,
+            download_annotations=self.download_annotations,
         )
         return ProcessingDatasetCollection(
             input_dataset_context=input_dataset_context,

@@ -30,8 +30,8 @@ class DatasetContext:
         multi_asset: Optional[MultiAsset] = None,
         labelmap: Optional[Dict[str, Label]] = None,
         skip_asset_listing: bool = False,
-        use_id: bool = True,
-        download_annotations: bool = True,
+        use_id: Optional[bool] = True,
+        download_annotations: Optional[bool] = True,
     ):
         self.dataset_name = dataset_name
         self.dataset_version = dataset_version

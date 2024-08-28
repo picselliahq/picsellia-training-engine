@@ -73,6 +73,7 @@ def processing_dataset_collection_extractor() -> ProcessingDatasetCollection:
         output_dataset_version=context.output_dataset_version,
         job_id=context.job_id,
         use_id=context.use_id,
+        download_annotations=context.download_annotations,
     )
     dataset_collection = dataset_collection_extractor.get_dataset_collection()
     dataset_collection.download_assets()
