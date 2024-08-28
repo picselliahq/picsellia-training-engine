@@ -14,8 +14,9 @@ class ClassificationDatasetContextValidator(DatasetContextValidator):
     def validate(self):
         """
         Validate the classification dataset context.
-        A classification dataset context must have at least 2 classes and at least 1 image per class
+        A classification dataset context must have at least 2 classes and at least 1 image per class.
 
+        Logs the number of images per class and any errors found.
         Raises:
             ValueError: If the classification dataset context is not valid.
         """
