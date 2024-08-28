@@ -6,7 +6,7 @@ from src.models.steps.data_validation.common.dataset_context_validator import (
 
 
 class ObjectDetectionDatasetContextValidator(DatasetContextValidator):
-    def __init__(self, dataset_context, fix_annotation=False):
+    def __init__(self, dataset_context, fix_annotation=True):
         super().__init__(dataset_context)
         self.fix_annotation = fix_annotation
         self.error_count = {
