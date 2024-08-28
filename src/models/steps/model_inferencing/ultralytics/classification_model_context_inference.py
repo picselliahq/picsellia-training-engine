@@ -3,11 +3,9 @@ from typing import List
 from ultralytics.engine.results import Results
 
 from src.models.dataset.training.training_dataset_collection import TDatasetContext
+from src.models.model.common.model_context import ModelContext
 from src.models.model.common.picsellia_prediction import (
     PredictionClassificationResult,
-)
-from src.models.model.ultralytics.ultralytics_model_context import (
-    UltralyticsModelContext,
 )
 from src.models.steps.model_inferencing.model_context_inference import (
     ClassificationModelContextInference,
@@ -15,9 +13,9 @@ from src.models.steps.model_inferencing.model_context_inference import (
 
 
 class UltralyticsClassificationModelContextInference(
-    ClassificationModelContextInference[UltralyticsModelContext]
+    ClassificationModelContextInference[ModelContext]
 ):
-    def __init__(self, model_context: UltralyticsModelContext):
+    def __init__(self, model_context: ModelContext):
         super().__init__(model_context)
 
     def predict_images(

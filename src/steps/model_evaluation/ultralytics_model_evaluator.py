@@ -5,9 +5,7 @@ from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
 from src.models.dataset.training.training_dataset_collection import TDatasetContext
-from src.models.model.ultralytics.ultralytics_model_context import (
-    UltralyticsModelContext,
-)
+from src.models.model.common.model_context import ModelContext
 from src.models.steps.model_evaluation.model_evaluator import ModelEvaluator
 from src.models.steps.model_inferencing.ultralytics.classification_model_context_inference import (
     UltralyticsClassificationModelContextInference,
@@ -16,9 +14,9 @@ from src.models.steps.model_inferencing.ultralytics.classification_model_context
 
 @step
 def ultralytics_model_evaluator(
-    model_context: UltralyticsModelContext,
+    model_context: ModelContext,
     dataset_context: TDatasetContext,
-):
+) -> None:
     context: PicselliaTrainingContext = Pipeline.get_active_context()
 
     if dataset_context.dataset_version.type == InferenceType.CLASSIFICATION:

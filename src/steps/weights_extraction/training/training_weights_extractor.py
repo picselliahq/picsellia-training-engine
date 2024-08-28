@@ -16,5 +16,4 @@ def training_weights_extractor() -> ModelContext:
     )
     model_context = model_context_extractor.get_model_context()
     model_context.download_weights()
-    model_context.load_model()
     return model_context

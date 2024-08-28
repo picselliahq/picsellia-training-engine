@@ -1,8 +1,7 @@
 import os
 import tarfile
 import zipfile
-from abc import abstractmethod
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Callable
 
 from picsellia import ModelVersion, Label, ModelFile
 
@@ -72,11 +71,12 @@ class ModelContext:
             ValueError: If the model is not loaded.
         """
         if self._loaded_model is None:
-            raise ValueError("Model is not loaded")
+            raise ValueError(
+                "Model is not loaded. Please load the model before accessing it."
+            )
         return self._loaded_model
 
-    @loaded_model.setter
-    def loaded_model(self, model: Any):
+    def set_loaded_model(self, model: Any) -> None:
         """
         Sets the loaded model instance.
 
@@ -85,10 +85,17 @@ class ModelContext:
         """
         self._loaded_model = model
 
-    @abstractmethod
-    def load_model(self) -> None:
-        """Abstract method to be implemented by subclasses for loading the model."""
-        pass
+    def load_model(self, model_loader_func: Callable[[], Any]) -> None:
+        """
+        Loads the model using a provided model loader function.
+
+        Args:
+            model_loader_func (Callable[[], Any]): A function that returns the loaded model instance.
+        """
+        if self.pretrained_model_path is None:
+            raise ValueError("Pretrained model path is not set. Cannot load the model.")
+
+        self.set_loaded_model(model_loader_func())
 
     def download_weights(self) -> None:
         """

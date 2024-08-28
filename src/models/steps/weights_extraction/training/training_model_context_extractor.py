@@ -3,7 +3,7 @@ from typing import Optional
 
 from picsellia import Experiment
 
-from src.models.model.model_context import ModelContext
+from src.models.model.common.model_context import ModelContext
 
 
 class TrainingModelContextExtractor:
