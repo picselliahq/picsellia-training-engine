@@ -7,7 +7,7 @@ class UltralyticsHyperParameters(HyperParameters):
     def __init__(self, log_data: LogDataType):
         super().__init__(log_data=log_data)
         self.time = self.extract_parameter(
-            keys=["time"], expected_type=float, default=float("inf")
+            keys=["time"], expected_type=float, default=10.0
         )
         self.patience = self.extract_parameter(
             keys=["patience"], expected_type=int, default=100
