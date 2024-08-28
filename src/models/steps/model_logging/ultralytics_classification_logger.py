@@ -1,30 +1,72 @@
-from src.models.steps.model_logging.classification_logger import ClassificationLogger
+from src.models.steps.model_logging.base_logger import (
+    ClassificationMetricMapping,
+    Metric,
+    BaseLogger,
+)
+
+from picsellia import Experiment
 
 
-class UltralyticsClassificationLogger(ClassificationLogger):
-    def _get_default_metric_mappings(self) -> dict:
-        # Map Ultralytics-specific metric names to your standard names
-        return {
-            "train": {
-                "metrics/accuracy_top1": "accuracy",
-                "metrics/accuracy_top5": "accuracy_top5",
-                "train/loss": "loss",
-                "lr/pg0": "learning_rate",
-                "lr/pg1": "learning_rate_pg1",
-                "lr/pg2": "learning_rate_pg2",
-                "epoch_time": "epoch_time",
-            },
-            "val": {
-                "val/loss": "loss",
-                "metrics/accuracy_top1": "accuracy",
-                "metrics/accuracy_top5": "accuracy_top5",
-            },
-            "test": {
-                "accuracy": "accuracy",
-                "precision": "precision",
-                "recall": "recall",
-                "f1_score": "f1_score",
-                "loss": "loss",
-                "confusion_matrix": "confusion_matrix",
-            },
-        }
+class UltralyticsClassificationMetricMapping(ClassificationMetricMapping):
+    def __init__(self):
+        super().__init__()
+        self.add_metric(
+            phase="train",
+            metric=Metric(
+                standard_name="accuracy", framework_name="metrics/accuracy_top1"
+            ),
+        )
+        self.add_metric(
+            phase="train",
+            metric=Metric(
+                standard_name="accuracy_top5", framework_name="metrics/accuracy_top5"
+            ),
+        )
+        self.add_metric(
+            phase="train",
+            metric=Metric(standard_name="loss", framework_name="train/loss"),
+        )
+        self.add_metric(
+            phase="train",
+            metric=Metric(standard_name="learning_rate", framework_name="lr/pg0"),
+        )
+        self.add_metric(
+            phase="train",
+            metric=Metric(standard_name="learning_rate_pg1", framework_name="lr/pg1"),
+        )
+        self.add_metric(
+            phase="train",
+            metric=Metric(standard_name="learning_rate_pg2", framework_name="lr/pg2"),
+        )
+        self.add_metric(
+            phase="train",
+            metric=Metric(standard_name="epoch_time", framework_name="epoch_time"),
+        )
+
+        self.add_metric(
+            phase="val",
+            metric=Metric(
+                standard_name="accuracy", framework_name="metrics/accuracy_top1"
+            ),
+        )
+        self.add_metric(
+            phase="val",
+            metric=Metric(
+                standard_name="accuracy_top5", framework_name="metrics/accuracy_top5"
+            ),
+        )
+        self.add_metric(
+            phase="val", metric=Metric(standard_name="loss", framework_name="val/loss")
+        )
+
+
+class UltralyticsClassificationLogger(BaseLogger):
+    def __init__(self, experiment: Experiment):
+        """
+        Initialize the Ultralytics logger with a specific metric mapping.
+
+        Args:
+            experiment (Experiment): The experiment object for logging.
+        """
+        metric_mapping = UltralyticsClassificationMetricMapping()
+        super().__init__(experiment=experiment, metric_mapping=metric_mapping)

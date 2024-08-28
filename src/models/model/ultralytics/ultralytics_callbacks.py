@@ -37,9 +37,14 @@ class UltralyticsCallbacks:
         )
 
         for metric_name, metric_value in trainer.metrics.items():
-            self.logger.log_metric(
-                name=metric_name, value=(metric_value), phase="train"
-            )
+            if metric_name.startswith("val"):
+                self.logger.log_metric(
+                    name=metric_name, value=float(metric_value), phase="val"
+                )
+            else:
+                self.logger.log_metric(
+                    name=metric_name, value=float(metric_value), phase="train"
+                )
 
         if trainer.epoch == 0:
             from ultralytics.utils.torch_utils import model_info_for_loggers
