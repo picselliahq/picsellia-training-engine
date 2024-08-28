@@ -25,6 +25,7 @@ def bounding_box_cropper_data_validator(
         client=context.client,
         label_name_to_extract=context.processing_parameters.label_name_to_extract,
         datalake=context.processing_parameters.datalake,
+        fix_annotation=context.processing_parameters.fix_annotation,
     )
     dataset_context = validator.validate()
     return dataset_context
