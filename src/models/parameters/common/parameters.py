@@ -88,6 +88,11 @@ class Parameters(ABC):
                 f"The provided default value {default} does not match the expected type {expected_type}."
             )
 
+        if default is None and not is_optional:
+            raise ValueError(
+                f"The default value cannot be None as the expected type {expected_type} is not optional."
+            )
+
         for key in keys:
             if key in self.parameters_data:
                 value = self.parameters_data[key]

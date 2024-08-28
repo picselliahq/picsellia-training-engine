@@ -182,10 +182,35 @@ class TestParameters:
             is None
         )
 
+    def test_non_optional_parameter_with_none_parameter_raises_an_error(
+        self, parameters
+    ):
+        with pytest.raises(TypeError):
+            parameters.extract_parameter(keys=["key6"], expected_type=str)
+
+    def test_parsed_optional_value(self, parameters):
         assert (
             parameters.extract_parameter(keys=["key5"], expected_type=str)
             == parameters.parameters_data["key5"]
         )
 
-        with pytest.raises(TypeError):
-            parameters.extract_parameter(keys=["key6"], expected_type=str)
+        assert (
+            parameters.extract_parameter(keys=["key5"], expected_type=Union[str, None])
+            is None
+        )
+
+        assert (
+            parameters.extract_parameter(
+                keys=["nonexistent"], expected_type=Union[str, None], default="null"
+            )
+            == "null"
+        )
+
+    def test_non_optional_parameter_with_none_default(self, parameters):
+        parameters.extract_parameter(
+            keys=["nonexistent"], expected_type=Union[str, None], default=None
+        )
+        with pytest.raises(ValueError):
+            parameters.extract_parameter(
+                keys=["nonexistent"], expected_type=str, default=None
+            )
