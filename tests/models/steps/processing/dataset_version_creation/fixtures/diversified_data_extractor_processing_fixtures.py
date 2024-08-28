@@ -6,7 +6,7 @@ from src.enums import DatasetSplitName
 from src.models.steps.processing.dataset_version_creation.diversified_data_extractor_processing import (
     DiversifiedDataExtractorProcessing,
 )
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
+from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
     OpenClipEmbeddingModel,
 )
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata

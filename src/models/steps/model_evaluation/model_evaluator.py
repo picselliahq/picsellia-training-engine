@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Union
 
 from picsellia import Experiment
 from picsellia.types.enums import AddEvaluationType
@@ -27,14 +27,22 @@ class ModelEvaluator(ABC, Generic[TModelInference]):
         self.dataset_context = dataset_context
         self.experiment = experiment
 
-    def evaluate(self):
+    def evaluate(self) -> None:
         picsellia_evaluations = self.model_inference.predict_on_dataset_context(
             self.dataset_context
         )
         for evaluation in picsellia_evaluations:
             self.add_evaluation(evaluation)
 
-    def add_evaluation(self, evaluation):
+    def add_evaluation(
+        self,
+        evaluation: Union[
+            PicselliaClassificationPrediction,
+            PicselliaRectanglePrediction,
+            PicselliaPolygonPrediction,
+            PicselliaOCRPrediction,
+        ],
+    ) -> None:
         asset = evaluation.asset
         if isinstance(evaluation, PicselliaOCRPrediction):
             rectangles = [

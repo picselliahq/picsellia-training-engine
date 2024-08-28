@@ -17,7 +17,7 @@ from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.processing.dataset_version_creation.dataset_version_creation_processing import (
     DatasetVersionCreationProcessing,
 )
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
+from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
     EmbeddingModel,
 )
 

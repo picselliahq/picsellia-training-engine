@@ -11,7 +11,7 @@ from src.steps.data_extraction.processing.processing_data_extractor import (
 from src.steps.data_validation.processing.processing_diversified_data_extractor_data_validator import (
     diversified_data_extractor_data_validator,
 )
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
+from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
     diversified_data_extractor_model_loader,
 )
 from src.steps.processing.dataset_version_creation.diversified_data_extractor_processing import (
