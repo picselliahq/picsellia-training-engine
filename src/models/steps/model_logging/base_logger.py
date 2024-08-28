@@ -43,8 +43,8 @@ class Metric:
         self.standard_name = standard_name
         self.framework_name = framework_name
 
-    def get_name(self) -> Optional[str]:
-        return self.framework_name
+    def get_name(self) -> str:
+        return self.standard_name
 
 
 class MetricMapping:
@@ -80,12 +80,12 @@ class MetricMapping:
             phase: The phase ('train', 'val', 'test').
 
         Returns:
-
+            A dictionary mapping framework names to standard names.
         """
         if phase is None:
             return {}
         return {
-            metric.standard_name: metric.get_name() or metric.standard_name
+            metric.framework_name or metric.standard_name: metric.standard_name
             for metric in self.mappings.get(phase, [])
         }
 
