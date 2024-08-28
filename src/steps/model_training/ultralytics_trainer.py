@@ -30,6 +30,8 @@ def ultralytics_trainer(
         experiment=context.experiment,
     )
     model_context = model_trainer.train_model_context(
-        dataset_collection=dataset_collection, hyperparameters=context.hyperparameters
+        dataset_collection=dataset_collection,
+        hyperparameters=context.hyperparameters,
+        augmentation_parameters=context.augmentation_parameters,
     )
     return model_context
