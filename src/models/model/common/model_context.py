@@ -76,14 +76,14 @@ class ModelContext:
         return self._loaded_model
 
     @loaded_model.setter
-    def loaded_model(self, value: Any):
+    def loaded_model(self, model: Any):
         """
         Sets the loaded model instance.
 
         Args:
-            value (Any): The model instance to set as loaded.
+            model (Any): The model instance to set as loaded.
         """
-        self._loaded_model = value
+        self._loaded_model = model
 
     @abstractmethod
     def load_model(self) -> None:
