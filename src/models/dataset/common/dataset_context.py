@@ -31,11 +31,13 @@ class DatasetContext:
         labelmap: Optional[Dict[str, Label]] = None,
         skip_asset_listing: bool = False,
         use_id: bool = True,
+        download_annotations: bool = True,
     ):
         self.dataset_name = dataset_name
         self.dataset_version = dataset_version
         self.destination_path = Path(destination_path)
         self.use_id = use_id
+        self.download_annotations = download_annotations
         self.labelmap = labelmap or get_labelmap(dataset_version=dataset_version)
         self.multi_asset = multi_asset or (
             None if skip_asset_listing else self._list_assets()
@@ -82,12 +84,21 @@ class DatasetContext:
         return coco_file
 
     def _initialize_coco_file(self):
-        coco_file_path = self._download_coco_file()
-        if coco_file_path is None:
-            raise ValueError(
-                "Failed to download COCO file. Dataset context cannot be initialized."
-            )
-        self.coco_file = self._build_coco_file(coco_file_path)
+        if self.download_annotations:
+            coco_file_path = self._download_coco_file()
+            if coco_file_path is None:
+                raise ValueError(
+                    "Failed to download COCO file. Dataset context cannot be initialized."
+                )
+            self.coco_file = self._build_coco_file(coco_file_path)
+        else:
+            if self.multi_asset:
+                self.coco_file = self.dataset_version.build_coco_file_locally(
+                    use_id=self.use_id
+                )
+            else:
+                self.coco_file = COCOFile(images=[], annotations=[])
+            self.coco_file_manager = COCOFileManager(self.coco_file)
 
     def download_assets(self) -> None:
         """Downloads the dataset assets to the local filesystem."""
@@ -96,8 +107,6 @@ class DatasetContext:
             self.multi_asset.download(
                 target_path=str(self.image_dir), use_id=self.use_id
             )
-        else:
-            logger.warning(f"No assets found for dataset {self.dataset_name}!")
 
     def _list_assets(self) -> Optional[MultiAsset]:
         """Lists the assets in the dataset."""
