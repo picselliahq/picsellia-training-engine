@@ -16,6 +16,8 @@ def log_data():
         "key2": 100,
         "key3": True,
         "key4": {"nested_key1": 63, "nested_key2": 42.0},
+        "key5": "null",
+        "key6": None,
     }
 
 
