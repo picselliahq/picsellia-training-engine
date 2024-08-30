@@ -1,5 +1,4 @@
-from src import Pipeline
-from src import step
+from src import Pipeline, step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
@@ -24,12 +23,15 @@ def tiler_processing(
     ] = Pipeline.get_active_context()
 
     processor = TilerProcessing(
-        dataset_collection=dataset_collection,
         tile_height=context.processing_parameters.tile_height,
         tile_width=context.processing_parameters.tile_width,
         overlap_height_ratio=context.processing_parameters.overlap_height_ratio,
         overlap_width_ratio=context.processing_parameters.overlap_width_ratio,
         min_area_ratio=context.processing_parameters.min_area_ratio,
     )
-    dataset_collection = processor.process()
+
+    dataset_collection = processor.process_dataset_collection(
+        dataset_collection=dataset_collection
+    )
+
     return dataset_collection.output
