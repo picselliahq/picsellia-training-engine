@@ -20,7 +20,9 @@ class ModelContextExporter:
         self.experiment = experiment
 
     @abstractmethod
-    def export_model_context(self):
+    def export_model_context(
+        self, exported_model_destination_path: str, export_format: str
+    ):
         """
         Abstract method to be implemented by subclasses to define how the model context is exported.
         """
@@ -42,7 +44,7 @@ class ModelContextExporter:
             else "model-latest"
         )
 
-        inference_model_files = os.listdir(self.model_context.inference_model_path)
+        inference_model_files = os.listdir(self.model_context.inference_model_dir)
         if not inference_model_files:
             raise ValueError("No model files found in inference model path")
 
@@ -62,25 +64,14 @@ class ModelContextExporter:
         if len(inference_model_files) > 1:
             self.experiment.store(
                 name=saved_model_name,
-                path=self.model_context.inference_model_path,
+                path=self.model_context.inference_model_dir,
                 do_zip=True,
             )
         else:
             self.experiment.store(
                 name=saved_model_name,
                 path=os.path.join(
-                    str(self.model_context.inference_model_path),
+                    str(self.model_context.inference_model_dir),
                     inference_model_files[0],
                 ),
             )
-
-    def export_and_save_model_context(self) -> ModelContext:
-        """
-        Exports the model context and then saves it to the experiment.
-
-        Returns:
-            ModelContext: The updated model context after export and save.
-        """
-        self.export_model_context()
-        self.model_context = self.save_model_to_experiment()
-        return self.model_context

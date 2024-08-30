@@ -1,18 +1,11 @@
-from src.models.model.common.model_context import ModelContext
-
 from ultralytics import YOLO
 
 
-class UltralyticsModelContextLoader:
-    def __init__(self, model_context: ModelContext):
-        self.model_context = model_context
-
-    def load_model(self) -> YOLO:
-        """
-        Loads the Ultralytics model using the pretrained model path.
-        Raises an error if the pretrained model path is not set.
-        """
-        if self.model_context.pretrained_model_path is None:
-            raise ValueError("Pretrained model path is not set")
-        loaded_model = YOLO(self.model_context.pretrained_model_path)
-        return loaded_model
+def ultralytics_load_model(weights_path_to_load: str, device: str) -> YOLO:
+    """
+    Loads the Ultralytics model using the pretrained model path.
+    Raises an error if the pretrained model path is not set.
+    """
+    loaded_model = YOLO(weights_path_to_load)
+    loaded_model.to(device)
+    return loaded_model

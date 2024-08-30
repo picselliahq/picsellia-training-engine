@@ -18,7 +18,9 @@ class UltralyticsModelContextExporter(ModelContextExporter):
     def __init__(self, model_context: ModelContext, experiment: Experiment):
         super().__init__(model_context=model_context, experiment=experiment)
 
-    def export_model_context(self) -> None:
+    def export_model_context(
+        self, exported_model_destination_path: str, export_format: str
+    ) -> None:
         """
         Exports the Ultralytics model context by converting it to the ONNX format and ensuring
         that the resulting file is placed in the inference model path for subsequent saving.
@@ -26,24 +28,24 @@ class UltralyticsModelContextExporter(ModelContextExporter):
         Raises:
             ValueError: If no results folder or ONNX file is found.
         """
-        self._export_model_to_inference_path()
-        model_folder = self._find_model_folder()
+        self._export_model(export_format=export_format)
 
+        model_folder = self._find_model_folder()
         exported_model_dir = os.path.join(
-            self.model_context.results_path, model_folder, "weights"
+            self.model_context.results_dir, model_folder, "weights"
         )
         onnx_file = self._find_onnx_file(exported_model_dir)
 
-        self._move_onnx_to_inference_path(exported_model_dir, onnx_file)
+        self._move_onnx_to_destination_path(
+            onnx_file_path=os.path.join(exported_model_dir, onnx_file),
+            exported_model_destination_path=exported_model_destination_path,
+        )
 
-    def _export_model_to_inference_path(self) -> None:
+    def _export_model(self, export_format: str) -> None:
         """
         Exports the model to ONNX format directly into the inference model path.
         """
-        print(
-            f"Exporting model to ONNX format at {self.model_context.inference_model_path}"
-        )
-        self.model_context.loaded_model.export(format="onnx")
+        self.model_context.loaded_model.export(format=export_format)
 
     def _find_model_folder(self) -> str:
         """
@@ -55,7 +57,7 @@ class UltralyticsModelContextExporter(ModelContextExporter):
         Raises:
             ValueError: If no results folder is found.
         """
-        results_dir = os.listdir(self.model_context.results_path)
+        results_dir = os.listdir(self.model_context.results_dir)
         if not results_dir:
             raise ValueError("No results folder found")
         elif len(results_dir) == 1:
@@ -87,20 +89,20 @@ class UltralyticsModelContextExporter(ModelContextExporter):
             raise ValueError("No ONNX file found")
         return onnx_files[0]
 
-    def _move_onnx_to_inference_path(
-        self, exported_model_dir: str, onnx_file: str
+    def _move_onnx_to_destination_path(
+        self, onnx_file_path: str, exported_model_destination_path: str
     ) -> None:
         """
-        Moves the ONNX file from the export directory to the inference model path.
+        Moves the ONNX file to the specified destination path.
 
         Args:
-            exported_model_dir (str): The directory from which the ONNX file is moved.
-            onnx_file (str): The ONNX file to move.
+            onnx_file_path:
+            exported_model_destination_path:
+
+        Returns:
+
         """
         print(
-            f"Moving ONNX file to inference model path: {self.model_context.inference_model_path}"
+            f"Moving ONNX file to inference model path: {exported_model_destination_path}"
         )
-        shutil.move(
-            os.path.join(exported_model_dir, onnx_file),
-            self.model_context.inference_model_path,
-        )
+        shutil.move(onnx_file_path, exported_model_destination_path)

@@ -1,11 +1,13 @@
-from src.models.dataset.common.dataset_context import DatasetContext
+from typing import Generic
+
+from src.models.dataset.common.dataset_context import TDatasetContext
 
 
-class ProcessingDatasetCollection:
+class ProcessingDatasetCollection(Generic[TDatasetContext]):
     def __init__(
         self,
-        input_dataset_context: DatasetContext,
-        output_dataset_context: DatasetContext,
+        input_dataset_context: TDatasetContext,
+        output_dataset_context: TDatasetContext,
     ):
         self.input = input_dataset_context
         self.output = output_dataset_context

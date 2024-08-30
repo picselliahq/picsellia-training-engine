@@ -76,7 +76,7 @@ class UltralyticsModelContextTrainer:
                 cache=hyperparameters.cache,
                 device=hyperparameters.device,
                 workers=hyperparameters.workers,
-                project=self.model_context.results_path,
+                project=self.model_context.results_dir,
                 name=self.model_context.model_name,
                 exist_ok=True,
                 pretrained=True,

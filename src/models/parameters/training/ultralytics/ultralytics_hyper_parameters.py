@@ -7,7 +7,7 @@ class UltralyticsHyperParameters(HyperParameters):
     def __init__(self, log_data: LogDataType):
         super().__init__(log_data=log_data)
         self.time = self.extract_parameter(
-            keys=["time"], expected_type=float, default=10.0
+            keys=["time"], expected_type=float, default=None
         )
         self.patience = self.extract_parameter(
             keys=["patience"], expected_type=int, default=100
@@ -56,7 +56,7 @@ class UltralyticsHyperParameters(HyperParameters):
             keys=["profile"], expected_type=bool, default=False
         )
         self.freeze = self.extract_parameter(
-            keys=["freeze"], expected_type=int, default=0
+            keys=["freeze"], expected_type=int, default=None
         )
         self.lr0 = self.extract_parameter(
             keys=["lr0"], expected_type=float, default=0.01

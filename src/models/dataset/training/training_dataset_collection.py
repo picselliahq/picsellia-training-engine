@@ -1,9 +1,7 @@
 import os
-from typing import TypeVar, Generic, List
+from typing import Generic, List
 
-from src.models.dataset.common.dataset_context import DatasetContext
-
-TDatasetContext = TypeVar("TDatasetContext", bound=DatasetContext)
+from src.models.dataset.common.dataset_context import TDatasetContext
 
 
 class TrainingDatasetCollection(Generic[TDatasetContext]):

@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 import logging
 import shutil
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, TypeVar
 
 from picsellia import DatasetVersion, Label
 from picsellia.exceptions import NoDataError
@@ -200,3 +200,6 @@ class DatasetContext:
             if f.suffix.lower() in (".png", ".jpg", ".jpeg")
         ]
         return len(image_files) > 0
+
+
+TDatasetContext = TypeVar("TDatasetContext", bound=DatasetContext)
