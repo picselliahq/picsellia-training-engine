@@ -45,13 +45,18 @@ class YOLOEvaluator(AbstractEvaluator):
         images = []
         for asset in assets:
             try:
-                image = open_asset_as_array(asset)
+                image_data = open_asset_as_array(asset)
+
+                # Since YOLO from ultralytics except numpy arrays as BGR, we need to convert the image to BGR
+                image_data = image_data[:, :, ::-1]
+
             except UnidentifiedImageError:
                 logging.warning(
                     f"Can't evaluate {asset.filename}, error opening the image"
                 )
                 continue
-            images.append(image)
+
+            images.append(image_data)
         return images
 
     def _get_model_weights_path(self):
