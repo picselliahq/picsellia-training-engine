@@ -180,6 +180,8 @@ class VOCDetection(CacheDataset):
     def load_image(self, index):
         img_id = self.ids[index]
         img = cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
         assert img is not None, f"file named {self._imgpath % img_id} not found"
 
         return img
