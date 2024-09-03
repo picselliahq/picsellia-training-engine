@@ -1,0 +1,6 @@
+pycocotools==2.0.8
+ultralytics==8.0.67
+onnx==1.13.0
+coverage==7.3.0
+picsellia==6.10.3
+numpy==1.26.4
