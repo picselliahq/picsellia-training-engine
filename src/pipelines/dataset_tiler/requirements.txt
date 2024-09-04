@@ -17,8 +17,11 @@ numpy==1.26.4
 orjson==3.10.3
     # via picsellia
 packaging==24.0
-    # via deprecation
-picsellia==6.17.0
+    # via
+    #   deprecation
+    #   lazy-loader
+    #   scikit-image
+picsellia==6.17.1
     # via -r requirements.in
 picsellia-annotations==0.9.0
     # via picsellia
