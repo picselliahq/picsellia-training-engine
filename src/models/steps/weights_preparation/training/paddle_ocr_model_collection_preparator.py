@@ -29,9 +29,9 @@ def generate_bbox_yaml_config(
     config["Global"]["use_gpu"] = True
     config["Global"]["epoch_num"] = hyperparameters.bbox_epochs
     config["Global"]["pretrained_model"] = model_context.pretrained_model_path
-    config["Global"]["save_model_dir"] = model_context.trained_model_path
-    config["Global"]["save_res_path"] = model_context.results_path
-    config["Global"]["save_inference_dir"] = model_context.inference_model_path
+    config["Global"]["save_model_dir"] = model_context.results_dir
+    config["Global"]["save_res_path"] = model_context.results_dir
+    config["Global"]["save_inference_dir"] = model_context.inference_model_dir
     config["Global"]["save_epoch_step"] = hyperparameters.bbox_save_epoch_step
 
     config["Optimizer"]["lr"]["learning_rate"] = hyperparameters.bbox_learning_rate
@@ -72,13 +72,13 @@ def generate_text_yaml_config(
         config["Global"]["pretrained_model"] = os.path.join(
             model_context.pretrained_model_path, "best_accuracy"
         )
-    config["Global"]["save_model_dir"] = model_context.trained_model_path
-    config["Global"]["save_res_path"] = model_context.results_path
-    config["Global"]["save_inference_dir"] = model_context.inference_model_path
+    config["Global"]["save_model_dir"] = model_context.results_dir
+    config["Global"]["save_res_path"] = model_context.results_dir
+    config["Global"]["save_inference_dir"] = model_context.inference_model_dir
     config["Global"]["save_epoch_step"] = hyperparameters.text_save_epoch_step
     config["Global"]["max_text_length"] = hyperparameters.max_text_length
     config["Global"]["character_dict_path"] = os.path.join(
-        model_context.model_weights_path, "en_dict.txt"
+        model_context.weights_dir, "en_dict.txt"
     )
 
     if "SARHead" in config["Architecture"]["Head"]["head_list"]:
