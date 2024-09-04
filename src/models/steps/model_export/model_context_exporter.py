@@ -28,7 +28,7 @@ class ModelContextExporter:
         """
         pass
 
-    def save_model_to_experiment(self) -> ModelContext:
+    def save_model_to_experiment(self, exported_model_dir: str, saved_model_name: str):
         """
         Saves the exported model to the experiment.
 
@@ -38,30 +38,24 @@ class ModelContextExporter:
         Raises:
             ValueError: If no model files are found in the inference model path.
         """
-        saved_model_name = (
-            f"{self.model_context.prefix_model_name}-model-latest"
-            if self.model_context.prefix_model_name
-            else "model-latest"
-        )
 
-        inference_model_files = os.listdir(self.model_context.inference_model_dir)
-        if not inference_model_files:
-            raise ValueError("No model files found in inference model path")
+        exported_model_files = os.listdir(exported_model_dir)
+        if not exported_model_files:
+            raise ValueError("No model files found in the exported model directory")
 
-        self._store_model_files(saved_model_name, inference_model_files)
-        return self.model_context
+        self._store_model_files(saved_model_name, exported_model_files)
 
     def _store_model_files(
-        self, saved_model_name: str, inference_model_files: List[str]
+        self, saved_model_name: str, exported_model_files: List[str]
     ) -> None:
         """
         Stores the model files in the experiment.
 
         Args:
             saved_model_name (str): The name under which the model will be saved.
-            inference_model_files (list): The list of files in the inference model path.
+            exported_model_files (list): The list of files in the inference model path.
         """
-        if len(inference_model_files) > 1:
+        if len(exported_model_files) > 1:
             self.experiment.store(
                 name=saved_model_name,
                 path=self.model_context.inference_model_dir,
@@ -72,6 +66,6 @@ class ModelContextExporter:
                 name=saved_model_name,
                 path=os.path.join(
                     str(self.model_context.inference_model_dir),
-                    inference_model_files[0],
+                    exported_model_files[0],
                 ),
             )

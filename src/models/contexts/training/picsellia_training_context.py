@@ -19,7 +19,7 @@ class PicselliaTrainingContext(
         augmentation_parameters_cls: Union[
             Type[TAugmentationParameters], Type[TParameters]
         ],
-        export_parameters_cls: Union[Type[TExportParameters], Type[TParameters]],
+        export_parameters_cls: Union[Type[TExportParameters]],
         api_token: Optional[str] = None,
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
