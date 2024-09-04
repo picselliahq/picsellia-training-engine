@@ -55,6 +55,8 @@ class TilerProcessing:
         self.tilling_mode = tilling_mode
         self.constant_value = constant_value
 
+        self.current_tile_id = 0
+
     @property
     def stride_x(self) -> int:
         return (
@@ -419,6 +421,10 @@ class TilerProcessing:
         tiles_per_row = math.ceil(original_image_size[0] / self.stride_x)
 
         for idx, tile in enumerate(tiles_batch):
+            # Skip the tiles that are only made of the constant value
+            if np.all(tile == self.constant_value):
+                continue
+
             tile_y = (idx // tiles_per_row) * self.stride_y
             tile_x = (idx % tiles_per_row) * self.stride_x
 
@@ -435,11 +441,13 @@ class TilerProcessing:
                     "file_name": tile_filename,
                     "width": tile.shape[1],
                     "height": tile.shape[0],
-                    "id": len(tile_infos),
+                    "id": self.current_tile_id,
                     "tile_x": tile_x,
                     "tile_y": tile_y,
                 }
             )
+
+            self.current_tile_id += 1
 
         return tile_infos
 

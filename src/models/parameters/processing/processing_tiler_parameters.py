@@ -47,6 +47,12 @@ class ProcessingTilerParameters(Parameters):
             default=30,
             range_value=(0, float("inf")),
         )
+        self.constant_value = self.extract_parameter(
+            keys=["constant_value"],
+            expected_type=int,
+            default=114,
+            range_value=(0, 255),
+        )
         self.fix_annotation = self.extract_parameter(
             keys=["fix_annotation"], expected_type=bool, default=True
         )
