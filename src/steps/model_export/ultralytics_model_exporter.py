@@ -3,6 +3,13 @@ from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
 from src.models.model.common.model_context import ModelContext
+from src.models.parameters.common.export_parameters import ExportParameters
+from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
+    UltralyticsAugmentationParameters,
+)
+from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters import (
+    UltralyticsHyperParameters,
+)
 from src.models.steps.model_export.ultralytics_model_context_exporter import (
     UltralyticsModelContextExporter,
 )
@@ -10,7 +17,9 @@ from src.models.steps.model_export.ultralytics_model_context_exporter import (
 
 @step
 def ultralytics_model_exporter(model_context: ModelContext):
-    context: PicselliaTrainingContext = Pipeline.get_active_context()
+    context: PicselliaTrainingContext[
+        UltralyticsHyperParameters, UltralyticsAugmentationParameters, ExportParameters
+    ] = Pipeline.get_active_context()
     model_context_exporter = UltralyticsModelContextExporter(
         model_context=model_context, experiment=context.experiment
     )

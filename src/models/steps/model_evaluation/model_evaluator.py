@@ -1,38 +1,30 @@
-from abc import ABC
-from typing import TypeVar, Generic, Union
+from typing import Union, List
 
-from picsellia import Experiment
 from picsellia.types.enums import AddEvaluationType
 
-from src.models.dataset.training.training_dataset_collection import TDatasetContext
 from src.models.model.common.picsellia_prediction import (
     PicselliaOCRPrediction,
     PicselliaRectanglePrediction,
     PicselliaClassificationPrediction,
     PicselliaPolygonPrediction,
 )
-from src.models.steps.model_inferencing.base_model_inference import BaseModelInference
-
-TModelInference = TypeVar("TModelInference", bound=BaseModelInference)
 
 
-class ModelEvaluator(ABC, Generic[TModelInference]):
-    def __init__(
-        self,
-        model_inference: TModelInference,
-        dataset_context: TDatasetContext,
-        experiment: Experiment,
-    ):
-        self.model_inference = model_inference
-        self.dataset_context = dataset_context
+class ModelEvaluator:
+    def __init__(self, experiment):
         self.experiment = experiment
 
-    def evaluate(self) -> None:
-        picsellia_evaluations = self.model_inference.predict_on_dataset_context(
-            self.dataset_context
-        )
-        for evaluation in picsellia_evaluations:
-            self.add_evaluation(evaluation)
+    def evaluate(
+        self,
+        picsellia_predictions: Union[
+            List[PicselliaClassificationPrediction],
+            List[PicselliaRectanglePrediction],
+            List[PicselliaPolygonPrediction],
+            List[PicselliaOCRPrediction],
+        ],
+    ) -> None:
+        for prediction in picsellia_predictions:
+            self.add_evaluation(prediction)
 
     def add_evaluation(
         self,

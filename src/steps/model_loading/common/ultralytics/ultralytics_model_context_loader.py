@@ -5,6 +5,7 @@ from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
 from src.models.model.common.model_context import ModelContext
+from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
@@ -19,7 +20,7 @@ from src.models.steps.model_loading.ultralytics.ultralytics_model_context_loader
 @step
 def ultralytics_model_context_loader(model_context: ModelContext) -> ModelContext:
     context: PicselliaTrainingContext[
-        UltralyticsHyperParameters, UltralyticsAugmentationParameters
+        UltralyticsHyperParameters, UltralyticsAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
     if (
         model_context.pretrained_model_path
