@@ -1,6 +1,6 @@
 import logging
 from abc import ABC
-from typing import Any, Dict, Optional, Set, Tuple, TypeVar, get_origin, get_args, Union
+from typing import Any, Dict, Optional, Set, Tuple, TypeVar, Union, get_args, get_origin
 
 from picsellia.types.schemas import LogDataType  # type: ignore
 
@@ -12,12 +12,14 @@ logger = logging.getLogger("picsellia-engine")
 class Parameters(ABC):
     def __init__(self, log_data: LogDataType):
         self.parameters_data = self.validate_log_data(log_data)
+
+        # Store the keys that have been defaulted, used for logging purposes
         self.defaulted_keys: Set[str] = set()
 
     def extract_parameter(
         self,
         keys: list,
-        expected_type: type,
+        expected_type: Union[type, object],
         default: Any = ...,
         range_value: Optional[Tuple[Any, Any]] = None,
     ) -> Any:
@@ -83,7 +85,7 @@ class Parameters(ABC):
         )
 
         # Check if the default value matches the expected type
-        if default is not ... and not isinstance(default, (base_type, type(None))):
+        if default is not ... and not isinstance(default, (base_type, type(None))):  # type: ignore
             raise TypeError(
                 f"The provided default value {default} does not match the expected type {expected_type}."
             )
@@ -177,7 +179,7 @@ class Parameters(ABC):
         raise ValueError("The provided parameters must be a dictionary.")
 
     def _flexible_type_check(
-        self, value: Any, expected_type: type, is_optional: bool
+        self, value: Any, expected_type: Union[type, object], is_optional: bool
     ) -> Any:
         """Check if a value can be converted to a given type.
 

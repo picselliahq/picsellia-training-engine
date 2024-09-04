@@ -9,15 +9,23 @@ class ProcessingTilerDataValidator:
         tile_width: int,
         overlap_height_ratio: float,
         overlap_width_ratio: float,
-        min_area_ratio: float,
+        min_annotation_area_ratio: float,
+        min_annotation_width: float,
+        min_annotation_height: float,
         datalake: str,
     ):
         self.client = client
+
         self.tile_height = tile_height
         self.tile_width = tile_width
+
         self.overlap_height_ratio = overlap_height_ratio
         self.overlap_width_ratio = overlap_width_ratio
-        self.min_area_ratio = min_area_ratio
+
+        self.min_annotation_area_ratio = min_annotation_area_ratio
+        self.min_annotation_width = min_annotation_width
+        self.min_annotation_height = min_annotation_height
+
         self.datalake = datalake
 
     def _validate_tile_size(self) -> None:
@@ -41,8 +49,12 @@ class ProcessingTilerDataValidator:
             raise ValueError("overlap_height_ratio must be between 0 and 0.99")
         if not (0 <= self.overlap_width_ratio < 1):
             raise ValueError("overlap_width_ratio must be between 0 and 0.99")
-        if not (0 <= self.min_area_ratio < 1):
-            raise ValueError("min_area_ratio must be between 0 and 0.99")
+        if not (0 <= self.min_annotation_area_ratio < 1):
+            raise ValueError("min_annotation_area_ratio must be between 0 and 0.99")
+        if self.min_annotation_width is not None and self.min_annotation_width < 0:
+            raise ValueError("min_annotation_width must be greater than 0")
+        if self.min_annotation_height is not None and self.min_annotation_height < 0:
+            raise ValueError("min_annotation_height must be greater than 0")
 
     def _validate_datalake(self) -> None:
         """

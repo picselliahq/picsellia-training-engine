@@ -36,7 +36,9 @@ class TilerProcessing:
         tile_width: int,
         overlap_height_ratio: float,
         overlap_width_ratio: float,
-        min_area_ratio: float,
+        min_annotation_area_ratio: float,
+        min_annotation_width: Optional[float] = None,
+        min_annotation_height: Optional[float] = None,
         tilling_mode: TileMode = TileMode.CONSTANT,
         constant_value: int = 114,
     ):
@@ -46,7 +48,9 @@ class TilerProcessing:
         self.overlap_width_ratio = overlap_width_ratio
         self.overlap_height_ratio = overlap_height_ratio
 
-        self.min_area_ratio = min_area_ratio
+        self.min_annotation_area_ratio = min_annotation_area_ratio
+        self.min_annotation_width = min_annotation_width
+        self.min_annotation_height = min_annotation_height
 
         self.tilling_mode = tilling_mode
         self.constant_value = constant_value
@@ -184,14 +188,16 @@ class TilerProcessing:
             return None
 
         # Calculate new bounding box coordinates relative to the tile
-        new_bbox = [ix1 - tile_x, iy1 - tile_y, ix2 - ix1, iy2 - iy1]
+        new_bbox_x = ix1 - tile_x
+        new_bbox_y = iy1 - tile_y
+        new_bbox_width = ix2 - ix1
+        new_bbox_height = iy2 - iy1
 
-        # Calculate intersection area
-        intersect_area = (ix2 - ix1) * (iy2 - iy1)
-        original_area = width * height
+        new_bbox = [new_bbox_x, new_bbox_y, new_bbox_width, new_bbox_height]
+        new_bbox_area = new_bbox_width * new_bbox_height
 
         # Check if the intersection area is large enough
-        if intersect_area / original_area < self.min_area_ratio:
+        if not self._should_annotation_be_kept(bbox, new_bbox):
             return None
 
         # Create new annotation
@@ -199,7 +205,7 @@ class TilerProcessing:
         new_annotation["id"] = len(output_coco_data["annotations"])
         new_annotation["image_id"] = tile_info["id"]
         new_annotation["bbox"] = new_bbox
-        new_annotation["area"] = intersect_area
+        new_annotation["area"] = new_bbox_area
 
         # Handle segmentation for segmentation datasets
         if dataset_type == InferenceType.SEGMENTATION and "segmentation" in annotation:
@@ -436,6 +442,47 @@ class TilerProcessing:
             )
 
         return tile_infos
+
+    def _should_annotation_be_kept(
+        self, old_bounding_box: List[int], new_bounding_box: List[int]
+    ) -> bool:
+        """
+        Check if the annotation should be kept based on the new bounding box.
+
+        Args:
+            old_bounding_box: Original bounding box.
+            new_bounding_box: New bounding box.
+
+        Returns:
+            True if the annotation should be kept, False otherwise.
+        """
+        old_x, old_y, old_width, old_height = old_bounding_box
+        new_x, new_y, new_width, new_height = new_bounding_box
+
+        # Check if the new bounding box is large enough
+        if new_width < old_width:
+            if (
+                self.min_annotation_width is not None
+                and new_width < self.min_annotation_width
+            ):
+                return False
+
+        # Check if the new bounding box is tall enough
+        if new_height < old_height:
+            if (
+                self.min_annotation_height is not None
+                and new_height < self.min_annotation_height
+            ):
+                return False
+
+        # Check the area as well
+        old_area = old_width * old_height
+        new_area = new_width * new_height
+
+        if new_area / old_area < self.min_annotation_area_ratio:
+            return False
+
+        return True
 
     def _tile_annotation(
         self,

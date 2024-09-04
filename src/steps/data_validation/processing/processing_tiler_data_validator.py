@@ -1,7 +1,6 @@
 from picsellia.types.enums import InferenceType
 
-from src import Pipeline
-from src import step
+from src import Pipeline, step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
@@ -70,7 +69,9 @@ def tiler_data_validator(
         tile_width=context.processing_parameters.tile_width,
         overlap_height_ratio=context.processing_parameters.overlap_height_ratio,
         overlap_width_ratio=context.processing_parameters.overlap_width_ratio,
-        min_area_ratio=context.processing_parameters.min_area_ratio,
+        min_annotation_area_ratio=context.processing_parameters.min_annotation_area_ratio,
+        min_annotation_width=context.processing_parameters.min_annotation_width,
+        min_annotation_height=context.processing_parameters.min_annotation_height,
         datalake=context.processing_parameters.datalake,
     )
     processing_validator.validate()

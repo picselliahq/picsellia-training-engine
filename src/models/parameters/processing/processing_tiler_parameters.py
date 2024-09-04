@@ -1,3 +1,5 @@
+from typing import Union
+
 from src.models.parameters.common.parameters import Parameters
 
 
@@ -27,11 +29,23 @@ class ProcessingTilerParameters(Parameters):
             default=0.1,
             range_value=(0, 0.99),
         )
-        self.min_area_ratio = self.extract_parameter(
-            keys=["min_area_ratio"],
+        self.min_annotation_area_ratio = self.extract_parameter(
+            keys=["min_annotation_area_ratio", "min_area_ratio"],
             expected_type=float,
-            default=0.1,
+            default=0.0,
             range_value=(0, 0.99),
+        )
+        self.min_annotation_width = self.extract_parameter(
+            keys=["min_annotation_width"],
+            expected_type=Union[int, None],
+            default=30,
+            range_value=(0, float("inf")),
+        )
+        self.min_annotation_height = self.extract_parameter(
+            keys=["min_annotation_height"],
+            expected_type=Union[int, None],
+            default=30,
+            range_value=(0, float("inf")),
         )
         self.fix_annotation = self.extract_parameter(
             keys=["fix_annotation"], expected_type=bool, default=True

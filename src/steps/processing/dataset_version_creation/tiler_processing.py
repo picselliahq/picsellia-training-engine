@@ -27,7 +27,9 @@ def tiler_processing(
         tile_width=context.processing_parameters.tile_width,
         overlap_height_ratio=context.processing_parameters.overlap_height_ratio,
         overlap_width_ratio=context.processing_parameters.overlap_width_ratio,
-        min_area_ratio=context.processing_parameters.min_area_ratio,
+        min_annotation_area_ratio=context.processing_parameters.min_annotation_area_ratio,
+        min_annotation_width=context.processing_parameters.min_annotation_width,
+        min_annotation_height=context.processing_parameters.min_annotation_height,
     )
 
     dataset_collection = processor.process_dataset_collection(
