@@ -13,7 +13,7 @@ class ExportParameters(Parameters):
         super().__init__(log_data=log_data)
 
         self.export_format = self.extract_parameter(
-            keys=["export_format"], expected_type=str
+            keys=["export_format"], expected_type=str, default="onnx"
         )
 
 
