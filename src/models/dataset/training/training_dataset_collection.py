@@ -3,6 +3,8 @@ from typing import Generic, List
 
 from src.models.dataset.common.dataset_context import TDatasetContext
 
+from picsellia import Experiment
+
 
 class TrainingDatasetCollection(Generic[TDatasetContext]):
     """
@@ -47,3 +49,10 @@ class TrainingDatasetCollection(Generic[TDatasetContext]):
         for dataset_context in self:
             dataset_context.download_assets()
             dataset_context.download_and_build_coco_file()
+
+    def log_labelmap(self, experiment: Experiment):
+        labelmap_to_log = {
+            str(i): label
+            for i, label in enumerate(self.datasets["train"].labelmap.keys())
+        }
+        experiment.log("labelmap", labelmap_to_log, "labelmap", replace=True)

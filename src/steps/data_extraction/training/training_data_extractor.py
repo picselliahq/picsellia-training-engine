@@ -43,4 +43,5 @@ def training_data_extractor() -> TrainingDatasetCollection:
         random_seed=context.hyperparameters.seed
     )
     dataset_collection.download_all()
+    dataset_collection.log_labelmap(experiment=context.experiment)
     return dataset_collection
