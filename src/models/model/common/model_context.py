@@ -124,9 +124,9 @@ class ModelContext:
             )
 
             # Assigne les chemins selon le nom du fichier
-            if model_file.filename == self.pretrained_model_filename:
+            if model_file.name == self.pretrained_model_filename:
                 self.pretrained_model_path = file_path
-            elif model_file.filename == self.config_filename:
+            elif model_file.name == self.config_filename:
                 self.config_file_path = file_path
 
     def _construct_path(self, folder_name: str) -> str:
@@ -146,4 +146,6 @@ class ModelContext:
                 self.prefix_model_name,
                 folder_name,
             )
-        return os.path.join(self.destination_path, self.model_name, folder_name)
+        folder_path = os.path.join(self.destination_path, self.model_name, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
+        return folder_path
