@@ -4,7 +4,6 @@ from picsellia import Experiment
 from src.models.contexts.common.picsellia_context import PicselliaContext
 from src.models.parameters.common.export_parameters import TExportParameters
 
-from src.models.parameters.common.parameters import TParameters
 from src.models.parameters.common.hyper_parameters import THyperParameters
 from src.models.parameters.common.augmentation_parameters import (
     TAugmentationParameters,
@@ -20,11 +19,9 @@ class TestPicselliaTrainingContext(
 
     def __init__(
         self,
-        hyperparameters_cls: Union[Type[THyperParameters], Type[TParameters]],
-        augmentation_parameters_cls: Union[
-            Type[TAugmentationParameters], Type[TParameters]
-        ],
-        export_parameters_cls: Union[Type[TExportParameters], Type[TParameters]],
+        hyperparameters_cls: Union[Type[THyperParameters]],
+        augmentation_parameters_cls: Union[Type[TAugmentationParameters]],
+        export_parameters_cls: Union[Type[TExportParameters]],
         api_token: Optional[str] = None,
         host: Optional[str] = None,
         organization_id: Optional[str] = None,

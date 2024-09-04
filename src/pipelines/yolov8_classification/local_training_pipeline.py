@@ -5,6 +5,7 @@ from src import pipeline
 from src.models.contexts.training.test_picsellia_training_context import (
     TestPicselliaTrainingContext,
 )
+from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
@@ -47,6 +48,7 @@ def get_context() -> TestPicselliaTrainingContext:
         experiment_id=args.experiment_id,
         hyperparameters_cls=UltralyticsHyperParameters,
         augmentation_parameters_cls=UltralyticsAugmentationParameters,
+        export_parameters_cls=ExportParameters,
     )
 
 
