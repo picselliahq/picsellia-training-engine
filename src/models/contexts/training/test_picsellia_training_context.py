@@ -1,7 +1,8 @@
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union, Generic
 
 from picsellia import Experiment
 from src.models.contexts.common.picsellia_context import PicselliaContext
+from src.models.parameters.common.export_parameters import TExportParameters
 
 from src.models.parameters.common.parameters import TParameters
 from src.models.parameters.common.hyper_parameters import THyperParameters
@@ -10,7 +11,9 @@ from src.models.parameters.common.augmentation_parameters import (
 )
 
 
-class TestPicselliaTrainingContext(PicselliaContext):
+class TestPicselliaTrainingContext(
+    PicselliaContext, Generic[THyperParameters, TAugmentationParameters]
+):
     """
     This class is used to test a processing pipeline without a real job execution on Picsellia (without giving a real job ID).
     """
@@ -21,6 +24,7 @@ class TestPicselliaTrainingContext(PicselliaContext):
         augmentation_parameters_cls: Union[
             Type[TAugmentationParameters], Type[TParameters]
         ],
+        export_parameters_cls: Union[Type[TExportParameters], Type[TParameters]],
         api_token: Optional[str] = None,
         host: Optional[str] = None,
         organization_id: Optional[str] = None,
@@ -37,6 +41,7 @@ class TestPicselliaTrainingContext(PicselliaContext):
         self.augmentation_parameters = augmentation_parameters_cls(
             log_data=parameters_log_data
         )
+        self.export_parameters = export_parameters_cls(log_data=parameters_log_data)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -53,6 +58,10 @@ class TestPicselliaTrainingContext(PicselliaContext):
             "augmentation_parameters": self._process_parameters(
                 parameters_dict=self.augmentation_parameters.to_dict(),
                 defaulted_keys=self.augmentation_parameters.defaulted_keys,
+            ),
+            "export_parameters": self._process_parameters(
+                parameters_dict=self.export_parameters.to_dict(),
+                defaulted_keys=self.export_parameters.defaulted_keys,
             ),
         }
 
