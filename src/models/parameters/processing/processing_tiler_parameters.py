@@ -1,6 +1,9 @@
 from typing import Union
 
 from src.models.parameters.common.parameters import Parameters
+from src.models.steps.processing.dataset_version_creation.tiler_processing import (
+    TileMode,
+)
 
 
 class ProcessingTilerParameters(Parameters):
@@ -46,6 +49,11 @@ class ProcessingTilerParameters(Parameters):
             expected_type=Union[int, None],
             default=30,
             range_value=(0, float("inf")),
+        )
+        self.tiling_mode = self.extract_parameter(
+            keys=["tiling_mode", "mode"],
+            expected_type=TileMode,
+            default=TileMode.CONSTANT,
         )
         self.constant_value = self.extract_parameter(
             keys=["constant_value"],

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Union
 from unittest.mock import patch
 
@@ -6,6 +7,14 @@ import pytest
 from tests.models.parameters.common.fixtures.parameters_fixtures import (
     ConcreteParameters,
 )
+
+
+class TestTileMode(Enum):
+    CONSTANT = 0
+    DROP = 1
+    REFLECT = 2
+    EDGE = 3
+    WRAP = 4
 
 
 class TestParameters:
@@ -180,6 +189,86 @@ class TestParameters:
                 )
                 == expected_outcome
             )
+
+    @pytest.mark.parametrize(
+        "value,expected_outcome",
+        [
+            ("CONSTANT", TestTileMode.CONSTANT),
+            ("constant", TestTileMode.CONSTANT),
+            (0, TestTileMode.CONSTANT),
+            ("DROP", TestTileMode.DROP),
+            ("drop", TestTileMode.DROP),
+            (1, TestTileMode.DROP),
+            ("REFLECT", TestTileMode.REFLECT),
+            ("reflect", TestTileMode.REFLECT),
+            (2, TestTileMode.REFLECT),
+            ("EDGE", TestTileMode.EDGE),
+            ("edge", TestTileMode.EDGE),
+            (3, TestTileMode.EDGE),
+            ("WRAP", TestTileMode.WRAP),
+            ("wrap", TestTileMode.WRAP),
+            (4, TestTileMode.WRAP),
+            (TestTileMode.CONSTANT, TestTileMode.CONSTANT),  # Already an enum value
+            ("INVALID", ValueError),
+            (5, ValueError),
+        ],
+    )
+    def test_extract_parameter_enum(self, parameters, value, expected_outcome):
+        parameters.parameters_data["tile_mode"] = value
+
+        if isinstance(expected_outcome, type) and issubclass(
+            expected_outcome, Exception
+        ):
+            with pytest.raises(expected_outcome):
+                parameters.extract_parameter(
+                    keys=["tile_mode"], expected_type=TestTileMode
+                )
+        else:
+            result = parameters.extract_parameter(
+                keys=["tile_mode"], expected_type=TestTileMode
+            )
+            assert (
+                result == expected_outcome
+            ), f"Expected {expected_outcome}, got {result}"
+
+    def test_extract_parameter_enum_default(self, parameters):
+        result = parameters.extract_parameter(
+            keys=["nonexistent"],
+            expected_type=TestTileMode,
+            default=TestTileMode.CONSTANT,
+        )
+        assert result == TestTileMode.CONSTANT
+
+    def test_extract_parameter_enum_no_default(self, parameters):
+        with pytest.raises(KeyError):
+            parameters.extract_parameter(
+                keys=["nonexistent"], expected_type=TestTileMode
+            )
+
+    def test_extract_parameter_optional_enum(self, parameters):
+        parameters.parameters_data["optional_tile_mode"] = None
+        result = parameters.extract_parameter(
+            keys=["optional_tile_mode"], expected_type=Union[TestTileMode, None]
+        )
+        assert result is None
+
+        parameters.parameters_data["optional_tile_mode"] = "CONSTANT"
+        result = parameters.extract_parameter(
+            keys=["optional_tile_mode"], expected_type=Union[TestTileMode, None]
+        )
+        assert result == TestTileMode.CONSTANT
+
+    def test_extract_parameter_enum_case_insensitive(self, parameters):
+        parameters.parameters_data["tile_mode"] = "cOnStAnT"
+        result = parameters.extract_parameter(
+            keys=["tile_mode"], expected_type=TestTileMode
+        )
+        assert result == TestTileMode.CONSTANT
+
+    def test_extract_parameter_enum_invalid_type(self, parameters):
+        parameters.parameters_data["tile_mode"] = 3.14  # Float instead of int or string
+        with pytest.raises(ValueError):
+            parameters.extract_parameter(keys=["tile_mode"], expected_type=TestTileMode)
 
     def test_optional_parameter(self, parameters):
         assert (

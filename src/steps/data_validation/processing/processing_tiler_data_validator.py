@@ -8,6 +8,9 @@ from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingTilerParameters,
 )
+from src.models.steps.data_validation.common.classification_dataset_context_validator import (
+    ClassificationDatasetContextValidator,
+)
 from src.models.steps.data_validation.common.not_configured_dataset_context_validator import (
     NotConfiguredDatasetContextValidator,
 )
@@ -38,13 +41,6 @@ def tiler_data_validator(
             not_configured_dataset_validator.validate()
 
         case InferenceType.SEGMENTATION:
-            # SAHI requires both the bounding boxes and the polygons to be valid
-            object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
-                dataset_context=dataset_context,
-                fix_annotation=context.processing_parameters.fix_annotation,
-            )
-            dataset_context = object_detection_dataset_validator.validate()
-
             segmentation_dataset_validator = SegmentationDatasetContextValidator(
                 dataset_context=dataset_context,
                 fix_annotation=context.processing_parameters.fix_annotation,
@@ -57,6 +53,12 @@ def tiler_data_validator(
                 fix_annotation=context.processing_parameters.fix_annotation,
             )
             dataset_context = object_detection_dataset_validator.validate()
+
+        case InferenceType.CLASSIFICATION:
+            classification_dataset_validator = ClassificationDatasetContextValidator(
+                dataset_context=dataset_context,
+            )
+            dataset_context = classification_dataset_validator.validate()
 
         case _:
             raise ValueError(

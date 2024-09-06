@@ -51,4 +51,4 @@ class TestClassificationDatasetValidator:
             "class2": 1,
         }
         with pytest.raises(ValueError):
-            classification_dataset_context_validator.validate_at_least_one_image_per_class()
+            classification_dataset_context_validator.validate_coco_file()

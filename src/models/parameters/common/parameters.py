@@ -1,25 +1,60 @@
 import logging
 from abc import ABC
-from typing import Any, Dict, Optional, Set, Tuple, TypeVar, Union, get_args, get_origin
+from enum import Enum
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+    overload,
+)
 
 from picsellia.types.schemas import LogDataType  # type: ignore
 
 from src import Colors
 
 logger = logging.getLogger("picsellia-engine")
+T = TypeVar("T")
 
 
-class Parameters(ABC):
+class Parameters(ABC, Generic[T]):
     def __init__(self, log_data: LogDataType):
         self.parameters_data = self.validate_log_data(log_data)
 
         # Store the keys that have been defaulted, used for logging purposes
         self.defaulted_keys: Set[str] = set()
 
+    @overload
     def extract_parameter(
         self,
         keys: list,
-        expected_type: Union[type, object],
+        expected_type: Type[T],
+        default: Any = ...,
+        range_value: Optional[Tuple[Any, Any]] = None,
+    ) -> T:
+        ...
+
+    @overload
+    def extract_parameter(
+        self,
+        keys: list,
+        expected_type: Any,
+        default: Any = ...,
+        range_value: Optional[Tuple[Any, Any]] = None,
+    ) -> Any:
+        ...
+
+    def extract_parameter(
+        self,
+        keys: list,
+        expected_type: Type[T],
         default: Any = ...,
         range_value: Optional[Tuple[Any, Any]] = None,
     ) -> Any:
@@ -85,7 +120,7 @@ class Parameters(ABC):
         )
 
         # Check if the default value matches the expected type
-        if default is not ... and not isinstance(default, (base_type, type(None))):  # type: ignore
+        if default is not ... and not isinstance(default, (base_type, type(None))):
             raise TypeError(
                 f"The provided default value {default} does not match the expected type {expected_type}."
             )
@@ -108,6 +143,16 @@ class Parameters(ABC):
                     )
 
                 if parsed_value is not None:
+                    if isinstance(expected_type, type) and issubclass(
+                        expected_type, Enum
+                    ):
+                        try:
+                            return expected_type(parsed_value)
+                        except ValueError:
+                            raise ValueError(
+                                f"Invalid value '{parsed_value}' for enum {expected_type.__name__}"
+                            )
+
                     if range_value and base_type in [int, float]:
                         checked_value_range = self._validate_range(range_value)
                         if not (
@@ -179,7 +224,7 @@ class Parameters(ABC):
         raise ValueError("The provided parameters must be a dictionary.")
 
     def _flexible_type_check(
-        self, value: Any, expected_type: Union[type, object], is_optional: bool
+        self, value: Any, expected_type: Type[T], is_optional: bool
     ) -> Any:
         """Check if a value can be converted to a given type.
 
@@ -237,6 +282,34 @@ class Parameters(ABC):
                     raise ValueError(
                         f"Value {value} cannot be converted to int without losing precision."
                     ) from e
+
+        elif isinstance(expected_type, type) and issubclass(expected_type, Enum):
+            if isinstance(value, expected_type):
+                return value
+
+            elif isinstance(value, str):
+                try:
+                    return expected_type[value.upper()]
+                except KeyError:
+                    try:
+                        return expected_type(value.lower())
+                    except ValueError:
+                        pass
+
+            elif isinstance(value, int):
+                try:
+                    return expected_type(value)
+                except ValueError:
+                    pass
+
+            elif value is None and is_optional:
+                return None
+
+            valid_values = ", ".join([f"{e.name}({e.value})" for e in expected_type])
+            raise ValueError(
+                f"Invalid value '{value}' for enum {expected_type.__name__}. "
+                f"Valid values are: {valid_values}"
+            )
 
         elif value is None and not is_optional:
             raise TypeError(

@@ -212,9 +212,11 @@ class TilerProcessing:
         # Handle segmentation for segmentation datasets
         if dataset_type == InferenceType.SEGMENTATION and "segmentation" in annotation:
             new_segmentation = self._adjust_segmentation_annotation(
-                annotation["segmentation"],
-                tile_x,
-                tile_y,
+                polygons=annotation["segmentation"],
+                tile_x=tile_x,
+                tile_y=tile_y,
+                tile_width=tile_info["width"],
+                tile_height=tile_info["height"],
             )
             if not new_segmentation:
                 return None
@@ -223,26 +225,95 @@ class TilerProcessing:
         return new_annotation
 
     def _adjust_segmentation_annotation(
-        self, segmentation: List[List[float]], tile_x: int, tile_y: int
+        self,
+        polygons: List[List[float]],
+        tile_x: int,
+        tile_y: int,
+        tile_width: int,
+        tile_height: int,
     ) -> List[List[float]]:
         """
-        Adjust segmentation coordinates for a tile.
+        Adjust segmentation coordinates for a tile and clip the polygon to the tile boundaries.
 
         Args:
-            segmentation: Original segmentation coordinates.
-            tile_x: X-coordinate of the tile.
-            tile_y: Y-coordinate of the tile.
+            polygons (List[List[float]]): Original segmentation coordinates.
+            tile_x (int): X-coordinate of the tile's top-left corner.
+            tile_y (int): Y-coordinate of the tile's top-left corner.
+            tile_width (int): Width of the tile.
+            tile_height (int): Height of the tile.
 
         Returns:
-            Adjusted segmentation coordinates.
+            List[List[float]]: Adjusted and clipped segmentation coordinates.
         """
-        return [
-            [
-                coord - tile_x if i % 2 == 0 else coord - tile_y
-                for i, coord in enumerate(poly)
-            ]
-            for poly in segmentation
+
+        def clip_polygon(polygon, clip_rect):
+            """Clip a polygon to a rectangle using Sutherland-Hodgman algorithm."""
+
+            def inside(p, cp1, cp2):
+                return (cp2[0] - cp1[0]) * (p[1] - cp1[1]) > (cp2[1] - cp1[1]) * (
+                    p[0] - cp1[0]
+                )
+
+            def compute_intersection(cp1, cp2, s, e):
+                dc = [cp1[0] - cp2[0], cp1[1] - cp2[1]]
+                dp = [s[0] - e[0], s[1] - e[1]]
+                n1 = cp1[0] * cp2[1] - cp1[1] * cp2[0]
+                n2 = s[0] * e[1] - s[1] * e[0]
+                n3 = 1.0 / (dc[0] * dp[1] - dc[1] * dp[0])
+                return [(n1 * dp[0] - n2 * dc[0]) * n3, (n1 * dp[1] - n2 * dc[1]) * n3]
+
+            output_list = polygon
+            cp1 = clip_rect[-1]
+
+            for clip_vertex in clip_rect:
+                cp2 = clip_vertex
+                input_list = output_list
+                output_list = []
+
+                if not input_list:
+                    break
+
+                s = input_list[-1]
+
+                for subject_vertex in input_list:
+                    e = subject_vertex
+                    if inside(e, cp1, cp2):
+                        if not inside(s, cp1, cp2):
+                            output_list.append(compute_intersection(cp1, cp2, s, e))
+                        output_list.append(e)
+                    elif inside(s, cp1, cp2):
+                        output_list.append(compute_intersection(cp1, cp2, s, e))
+                    s = e
+                cp1 = cp2
+
+            return output_list
+
+        adjusted_segmentation = []
+        clip_rect = [
+            (0, 0),
+            (tile_width, 0),
+            (tile_width, tile_height),
+            (0, tile_height),
         ]
+
+        for polygon in polygons:
+            # Convert flat list to list of points
+            points = [
+                (polygon[i] - tile_x, polygon[i + 1] - tile_y)
+                for i in range(0, len(polygon), 2)
+            ]
+
+            # Clip the polygon
+            clipped_poly = clip_polygon(points, clip_rect)
+
+            # Convert back to flat list and add to adjusted segmentation
+            if (
+                len(clipped_poly) > 2
+            ):  # Only add if the polygon is valid (at least 3 points)
+                adjusted_poly = [coord for point in clipped_poly for coord in point]
+                adjusted_segmentation.append(adjusted_poly)
+
+        return adjusted_segmentation
 
     def _get_tile_coordinates_from_filename(
         self, tile_filename: str
@@ -274,7 +345,7 @@ class TilerProcessing:
 
     def _process_classification_image(
         self,
-        coco_image_info: Dict[str, Any],
+        annotation: Dict[str, Any],
         tiles_batch_info: List[Dict[str, Any]],
         output_coco_data: Dict[str, Any],
     ) -> None:
@@ -282,14 +353,30 @@ class TilerProcessing:
         Process classification images for tiling.
 
         Args:
-            coco_image_info: Information about the original image.
+            annotation: Original classification annotation.
             tiles_batch_info: List of dictionaries containing information about each tile.
             output_coco_data: Dict to store the processed COCO data.
         """
         for tile_info in tiles_batch_info:
-            new_image_info = tile_info.copy()
-            new_image_info["category_id"] = coco_image_info.get("category_id")
-            output_coco_data["images"].append(new_image_info)
+            # Add image information
+            image_info = {
+                "id": tile_info["id"],
+                "file_name": tile_info["file_name"],
+                "width": tile_info["width"],
+                "height": tile_info["height"],
+            }
+            output_coco_data["images"].append(image_info)
+
+            annotation = {
+                "id": len(output_coco_data["annotations"]),
+                "image_id": tile_info["id"],
+                "category_id": annotation["category_id"],
+                "bbox": [],
+                "segmentation": [],
+                "area": 0,
+                "iscrowd": 0,
+            }
+            output_coco_data["annotations"].append(annotation)
 
     def _process_dataset_collection(
         self, dataset_collection: ProcessingDatasetCollection
@@ -349,7 +436,6 @@ class TilerProcessing:
 
     def _process_object_detection_and_segmentation_annotations(
         self,
-        coco_image_info: Dict[str, Any],
         annotations: List[Dict[str, Any]],
         tiles_batch_info: List[Dict[str, Any]],
         output_coco_data: Dict[str, Any],
@@ -359,7 +445,6 @@ class TilerProcessing:
         Process object detection and segmentation annotations for tiled images.
 
         Args:
-            coco_image_info: Information about the original image.
             annotations: List of annotations for the original image.
             tiles_batch_info: List of dictionaries containing information about each tile.
             output_coco_data: Dict to store the processed COCO data.
@@ -510,26 +595,29 @@ class TilerProcessing:
             tiles_batch_info: List of dictionaries containing information about each tile.
             dataset_type: Type of the dataset (OBJECT_DETECTION, SEGMENTATION, or CLASSIFICATION).
         """
+        annotations = [
+            annotation
+            for annotation in coco_data["annotations"]
+            if annotation["image_id"] == coco_image_info["id"]
+        ]
+
         if dataset_type in [
             InferenceType.OBJECT_DETECTION,
             InferenceType.SEGMENTATION,
         ]:
-            annotations = [
-                annotation
-                for annotation in coco_data["annotations"]
-                if annotation["image_id"] == coco_image_info["id"]
-            ]
             self._process_object_detection_and_segmentation_annotations(
-                coco_image_info,
-                annotations,
-                tiles_batch_info,
-                output_coco_data,
-                dataset_type,
+                annotations=annotations,
+                tiles_batch_info=tiles_batch_info,
+                output_coco_data=output_coco_data,
+                dataset_type=dataset_type,
             )
         elif dataset_type == InferenceType.CLASSIFICATION:
-            self._process_classification_image(
-                coco_image_info, tiles_batch_info, output_coco_data
-            )
+            if len(annotations) == 1:
+                self._process_classification_image(
+                    annotation=annotations[0],
+                    tiles_batch_info=tiles_batch_info,
+                    output_coco_data=output_coco_data,
+                )
 
     def _update_output_dataset_version_description_and_type(
         self,
