@@ -2,9 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
-
 from YOLOX.yolox.data import TrainTransformV3
-
 
 # Assuming TrainTransformV2 and other necessary imports are already included here
 
@@ -12,9 +10,7 @@ from YOLOX.yolox.data import TrainTransformV3
 def load_image(image_path):
     """Load an image from a file path."""
     image = cv2.imread(image_path)
-    image = cv2.cvtColor(
-        image, cv2.COLOR_BGR2RGB
-    )  # Convert from BGR to RGB for display purposes
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert from BGR to RGB for display purposes
     return image
 
 
