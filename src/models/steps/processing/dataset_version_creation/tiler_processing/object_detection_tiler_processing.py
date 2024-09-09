@@ -100,7 +100,10 @@ class ObjectDetectionTilerProcessing(BaseTilerProcessing):
         old_area = old_width * old_height
         new_area = new_width * new_height
 
-        if new_area / old_area < self.min_annotation_area_ratio:
+        if (
+            self.min_annotation_area_ratio is not None
+            and new_area / old_area < self.min_annotation_area_ratio
+        ):
             return False
 
         return True

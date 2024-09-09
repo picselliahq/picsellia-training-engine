@@ -27,9 +27,9 @@ class TilerProcessingFactory:
         tile_width: int,
         overlap_height_ratio: float,
         overlap_width_ratio: float,
-        min_annotation_area_ratio: float,
-        min_annotation_width: Optional[float] = None,
-        min_annotation_height: Optional[float] = None,
+        min_annotation_area_ratio: Optional[float],
+        min_annotation_width: Optional[int],
+        min_annotation_height: Optional[int],
         tilling_mode: TileMode = TileMode.CONSTANT,
         constant_value: int = 114,
     ) -> BaseTilerProcessing:

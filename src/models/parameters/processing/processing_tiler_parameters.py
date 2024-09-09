@@ -34,20 +34,20 @@ class ProcessingTilerParameters(Parameters):
         )
         self.min_annotation_area_ratio = self.extract_parameter(
             keys=["min_annotation_area_ratio", "min_area_ratio"],
-            expected_type=float,
-            default=0.0,
+            expected_type=Union[float, None],
+            default=None,
             range_value=(0, 0.99),
         )
         self.min_annotation_width = self.extract_parameter(
             keys=["min_annotation_width"],
             expected_type=Union[int, None],
-            default=30,
+            default=None,
             range_value=(0, float("inf")),
         )
         self.min_annotation_height = self.extract_parameter(
             keys=["min_annotation_height"],
             expected_type=Union[int, None],
-            default=30,
+            default=None,
             range_value=(0, float("inf")),
         )
         self.tiling_mode = self.extract_parameter(

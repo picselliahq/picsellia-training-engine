@@ -36,9 +36,9 @@ class BaseTilerProcessing(ABC):
         tile_width: int,
         overlap_height_ratio: float,
         overlap_width_ratio: float,
-        min_annotation_area_ratio: float,
-        min_annotation_width: Optional[float] = None,
-        min_annotation_height: Optional[float] = None,
+        min_annotation_area_ratio: Optional[float],
+        min_annotation_width: Optional[int],
+        min_annotation_height: Optional[int],
         tilling_mode: TileMode = TileMode.CONSTANT,
         constant_value: int = 114,
     ):
@@ -48,9 +48,9 @@ class BaseTilerProcessing(ABC):
         self.overlap_width_ratio = overlap_width_ratio
         self.overlap_height_ratio = overlap_height_ratio
 
-        self.min_annotation_area_ratio = 0
-        self.min_annotation_width = 50
-        self.min_annotation_height = 50
+        self.min_annotation_area_ratio = min_annotation_area_ratio
+        self.min_annotation_width = min_annotation_width
+        self.min_annotation_height = min_annotation_height
 
         self.tilling_mode = tilling_mode
         self.constant_value = constant_value
