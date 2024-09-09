@@ -9,8 +9,8 @@ from src.models.dataset.processing.processing_dataset_collection import (
 from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingTilerParameters,
 )
-from src.models.steps.processing.dataset_version_creation.tiler_processing import (
-    TilerProcessing,
+from src.models.steps.processing.dataset_version_creation.tiler_processing.tiler_processing_factory import (
+    TilerProcessingFactory,
 )
 
 
@@ -22,7 +22,8 @@ def tiler_processing(
         ProcessingTilerParameters
     ] = Pipeline.get_active_context()
 
-    processor = TilerProcessing(
+    processor = TilerProcessingFactory.create_tiler_processing(
+        dataset_type=dataset_collection.input.dataset_version.type,
         tile_height=context.processing_parameters.tile_height,
         tile_width=context.processing_parameters.tile_width,
         overlap_height_ratio=context.processing_parameters.overlap_height_ratio,

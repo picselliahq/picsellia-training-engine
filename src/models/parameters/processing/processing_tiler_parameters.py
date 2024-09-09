@@ -1,7 +1,7 @@
 from typing import Union
 
 from src.models.parameters.common.parameters import Parameters
-from src.models.steps.processing.dataset_version_creation.tiler_processing import (
+from src.models.steps.processing.dataset_version_creation.tiler_processing.base_tiler_processing import (
     TileMode,
 )
 
