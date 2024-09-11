@@ -47,7 +47,7 @@ class ModelEvaluator:
                     conf.value,
                 )
                 for rectangle, label, conf in zip(
-                    evaluation.boxes, evaluation.classes, evaluation.confidences
+                    evaluation.boxes, evaluation.labels, evaluation.confidences
                 )
             ]
             rectangles_with_text = [
@@ -62,7 +62,7 @@ class ModelEvaluator:
                 )
                 for rectangle, label, conf, text in zip(
                     evaluation.boxes,
-                    evaluation.classes,
+                    evaluation.labels,
                     evaluation.confidences,
                     evaluation.texts,
                 )
@@ -85,7 +85,7 @@ class ModelEvaluator:
                     conf.value,
                 )
                 for rectangle, label, conf in zip(
-                    evaluation.boxes, evaluation.classes, evaluation.confidences
+                    evaluation.boxes, evaluation.labels, evaluation.confidences
                 )
             ]
             print(
@@ -96,10 +96,7 @@ class ModelEvaluator:
             )
 
         elif isinstance(evaluation, PicselliaClassificationPrediction):
-            classifications = [
-                (label.value, conf.value)
-                for label, conf in zip(evaluation.classes, evaluation.confidences)
-            ]
+            classifications = [(evaluation.label.value, evaluation.confidence.value)]
             self.experiment.add_evaluation(
                 asset,
                 add_type=AddEvaluationType.REPLACE,
@@ -110,7 +107,7 @@ class ModelEvaluator:
             polygons = [
                 (polygon.value, label.value, conf.value)
                 for polygon, label, conf in zip(
-                    evaluation.polygons, evaluation.classes, evaluation.confidences
+                    evaluation.polygons, evaluation.labels, evaluation.confidences
                 )
             ]
             self.experiment.add_evaluation(
