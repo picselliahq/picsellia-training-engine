@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 from picsellia import DatasetVersion, Experiment
@@ -35,9 +34,10 @@ class TrainingDatasetCollectionExtractor:
         """
         self.experiment = experiment
         self.train_set_split_ratio = train_set_split_ratio
-        self.destination_path = os.path.join(os.getcwd(), self.experiment.name)
 
-    def get_dataset_collection(self, random_seed=None) -> TrainingDatasetCollection:
+    def get_dataset_collection(
+        self, destination_path: str, random_seed=None
+    ) -> TrainingDatasetCollection:
         """
         Retrieves dataset versions attached to the experiment and organizes them into a DatasetCollection.
 
@@ -45,7 +45,7 @@ class TrainingDatasetCollectionExtractor:
         It prepares dataset contexts for each scenario and assembles them into a DatasetCollection.
 
         Returns:
-            - DatasetCollection: A collection of dataset contexts prepared based on the attached dataset versions.
+            - TrainingDatasetCollection: A collection of dataset contexts prepared based on the attached dataset versions.
 
         Raises:
             - ResourceNotFoundError: If the expected dataset splits are not found in the experiment.
@@ -88,6 +88,7 @@ class TrainingDatasetCollectionExtractor:
                 train_dataset_version=train_dataset_version,
                 val_dataset_version=val_dataset_version,
                 test_dataset_version=test_dataset_version,
+                destination_path=destination_path,
             )
         elif nb_attached_datasets == 2:
             try:
@@ -102,11 +103,14 @@ class TrainingDatasetCollectionExtractor:
             return self._handle_two_datasets(
                 train_dataset_version=train_dataset_version,
                 test_dataset_version=test_dataset_version,
+                destination_path=destination_path,
                 random_seed=random_seed,
             )
         elif nb_attached_datasets == 1:
             return self._handle_one_dataset(
-                train_dataset_version=train_dataset_version, random_seed=random_seed
+                train_dataset_version=train_dataset_version,
+                destination_path=destination_path,
+                random_seed=random_seed,
             )
         else:
             raise RuntimeError(
@@ -119,6 +123,7 @@ class TrainingDatasetCollectionExtractor:
         train_dataset_version: DatasetVersion,
         val_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
+        destination_path: str,
     ) -> TrainingDatasetCollection:
         """
         Handles the scenario where three distinct datasets (train, validation, and test) are attached to the experiment.
@@ -136,21 +141,21 @@ class TrainingDatasetCollectionExtractor:
                 DatasetContext(
                     dataset_name=DatasetSplitName.TRAIN.value,
                     dataset_version=train_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=None,
                     labelmap=None,
                 ),
                 DatasetContext(
                     dataset_name=DatasetSplitName.VAL.value,
                     dataset_version=val_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=None,
                     labelmap=None,
                 ),
                 DatasetContext(
                     dataset_name=DatasetSplitName.TEST.value,
                     dataset_version=test_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=None,
                     labelmap=None,
                 ),
@@ -161,6 +166,7 @@ class TrainingDatasetCollectionExtractor:
         self,
         train_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
+        destination_path: str,
         random_seed=None,
     ) -> TrainingDatasetCollection:
         """
@@ -183,21 +189,21 @@ class TrainingDatasetCollectionExtractor:
                 DatasetContext(
                     dataset_name=DatasetSplitName.TRAIN.value,
                     dataset_version=train_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=train_assets,
                     labelmap=None,
                 ),
                 DatasetContext(
                     dataset_name=DatasetSplitName.VAL.value,
                     dataset_version=train_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=val_assets,
                     labelmap=None,
                 ),
                 DatasetContext(
                     dataset_name=DatasetSplitName.TEST.value,
                     dataset_version=test_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=None,
                     labelmap=None,
                 ),
@@ -207,6 +213,7 @@ class TrainingDatasetCollectionExtractor:
     def _handle_one_dataset(
         self,
         train_dataset_version: DatasetVersion,
+        destination_path: str,
         random_seed=None,
     ) -> TrainingDatasetCollection:
         """
@@ -228,21 +235,21 @@ class TrainingDatasetCollectionExtractor:
                 DatasetContext(
                     dataset_name=DatasetSplitName.TRAIN.value,
                     dataset_version=train_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=train_assets,
                     labelmap=None,
                 ),
                 DatasetContext(
                     dataset_name=DatasetSplitName.VAL.value,
                     dataset_version=train_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=val_assets,
                     labelmap=None,
                 ),
                 DatasetContext(
                     dataset_name=DatasetSplitName.TEST.value,
                     dataset_version=train_dataset_version,
-                    destination_path=self.destination_path,
+                    destination_path=destination_path,
                     multi_asset=test_assets,
                     labelmap=None,
                 ),
