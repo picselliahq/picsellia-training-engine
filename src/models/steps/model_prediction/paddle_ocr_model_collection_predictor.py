@@ -11,8 +11,8 @@ from src.models.model.common.picsellia_prediction import (
     PicselliaConfidence,
     PicselliaLabel,
 )
-from src.models.steps.model_inferencing.model_collection_inference import (
-    ModelCollectionInference,
+from src.models.steps.model_prediction.model_collection_predictor import (
+    ModelCollectionPredictor,
 )
 from src.pipelines.paddle_ocr.PaddleOCR import PaddleOCR  # type: ignore[attr-defined]
 
@@ -45,8 +45,8 @@ def get_picsellia_confidence(confidence: float) -> PicselliaConfidence:
     return PicselliaConfidence(confidence)
 
 
-class PaddleOCRModelCollectionInference(
-    ModelCollectionInference[PaddleOCRModelCollection]
+class PaddleOCRModelCollectionPredictor(
+    ModelCollectionPredictor[PaddleOCRModelCollection]
 ):
     def __init__(self, model_collection: PaddleOCRModelCollection):
         super().__init__(model_collection)
@@ -56,10 +56,10 @@ class PaddleOCRModelCollectionInference(
     def load_model(self) -> PaddleOCR:
         return PaddleOCR(
             use_angle_cls=True,
-            rec_model_dir=self.model_collection.text_model.inference_model_path,
-            det_model_dir=self.model_collection.bbox_model.inference_model_path,
+            rec_model_dir=self.model_collection.text_model.exported_weights_path,
+            det_model_dir=self.model_collection.bbox_model.exported_weights_path,
             rec_char_dict_path=os.path.join(
-                self.model_collection.text_model.model_weights_path, "en_dict.txt"
+                self.model_collection.text_model.weights_dir, "en_dict.txt"
             ),
             use_gpu=True,
             show_log=False,
