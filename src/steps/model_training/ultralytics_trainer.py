@@ -25,11 +25,11 @@ def ultralytics_trainer(
     context: PicselliaTrainingContext[
         UltralyticsHyperParameters, UltralyticsAugmentationParameters
     ] = Pipeline.get_active_context()
-    model_trainer = UltralyticsModelContextTrainer(
+    model_context_trainer = UltralyticsModelContextTrainer(
         model_context=model_context,
         experiment=context.experiment,
     )
-    model_context = model_trainer.train_model_context(
+    model_context = model_context_trainer.train_model_context(
         dataset_collection=dataset_collection,
         hyperparameters=context.hyperparameters,
         augmentation_parameters=context.augmentation_parameters,
