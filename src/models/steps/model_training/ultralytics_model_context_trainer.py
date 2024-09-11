@@ -38,7 +38,14 @@ class UltralyticsModelContextTrainer:
         """
         self.model_context = model_context
         self.experiment = experiment
-        self.callbacks = UltralyticsCallbacks(experiment=experiment)
+        self.callback_handler = UltralyticsCallbacks(experiment)
+
+    def _setup_callbacks(self):
+        """
+        Sets up the callbacks for the model training process.
+        """
+        for event, callback in self.callback_handler.get_callbacks().items():
+            self.model_context.loaded_model.add_callback(event, callback)
 
     def train_model_context(
         self,
@@ -57,11 +64,9 @@ class UltralyticsModelContextTrainer:
         Returns:
             ModelContext: The updated model context after training.
         """
-        callbacks = self.callbacks.get_callbacks()
-        for callback_name, callback_function in callbacks.items():
-            self.model_context.loaded_model.add_callback(
-                event=callback_name, func=callback_function
-            )
+
+        self._setup_callbacks()
+
         if hyperparameters.epochs > 0:
             self.model_context.loaded_model.train(
                 # Hyperparameters
@@ -129,4 +134,5 @@ class UltralyticsModelContextTrainer:
                 erasing=augmentation_parameters.erasing,
                 crop_fraction=augmentation_parameters.crop_fraction,
             )
+
         return self.model_context
