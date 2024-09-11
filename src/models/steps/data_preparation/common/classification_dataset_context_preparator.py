@@ -1,6 +1,5 @@
 import os
 import shutil
-from pathlib import Path
 from typing import Dict
 
 from picsellia_annotations.coco import Image
@@ -21,7 +20,7 @@ class ClassificationDatasetContextPreparator:
         dataset_path (str): The root directory where the organized dataset will be stored.
     """
 
-    def __init__(self, dataset_context: DatasetContext, dataset_path: str):
+    def __init__(self, dataset_context: DatasetContext, destination_image_dir: str):
         """
         Initializes the organizer with a given dataset context.
 
@@ -29,7 +28,11 @@ class ClassificationDatasetContextPreparator:
             dataset_context (DatasetContext): The dataset context to organize.
         """
         self.dataset_context = dataset_context
-        self.dataset_path = dataset_path
+        self.destination_image_dir = destination_image_dir
+        if self.dataset_context.image_dir == self.destination_image_dir:
+            raise ValueError(
+                "The destination image directory cannot be the same as the original image directory."
+            )
 
     def organize(self) -> DatasetContext:
         """
@@ -42,9 +45,14 @@ class ClassificationDatasetContextPreparator:
         categories = self._extract_categories()
         image_categories = self._map_image_to_category()
         self._organize_images(categories, image_categories)
-        self.dataset_context.update_image_dir(
-            Path(os.path.join(self.dataset_path, self.dataset_context.dataset_name))
-        )
+
+        shutil.rmtree(self.dataset_context.image_dir)
+        self.dataset_context.image_dir = self.destination_image_dir
+        if self.dataset_context.annotations_dir and os.path.exists(
+            self.dataset_context.annotations_dir
+        ):
+            shutil.rmtree(self.dataset_context.annotations_dir)
+
         return self.dataset_context
 
     def _extract_categories(self) -> Dict[int, str]:
@@ -103,11 +111,8 @@ class ClassificationDatasetContextPreparator:
             FileNotFoundError: If the source image file to copy is not found.
             shutil.SameFileError: If the source and destination paths are the same.
         """
-        category_dir = os.path.join(
-            self.dataset_path, self.dataset_context.dataset_name, category_name
-        )
-        if not os.path.exists(category_dir):
-            os.makedirs(category_dir)
+        category_dir = os.path.join(self.destination_image_dir, category_name)
+        os.makedirs(category_dir, exist_ok=True)
         src_image_path = os.path.join(self.dataset_context.image_dir, image.file_name)
         dest_image_path = os.path.join(category_dir, image.file_name)
-        shutil.copy(src_image_path, dest_image_path)
+        shutil.move(src_image_path, dest_image_path)
