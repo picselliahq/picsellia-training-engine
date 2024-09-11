@@ -15,10 +15,11 @@ def training_weights_extractor() -> ModelContext:
     model_context = ModelContext(
         model_name=model_version.name,
         model_version=model_version,
-        destination_path=os.path.join(os.getcwd(), context.experiment.name),
-        pretrained_model_filename="weights",
-        config_filename="config",
-        prefix_model_name=None,
+        destination_path=os.path.join(os.getcwd(), context.experiment.name, "model"),
+        pretrained_weights_name="pretrained-weights",
+        trained_weights_name=None,
+        config_name=None,
+        exported_weights_name=None,
     )
     model_context.download_weights(
         model_weights_destination_path=model_context.weights_dir
