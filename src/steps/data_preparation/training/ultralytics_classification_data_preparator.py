@@ -1,6 +1,4 @@
 import os
-import shutil
-from pathlib import Path
 
 from src import step
 from src.models.dataset.training.training_dataset_collection import (
@@ -15,19 +13,18 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 def ultralytics_classification_data_preparator(
     dataset_collection: TrainingDatasetCollection,
 ) -> TrainingDatasetCollection:
-    def remove_existing_annotations(annotations_dir: Path) -> None:
-        if annotations_dir and os.path.exists(annotations_dir):
-            shutil.rmtree(annotations_dir)
-
     for dataset_context in dataset_collection:
+        destination_image_dir = str(
+            os.path.join(dataset_context.destination_path, dataset_context.dataset_name)
+        )
         preparator = ClassificationDatasetContextPreparator(
             dataset_context=dataset_context,
-            dataset_path=dataset_collection.dataset_path,
+            destination_image_dir=destination_image_dir,
         )
+        prepared_dataset_context = preparator.organize()
 
-        new_dataset_context = preparator.organize()
-        remove_existing_annotations(new_dataset_context.annotations_dir)
-
-        dataset_collection[new_dataset_context.dataset_name] = new_dataset_context
+        dataset_collection[
+            prepared_dataset_context.dataset_name
+        ] = prepared_dataset_context
 
     return dataset_collection
