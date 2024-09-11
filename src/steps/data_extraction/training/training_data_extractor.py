@@ -1,4 +1,4 @@
-# type: ignore
+import os
 
 from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
@@ -9,6 +9,10 @@ from src.models.dataset.training.training_dataset_collection import (
 )
 from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
     TrainingDatasetCollectionExtractor,
+)
+from src.steps.data_extraction.utils.image_utils import (
+    log_labelmap,
+    log_objects_distribution,
 )
 
 
@@ -26,7 +30,7 @@ def training_data_extractor() -> TrainingDatasetCollection:
     data preparation and model training pipeline.
 
     Returns:
-        - DatasetCollection: A collection of dataset contexts prepared for the training, including training,
+        - TrainingDatasetCollection: A collection of dataset contexts prepared for the training, including training,
         validation, and testing splits, with all necessary assets and annotations downloaded.
 
     Raises:
@@ -40,8 +44,21 @@ def training_data_extractor() -> TrainingDatasetCollection:
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
     dataset_collection = dataset_collection_extractor.get_dataset_collection(
-        random_seed=context.hyperparameters.seed
+        destination_path=os.path.join(os.getcwd(), context.experiment.name, "dataset"),
+        random_seed=context.hyperparameters.seed,
     )
     dataset_collection.download_all()
-    dataset_collection.log_labelmap(experiment=context.experiment)
+
+    log_labelmap(
+        labelmap=dataset_collection["train"].labelmap,
+        experiment=context.experiment,
+        log_name="labelmap",
+    )
+    for dataset_context in dataset_collection:
+        log_objects_distribution(
+            coco_file=dataset_context.coco_file,
+            experiment=context.experiment,
+            log_name=f"{dataset_context.dataset_name}/objects_distribution",
+        )
+
     return dataset_collection
