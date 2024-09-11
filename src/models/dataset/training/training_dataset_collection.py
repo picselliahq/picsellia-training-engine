@@ -3,8 +3,6 @@ from typing import Generic, List
 
 from src.models.dataset.common.dataset_context import TDatasetContext
 
-from picsellia import Experiment
-
 
 class TrainingDatasetCollection(Generic[TDatasetContext]):
     """
@@ -22,19 +20,14 @@ class TrainingDatasetCollection(Generic[TDatasetContext]):
         test (DatasetContext): The dataset context for the testing split.
     """
 
-    def __init__(
-        self,
-        datasets: List[TDatasetContext],
-    ):
+    def __init__(self, datasets: List[TDatasetContext]):
         self.datasets = {dataset.dataset_name: dataset for dataset in datasets}
-        self.dataset_path = self._unify_dataset_paths(
-            os.path.join(self.datasets["train"].destination_path, "dataset")
-        )
+        self.dataset_path = self.get_common_path()
 
-    def _unify_dataset_paths(self, dataset_path: str) -> str:
-        for dataset in self:
-            dataset.update_destination_path(dataset_path)
-        return dataset_path
+    def get_common_path(self):
+        return os.path.commonpath(
+            [dataset_context.dataset_path for dataset_context in self.datasets.values()]
+        )
 
     def __getitem__(self, key: str) -> TDatasetContext:
         return self.datasets[key]
@@ -47,12 +40,7 @@ class TrainingDatasetCollection(Generic[TDatasetContext]):
 
     def download_all(self):
         for dataset_context in self:
-            dataset_context.download_assets()
-            dataset_context.download_and_build_coco_file()
-
-    def log_labelmap(self, experiment: Experiment):
-        labelmap_to_log = {
-            str(i): label
-            for i, label in enumerate(self.datasets["train"].labelmap.keys())
-        }
-        experiment.log("labelmap", labelmap_to_log, "labelmap", replace=True)
+            dataset_context.download_assets(image_dir=dataset_context.image_dir)
+            dataset_context.download_and_build_coco_file(
+                annotations_dir=dataset_context.annotations_dir
+            )
