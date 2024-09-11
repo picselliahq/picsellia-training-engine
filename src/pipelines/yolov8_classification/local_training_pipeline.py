@@ -1,4 +1,3 @@
-# type: ignore
 from argparse import ArgumentParser
 
 from src import pipeline
@@ -70,7 +69,7 @@ def yolov8_classification_training_pipeline():
         model_context=model_context, dataset_collection=dataset_collection
     )
 
-    model_context = ultralytics_model_exporter(model_context=model_context)
+    ultralytics_model_exporter(model_context=model_context)
     ultralytics_model_evaluator(
         model_context=model_context, dataset_context=dataset_collection["test"]
     )
