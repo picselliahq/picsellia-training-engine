@@ -22,18 +22,16 @@ def ultralytics_model_context_loader(model_context: ModelContext) -> ModelContex
     context: PicselliaTrainingContext[
         UltralyticsHyperParameters, UltralyticsAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
-    if (
-        model_context.pretrained_model_path
-        and os.path.exists(model_context.pretrained_model_path)
-        and isinstance(context.hyperparameters, UltralyticsHyperParameters)
+    if model_context.pretrained_weights_path and os.path.exists(
+        model_context.pretrained_weights_path
     ):
         loaded_model = ultralytics_load_model(
-            weights_path_to_load=model_context.pretrained_model_path,
+            weights_path_to_load=model_context.pretrained_weights_path,
             device=context.hyperparameters.device,
         )
         model_context.set_loaded_model(loaded_model)
     else:
         raise FileNotFoundError(
-            f"Pretrained model file not found at {model_context.pretrained_model_path}. Cannot load model."
+            f"Pretrained model file not found at {model_context.pretrained_weights_path}. Cannot load model."
         )
     return model_context
