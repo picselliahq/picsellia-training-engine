@@ -16,7 +16,7 @@ from src.models.steps.model_export.ultralytics_model_context_exporter import (
 
 
 @step
-def ultralytics_model_exporter(model_context: ModelContext):
+def ultralytics_model_context_exporter(model_context: ModelContext):
     context: PicselliaTrainingContext[
         UltralyticsHyperParameters, UltralyticsAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()

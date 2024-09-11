@@ -8,7 +8,7 @@ from src.models.model.common.model_context import ModelContext
 
 
 @step
-def training_weights_extractor() -> ModelContext:
+def training_model_context_extractor() -> ModelContext:
     context: PicselliaTrainingContext = Pipeline.get_active_context()
 
     model_version = context.experiment.get_base_model_version()

@@ -10,7 +10,7 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 
 
 @step
-def ultralytics_classification_data_preparator(
+def ultralytics_classification_dataset_collection_preparator(
     dataset_collection: TrainingDatasetCollection,
 ) -> TrainingDatasetCollection:
     for dataset_context in dataset_collection:

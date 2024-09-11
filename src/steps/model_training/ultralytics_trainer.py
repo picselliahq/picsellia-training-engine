@@ -19,7 +19,7 @@ from src.models.steps.model_training.ultralytics_model_context_trainer import (
 
 
 @step
-def ultralytics_trainer(
+def ultralytics_model_context_trainer(
     model_context: ModelContext, dataset_collection: TrainingDatasetCollection
 ) -> ModelContext:
     context: PicselliaTrainingContext[

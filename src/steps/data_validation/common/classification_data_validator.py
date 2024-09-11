@@ -11,7 +11,7 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 
 
 @step
-def classification_data_validator(
+def classification_dataset_collection_validator(
     dataset_collection: TrainingDatasetCollection,
 ) -> None:
     """

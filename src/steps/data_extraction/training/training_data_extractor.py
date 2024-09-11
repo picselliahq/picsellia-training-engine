@@ -17,7 +17,7 @@ from src.steps.data_extraction.utils.image_utils import (
 
 
 @step
-def training_data_extractor() -> TrainingDatasetCollection:
+def training_dataset_collection_extractor() -> TrainingDatasetCollection:
     """
     Extracts datasets from an experiment and prepares them for training.
 

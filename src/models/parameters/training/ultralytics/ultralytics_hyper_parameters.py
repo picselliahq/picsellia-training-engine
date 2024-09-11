@@ -1,4 +1,3 @@
-# type: ignore
 from typing import Union
 
 from src.models.parameters.common.hyper_parameters import HyperParameters
