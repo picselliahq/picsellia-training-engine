@@ -1,3 +1,6 @@
+# type: ignore
+from typing import Union
+
 from src.models.parameters.common.hyper_parameters import HyperParameters
 
 from picsellia.types.schemas import LogDataType
@@ -7,7 +10,7 @@ class UltralyticsHyperParameters(HyperParameters):
     def __init__(self, log_data: LogDataType):
         super().__init__(log_data=log_data)
         self.time = self.extract_parameter(
-            keys=["time"], expected_type=float, default=None
+            keys=["time"], expected_type=Union[float, None], default=None
         )
         self.patience = self.extract_parameter(
             keys=["patience"], expected_type=int, default=100
@@ -21,9 +24,6 @@ class UltralyticsHyperParameters(HyperParameters):
             keys=["cache", "use_cache"],
             expected_type=bool,
             default=False,
-        )
-        self.device = self.extract_parameter(
-            keys=["device"], expected_type=str, default="0"
         )
         self.workers = self.extract_parameter(
             keys=["workers"], expected_type=int, default=8
@@ -56,7 +56,7 @@ class UltralyticsHyperParameters(HyperParameters):
             keys=["profile"], expected_type=bool, default=False
         )
         self.freeze = self.extract_parameter(
-            keys=["freeze"], expected_type=int, default=None
+            keys=["freeze"], expected_type=Union[int, None], default=None
         )
         self.lr0 = self.extract_parameter(
             keys=["lr0"], expected_type=float, default=0.01
