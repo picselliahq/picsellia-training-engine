@@ -1,14 +1,27 @@
 from src.models.steps.model_logging.base_logger import (
-    ClassificationMetricMapping,
     Metric,
     BaseLogger,
 )
 
 from picsellia import Experiment
 
+from src.models.steps.model_logging.classification_logger import (
+    ClassificationMetricMapping,
+)
+
 
 class UltralyticsClassificationMetricMapping(ClassificationMetricMapping):
+    """
+    Defines the metric mapping for classification tasks in the Ultralytics framework.
+
+    This class extends the ClassificationMetricMapping and adds specific framework-related metric names
+    for training and validation phases, such as top-1 and top-5 accuracy, loss, and learning rate.
+    """
+
     def __init__(self):
+        """
+        Initializes the Ultralytics-specific classification metric mapping.
+        """
         super().__init__()
         self.add_metric(
             phase="train",
@@ -61,12 +74,19 @@ class UltralyticsClassificationMetricMapping(ClassificationMetricMapping):
 
 
 class UltralyticsClassificationLogger(BaseLogger):
+    """
+    Logger for Ultralytics-based classification models.
+
+    This class logs classification metrics during training and validation phases in Ultralytics models,
+    using a metric mapping specific to the Ultralytics framework.
+    """
+
     def __init__(self, experiment: Experiment):
         """
-        Initialize the Ultralytics logger with a specific metric mapping.
+        Initialize the UltralyticsClassificationLogger with an experiment and Ultralytics metric mapping.
 
         Args:
-            experiment (Experiment): The experiment object for logging.
+            experiment (Experiment): The experiment object for logging Ultralytics classification metrics.
         """
         metric_mapping = UltralyticsClassificationMetricMapping()
         super().__init__(experiment=experiment, metric_mapping=metric_mapping)
