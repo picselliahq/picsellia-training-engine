@@ -7,6 +7,25 @@ from src.models.model.common.model_downloader import ModelDownloader
 
 
 class ModelContext:
+    """
+    Manages the context of a specific model version, including paths, weights, configuration, and labels.
+
+    This class handles the organization of model-related files, such as pretrained weights, trained weights,
+    configuration files, and exported weights. It also provides functionality for downloading these files
+    and managing the model's runtime instance.
+
+    Attributes:
+        model_name (str): The name of the model.
+        model_version (ModelVersion): The version of the model from Picsellia.
+        destination_path (str): The base directory where model files will be stored.
+        pretrained_weights_name (Optional[str]): The name of the pretrained weights file attached to the model version in Picsellia.
+        trained_weights_name (Optional[str]): The name of the trained weights file attached to the model version in Picsellia.
+        config_name (Optional[str]): The name of the configuration file attached to the model version in Picsellia.
+        exported_weights_name (Optional[str]): The name of the exported weights file attached to the model version in Picsellia.
+        labelmap (Optional[Dict[str, Label]]): A dictionary mapping category names to labels.
+        prefix_model_name (Optional[str]): A prefix for handling multiple models (e.g., OCR models with different purposes).
+    """
+
     def __init__(
         self,
         model_name: str,
@@ -61,6 +80,15 @@ class ModelContext:
         self._loaded_model: Optional[Any] = None
 
     def _create_directory(self, folder_name: str) -> str:
+        """
+        Creates a directory inside the destination path for a specific type of model-related files (e.g., weights, results).
+
+        Args:
+            folder_name (str): The name of the folder to create (e.g., 'weights', 'results').
+
+        Returns:
+            str: The path to the created directory.
+        """
         if self.prefix_model_name:
             path = os.path.join(
                 self.destination_path,
@@ -100,6 +128,12 @@ class ModelContext:
         self._loaded_model = model
 
     def download_weights(self, model_weights_destination_path: str) -> None:
+        """
+        Downloads the model's weights and configuration files to the specified destination path.
+
+        Args:
+            model_weights_destination_path (str): The destination path where the model weights and related files will be downloaded.
+        """
         downloader = ModelDownloader()
 
         # Create directories
@@ -115,6 +149,7 @@ class ModelContext:
             model_weights_destination_path, "exported_weights"
         )
 
+        # Create directories if they don't exist
         for directory in [
             self.weights_dir,
             self.pretrained_weights_dir,
@@ -124,6 +159,7 @@ class ModelContext:
         ]:
             os.makedirs(directory, exist_ok=True)
 
+        # Download and process model files
         for model_file in self.model_version.list_files():
             if model_file.name == self.pretrained_weights_name:
                 self.pretrained_weights_path = downloader.download_and_process(
