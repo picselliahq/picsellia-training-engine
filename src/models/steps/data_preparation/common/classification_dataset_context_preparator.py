@@ -8,24 +8,27 @@ from src.models.dataset.common.dataset_context import DatasetContext
 
 class ClassificationDatasetContextPreparator:
     """
-    Organizes dataset images into directories based on their classification categories.
+    Prepares and organizes dataset images into directories based on their classification categories.
 
-    This class takes a dataset context which includes a COCO file with category and annotation information.
-    It organizes the dataset by creating a directory for each category and moving the images into their respective
-    category directories. This structure is often required for many deep learning frameworks and simplifies the
-    task of dataset loading for classification tasks.
+    This class takes a dataset context with category and annotation information in COCO format.
+    It organizes the dataset by creating a directory for each category and moves the images into their
+    respective category directories, which is often required for classification tasks in deep learning frameworks.
 
     Attributes:
-        dataset_context (DatasetContext): The context of the dataset to organize, including paths and COCO file.
-        dataset_path (str): The root directory where the organized dataset will be stored.
+        dataset_context (DatasetContext): The context of the dataset including paths and COCO file.
+        destination_image_dir (str): The target directory where the images will be moved and organized.
     """
 
     def __init__(self, dataset_context: DatasetContext, destination_image_dir: str):
         """
-        Initializes the organizer with a given dataset context.
+        Initializes the preparator with a given dataset context and a destination directory for images.
 
         Args:
-            dataset_context (DatasetContext): The dataset context to organize.
+            dataset_context (DatasetContext): The context of the dataset to organize.
+            destination_image_dir (str): The directory where the organized images will be stored.
+
+        Raises:
+            ValueError: If the destination image directory is the same as the original image directory.
         """
         self.dataset_context = dataset_context
         self.destination_image_dir = destination_image_dir
@@ -39,8 +42,11 @@ class ClassificationDatasetContextPreparator:
         Organizes the dataset by creating category directories and moving images.
 
         Extracts category information from the COCO file, maps images to their categories,
-        and organizes the images into the respective category directories. Finally, cleans up
-        the original image directory.
+        and organizes the images into the respective category directories. Cleans up the original
+        image directory and annotations directory after moving the images.
+
+        Returns:
+            DatasetContext: The updated dataset context with the new image directory.
         """
         categories = self._extract_categories()
         image_categories = self._map_image_to_category()
@@ -60,7 +66,7 @@ class ClassificationDatasetContextPreparator:
         Extracts the categories from the dataset's COCO file.
 
         Returns:
-            - Dict[int, str]: A dictionary mapping category IDs to category names.
+            Dict[int, str]: A dictionary mapping category IDs to category names.
         """
         return {
             category.id: category.name
@@ -69,10 +75,10 @@ class ClassificationDatasetContextPreparator:
 
     def _map_image_to_category(self) -> Dict[int, int]:
         """
-        Maps each image to its category based on annotations in the COCO file.
+        Maps each image to its category based on the annotations in the COCO file.
 
         Returns:
-            - Dict[int, int]: A dictionary mapping image IDs to category IDs.
+            Dict[int, int]: A dictionary mapping image IDs to category IDs.
         """
         return {
             annotation.image_id: annotation.category_id
@@ -100,15 +106,15 @@ class ClassificationDatasetContextPreparator:
         self, category_name: str, image: Image
     ) -> None:
         """
-        Creates a directory for a category if it doesn't exist and copies an image into it.
+        Creates a directory for a category if it doesn't exist and moves an image into it.
 
-        Parameters:
+        Args:
             category_name (str): The name of the category.
-            image: The image object containing the file name.
+            image (Image): The image object containing file name and metadata.
 
         Raises:
-            PermissionError: If there is a permission issue creating the directory or copying the file.
-            FileNotFoundError: If the source image file to copy is not found.
+            PermissionError: If there is a permission issue when creating the directory or moving the file.
+            FileNotFoundError: If the source image file is not found.
             shutil.SameFileError: If the source and destination paths are the same.
         """
         category_dir = os.path.join(self.destination_image_dir, category_name)
