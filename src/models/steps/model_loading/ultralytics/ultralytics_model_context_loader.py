@@ -1,5 +1,9 @@
+import logging
+
 from ultralytics import YOLO
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 def ultralytics_load_model(weights_path_to_load: str, device: str) -> YOLO:
@@ -22,6 +26,6 @@ def ultralytics_load_model(weights_path_to_load: str, device: str) -> YOLO:
     """
     loaded_model = YOLO(weights_path_to_load)
     torch_device = torch.device(device)
-    print(f"Loading model on device: {torch_device}")
+    logger.info(f"Loading model on device: {torch_device}")
     loaded_model.to(device=device)
     return loaded_model

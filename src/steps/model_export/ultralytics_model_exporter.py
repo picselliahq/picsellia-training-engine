@@ -13,6 +13,9 @@ from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters imp
 from src.models.steps.model_export.ultralytics_model_context_exporter import (
     UltralyticsModelContextExporter,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @step
@@ -33,4 +36,6 @@ def ultralytics_model_context_exporter(model_context: ModelContext):
             exported_weights_name="model-latest",
         )
     else:
-        print("No exported weights directory found in model context. Skipping export.")
+        logger.info(
+            "No exported weights directory found in model context. Skipping export."
+        )

@@ -1,3 +1,4 @@
+import logging
 from typing import Union, List
 
 from picsellia.types.enums import AddEvaluationType
@@ -8,6 +9,8 @@ from src.models.model.common.picsellia_prediction import (
     PicselliaClassificationPrediction,
     PicselliaPolygonPrediction,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ModelEvaluator:
@@ -101,7 +104,7 @@ class ModelEvaluator:
                     evaluation.texts,
                 )
             ]
-            print(
+            logger.info(
                 f"Adding evaluation for asset {asset.filename} with rectangles {rectangles_with_text}"
             )
             self.experiment.add_evaluation(
@@ -122,7 +125,7 @@ class ModelEvaluator:
                     evaluation.boxes, evaluation.labels, evaluation.confidences
                 )
             ]
-            print(
+            logger.info(
                 f"Adding evaluation for asset {asset.filename} with rectangles {rectangles}"
             )
             self.experiment.add_evaluation(
@@ -144,6 +147,9 @@ class ModelEvaluator:
                     evaluation.polygons, evaluation.labels, evaluation.confidences
                 )
             ]
+            logger.info(
+                f"Adding evaluation for asset {asset.filename} with polygons {polygons}"
+            )
             self.experiment.add_evaluation(
                 asset, add_type=AddEvaluationType.REPLACE, polygons=polygons
             )

@@ -1,9 +1,13 @@
+import logging
 import os
 import shutil
 from picsellia import Experiment
 
 from src.models.model.common.model_context import ModelContext
 from src.models.steps.model_export.model_context_exporter import ModelContextExporter
+
+
+logger = logging.getLogger(__name__)
 
 
 class UltralyticsModelContextExporter(ModelContextExporter):
@@ -116,5 +120,5 @@ class UltralyticsModelContextExporter(ModelContextExporter):
             onnx_file_path (str): The full path to the ONNX file.
             exported_weights_destination_path (str): The destination path where the ONNX file should be moved.
         """
-        print(f"Moving ONNX file to {exported_weights_destination_path}...")
+        logger.info(f"Moving ONNX file to {exported_weights_destination_path}...")
         shutil.move(onnx_file_path, exported_weights_destination_path)
