@@ -10,6 +10,9 @@ class UltralyticsModelContextExporter(ModelContextExporter):
     """
     Exporter class for Ultralytics model contexts.
 
+    This class handles the exportation of models trained using Ultralytics. It exports the model to a specified format,
+    typically ONNX, and moves the resulting file to a destination directory for further use or deployment.
+
     Attributes:
         model_context (ModelContext): The Ultralytics model context to be exported.
         experiment (Experiment): The experiment to which the model is related.
@@ -37,7 +40,7 @@ class UltralyticsModelContextExporter(ModelContextExporter):
             export_format (str): The format to export the model (e.g., ONNX).
 
         Raises:
-            ValueError: If no results folder or ONNX file is found.
+            ValueError: If no results folder or ONNX file is found during the export process.
         """
         self._export_model(export_format=export_format)
 
@@ -50,10 +53,10 @@ class UltralyticsModelContextExporter(ModelContextExporter):
 
     def _export_model(self, export_format: str) -> None:
         """
-        Exports the loaded model in the specified format (e.g., ONNX) to the inference model path.
+        Exports the loaded model in the specified format (e.g., ONNX) to the model's inference path.
 
         Args:
-            export_format (str): The format to export the model in.
+            export_format (str): The format to export the model in (e.g., ONNX).
         """
         self.model_context.loaded_model.export(format=export_format)
 
@@ -112,7 +115,6 @@ class UltralyticsModelContextExporter(ModelContextExporter):
         Args:
             onnx_file_path (str): The full path to the ONNX file.
             exported_weights_destination_path (str): The destination path where the ONNX file should be moved.
-
         """
         print(f"Moving ONNX file to {exported_weights_destination_path}...")
         shutil.move(onnx_file_path, exported_weights_destination_path)
