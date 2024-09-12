@@ -11,7 +11,24 @@ from src.models.model.common.picsellia_prediction import (
 
 
 class ModelEvaluator:
+    """
+    Handles the evaluation process of various prediction types for an experiment in Picsellia.
+
+    The ModelEvaluator class processes different types of predictions (OCR, rectangles, classifications, and polygons)
+    and adds them as evaluations to an experiment. The predictions are passed as lists, and each prediction type
+    is handled accordingly to log the evaluation results.
+
+    Attributes:
+        experiment: The Picsellia experiment to which evaluations will be added.
+    """
+
     def __init__(self, experiment):
+        """
+        Initializes the ModelEvaluator with the given experiment.
+
+        Args:
+            experiment: The Picsellia experiment object where the evaluations will be logged.
+        """
         self.experiment = experiment
 
     def evaluate(
@@ -23,6 +40,13 @@ class ModelEvaluator:
             List[PicselliaOCRPrediction],
         ],
     ) -> None:
+        """
+        Evaluates a list of predictions and adds them to the experiment.
+
+        Args:
+            picsellia_predictions: A list of Picsellia predictions, which can include
+                classification, rectangle, polygon, or OCR predictions.
+        """
         for prediction in picsellia_predictions:
             self.add_evaluation(prediction)
 
@@ -35,7 +59,17 @@ class ModelEvaluator:
             PicselliaOCRPrediction,
         ],
     ) -> None:
+        """
+        Adds a single evaluation to the experiment based on the prediction type.
+
+        Args:
+            evaluation: A single prediction instance, which can be a classification, rectangle, polygon, or OCR prediction.
+
+        Raises:
+            TypeError: If the prediction type is not supported.
+        """
         asset = evaluation.asset
+
         if isinstance(evaluation, PicselliaOCRPrediction):
             rectangles = [
                 (
