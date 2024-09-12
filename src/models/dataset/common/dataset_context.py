@@ -19,7 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 class DatasetContext:
-    """Stores and manages the context of a dataset, including metadata, paths, and assets."""
+    """
+    Stores and manages the context of a dataset, including metadata, paths,
+    assets, and COCO file management.
+
+    Attributes:
+        dataset_name (str): The name of the dataset.
+        dataset_version (DatasetVersion): Version of the dataset from Picsellia.
+        destination_path (str): Path where the dataset will be downloaded and stored.
+        multi_asset (Optional[MultiAsset]): MultiAsset object for managing dataset assets.
+        labelmap (Optional[Dict[str, Label]]): Label map of the dataset, used for annotations.
+        skip_asset_listing (bool): If True, skips listing of assets during initialization.
+        use_id (Optional[bool]): If True, uses asset ID in file paths.
+        download_annotations (Optional[bool]): If True, downloads and initializes annotations.
+    """
 
     def __init__(
         self,
@@ -32,6 +45,19 @@ class DatasetContext:
         use_id: Optional[bool] = True,
         download_annotations: Optional[bool] = True,
     ):
+        """
+        Initializes the DatasetContext with the provided dataset information, path, and options.
+
+        Args:
+            dataset_name (str): Name of the dataset.
+            dataset_version (DatasetVersion): Version of the dataset to manage.
+            destination_path (str): Local path where dataset assets and annotations will be saved.
+            multi_asset (Optional[MultiAsset]): Pre-listed assets to be used.
+            labelmap (Optional[Dict[str, Label]]): Pre-loaded label map for the dataset.
+            skip_asset_listing (bool): Whether to skip asset listing (default: False).
+            use_id (Optional[bool]): Whether to use asset ID in file paths (default: True).
+            download_annotations (Optional[bool]): Whether to download annotation files (default: True).
+        """
         self.dataset_name = dataset_name
         self.dataset_version = dataset_version
         self.destination_path = destination_path
@@ -47,12 +73,21 @@ class DatasetContext:
         self._initialize_coco_file()
 
     def _initialize_paths(self):
-        """Initializes the dataset, image, and annotations paths."""
+        """
+        Initializes the file paths for the dataset, images, and annotations.
+        Sets up the necessary directories in the destination path.
+        """
         self.dataset_path = os.path.join(self.destination_path, self.dataset_name)
         self.image_dir = os.path.join(self.dataset_path, "images")
         self.annotations_dir = os.path.join(self.dataset_path, "annotations")
 
     def download_and_build_coco_file(self, annotations_dir: str) -> None:
+        """
+        Downloads the COCO annotation file and builds the COCO file object.
+
+        Args:
+            annotations_dir (str): Directory path to save the downloaded COCO file.
+        """
         coco_file_path = self._download_coco_file(annotations_dir=annotations_dir)
         if isinstance(coco_file_path, str):
             self.coco_file_path = coco_file_path
@@ -61,7 +96,15 @@ class DatasetContext:
             logger.warning("COCO file path is None, skipping COCO file build.")
 
     def _download_coco_file(self, annotations_dir: str) -> Optional[str]:
-        """Downloads the COCO file associated with the dataset."""
+        """
+        Downloads the COCO file for the dataset from Picsellia.
+
+        Args:
+            annotations_dir (str): Path where the COCO file should be downloaded.
+
+        Returns:
+            Optional[str]: Path to the COCO file if downloaded successfully, otherwise None.
+        """
         coco_file_path = self.dataset_version.export_annotation_file(
             annotation_file_type=AnnotationFileType.COCO,
             target_path=annotations_dir,
@@ -75,12 +118,25 @@ class DatasetContext:
             return None
 
     def _build_coco_file(self, coco_file_path: str) -> COCOFile:
-        """Builds the COCO file object and initializes the manager."""
+        """
+        Builds and returns a COCOFile object from the downloaded COCO file.
+
+        Args:
+            coco_file_path (str): Path to the downloaded COCO file.
+
+        Returns:
+            COCOFile: The COCO file object with the dataset's annotations.
+        """
         coco_file = read_coco_file(str(coco_file_path))
         self.coco_file_manager = COCOFileManager(coco_file)
         return coco_file
 
     def _initialize_coco_file(self):
+        """
+        Initializes the COCO file by either downloading it or creating it locally
+        depending on the configuration.
+        Raises a ValueError if the COCO file cannot be downloaded.
+        """
         if self.download_annotations:
             coco_file_path = self._download_coco_file(
                 annotations_dir=str(self.annotations_dir)
@@ -100,13 +156,23 @@ class DatasetContext:
             self.coco_file_manager = COCOFileManager(self.coco_file)
 
     def download_assets(self, image_dir: str) -> None:
-        """Downloads the dataset assets to the local filesystem."""
+        """
+        Downloads all assets (images) associated with the dataset.
+
+        Args:
+            image_dir (str): Directory where the assets should be downloaded.
+        """
         os.makedirs(image_dir, exist_ok=True)
         if self.multi_asset:
             self.multi_asset.download(target_path=str(image_dir), use_id=self.use_id)
 
     def _list_assets(self) -> Optional[MultiAsset]:
-        """Lists the assets in the dataset."""
+        """
+        Lists and retrieves the dataset's assets from Picsellia.
+
+        Returns:
+            Optional[MultiAsset]: The MultiAsset object if assets are found, otherwise None.
+        """
         try:
             return self.dataset_version.list_assets()
         except NoDataError:
@@ -121,7 +187,16 @@ class DatasetContext:
             return json.load(f)
 
     def get_assets_batch(self, limit: int, offset: int) -> MultiAsset:
-        """Retrieves a batch of assets from the dataset."""
+        """
+        Retrieves a batch of assets with a specified limit and offset.
+
+        Args:
+            limit (int): Number of assets to retrieve in one batch.
+            offset (int): Starting point for the asset batch.
+
+        Returns:
+            MultiAsset: Batch of assets.
+        """
         return self.dataset_version.list_assets(limit=limit, offset=offset)
 
 
