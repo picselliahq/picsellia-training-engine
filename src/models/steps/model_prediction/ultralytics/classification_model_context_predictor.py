@@ -155,7 +155,7 @@ class UltralyticsClassificationModelContextPredictor(
                 prediction.names[int(prediction.probs.top1)], dataset_context
             )
             prediction_confidence = self.get_picsellia_confidence(
-                float(prediction.probs.top1conf.numpy())
+                float(prediction.probs.top1conf.cpu().numpy())
             )
             processed_prediction = PicselliaClassificationPrediction(
                 asset=asset,
