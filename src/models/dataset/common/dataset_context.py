@@ -64,9 +64,14 @@ class DatasetContext:
         self.use_id = use_id
         self.download_annotations = download_annotations
         self.labelmap = labelmap or get_labelmap(dataset_version=dataset_version)
-        self.multi_asset = multi_asset or (
-            None if skip_asset_listing else self._list_assets()
-        )
+        if not labelmap:
+            self.labelmap = get_labelmap(dataset_version=dataset_version)
+        else:
+            self.labelmap = labelmap or {}
+        if multi_asset:
+            self.multi_asset = multi_asset
+        elif not skip_asset_listing:
+            self.list_assets()
 
         self._initialize_paths()
         self.coco_file: COCOFile
@@ -166,18 +171,17 @@ class DatasetContext:
         if self.multi_asset:
             self.multi_asset.download(target_path=str(image_dir), use_id=self.use_id)
 
-    def _list_assets(self) -> Optional[MultiAsset]:
+    def list_assets(self) -> None:
         """
-        Lists and retrieves the dataset's assets from Picsellia.
+        Lists the assets in the dataset.
 
-        Returns:
-            Optional[MultiAsset]: The MultiAsset object if assets are found, otherwise None.
+        Raises:
+            NoDataError: If no assets are found in the dataset.
         """
         try:
-            return self.dataset_version.list_assets()
+            self.multi_asset = self.dataset_version.list_assets()
         except NoDataError:
-            logger.warning(f"No assets found for dataset {self.dataset_name}")
-            return None
+            self.multi_asset = None
 
     def load_coco_file_data(self) -> Dict[str, Any]:
         """
