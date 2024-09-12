@@ -63,11 +63,12 @@ class DatasetContext:
         self.destination_path = destination_path
         self.use_id = use_id
         self.download_annotations = download_annotations
-        self.labelmap = labelmap or get_labelmap(dataset_version=dataset_version)
+
         if not labelmap:
             self.labelmap = get_labelmap(dataset_version=dataset_version)
         else:
             self.labelmap = labelmap or {}
+
         if multi_asset:
             self.multi_asset = multi_asset
         elif not skip_asset_listing:
