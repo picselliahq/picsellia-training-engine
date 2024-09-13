@@ -55,8 +55,8 @@ class ProcessingTilerParameters(Parameters):
             expected_type=TileMode,
             default=TileMode.CONSTANT,
         )
-        self.constant_value = self.extract_parameter(
-            keys=["constant_value"],
+        self.padding_color_value = self.extract_parameter(
+            keys=["padding_color_value"],
             expected_type=int,
             default=114,
             range_value=(0, 255),

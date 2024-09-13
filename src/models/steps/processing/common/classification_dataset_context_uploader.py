@@ -31,7 +31,7 @@ class ClassificationDatasetContextUploader(DataUploader):
         """
         Uploads the dataset context to Picsellia using COCO annotation file.
         """
-        coco_data = self._load_coco_data()
+        coco_data = self.dataset_context.load_coco_file_data()
         images_by_category = self._process_coco_data(coco_data)
 
         for category_name, image_paths in images_by_category.items():
@@ -56,13 +56,6 @@ class ClassificationDatasetContextUploader(DataUploader):
             )
         )
         conversion_job.wait_for_done()
-
-    def _load_coco_data(self) -> Dict[str, Any]:
-        """
-        Load COCO data from the annotation file.
-        """
-        with open(self.dataset_context.coco_file_path, "r") as f:
-            return json.load(f)
 
     def _process_coco_data(self, coco_data: Dict[str, Any]) -> Dict[str, List[str]]:
         """

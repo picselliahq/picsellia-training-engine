@@ -31,7 +31,7 @@ class TilerProcessingFactory:
         min_annotation_width: Optional[int],
         min_annotation_height: Optional[int],
         tilling_mode: TileMode = TileMode.CONSTANT,
-        constant_value: int = 114,
+        padding_color_value: int = 114,
     ) -> BaseTilerProcessing:
         """Create and return the appropriate TilerProcessing instance based on the dataset type."""
 
@@ -45,7 +45,7 @@ class TilerProcessingFactory:
                 min_annotation_width=min_annotation_width,
                 min_annotation_height=min_annotation_height,
                 tilling_mode=tilling_mode,
-                constant_value=constant_value,
+                padding_color_value=padding_color_value,
             )
 
         elif dataset_type == InferenceType.SEGMENTATION:
@@ -58,7 +58,7 @@ class TilerProcessingFactory:
                 min_annotation_width=min_annotation_width,
                 min_annotation_height=min_annotation_height,
                 tilling_mode=tilling_mode,
-                constant_value=constant_value,
+                padding_color_value=padding_color_value,
             )
 
         elif dataset_type == InferenceType.CLASSIFICATION:
@@ -71,7 +71,7 @@ class TilerProcessingFactory:
                 min_annotation_width=min_annotation_width,
                 min_annotation_height=min_annotation_height,
                 tilling_mode=tilling_mode,
-                constant_value=constant_value,
+                padding_color_value=padding_color_value,
             )
         else:
             raise ValueError(

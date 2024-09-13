@@ -29,9 +29,9 @@ from src.models.steps.data_validation.processing.processing_tiler_data_validator
 def tiler_data_validator(
     dataset_context: DatasetContext,
 ) -> DatasetContext:
-    context: PicselliaProcessingContext[
-        ProcessingTilerParameters
-    ] = Pipeline.get_active_context()
+    context: PicselliaProcessingContext[ProcessingTilerParameters] = (
+        Pipeline.get_active_context()
+    )
 
     match dataset_context.dataset_version.type:
         case InferenceType.NOT_CONFIGURED:
@@ -41,6 +41,14 @@ def tiler_data_validator(
             not_configured_dataset_validator.validate()
 
         case InferenceType.SEGMENTATION:
+            # Both object detection and segmentation dataset validators are used for segmentation datasets because,
+            # within a COCO segmentation dataset, both the properties of bounding boxes and polygons are used.
+            object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
+                dataset_context=dataset_context,
+                fix_annotation=context.processing_parameters.fix_annotation,
+            )
+            dataset_context = object_detection_dataset_validator.validate()
+
             segmentation_dataset_validator = SegmentationDatasetContextValidator(
                 dataset_context=dataset_context,
                 fix_annotation=context.processing_parameters.fix_annotation,
@@ -74,6 +82,7 @@ def tiler_data_validator(
         min_annotation_area_ratio=context.processing_parameters.min_annotation_area_ratio,
         min_annotation_width=context.processing_parameters.min_annotation_width,
         min_annotation_height=context.processing_parameters.min_annotation_height,
+        padding_color_value=context.processing_parameters.padding_color_value,
         datalake=context.processing_parameters.datalake,
     )
     processing_validator.validate()

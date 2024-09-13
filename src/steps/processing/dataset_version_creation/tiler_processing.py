@@ -18,9 +18,9 @@ from src.models.steps.processing.dataset_version_creation.tiler_processing.tiler
 def tiler_processing(
     dataset_collection: ProcessingDatasetCollection,
 ) -> DatasetContext:
-    context: PicselliaProcessingContext[
-        ProcessingTilerParameters
-    ] = Pipeline.get_active_context()
+    context: PicselliaProcessingContext[ProcessingTilerParameters] = (
+        Pipeline.get_active_context()
+    )
 
     processor = TilerProcessingFactory.create_tiler_processing(
         dataset_type=dataset_collection.input.dataset_version.type,
@@ -31,6 +31,8 @@ def tiler_processing(
         min_annotation_area_ratio=context.processing_parameters.min_annotation_area_ratio,
         min_annotation_width=context.processing_parameters.min_annotation_width,
         min_annotation_height=context.processing_parameters.min_annotation_height,
+        tilling_mode=context.processing_parameters.tilling_mode,
+        padding_color_value=context.processing_parameters.padding_color_value,
     )
 
     dataset_collection = processor.process_dataset_collection(

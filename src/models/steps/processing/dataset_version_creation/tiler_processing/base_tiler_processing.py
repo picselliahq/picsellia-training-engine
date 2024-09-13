@@ -40,7 +40,7 @@ class BaseTilerProcessing(ABC):
         min_annotation_width: Optional[int],
         min_annotation_height: Optional[int],
         tilling_mode: TileMode = TileMode.CONSTANT,
-        constant_value: int = 114,
+        padding_color_value: int = 114,
     ):
         self.tile_width = tile_width
         self.tile_height = tile_height
@@ -53,7 +53,7 @@ class BaseTilerProcessing(ABC):
         self.min_annotation_height = min_annotation_height
 
         self.tilling_mode = tilling_mode
-        self.constant_value = constant_value
+        self.padding_color_value = padding_color_value
 
     @property
     def stride_x(self) -> int:
@@ -148,7 +148,7 @@ class BaseTilerProcessing(ABC):
                                 tile,
                                 pad_width,
                                 mode="constant",
-                                constant_values=self.constant_value,
+                                constant_values=self.padding_color_value,
                             )
                         elif self.tilling_mode == TileMode.REFLECT:
                             tile = np.pad(tile, pad_width, mode="reflect")  # noqa
@@ -161,19 +161,6 @@ class BaseTilerProcessing(ABC):
 
         tiles_data = np.array(tiles)
         return tiles_data
-
-    def _load_coco_data(self, coco_file_path: str) -> Dict[str, Any]:
-        """
-        Load COCO data from a JSON file.
-
-        Args:
-            coco_file_path: Path to the COCO file.
-
-        Returns:
-            Dict[str, Any]: The COCO data extracted from the file.
-        """
-        with open(coco_file_path, "r") as f:
-            return json.load(f)
 
     def _process_dataset_collection(
         self, dataset_collection: ProcessingDatasetCollection
@@ -195,7 +182,7 @@ class BaseTilerProcessing(ABC):
         if dataset_type == InferenceType.NOT_CONFIGURED:
             raise ValueError("Dataset type is not configured.")
 
-        coco_data = self._load_coco_data(dataset_collection.input.coco_file_path)
+        coco_data = dataset_collection.input.load_coco_file_data()
         number_of_images = len(coco_data["images"])
 
         output_coco_data = {
@@ -228,7 +215,7 @@ class BaseTilerProcessing(ABC):
                 output_dir=dataset_collection.output.image_dir,
                 stride_x=self.stride_x,
                 stride_y=self.stride_y,
-                constant_value=self.constant_value,
+                constant_value=self.padding_color_value,
             )
 
             self._tile_annotation(

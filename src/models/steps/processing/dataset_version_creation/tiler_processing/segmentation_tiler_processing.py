@@ -4,8 +4,6 @@ from src.models.steps.processing.dataset_version_creation.tiler_processing.objec
     ObjectDetectionTilerProcessing,
 )
 
-# TODO fix because detection and segmentation are lo longer working
-
 
 class SegmentationTilerProcessing(ObjectDetectionTilerProcessing):
     """Tiler processing for segmentation datasets."""

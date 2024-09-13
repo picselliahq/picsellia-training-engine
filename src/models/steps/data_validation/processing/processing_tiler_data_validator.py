@@ -12,6 +12,7 @@ class ProcessingTilerDataValidator:
         min_annotation_area_ratio: float,
         min_annotation_width: float,
         min_annotation_height: float,
+        padding_color_value: int,
         datalake: str,
     ):
         self.client = client
@@ -25,6 +26,8 @@ class ProcessingTilerDataValidator:
         self.min_annotation_area_ratio = min_annotation_area_ratio
         self.min_annotation_width = min_annotation_width
         self.min_annotation_height = min_annotation_height
+
+        self.padding_color_value = padding_color_value
 
         self.datalake = datalake
 
@@ -55,6 +58,8 @@ class ProcessingTilerDataValidator:
             raise ValueError("min_annotation_width must be greater than 0")
         if self.min_annotation_height is not None and self.min_annotation_height < 0:
             raise ValueError("min_annotation_height must be greater than 0")
+        if self.padding_color_value < 0 or self.padding_color_value > 255:
+            raise ValueError("padding_color_value must be between 0 and 255")
 
     def _validate_datalake(self) -> None:
         """
