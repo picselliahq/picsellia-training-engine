@@ -1,155 +1,143 @@
 import os
 import tarfile
 import zipfile
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
+from picsellia import ModelFile
 from picsellia import ModelVersion, Label
 
 
+class ModelDownloader:
+    def download_and_process(self, model_file: ModelFile, destination_path: str) -> str:
+        """
+        Télécharge et décompresse un fichier de modèle.
+
+        Args:
+            model_file (ModelFile): Le fichier de modèle à télécharger.
+
+        Returns:
+            str: Le chemin vers le fichier téléchargé ou décompressé.
+        """
+        os.makedirs(destination_path, exist_ok=True)
+        file_path = os.path.join(destination_path, model_file.filename)
+        model_file.download(destination_path)
+
+        return self._unzip_if_needed(
+            file_path=file_path, destination_path=destination_path
+        )
+
+    def _unzip_if_needed(self, file_path: str, destination_path: str) -> str:
+        """
+        Décompresse un fichier si nécessaire et retourne le chemin du fichier extrait.
+
+        Args:
+            file_path (str): Le chemin du fichier à décompresser.
+
+        Returns:
+            str: Le chemin du fichier extrait ou du fichier d'origine s'il n'était pas compressé.
+        """
+        if file_path.endswith(".tar"):
+            with tarfile.open(file_path, "r:*") as tar:
+                tar.extractall(path=destination_path)
+            os.remove(file_path)
+            return file_path[:-4]
+
+        elif file_path.endswith(".zip"):
+            with zipfile.ZipFile(file_path, "r") as zipf:
+                zipf.extractall(path=destination_path)
+            os.remove(file_path)
+            return file_path[:-4]
+
+        return file_path
+
+
 class ModelContext:
-    """
-    This class is used to store the context of an AI model, which includes its metadata, paths to its assets and weights.
-
-    Attributes:
-        - model_name: The name of the model.
-        - model_version: The version of the model, as managed by Picsellia.
-        - multi_asset: A collection of assets associated with the model.
-        - labelmap: A mapping from label names to (Picsellia) label objects.
-        - destination_path: The root path where the model should be stored locally.
-        - model_weights_path: The path where the model weights are stored.
-        - config_file_path: The configuration file associated with the model.
-    """
-
     def __init__(
         self,
         model_name: str,
         model_version: ModelVersion,
         destination_path: str,
+        pretrained_model_filename: str = "model-latest",
+        config_filename: str = "config",
         labelmap: Optional[Dict[str, Label]] = None,
         prefix_model_name: Optional[str] = None,
     ):
-        """
-        Initializes the ModelContext with model metadata and configuration.
-
-        Args:
-            model_name (str): The name of the model.
-            model_version (ModelVersion): The model version object.
-            destination_path (str): The root directory for storing the model locally.
-            labelmap (dict): The mapping of label names to ids.
-        """
         self.model_name = model_name
-        self.prefix_model_name = prefix_model_name
         self.model_version = model_version
         self.destination_path = destination_path
-        self.labelmap = labelmap
-        self.pretrained_model_path = None
-        self.config_file_path = None
-        self.model_weights_path = self.get_model_weights_path()
-        self.trained_model_path = self.get_trained_model_path()
-        self.results_path = self.get_results_path()
-        self.inference_model_path = self.get_inference_model_path()
-        os.makedirs(self.model_weights_path, exist_ok=True)
-        os.makedirs(self.trained_model_path, exist_ok=True)
-        os.makedirs(self.results_path, exist_ok=True)
-        os.makedirs(self.inference_model_path, exist_ok=True)
+        self.pretrained_model_filename = pretrained_model_filename
+        self.config_filename = config_filename
+        self.labelmap = labelmap or {}
+        self.prefix_model_name = prefix_model_name
 
-    def download_weights(self) -> None:
+        self.weights_dir = self._construct_path("weights")
+        self.results_dir = self._construct_path("results")
+        self.inference_model_dir = self._construct_path("inference_model")
+
+        self.pretrained_model_path: Optional[str] = None
+        self.config_file_path: Optional[str] = None
+        self._loaded_model: Optional[Any] = None
+
+    @property
+    def loaded_model(self) -> Any:
         """
-        Downloads the model weights to a local directory.
+        Returns the loaded model instance. Raises an error if the model is not loaded.
+
+        Returns:
+            Any: The loaded model instance.
+
+        Raises:
+            ValueError: If the model is not loaded.
         """
-        os.makedirs(self.model_weights_path, exist_ok=True)
+        if self._loaded_model is None:
+            raise ValueError(
+                "Model is not loaded. Please load the model before accessing it."
+            )
+        return self._loaded_model
+
+    def set_loaded_model(self, model: Any) -> None:
+        """
+        Sets the loaded model instance.
+
+        Args:
+            model (Any): The model instance to set as loaded.
+        """
+        self._loaded_model = model
+
+    def download_weights(self, model_weights_destination_path: str) -> None:
+        """
+        Télécharge les fichiers de poids et de configuration, en les assignant aux bons chemins.
+        """
+        downloader = ModelDownloader()
+
+        # Boucle sur tous les fichiers du modèle
         model_files = self.model_version.list_files()
         for model_file in model_files:
-            self.download_model_file(model_file)
+            file_path = downloader.download_and_process(
+                model_file=model_file, destination_path=model_weights_destination_path
+            )
 
-    def download_model_file(self, model_file):
-        if self.prefix_model_name:
-            if model_file.name.startswith(f"{self.prefix_model_name}-"):
-                model_file.download(self.model_weights_path)
-                self.extract_weights(model_file=model_file)
-            if model_file.name == f"{self.prefix_model_name}-config":
-                self.config_file_path = self.get_extracted_path(model_file)
-            elif model_file.name == f"{self.prefix_model_name}-pretrained-model":
-                self.pretrained_model_path = self.get_extracted_path(model_file)
-        else:
-            model_file.download(self.model_weights_path)
-            self.extract_weights(model_file=model_file)
-            if model_file.name == "config":
-                self.config_file_path = self.get_extracted_path(model_file)
-            elif model_file.name == "pretrained-model":
-                self.pretrained_model_path = self.get_extracted_path(model_file)
+            # Assigne les chemins selon le nom du fichier
+            if model_file.filename == self.pretrained_model_filename:
+                self.pretrained_model_path = file_path
+            elif model_file.filename == self.config_filename:
+                self.config_file_path = file_path
 
-    def get_extracted_path(self, model_file):
-        if model_file.filename.endswith(".tar") or model_file.filename.endswith(".zip"):
-            return os.path.join(self.model_weights_path, model_file.filename[:-4])
-        else:
-            return os.path.join(self.model_weights_path, model_file.filename)
+    def _construct_path(self, folder_name: str) -> str:
+        """
+        Constructs the path to a folder within the model directory.
 
-    def extract_weights(self, model_file):
-        if model_file.filename.endswith(".tar"):
-            with tarfile.open(
-                os.path.join(self.model_weights_path, model_file.filename), "r:*"
-            ) as tar:
-                tar.extractall(path=self.model_weights_path)
-        elif model_file.filename.endswith(".zip"):
-            with zipfile.ZipFile(
-                os.path.join(self.model_weights_path, model_file.filename), "r"
-            ) as zipf:
-                zipf.extractall(path=self.model_weights_path)
+        Args:
+            folder_name: The name of the folder to construct the path for.
 
-        if model_file.filename.endswith((".tar", ".zip")):
-            os.remove(os.path.join(self.model_weights_path, model_file.filename))
+        Returns:
 
-    def get_model_weights_path(self):
+        """
         if self.prefix_model_name:
             return os.path.join(
                 self.destination_path,
                 self.model_name,
                 self.prefix_model_name,
-                "weights",
+                folder_name,
             )
-        else:
-            return os.path.join(self.destination_path, self.model_name, "weights")
-
-    def get_trained_model_path(self):
-        if self.prefix_model_name:
-            return os.path.join(
-                self.destination_path,
-                self.model_name,
-                self.prefix_model_name,
-                "trained_model",
-            )
-        else:
-            return os.path.join(self.destination_path, self.model_name, "trained_model")
-
-    def get_results_path(self):
-        if self.prefix_model_name:
-            return os.path.join(
-                self.destination_path,
-                self.model_name,
-                self.prefix_model_name,
-                "results",
-            )
-        else:
-            return os.path.join(self.destination_path, self.model_name, "results")
-
-    def get_inference_model_path(self):
-        if self.prefix_model_name:
-            return os.path.join(
-                self.destination_path,
-                self.model_name,
-                self.prefix_model_name,
-                "inference_model",
-            )
-        else:
-            return os.path.join(
-                self.destination_path, self.model_name, "inference_model"
-            )
-
-    def get_config_file_path(self):
-        if self.prefix_model_name:
-            return os.path.join(
-                self.model_weights_path, f"{self.prefix_model_name}-config"
-            )
-        else:
-            return os.path.join(self.model_weights_path, "config")
+        return os.path.join(self.destination_path, self.model_name, folder_name)
