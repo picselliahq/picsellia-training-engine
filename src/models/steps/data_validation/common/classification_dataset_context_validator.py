@@ -1,4 +1,3 @@
-import json
 import logging
 import os.path
 from collections import defaultdict
@@ -23,6 +22,8 @@ class ClassificationDatasetContextValidator(DatasetContextValidator):
         super().validate()  # Call common validations
         self._validate_labelmap()
         self._validate_coco_file()
+
+        return self.dataset_context
 
     def _validate_labelmap(self):
         """

@@ -12,6 +12,7 @@ from picsellia import DatasetVersion
 from picsellia.types.enums import InferenceType
 from PIL import Image
 
+from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.dataset.processing.processing_dataset_collection import (
     ProcessingDatasetCollection,
 )
@@ -39,7 +40,7 @@ class BaseTilerProcessing(ABC):
         min_annotation_area_ratio: Optional[float],
         min_annotation_width: Optional[int],
         min_annotation_height: Optional[int],
-        tilling_mode: TileMode = TileMode.CONSTANT,
+        tiling_mode: TileMode = TileMode.CONSTANT,
         padding_color_value: int = 114,
     ):
         self.tile_width = tile_width
@@ -52,7 +53,7 @@ class BaseTilerProcessing(ABC):
         self.min_annotation_width = min_annotation_width
         self.min_annotation_height = min_annotation_height
 
-        self.tilling_mode = tilling_mode
+        self.tiling_mode = tiling_mode
         self.padding_color_value = padding_color_value
 
     @property
@@ -133,7 +134,7 @@ class BaseTilerProcessing(ABC):
                 tile = image_array[y1:y2, x1:x2]
 
                 if tile.shape[:2] != (self.tile_width, self.tile_height):
-                    if self.tilling_mode == TileMode.DROP:
+                    if self.tiling_mode == TileMode.DROP:
                         continue
                     else:
                         pad_width = [
@@ -143,18 +144,18 @@ class BaseTilerProcessing(ABC):
                         ]
                         pad_width = [pw for pw in pad_width if pw is not None]
 
-                        if self.tilling_mode == TileMode.CONSTANT:
+                        if self.tiling_mode == TileMode.CONSTANT:
                             tile = np.pad(  # noqa
                                 tile,
                                 pad_width,
                                 mode="constant",
                                 constant_values=self.padding_color_value,
                             )
-                        elif self.tilling_mode == TileMode.REFLECT:
+                        elif self.tiling_mode == TileMode.REFLECT:
                             tile = np.pad(tile, pad_width, mode="reflect")  # noqa
-                        elif self.tilling_mode == TileMode.EDGE:
+                        elif self.tiling_mode == TileMode.EDGE:
                             tile = np.pad(tile, pad_width, mode="edge")  # noqa
-                        elif self.tilling_mode == TileMode.WRAP:
+                        elif self.tiling_mode == TileMode.WRAP:
                             tile = np.pad(tile, pad_width, mode="wrap")  # noqa
 
                 tiles.append(tile)
@@ -168,21 +169,38 @@ class BaseTilerProcessing(ABC):
         """
         Process all images and annotations from the dataset collection.
 
-        This method handles different dataset types (classification, object detection, segmentation)
-        and applies appropriate tiling strategies for each.
-
         Args:
             dataset_collection: A ProcessingDatasetCollection object containing input and output dataset information.
 
         Raises:
             ValueError: If the dataset type is not supported or configured.
         """
-        dataset_type = dataset_collection.input.dataset_version.type
+        self._process_dataset_context(
+            dataset_context=dataset_collection.input,
+            output_dir=dataset_collection.output.image_dir,
+            output_coco_path=dataset_collection.output.coco_file_path,
+        )
+
+    def _process_dataset_context(
+        self, dataset_context: DatasetContext, output_dir: str, output_coco_path: str
+    ) -> None:
+        """
+        Process the dataset context by tiling the images and annotations.
+
+        This method can handle different dataset types (classification, object detection, segmentation)
+        and applies appropriate tiling strategies for each.
+
+        Args:
+            dataset_context: The dataset context to process.
+            output_dir: The output directory where the tiled images will be saved.
+            output_coco_path: The output COCO file path where the tiled annotations will be saved.
+        """
+        dataset_type = dataset_context.dataset_version.type
 
         if dataset_type == InferenceType.NOT_CONFIGURED:
             raise ValueError("Dataset type is not configured.")
 
-        coco_data = dataset_collection.input.load_coco_file_data()
+        coco_data = dataset_context.load_coco_file_data()
         number_of_images = len(coco_data["images"])
 
         output_coco_data = {
@@ -191,18 +209,11 @@ class BaseTilerProcessing(ABC):
             "categories": coco_data.get("categories", []),
         }
 
-        logger.info(
-            f"🔎 Starting the tiling processing for {number_of_images} images, "
-            f"this may take a while depending on the number the size of the images."
-        )
-
         current_tile_id = 0
 
         for idx, image_info in enumerate(coco_data["images"]):
             image_filename = image_info["file_name"]
-            image_path = os.path.join(
-                dataset_collection.input.image_dir, image_filename
-            )
+            image_path = os.path.join(dataset_context.image_dir, image_filename)
             image = Image.open(image_path)
 
             tiles_batch = self.tile_image(image=image)
@@ -212,7 +223,7 @@ class BaseTilerProcessing(ABC):
                 original_image_size=(image.width, image.height),
                 original_filename=image_info["file_name"],
                 current_tile_id=current_tile_id,
-                output_dir=dataset_collection.output.image_dir,
+                output_dir=output_dir,
                 stride_x=self.stride_x,
                 stride_y=self.stride_y,
                 constant_value=self.padding_color_value,
@@ -237,10 +248,8 @@ class BaseTilerProcessing(ABC):
                 f"{skipped_tiles_message}"
             )
 
-        self._save_coco_data(dataset_collection.output.coco_file_path, output_coco_data)
-        dataset_collection.output.build_coco_file(
-            coco_file_path=dataset_collection.output.coco_file_path
-        )
+        self._save_coco_data(output_coco_path, output_coco_data)
+        dataset_context.build_coco_file(coco_file_path=output_coco_path)
 
     def _tile_annotation(
         self,
@@ -315,7 +324,8 @@ class BaseTilerProcessing(ABC):
 
         with ThreadPoolExecutor() as executor:
             future_to_tile = {}
-            for idx, tile in enumerate(tiles_batch):
+
+            for idx, tile in enumerate(tiles_batch):  # type: int, np.ndarray
                 if np.all(tile == constant_value):
                     ignored_tiles_count += 1
                     continue

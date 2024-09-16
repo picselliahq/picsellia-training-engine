@@ -30,7 +30,7 @@ class TilerProcessingFactory:
         min_annotation_area_ratio: Optional[float],
         min_annotation_width: Optional[int],
         min_annotation_height: Optional[int],
-        tilling_mode: TileMode = TileMode.CONSTANT,
+        tiling_mode: TileMode = TileMode.CONSTANT,
         padding_color_value: int = 114,
     ) -> BaseTilerProcessing:
         """Create and return the appropriate TilerProcessing instance based on the dataset type."""
@@ -44,7 +44,7 @@ class TilerProcessingFactory:
                 min_annotation_area_ratio=min_annotation_area_ratio,
                 min_annotation_width=min_annotation_width,
                 min_annotation_height=min_annotation_height,
-                tilling_mode=tilling_mode,
+                tiling_mode=tiling_mode,
                 padding_color_value=padding_color_value,
             )
 
@@ -57,7 +57,7 @@ class TilerProcessingFactory:
                 min_annotation_area_ratio=min_annotation_area_ratio,
                 min_annotation_width=min_annotation_width,
                 min_annotation_height=min_annotation_height,
-                tilling_mode=tilling_mode,
+                tiling_mode=tiling_mode,
                 padding_color_value=padding_color_value,
             )
 
@@ -70,7 +70,7 @@ class TilerProcessingFactory:
                 min_annotation_area_ratio=min_annotation_area_ratio,
                 min_annotation_width=min_annotation_width,
                 min_annotation_height=min_annotation_height,
-                tilling_mode=tilling_mode,
+                tiling_mode=tiling_mode,
                 padding_color_value=padding_color_value,
             )
         else:

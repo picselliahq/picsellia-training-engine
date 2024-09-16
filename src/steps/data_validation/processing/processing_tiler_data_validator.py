@@ -29,10 +29,11 @@ from src.models.steps.data_validation.processing.processing_tiler_data_validator
 def tiler_data_validator(
     dataset_context: DatasetContext,
 ) -> DatasetContext:
-    context: PicselliaProcessingContext[ProcessingTilerParameters] = (
-        Pipeline.get_active_context()
-    )
+    context: PicselliaProcessingContext[
+        ProcessingTilerParameters
+    ] = Pipeline.get_active_context()
 
+    # 1. First, perform dataset validation based on the dataset type.
     match dataset_context.dataset_version.type:
         case InferenceType.NOT_CONFIGURED:
             not_configured_dataset_validator = NotConfiguredDatasetContextValidator(
@@ -73,6 +74,7 @@ def tiler_data_validator(
                 f"Dataset type {dataset_context.dataset_version.type} is not supported."
             )
 
+    # 2. Then, perform validations specific to the tiler processing.
     processing_validator = ProcessingTilerDataValidator(
         client=context.client,
         tile_height=context.processing_parameters.tile_height,
