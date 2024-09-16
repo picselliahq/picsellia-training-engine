@@ -23,7 +23,6 @@ class ModelContext:
         config_name (Optional[str]): The name of the configuration file attached to the model version in Picsellia.
         exported_weights_name (Optional[str]): The name of the exported weights file attached to the model version in Picsellia.
         labelmap (Optional[Dict[str, Label]]): A dictionary mapping category names to labels.
-        prefix_model_name (Optional[str]): A prefix for handling multiple models (e.g., OCR models with different purposes).
     """
 
     def __init__(
@@ -36,7 +35,6 @@ class ModelContext:
         config_name: Optional[str] = None,
         exported_weights_name: Optional[str] = None,
         labelmap: Optional[Dict[str, Label]] = None,
-        prefix_model_name: Optional[str] = None,
     ):
         """
         Initializes the ModelContext, which manages the paths, version, and related information for a specific model.
@@ -50,7 +48,6 @@ class ModelContext:
             config_name (Optional[str], optional): The name of the configuration file attached to the model version in Picsellia. Defaults to None.
             exported_weights_name (Optional[str], optional): The name of the exported weights file attached to the model version in Picsellia. Defaults to None.
             labelmap (Optional[Dict[str, Label]], optional): A dictionary mapping category names to labels. Defaults to None.
-            prefix_model_name (Optional[str], optional): A prefix used when the model version includes multiple models (e.g., in OCR models, one for bounding boxes and one for text: these models will be prefixed by terms like "bbox-" or "text-"). Defaults to None.
         """
         self.model_name = model_name
         self.model_version = model_version
@@ -60,7 +57,6 @@ class ModelContext:
         self.trained_weights_name = trained_weights_name
         self.config_name = config_name
         self.exported_weights_name = exported_weights_name
-        self.prefix_model_name = prefix_model_name
 
         self.labelmap = labelmap or {}
 
@@ -89,15 +85,11 @@ class ModelContext:
         Returns:
             str: The path to the created directory.
         """
-        if self.prefix_model_name:
-            path = os.path.join(
-                self.destination_path,
-                self.model_name,
-                self.prefix_model_name,
-                folder_name,
-            )
-        else:
-            path = os.path.join(self.destination_path, self.model_name, folder_name)
+        path = os.path.join(
+            self.destination_path,
+            self.model_name,
+            folder_name,
+        )
         os.makedirs(path, exist_ok=True)
         return path
 
