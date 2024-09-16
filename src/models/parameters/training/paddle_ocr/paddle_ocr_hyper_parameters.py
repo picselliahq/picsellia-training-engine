@@ -12,6 +12,9 @@ class PaddleOCRHyperParameters(Parameters):
             default=0.8,
         )
         self.seed = self.extract_parameter(keys=["seed"], expected_type=int, default=0)
+        self.device = self.extract_parameter(
+            keys=["device"], expected_type=str, default="cuda:0"
+        )
         self.bbox_epochs = self.extract_parameter(
             keys=["bbox/epoch"], expected_type=int, default=100
         )
