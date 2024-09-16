@@ -20,18 +20,18 @@ def generate_bbox_yaml_config(
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
-    if model_context.config_file_path is None:
+    if model_context.config_path is None:
         raise ValueError("No config file path provided for the model context")
 
-    with open(model_context.config_file_path, "r") as file:
+    with open(model_context.config_path, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
     config["Global"]["use_gpu"] = True
     config["Global"]["epoch_num"] = hyperparameters.bbox_epochs
-    config["Global"]["pretrained_model"] = model_context.pretrained_model_path
-    config["Global"]["save_model_dir"] = model_context.results_dir
+    config["Global"]["pretrained_model"] = model_context.pretrained_weights_path
+    config["Global"]["save_model_dir"] = model_context.trained_weights_dir
     config["Global"]["save_res_path"] = model_context.results_dir
-    config["Global"]["save_inference_dir"] = model_context.inference_model_dir
+    config["Global"]["save_inference_dir"] = model_context.exported_weights_dir
     config["Global"]["save_epoch_step"] = hyperparameters.bbox_save_epoch_step
 
     config["Optimizer"]["lr"]["learning_rate"] = hyperparameters.bbox_learning_rate
@@ -60,21 +60,21 @@ def generate_text_yaml_config(
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
-    if model_context.config_file_path is None:
+    if model_context.config_path is None:
         raise ValueError("No config file path provided for the model context")
 
-    with open(model_context.config_file_path, "r") as file:
+    with open(model_context.config_path, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
     config["Global"]["use_gpu"] = True
     config["Global"]["epoch_num"] = hyperparameters.text_epochs
-    if model_context.pretrained_model_path is not None:
+    if model_context.pretrained_weights_path is not None:
         config["Global"]["pretrained_model"] = os.path.join(
-            model_context.pretrained_model_path, "best_accuracy"
+            model_context.pretrained_weights_path, "best_accuracy"
         )
-    config["Global"]["save_model_dir"] = model_context.results_dir
+    config["Global"]["save_model_dir"] = model_context.trained_weights_dir
     config["Global"]["save_res_path"] = model_context.results_dir
-    config["Global"]["save_inference_dir"] = model_context.inference_model_dir
+    config["Global"]["save_inference_dir"] = model_context.exported_weights_dir
     config["Global"]["save_epoch_step"] = hyperparameters.text_save_epoch_step
     config["Global"]["max_text_length"] = hyperparameters.max_text_length
     config["Global"]["character_dict_path"] = os.path.join(
@@ -139,10 +139,6 @@ class PaddleOCRModelCollectionPreparator:
             self.model_collection.text_model,
             self.hyperparameters,
         )
-        write_yaml_config(
-            bbox_config, self.model_collection.bbox_model.config_file_path
-        )
-        write_yaml_config(
-            text_config, self.model_collection.text_model.config_file_path
-        )
+        write_yaml_config(bbox_config, self.model_collection.bbox_model.config_path)
+        write_yaml_config(text_config, self.model_collection.text_model.config_path)
         return self.model_collection
