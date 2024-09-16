@@ -56,16 +56,12 @@ class PaddleOCRModelContextTrainer:
     def train_model_context(self):
         """
         Trains a Paddle OCR model given a configuration path and captures the output metrics line by line.
-
-        Args:
-            model_context (ModelContext): The model context containing the configuration path.
         """
-        print(f"Starting training for {self.model_context.prefix_model_name} model...")
 
-        config_path = self.model_context.config_file_path
+        config_path = self.model_context.config_path
         if not config_path:
             raise ValueError(
-                f"No configuration file path found in {self.model_context.prefix_model_name} model context"
+                f"No configuration file path found in {self.model_context.model_name} model context"
             )
 
         command = [
@@ -115,7 +111,7 @@ class PaddleOCRModelContextTrainer:
                         for key, value in metrics.items():
                             if isinstance(value, (int, float)):
                                 self.experiment.log(
-                                    name=f"{model_context.prefix_model_name}/{key}",
+                                    name=f"{model_context.model_name}/{key}",
                                     data=value,
                                     type=LogType.LINE,
                                 )
