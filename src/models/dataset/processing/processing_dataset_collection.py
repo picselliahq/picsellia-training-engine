@@ -21,6 +21,9 @@ class ProcessingDatasetCollection(Generic[TDatasetContext]):
     def __iter__(self):
         return iter([self.input, self.output])
 
-    def download_assets(self):
+    def download_all(self):
         for dataset_context in self:
-            dataset_context.download_assets()
+            dataset_context.download_assets(image_dir=dataset_context.image_dir)
+            dataset_context.download_and_build_coco_file(
+                annotations_dir=dataset_context.annotations_dir
+            )
