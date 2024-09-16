@@ -20,6 +20,11 @@ class ModelContextPredictor(ABC, Generic[TModelContext]):
         """
         self.model_context: TModelContext = model_context
 
+        if not hasattr(self.model_context, "loaded_model"):
+            raise ValueError(
+                "The model context does not have a loaded model attribute."
+            )
+
     def get_picsellia_label(
         self, category_name: str, dataset_context: TDatasetContext
     ) -> PicselliaLabel:
