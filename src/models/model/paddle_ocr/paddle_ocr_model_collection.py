@@ -20,16 +20,6 @@ class PaddleOCRModelCollection(ModelCollection):
             bbox_model (ModelContext): The model context for the bounding box detection.
             text_model (ModelContext): The model context for the text recognition.
         """
+        super().__init__([bbox_model, text_model])
         self.bbox_model = bbox_model
         self.text_model = text_model
-
-    def download_weights(self):
-        """
-        Downloads the weights for both bounding box and text recognition models.
-        """
-        self.bbox_model.download_weights(
-            model_weights_destination_path=self.bbox_model.weights_dir
-        )
-        self.text_model.download_weights(
-            model_weights_destination_path=self.text_model.weights_dir
-        )
