@@ -7,7 +7,7 @@ from ultralytics.models.yolo.classify import (
 
 from picsellia import Experiment
 
-from src.models.steps.model_logging.ultralytics_classification_logger import (
+from src.models.steps.model_logging.training.ultralytics_classification_logger import (
     UltralyticsClassificationLogger,
 )
 

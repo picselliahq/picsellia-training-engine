@@ -17,10 +17,10 @@ from src.steps.data_extraction.training.training_data_extractor import (
 from src.steps.data_preparation.training.paddle_ocr_data_preparator import (
     paddle_ocr_dataset_collection_preparator,
 )
-from src.steps.model_evaluation.paddle_ocr_model_evaluator import (
+from src.steps.model_evaluation.common.paddle_ocr_model_evaluator import (
     paddle_ocr_model_collection_evaluator,
 )
-from src.steps.model_export.paddle_ocr_model_exporter import (
+from src.steps.model_export.common.paddle_ocr_model_exporter import (
     paddle_ocr_model_collection_exporter,
 )
 from src.steps.model_loading.common.paddle_ocr.paddle_ocr_model_collection_loader import (

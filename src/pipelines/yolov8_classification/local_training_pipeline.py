@@ -20,10 +20,10 @@ from src.steps.data_preparation.training.ultralytics_classification_data_prepara
 from src.steps.data_validation.common.classification_data_validator import (
     classification_dataset_collection_validator,
 )
-from src.steps.model_evaluation.ultralytics_model_evaluator import (
+from src.steps.model_evaluation.common.ultralytics_model_evaluator import (
     ultralytics_model_context_evaluator,
 )
-from src.steps.model_export.ultralytics_model_exporter import (
+from src.steps.model_export.common.ultralytics_model_exporter import (
     ultralytics_model_context_exporter,
 )
 from src.steps.model_loading.common.ultralytics.ultralytics_model_context_loader import (

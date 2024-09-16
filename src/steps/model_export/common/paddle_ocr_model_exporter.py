@@ -1,7 +1,11 @@
 # type: ignore
+
 from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
+)
+from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
+    PaddleOCRModelCollection,
 )
 from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.paddle_ocr.paddle_ocr_augmentation_parameters import (
@@ -10,21 +14,24 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_augmentation_parameter
 from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters import (
     PaddleOCRHyperParameters,
 )
-from src.models.steps.model_training.common.paddle_ocr_model_collection_trainer import (
-    PaddleOCRModelCollectionTrainer,
+from src.models.steps.model_export.training.paddle_ocr_model_collection_exporter import (
+    PaddleOCRModelCollectionExporter,
 )
 
 
 @step
-def paddle_ocr_model_collection_trainer(model_collection):
+def paddle_ocr_model_collection_exporter(
+    model_collection: PaddleOCRModelCollection,
+) -> PaddleOCRModelCollection:
     context: PicselliaTrainingContext[
         PaddleOCRHyperParameters, PaddleOCRAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
-    model_trainer = PaddleOCRModelCollectionTrainer(
+    model_collection_exporter = PaddleOCRModelCollectionExporter(
         model_collection=model_collection, experiment=context.experiment
     )
-    model_collection = model_trainer.train_model_collection(
-        bbox_epochs=context.hyperparameters.bbox_epochs,
-        text_epochs=context.hyperparameters.text_epochs,
+    model_collection = model_collection_exporter.export_model_collection(
+        export_format=context.export_parameters.export_format
     )
+    model_collection_exporter.save_model_collection()
+
     return model_collection

@@ -16,7 +16,7 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_augmentation_parameter
 from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters import (
     PaddleOCRHyperParameters,
 )
-from src.models.steps.model_loading.paddle_ocr.paddle_ocr_model_collection_loader import (
+from src.models.steps.model_loading.common.paddle_ocr.paddle_ocr_model_collection_loader import (
     paddle_ocr_load_model,
 )
 

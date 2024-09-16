@@ -13,7 +13,7 @@ from src.models.parameters.training.ultralytics.ultralytics_augmentation_paramet
 from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters import (
     UltralyticsHyperParameters,
 )
-from src.models.steps.model_training.ultralytics_model_context_trainer import (
+from src.models.steps.model_training.common.ultralytics_model_context_trainer import (
     UltralyticsModelContextTrainer,
 )
 
