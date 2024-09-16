@@ -27,5 +27,9 @@ class PaddleOCRModelCollection(ModelCollection):
         """
         Downloads the weights for both bounding box and text recognition models.
         """
-        self.bbox_model.download_weights()
-        self.text_model.download_weights()
+        self.bbox_model.download_weights(
+            model_weights_destination_path=self.bbox_model.weights_dir
+        )
+        self.text_model.download_weights(
+            model_weights_destination_path=self.text_model.weights_dir
+        )
