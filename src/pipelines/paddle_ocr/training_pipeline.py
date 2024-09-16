@@ -23,6 +23,9 @@ from src.steps.model_evaluation.paddle_ocr_model_evaluator import (
 from src.steps.model_export.paddle_ocr_model_exporter import (
     paddle_ocr_model_collection_exporter,
 )
+from src.steps.model_loading.common.paddle_ocr.paddle_ocr_model_collection_loader import (
+    paddle_ocr_model_collection_loader,
+)
 from src.steps.model_training.paddle_ocr_trainer import (
     paddle_ocr_model_collection_trainer,
 )
@@ -64,6 +67,9 @@ def paddle_ocr_training_pipeline():
         model_collection=model_collection
     )
     model_collection = paddle_ocr_model_collection_exporter(
+        model_collection=model_collection
+    )
+    model_collection = paddle_ocr_model_collection_loader(
         model_collection=model_collection
     )
     paddle_ocr_model_collection_evaluator(
