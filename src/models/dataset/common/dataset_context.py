@@ -1,12 +1,13 @@
+import json
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from picsellia import DatasetVersion, Label
 from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import MultiAsset
+from picsellia.types.enums import AnnotationFileType
 from picsellia_annotations.coco import COCOFile
 from picsellia_annotations.utils import read_coco_file
-from picsellia.types.enums import AnnotationFileType
 
 from src.steps.data_extraction.utils.image_utils import get_labelmap
 
@@ -111,6 +112,13 @@ class DatasetContext:
             self.multi_asset = self.dataset_version.list_assets()
         except NoDataError:
             self.multi_asset = None
+
+    def load_coco_file_data(self) -> Dict[str, Any]:
+        """
+        Load COCO data from the annotation file.
+        """
+        with open(self.coco_file_path, "r") as f:
+            return json.load(f)
 
     def get_assets_batch(self, limit: int, offset: int) -> MultiAsset:
         """

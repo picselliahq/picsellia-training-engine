@@ -28,7 +28,7 @@ class TestClassificationDatasetValidator:
             "class1": 0
         }
         with pytest.raises(ValueError):
-            classification_dataset_context_validator.validate_labelmap()
+            classification_dataset_context_validator._validate_labelmap()
 
     def test_validate_at_least_one_image_per_class(
         self,
@@ -51,4 +51,4 @@ class TestClassificationDatasetValidator:
             "class2": 1,
         }
         with pytest.raises(ValueError):
-            classification_dataset_context_validator.validate_at_least_one_image_per_class()
+            classification_dataset_context_validator._validate_coco_file()
