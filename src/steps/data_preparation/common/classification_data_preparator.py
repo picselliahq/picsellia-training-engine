@@ -1,6 +1,9 @@
+import os
+
 from src import step
-from src.enums import DatasetSplitName
-from src.models.dataset.training.training_dataset_collection import DatasetCollection
+from src.models.dataset.training.training_dataset_collection import (
+    TrainingDatasetCollection,
+)
 from src.models.steps.data_preparation.common.classification_dataset_context_preparator import (
     ClassificationDatasetContextPreparator,
 )
@@ -8,8 +11,8 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 
 @step
 def classification_data_preparator(
-    dataset_collection: DatasetCollection,
-) -> DatasetCollection:
+    dataset_collection: TrainingDatasetCollection,
+) -> TrainingDatasetCollection:
     """
     Example:
         Assume `dataset_collection` comprises unorganized images across training, validation, and testing splits.
@@ -58,13 +61,12 @@ def classification_data_preparator(
         ```
     """
     for dataset_context in dataset_collection:
-        if dataset_context.dataset_name in [
-            DatasetSplitName.TRAIN.value,
-            DatasetSplitName.VAL.value,
-            DatasetSplitName.TEST.value,
-        ]:
-            organizer = ClassificationDatasetContextPreparator(
-                dataset_context=dataset_context
-            )
-            dataset_collection[dataset_context.dataset_name] = organizer.organize()
+        destination_image_dir = str(
+            os.path.join(dataset_context.destination_path, dataset_context.dataset_name)
+        )
+        organizer = ClassificationDatasetContextPreparator(
+            dataset_context=dataset_context,
+            destination_image_dir=destination_image_dir,
+        )
+        dataset_collection[dataset_context.dataset_name] = organizer.organize()
     return dataset_collection
