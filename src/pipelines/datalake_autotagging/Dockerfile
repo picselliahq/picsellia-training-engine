@@ -21,6 +21,6 @@ COPY ./src/pipelines/datalake_autotagging ./src/pipelines/datalake_autotagging
 
 RUN cd /experiment/src/pipelines/datalake_autotagging && git clone https://github.com/Vision-CAIR/MiniGPT-4 && mv MiniGPT-4 MiniGPT4
 
-ENV PYTHONPATH=":/experiment/src"
+ENV PYTHONPATH=":/experiment/src:/experiment/src/pipelines/datalake_autotagging/MiniGPT4"
 
 ENTRYPOINT ["run", "python3.11", "src/pipelines/datalake_autotagging/processing_pipeline.py"]
