@@ -1,0 +1,54 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "src/pipelines/dataset_tiler/**"
+      - "src/models/**"
+      - "src/decorators/**"
+      - "src/*.py"
+      - "**/*_tiler*"
+  pull_request:
+    paths:
+      - "src/pipelines/dataset_tiler/**"
+      - "src/models/**"
+      - "src/decorators/**"
+      - "src/*.py"
+      - "**/*_tiler*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ vars.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    - name: Determine image tag to use
+      id: determine_tag
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "image_tag=test" >> "$GITHUB_ENV"
+        else
+          echo "image_tag=latest" >> "$GITHUB_ENV"
+        fi
+
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: src/pipelines/dataset_tiler/Dockerfile
+        push: true
+        tags: picsellia/processing-dataset-tiler:${{ env.image_tag }}
