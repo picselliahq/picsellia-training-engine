@@ -2,22 +2,22 @@ import json
 import logging
 import math
 import os
-from typing import List, Union
+from typing import List, Union, Optional
 
 import numpy as np
 import picsellia
 import requests
 import torch
 import tqdm
+from PIL import Image, UnidentifiedImageError
 from picsellia import Asset, Job, Label
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.sdk.experiment import Experiment
 from picsellia.types.enums import InferenceType
-from PIL import Image, UnidentifiedImageError
 from pycocotools.coco import COCO
-from YOLOX.tools.demo import Predictor
 
+from YOLOX.tools.demo import Predictor
 from evaluator.type_formatter import TypeFormatter
 from evaluator.utils.general import transpose_if_exif_tags
 
@@ -90,11 +90,11 @@ def get_experiment() -> Experiment:
 
 
 def create_yolo_detection_label(
-    experiment: Experiment,
-    data_type: str,
-    annotations_dict: dict,
-    annotations_coco: COCO,
-    label_names: list,
+        experiment: Experiment,
+        data_type: str,
+        annotations_dict: dict,
+        annotations_coco: COCO,
+        label_names: list,
 ):
     dataset_path = os.path.join(experiment.png_dir, data_type)
     image_filenames = os.listdir(os.path.join(dataset_path, "images"))
@@ -111,7 +111,7 @@ def create_yolo_detection_label(
 
 
 def create_img_label_detection(
-    image: dict, annotations_coco: COCO, labels_path: str, label_names: list
+        image: dict, annotations_coco: COCO, labels_path: str, label_names: list
 ):
     result = []
     img_id = image["id"]
@@ -134,7 +134,7 @@ def create_img_label_detection(
 
 
 def coco_to_yolo_detection(
-    x1: int, y1: int, w: int, h: int, image_w: int, image_h: int
+        x1: int, y1: int, w: int, h: int, image_w: int, image_h: int
 ) -> list[float]:
     return [
         ((2 * x1 + w) / (2 * image_w)),
@@ -145,12 +145,12 @@ def coco_to_yolo_detection(
 
 
 def evaluate_model(
-    yolox_predictor: Predictor,
-    type_formatter: TypeFormatter,
-    experiment: Experiment,
-    asset_list: MultiAsset,
-    dataset_type: InferenceType,
-    confidence_threshold: float = 0.1,
+        yolox_predictor: Predictor,
+        type_formatter: TypeFormatter,
+        experiment: Experiment,
+        asset_list: MultiAsset,
+        dataset_type: InferenceType,
+        confidence_threshold: float = 0.1,
 ) -> Job:
     evaluation_batch_size = experiment.get_log(name="parameters").data.get(
         "evaluation_batch_size", 8
@@ -163,11 +163,13 @@ def evaluate_model(
     total_batch_number = math.ceil(len(asset_list) / batch_size)
 
     for i in tqdm.tqdm(range(total_batch_number)):
-        subset_asset_list = asset_list[i * batch_size : (i + 1) * batch_size]
+        subset_asset_list = asset_list[i * batch_size: (i + 1) * batch_size]
         inputs = preprocess_images(subset_asset_list)
 
         for j, asset in enumerate(subset_asset_list):
             prediction, img_info = yolox_predictor.inference(inputs[j])
+
+            evaluations = None
 
             if prediction[0] is not None:
                 yolov8_style_output = YOLOV8StyleOutput(
@@ -180,9 +182,10 @@ def evaluate_model(
                     type_formatter=type_formatter,
                     confidence_threshold=confidence_threshold,
                 )
-                send_evaluations_to_platform(
-                    experiment=experiment, asset=asset, evaluations=evaluations
-                )
+
+            send_evaluations_to_platform(
+                experiment=experiment, asset=asset, evaluations=evaluations
+            )
 
     if dataset_type in [
         InferenceType.OBJECT_DETECTION,
@@ -213,13 +216,15 @@ def open_asset_as_array(asset: Asset) -> np.array:
 
 
 def send_evaluations_to_platform(
-    experiment: Experiment, asset: Asset, evaluations: List
+        experiment: Experiment, asset: Asset, evaluations: Optional[List]
 ) -> None:
-    shapes = {"rectangles": evaluations}
+    shapes = {"rectangles": evaluations} if evaluations else {}
+
     try:
         experiment.add_evaluation(asset=asset, **shapes)
         print(f"Asset: {asset.filename} evaluated.")
         logging.info(f"Asset: {asset.filename} evaluated.")
+
     except Exception:
         logging.info(
             f"Something went wrong with evaluating {asset.filename}. Skipping.."
@@ -227,10 +232,10 @@ def send_evaluations_to_platform(
 
 
 def format_prediction_to_evaluations(
-    asset: Asset,
-    prediction: Union[List, dict],
-    type_formatter: TypeFormatter,
-    confidence_threshold: float,
+        asset: Asset,
+        prediction: Union[List, dict],
+        type_formatter: TypeFormatter,
+        confidence_threshold: float,
 ) -> List:
     picsellia_predictions = type_formatter.format_prediction(
         asset=asset, prediction=prediction
@@ -251,7 +256,7 @@ def format_prediction_to_evaluations(
 
 
 def extract_dataset_assets(
-    experiment: Experiment, prop_train_split: float
+        experiment: Experiment, prop_train_split: float
 ) -> (MultiAsset, MultiAsset, MultiAsset, list[Label], list[Label], InferenceType):
     attached_datasets = experiment.list_attached_dataset_versions()
     base_imgdir = experiment.png_dir
