@@ -4,7 +4,7 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.training.training_dataset_collection import TDatasetContext
+from src.models.dataset.common.dataset_context import TDatasetContext
 from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
     PaddleOCRModelCollection,
 )

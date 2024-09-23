@@ -3,7 +3,7 @@ from typing import List
 
 from ultralytics.engine.results import Results
 
-from src.models.dataset.training.training_dataset_collection import TDatasetContext
+from src.models.dataset.common.dataset_context import TDatasetContext
 from src.models.model.common.model_context import ModelContext
 from src.models.model.common.picsellia_prediction import (
     PicselliaClassificationPrediction,
@@ -45,9 +45,11 @@ class UltralyticsClassificationModelContextPredictor(
         Returns:
             List[str]: A list of image file paths from the dataset.
         """
+        if not dataset_context.images_dir:
+            raise ValueError("No images directory found in the dataset context.")
         image_paths = []
-        for category_name in os.listdir(dataset_context.image_dir):
-            category_dir = os.path.join(dataset_context.image_dir, category_name)
+        for category_name in os.listdir(dataset_context.images_dir):
+            category_dir = os.path.join(dataset_context.images_dir, category_name)
             image_paths.extend(
                 [
                     os.path.join(category_dir, image_name)

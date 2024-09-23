@@ -1,9 +1,6 @@
 import os
-
-from src import step
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
-)
+from src import step, Pipeline
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.steps.data_preparation.common.classification_dataset_context_preparator import (
     ClassificationDatasetContextPreparator,
 )
@@ -11,20 +8,30 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 
 @step
 def ultralytics_classification_dataset_collection_preparator(
-    dataset_collection: TrainingDatasetCollection,
-) -> TrainingDatasetCollection:
+    dataset_collection: DatasetCollection,
+) -> DatasetCollection:
+    context = Pipeline.get_active_context()
     for dataset_context in dataset_collection:
-        destination_image_dir = str(
-            os.path.join(dataset_context.destination_path, dataset_context.dataset_name)
+        destination_path = str(
+            os.path.join(
+                os.getcwd(),
+                context.experiment.name,
+                "ultralytics_dataset",
+                dataset_context.dataset_name,
+            )
         )
         preparator = ClassificationDatasetContextPreparator(
             dataset_context=dataset_context,
-            destination_image_dir=destination_image_dir,
+            destination_path=destination_path,
         )
         prepared_dataset_context = preparator.organize()
 
         dataset_collection[
             prepared_dataset_context.dataset_name
         ] = prepared_dataset_context
+
+    dataset_collection.dataset_path = os.path.join(
+        os.getcwd(), context.experiment.name, "ultralytics_dataset"
+    )
 
     return dataset_collection

@@ -66,7 +66,7 @@ def classification_data_preparator(
         )
         organizer = ClassificationDatasetContextPreparator(
             dataset_context=dataset_context,
-            destination_image_dir=destination_image_dir,
+            destination_path=destination_image_dir,
         )
         dataset_collection[dataset_context.dataset_name] = organizer.organize()
     return dataset_collection

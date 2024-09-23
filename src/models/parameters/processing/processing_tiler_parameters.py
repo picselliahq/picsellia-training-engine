@@ -20,7 +20,6 @@ class ProcessingTilerParameters(Parameters):
         self.tile_width = self.extract_parameter(
             keys=["tile_width"], expected_type=int, range_value=(0, float("inf"))
         )
-        self.tile_width = self.extract_parameter(keys=["tile_width"], expected_type=int)
         self.overlap_height_ratio = self.extract_parameter(
             keys=["overlap_height_ratio"],
             expected_type=float,

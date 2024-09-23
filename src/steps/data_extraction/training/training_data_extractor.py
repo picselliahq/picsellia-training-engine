@@ -4,12 +4,11 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
-)
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
     TrainingDatasetCollectionExtractor,
 )
+
 from src.steps.data_extraction.utils.image_utils import (
     log_labelmap,
     log_objects_distribution,
@@ -17,7 +16,7 @@ from src.steps.data_extraction.utils.image_utils import (
 
 
 @step
-def training_dataset_collection_extractor() -> TrainingDatasetCollection:
+def training_dataset_collection_extractor() -> DatasetCollection:
     """
     Extracts datasets from an experiment and prepares them for training.
 
@@ -44,10 +43,12 @@ def training_dataset_collection_extractor() -> TrainingDatasetCollection:
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
     dataset_collection = dataset_collection_extractor.get_dataset_collection(
-        destination_path=os.path.join(os.getcwd(), context.experiment.name, "dataset"),
         random_seed=context.hyperparameters.seed,
     )
-    dataset_collection.download_all()
+    dataset_collection.download_all(
+        destination_path=os.path.join(os.getcwd(), context.experiment.name, "dataset"),
+        use_id=True,
+    )
 
     log_labelmap(
         labelmap=dataset_collection["train"].labelmap,

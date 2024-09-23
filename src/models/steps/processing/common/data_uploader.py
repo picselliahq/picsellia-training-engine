@@ -6,16 +6,28 @@ from picsellia.services.error_manager import ErrorManager
 
 class DataUploader:
     """
-    Handles the processing of creating a dataset version.
+    Handles the process of creating a dataset version in Picsellia.
 
-    This class offers all the necessary methods to handle a processing of type DatasetVersionCreation of Picsellia.
-    It allows to upload images to the datalake, add them to a dataset version, and update the dataset version with
-    the necessary information.
+    This class provides methods to upload images to a datalake, add them to a dataset version, and
+    update the dataset version with the necessary information, including COCO annotations.
+
+    Attributes:
+        client (Client): The Picsellia client to interact with the API.
+        dataset_version (DatasetVersion): The dataset version that will be updated with images and annotations.
+        datalake (str): The datalake to which images will be uploaded (default is 'default').
     """
 
     def __init__(
         self, client: Client, dataset_version: DatasetVersion, datalake: str = "default"
     ):
+        """
+        Initializes the DataUploader with a Picsellia client, dataset version, and optional datalake.
+
+        Args:
+            client (Client): The Picsellia client used for communication with the API.
+            dataset_version (DatasetVersion): The dataset version that will be updated.
+            datalake (str): The name of the datalake where images will be uploaded (default is 'default').
+        """
         self.client = client
         self.dataset_version = dataset_version
         self.datalake = self.client.get_datalake(name=datalake)
@@ -24,16 +36,20 @@ class DataUploader:
         self, images_to_upload: List[str], data_tags: Optional[List[str]] = None
     ) -> Tuple[List[Data], List[str]]:
         """
-        Uploads data to the datalake using an error manager. This method allows to handle errors during the upload process.
-        It will retry to upload the data that failed to upload.
+        Uploads images to the datalake using an error manager to handle failed uploads.
+
+        This method attempts to upload images to the datalake. If any uploads fail, they are retried
+        using the error manager. It returns the successfully uploaded data and a list of paths
+        that failed to upload.
 
         Args:
             images_to_upload (List[str]): The list of image file paths to upload.
-            images_tags (Optional[List[str]]): The list of tags to associate with the images.
+            data_tags (Optional[List[str]]): The list of tags to associate with the uploaded images (default is None).
 
         Returns:
-            - List[Data]: The list of uploaded data.
-            - List[str]: The list of file paths that failed to upload.
+            Tuple[List[Data], List[str]]: A tuple containing:
+                - List[Data]: A list of successfully uploaded data.
+                - List[str]: A list of file paths that failed to upload.
         """
         error_manager = ErrorManager()
         data = self.datalake.upload_data(
@@ -55,15 +71,18 @@ class DataUploader:
         max_retries: int = 5,
     ) -> List[Data]:
         """
-        Uploads images to the datalake. This method allows to handle errors during the upload process.
+        Uploads images to the datalake and retries failed uploads up to a maximum number of retries.
 
         Args:
             images_to_upload (List[str]): The list of image file paths to upload.
-            images_tags (Optional[List[str]]): The list of tags to associate with the images.
-            max_retries (int): The maximum number of retries to upload the images.
+            data_tags (Optional[List[str]]): The list of tags to associate with the images (default is None).
+            max_retries (int): The maximum number of retry attempts for failed uploads (default is 5).
 
         Returns:
+            List[Data]: A list of successfully uploaded data.
 
+        Raises:
+            Exception: If the maximum number of retries is exceeded and there are still failed uploads.
         """
         all_uploaded_data = []
         uploaded_data, error_paths = self._upload_data_with_error_manager(
@@ -93,13 +112,15 @@ class DataUploader:
         blocking_time_increment: float = 50.0,
     ) -> None:
         """
-        Adds images to the dataset version.
+        Adds uploaded images to the dataset version and waits for the process to complete.
 
         Args:
             images_to_upload (List[str]): The list of image file paths to upload.
-            images_tags (Optional[List[str]]): The list of tags to associate with the images.
-            max_retries (int): The maximum number of retries to upload the images.
-
+            data_tags (Optional[List[str]]): The list of tags to associate with the images (default is None).
+            asset_tags (Optional[List[str]]): The list of tags to associate with the dataset version assets (default is None).
+            max_retries (int): The maximum number of retry attempts for failed uploads (default is 5).
+            attempts (int): The number of attempts to wait for the adding job to complete (default is 150).
+            blocking_time_increment (float): The amount of time to wait between job status checks (default is 50.0 seconds).
         """
         data = self._upload_images_to_datalake(
             images_to_upload=images_to_upload,
@@ -117,6 +138,5 @@ class DataUploader:
 
         Args:
             annotation_path (str): The path to the COCO annotations file.
-
         """
         self.dataset_version.import_annotations_coco_file(file_path=annotation_path)

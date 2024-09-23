@@ -1,7 +1,7 @@
 import os
 from typing import List, Tuple
 
-from src.models.dataset.training.training_dataset_collection import TDatasetContext
+from src.models.dataset.common.dataset_context import TDatasetContext
 from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
     PaddleOCRModelCollection,
 )
@@ -49,9 +49,11 @@ class PaddleOCRModelCollectionPredictor(
         Returns:
             List[str]: A list of image file paths from the dataset.
         """
+        if not dataset_context.images_dir:
+            raise ValueError("No images directory found in the dataset context.")
         image_paths = [
-            os.path.join(dataset_context.image_dir, image_name)
-            for image_name in os.listdir(dataset_context.image_dir)
+            os.path.join(dataset_context.images_dir, image_name)
+            for image_name in os.listdir(dataset_context.images_dir)
         ]
         return image_paths
 

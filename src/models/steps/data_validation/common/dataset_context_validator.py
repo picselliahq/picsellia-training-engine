@@ -32,9 +32,9 @@ class DatasetContextValidator:
         """
         Validates the dataset context.
         """
-        if self.dataset_context.image_dir:
+        if self.dataset_context.images_dir:
             images_path_list = get_images_path_list(
-                image_dir=self.dataset_context.image_dir
+                images_dir=self.dataset_context.images_dir
             )
             self.validate_images_extraction(images_path_list=images_path_list)
             self.validate_images_format(images_path_list=images_path_list)
@@ -54,18 +54,18 @@ class DatasetContextValidator:
         Raises:
             ValueError: If the number of extracted images does not match the expected number of assets.
         """
-        if self.dataset_context.multi_asset is None:
+        if self.dataset_context.assets is None:
             return
 
-        if len(images_path_list) < len(self.dataset_context.multi_asset):
+        if len(images_path_list) < len(self.dataset_context.assets):
             raise ValueError(
-                f"Some images have not been extracted in the image directory: {self.dataset_context.image_dir}. "
-                + f"There are {len(images_path_list)} images in the directory and {len(self.dataset_context.multi_asset)} assets in the dataset."
+                f"Some images have not been extracted in the image directory: {self.dataset_context.images_dir}. "
+                + f"There are {len(images_path_list)} images in the directory and {len(self.dataset_context.assets)} assets in the dataset."
             )
-        if len(images_path_list) > len(self.dataset_context.multi_asset):
+        if len(images_path_list) > len(self.dataset_context.assets):
             raise ValueError(
-                f"There are more images than expected in the image directory: {self.dataset_context.image_dir}. "
-                + f"There are {len(images_path_list)} images in the directory and {len(self.dataset_context.multi_asset)} assets in the dataset."
+                f"There are more images than expected in the image directory: {self.dataset_context.images_dir}. "
+                + f"There are {len(images_path_list)} images in the directory and {len(self.dataset_context.assets)} assets in the dataset."
             )
 
     def validate_images_format(self, images_path_list: List[str]) -> None:

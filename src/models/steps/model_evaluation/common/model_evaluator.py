@@ -1,6 +1,7 @@
 import logging
 from typing import Union, List
 
+from picsellia import Experiment
 from picsellia.types.enums import AddEvaluationType
 
 from src.models.model.common.picsellia_prediction import (
@@ -17,20 +18,20 @@ class ModelEvaluator:
     """
     Handles the evaluation process of various prediction types for an experiment in Picsellia.
 
-    The ModelEvaluator class processes different types of predictions (OCR, rectangles, classifications, and polygons)
-    and adds them as evaluations to an experiment. The predictions are passed as lists, and each prediction type
-    is handled accordingly to log the evaluation results.
+    This class processes different types of predictions (OCR, rectangles, classifications, and polygons)
+    and adds them as evaluations to an experiment. It supports logging and managing the evaluation results
+    based on the type of prediction.
 
     Attributes:
-        experiment: The Picsellia experiment to which evaluations will be added.
+        experiment (Experiment): The Picsellia experiment to which evaluations will be added.
     """
 
-    def __init__(self, experiment):
+    def __init__(self, experiment: Experiment):
         """
         Initializes the ModelEvaluator with the given experiment.
 
         Args:
-            experiment: The Picsellia experiment object where the evaluations will be logged.
+            experiment (Experiment): The Picsellia experiment object where the evaluations will be logged.
         """
         self.experiment = experiment
 
@@ -46,9 +47,13 @@ class ModelEvaluator:
         """
         Evaluates a list of predictions and adds them to the experiment.
 
+        This method processes a list of predictions and delegates the task to `add_evaluation`
+        for each prediction based on its type.
+
         Args:
-            picsellia_predictions: A list of Picsellia predictions, which can include
-                classification, rectangle, polygon, or OCR predictions.
+            picsellia_predictions (Union[List[PicselliaClassificationPrediction], List[PicselliaRectanglePrediction],
+                List[PicselliaPolygonPrediction], List[PicselliaOCRPrediction]]):
+                A list of Picsellia predictions, which can include classification, rectangle, polygon, or OCR predictions.
         """
         for prediction in picsellia_predictions:
             self.add_evaluation(prediction)
@@ -65,8 +70,14 @@ class ModelEvaluator:
         """
         Adds a single evaluation to the experiment based on the prediction type.
 
+        This method identifies the type of prediction and adds the corresponding evaluation
+        to the Picsellia experiment. It handles OCR, rectangle, classification, and polygon
+        predictions separately and logs the evaluation details.
+
         Args:
-            evaluation: A single prediction instance, which can be a classification, rectangle, polygon, or OCR prediction.
+            evaluation (Union[PicselliaClassificationPrediction, PicselliaRectanglePrediction,
+                PicselliaPolygonPrediction, PicselliaOCRPrediction]):
+                A single prediction instance, which can be a classification, rectangle, polygon, or OCR prediction.
 
         Raises:
             TypeError: If the prediction type is not supported.

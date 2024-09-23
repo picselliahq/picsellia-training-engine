@@ -1,49 +1,56 @@
-from typing import Optional
-
 from picsellia import DatasetVersion
 
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.dataset.processing.processing_dataset_collection import (
-    ProcessingDatasetCollection,
-)
 
 
 class ProcessingDatasetCollectionExtractor:
+    """
+    A class responsible for extracting and managing input and output datasets as a collection.
+
+    This class handles the creation of a `DatasetCollection` from two dataset versions: one for input data and one
+    for output data. It organizes the datasets into contexts and returns them in a unified collection.
+
+    Attributes:
+        input_dataset_version (DatasetVersion): The input dataset version from Picsellia.
+        output_dataset_version (DatasetVersion): The output dataset version from Picsellia.
+    """
+
     def __init__(
         self,
         input_dataset_version: DatasetVersion,
         output_dataset_version: DatasetVersion,
-        use_id: Optional[bool] = True,
-        download_annotations: Optional[bool] = True,
     ):
+        """
+        Initializes the ProcessingDatasetCollectionExtractor with input and output dataset versions.
+
+        Args:
+            input_dataset_version (DatasetVersion): The version of the input dataset to be processed.
+            output_dataset_version (DatasetVersion): The version of the output dataset to be processed.
+        """
         self.input_dataset_version = input_dataset_version
         self.output_dataset_version = output_dataset_version
 
-        self.use_id = use_id
-        self.download_annotations = download_annotations
+    def get_dataset_collection(self) -> DatasetCollection:
+        """
+        Creates and returns a DatasetCollection with input and output dataset contexts.
 
-    def get_dataset_collection(
-        self, destination_path: str
-    ) -> ProcessingDatasetCollection:
+        This method organizes the input and output datasets into `DatasetContext` objects and returns
+        them as part of a `DatasetCollection`. Each dataset context contains its assets and metadata.
+
+        Returns:
+            DatasetCollection: A collection of input and output datasets as DatasetContext objects.
+        """
         input_dataset_context = DatasetContext(
             dataset_name="input",
             dataset_version=self.input_dataset_version,
-            destination_path=destination_path,
-            multi_asset=None,
+            assets=self.input_dataset_version.list_assets(),
             labelmap=None,
-            use_id=self.use_id,
-            download_annotations=self.download_annotations,
         )
         output_dataset_context = DatasetContext(
             dataset_name="output",
             dataset_version=self.output_dataset_version,
-            destination_path=destination_path,
-            multi_asset=None,
+            assets=self.output_dataset_version.list_assets(),
             labelmap=None,
-            use_id=self.use_id,
-            download_annotations=self.download_annotations,
         )
-        return ProcessingDatasetCollection(
-            input_dataset_context=input_dataset_context,
-            output_dataset_context=output_dataset_context,
-        )
+        return DatasetCollection([input_dataset_context, output_dataset_context])

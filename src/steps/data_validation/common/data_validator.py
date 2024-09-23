@@ -1,8 +1,6 @@
 from src import step
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
-)
 from src.models.steps.data_validation.common.dataset_collection_validator import (
     DatasetCollectionValidator,
     DatasetContextValidator,
@@ -10,7 +8,7 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 
 
 @step
-def training_data_validator(dataset_collection: TrainingDatasetCollection):
+def training_data_validator(dataset_collection: DatasetCollection):
     """
     Performs common validations on a dataset collection.
 

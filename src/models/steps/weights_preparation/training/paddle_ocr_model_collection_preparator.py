@@ -2,9 +2,7 @@ import os
 
 import yaml
 
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
-)
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.paddle_ocr_dataset_context import PaddleOCRDatasetContext
 from src.models.model.common.model_context import ModelContext
 from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
@@ -16,7 +14,7 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters impor
 
 
 def generate_bbox_yaml_config(
-    dataset_collection: TrainingDatasetCollection[PaddleOCRDatasetContext],
+    dataset_collection: DatasetCollection[PaddleOCRDatasetContext],
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
@@ -37,7 +35,7 @@ def generate_bbox_yaml_config(
     config["Optimizer"]["lr"]["learning_rate"] = hyperparameters.bbox_learning_rate
 
     config["Train"]["dataset"]["name"] = "SimpleDataSet"
-    config["Train"]["dataset"]["data_dir"] = dataset_collection["train"].image_dir
+    config["Train"]["dataset"]["data_dir"] = dataset_collection["train"].images_dir
     config["Train"]["dataset"]["label_file_list"] = [
         dataset_collection["train"].paddle_ocr_bbox_annotations_path
     ]
@@ -45,7 +43,7 @@ def generate_bbox_yaml_config(
     config["Train"]["loader"]["shuffle"] = True
 
     config["Eval"]["dataset"]["name"] = "SimpleDataSet"
-    config["Eval"]["dataset"]["data_dir"] = dataset_collection["val"].image_dir
+    config["Eval"]["dataset"]["data_dir"] = dataset_collection["val"].images_dir
     config["Eval"]["dataset"]["label_file_list"] = [
         dataset_collection["val"].paddle_ocr_bbox_annotations_path
     ]
@@ -56,7 +54,7 @@ def generate_bbox_yaml_config(
 
 
 def generate_text_yaml_config(
-    dataset_collection: TrainingDatasetCollection[PaddleOCRDatasetContext],
+    dataset_collection: DatasetCollection[PaddleOCRDatasetContext],
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
@@ -89,7 +87,7 @@ def generate_text_yaml_config(
     config["Optimizer"]["lr"]["learning_rate"] = hyperparameters.text_learning_rate
 
     config["Train"]["dataset"]["name"] = "SimpleDataSet"
-    config["Train"]["dataset"]["data_dir"] = dataset_collection["train"].text_image_dir
+    config["Train"]["dataset"]["data_dir"] = dataset_collection["train"].text_images_dir
     config["Train"]["dataset"]["label_file_list"] = [
         dataset_collection["train"].paddle_ocr_text_annotations_path
     ]
@@ -102,7 +100,7 @@ def generate_text_yaml_config(
         ] = hyperparameters.max_text_length
 
     config["Eval"]["dataset"]["name"] = "SimpleDataSet"
-    config["Eval"]["dataset"]["data_dir"] = dataset_collection["val"].text_image_dir
+    config["Eval"]["dataset"]["data_dir"] = dataset_collection["val"].text_images_dir
     config["Eval"]["dataset"]["label_file_list"] = [
         dataset_collection["val"].paddle_ocr_text_annotations_path
     ]
@@ -121,7 +119,7 @@ class PaddleOCRModelCollectionPreparator:
     def __init__(
         self,
         model_collection: PaddleOCRModelCollection,
-        dataset_collection: TrainingDatasetCollection,
+        dataset_collection: DatasetCollection,
         hyperparameters: PaddleOCRHyperParameters,
     ):
         self.model_collection = model_collection

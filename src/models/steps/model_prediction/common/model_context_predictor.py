@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Generic
 
-from src.models.dataset.training.training_dataset_collection import TDatasetContext
+from src.models.dataset.common.dataset_context import TDatasetContext
 from src.models.model.common.model_context import TModelContext
 from src.models.model.common.picsellia_prediction import (
     PicselliaLabel,

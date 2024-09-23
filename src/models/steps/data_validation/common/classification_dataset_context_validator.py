@@ -1,5 +1,4 @@
 import logging
-import os.path
 from collections import defaultdict
 from typing import Dict, List
 
@@ -51,11 +50,6 @@ class ClassificationDatasetContextValidator(DatasetContextValidator):
             FileNotFoundError: If the COCO file is not found.
             json.JSONDecodeError: If the COCO file is not a valid JSON.
         """
-        if not os.path.isfile(self.dataset_context.coco_file_path):
-            raise FileNotFoundError(
-                f"COCO file not found at {self.dataset_context.coco_file_path}"
-            )
-
         coco_data = self.dataset_context.load_coco_file_data()
 
         # Create a mapping of category_id to category_name

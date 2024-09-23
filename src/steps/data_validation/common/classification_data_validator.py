@@ -1,7 +1,5 @@
 from src import step
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
-)
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.steps.data_validation.common.classification_dataset_context_validator import (
     ClassificationDatasetContextValidator,
 )
@@ -12,7 +10,7 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 
 @step
 def classification_dataset_collection_validator(
-    dataset_collection: TrainingDatasetCollection,
+    dataset_collection: DatasetCollection,
 ) -> None:
     """
     Validates a dataset collection for classification tasks.

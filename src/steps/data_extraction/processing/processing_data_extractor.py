@@ -6,16 +6,11 @@ from src import step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.dataset.processing.processing_dataset_collection import (
-    ProcessingDatasetCollection,
-)
 
 from src.models.steps.data_extraction.processing.processing_dataset_collection_extractor import (
     ProcessingDatasetCollectionExtractor,
-)
-from src.models.steps.data_extraction.processing.processing_dataset_context_extractor import (
-    ProcessingDatasetContextExtractor,
 )
 
 
@@ -47,26 +42,36 @@ def processing_dataset_context_extractor(
 
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
-    dataset_context_extractor = ProcessingDatasetContextExtractor(
+    dataset_context = DatasetContext(
+        dataset_name="input",
         dataset_version=context.input_dataset_version,
-        use_id=context.use_id,
+        assets=context.input_dataset_version.list_assets(),
+        labelmap=None,
     )
     destination_path = get_destination_path(context.job_id)
-    dataset_context = dataset_context_extractor.get_dataset_context(
-        destination_path=destination_path, skip_asset_listing=skip_asset_listing
-    )
 
-    if not skip_asset_listing:
-        dataset_context.download_assets(image_dir=dataset_context.image_dir)
-        dataset_context.download_and_build_coco_file(
-            annotations_dir=dataset_context.annotations_dir
-        )
+    dataset_context.download_assets(
+        destination_path=os.path.join(
+            destination_path, dataset_context.dataset_name, "images"
+        ),
+        use_id=True,
+        skip_asset_listing=skip_asset_listing,
+    )
+    dataset_context.download_and_build_coco_file(
+        destination_path=os.path.join(
+            destination_path, dataset_context.dataset_name, "annotations"
+        ),
+        use_id=True,
+        skip_asset_listing=skip_asset_listing,
+    )
 
     return dataset_context
 
 
 @step
-def processing_dataset_collection_extractor() -> ProcessingDatasetCollection:
+def processing_dataset_collection_extractor(
+    skip_asset_listing: bool = False,
+) -> DatasetCollection:
     """
     Extracts a dataset from a processing job and prepares it for processing.
 
@@ -85,12 +90,12 @@ def processing_dataset_collection_extractor() -> ProcessingDatasetCollection:
     dataset_collection_extractor = ProcessingDatasetCollectionExtractor(
         input_dataset_version=context.input_dataset_version,
         output_dataset_version=context.output_dataset_version,
-        use_id=context.use_id,
-        download_annotations=context.download_annotations,
     )
     destination_path = get_destination_path(context.job_id)
-    dataset_collection = dataset_collection_extractor.get_dataset_collection(
-        destination_path=destination_path
+    dataset_collection = dataset_collection_extractor.get_dataset_collection()
+    dataset_collection.download_all(
+        destination_path=destination_path,
+        use_id=True,
+        skip_asset_listing=skip_asset_listing,
     )
-    dataset_collection.download_all()
     return dataset_collection

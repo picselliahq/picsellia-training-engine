@@ -12,12 +12,30 @@ import cv2
 
 
 def write_annotations_file(data, output_path):
+    """
+    Writes the annotation data to a specified file in a text format.
+
+    Args:
+        data (List[str]): List of annotation strings to be written to the file.
+        output_path (str): Directory path where the annotations file will be written.
+    """
+    os.makedirs(output_path, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as file:
         for line in data:
             file.write(line + "\n")
 
 
 def find_category_id(categories: List[Dict], category_name: str) -> Union[str, None]:
+    """
+    Finds the ID of a category by its name from a list of categories.
+
+    Args:
+        categories (List[Dict]): A list of category dictionaries from the COCO dataset.
+        category_name (str): The name of the category to search for.
+
+    Returns:
+        Union[str, None]: The ID of the category if found, otherwise None.
+    """
     for category in categories:
         if category["name"] == category_name:
             return category["id"]
@@ -25,6 +43,16 @@ def find_category_id(categories: List[Dict], category_name: str) -> Union[str, N
 
 
 def find_category_name(categories: List[Dict], category_id: str) -> Union[str, None]:
+    """
+    Finds the name of a category by its ID from a list of categories.
+
+    Args:
+        categories (List[Dict]): A list of category dictionaries from the COCO dataset.
+        category_id (str): The ID of the category to search for.
+
+    Returns:
+        Union[str, None]: The name of the category if found, otherwise None.
+    """
     for category in categories:
         if category["id"] == category_id:
             return category["name"]
@@ -32,6 +60,16 @@ def find_category_name(categories: List[Dict], category_id: str) -> Union[str, N
 
 
 def find_image_id(images: List[Dict], image_filename: str) -> Union[str, None]:
+    """
+    Finds the ID of an image by its filename from a list of images.
+
+    Args:
+        images (List[Dict]): A list of image dictionaries from the COCO dataset.
+        image_filename (str): The filename of the image to search for.
+
+    Returns:
+        Union[str, None]: The ID of the image if found, otherwise None.
+    """
     for image in images:
         if image["file_name"] == image_filename:
             return image["id"]
@@ -39,16 +77,44 @@ def find_image_id(images: List[Dict], image_filename: str) -> Union[str, None]:
 
 
 def get_points_from_bbox(bbox: List[int]) -> List[List[int]]:
+    """
+    Converts a bounding box into a list of points representing its corners.
+
+    Args:
+        bbox (List[int]): A list representing the bounding box [x, y, width, height].
+
+    Returns:
+        List[List[int]]: A list of points representing the corners of the bounding box.
+    """
     x, y, w, h = bbox
     return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
 
 
 def load_coco_text(file_path: str) -> Dict:
+    """
+    Loads a COCO format JSON file from the specified path.
+
+    Args:
+        file_path (str): The path to the COCO format JSON file.
+
+    Returns:
+        Dict: The COCO data loaded from the JSON file.
+    """
     with open(file_path, "r") as file:
         return json.load(file)
 
 
 def get_bbox_annotations(coco: Dict, image_directory: str):
+    """
+    Retrieves and formats bounding box annotations from the COCO data.
+
+    Args:
+        coco (Dict): The COCO data containing images, annotations, and categories.
+        image_directory (str): The directory containing the images.
+
+    Returns:
+        List[str]: A list of formatted bounding box annotations for PaddleOCR.
+    """
     processed_data: List[str] = []
     paddle_ocr_annotations: List[Dict] = []
     group_image_id = None
@@ -86,6 +152,18 @@ def get_bbox_annotations(coco: Dict, image_directory: str):
 
 
 def get_text_annotations(coco: Dict, image_directory: str, new_image_directory: str):
+    """
+    Extracts and processes text annotations from the COCO data by cropping images and saving them.
+
+    Args:
+        coco (Dict): The COCO data containing images, annotations, and categories.
+        image_directory (str): The directory containing the original images.
+        new_image_directory (str): The directory where the cropped images will be saved.
+
+    Returns:
+        List[str]: A list of formatted text annotations for PaddleOCR.
+    """
+    os.makedirs(new_image_directory, exist_ok=True)
     processed_data: List[str] = []
     img_counter = 0
 
@@ -111,40 +189,83 @@ def get_text_annotations(coco: Dict, image_directory: str, new_image_directory: 
 
 
 class PaddleOCRDatasetContextPreparator:
-    def __init__(self, dataset_context: TDatasetContext):
+    """
+    Prepares and organizes a dataset for OCR tasks using the PaddleOCR format.
+
+    This class takes a dataset context and processes it to extract bounding box and text annotations
+    in a format suitable for PaddleOCR.
+
+    Attributes:
+        dataset_context (DatasetContext): The context of the dataset to organize.
+        destination_path (str): The target directory where the processed dataset will be saved.
+        paddle_ocr_dataset_context (PaddleOCRDatasetContext): The prepared dataset context for PaddleOCR.
+    """
+
+    def __init__(self, dataset_context: TDatasetContext, destination_path: str):
         """
         Initializes the organizer with a given dataset context.
 
         Args:
             dataset_context (DatasetContext): The dataset context to organize.
+            destination_path (str): The directory where the organized dataset will be stored.
         """
         self.dataset_context = dataset_context
+        self.destination_path = destination_path
         self.paddle_ocr_dataset_context = PaddleOCRDatasetContext(
             dataset_name=self.dataset_context.dataset_name,
             dataset_version=self.dataset_context.dataset_version,
-            destination_path=self.dataset_context.destination_path,
-            multi_asset=self.dataset_context.multi_asset,
+            assets=self.dataset_context.assets,
             labelmap=self.dataset_context.labelmap,
-            use_id=self.dataset_context.use_id,
         )
 
     def organize(self) -> PaddleOCRDatasetContext:
+        """
+        Organizes the dataset context by preparing it for OCR tasks.
+
+        This method processes the COCO data to extract bounding box and text annotations, creates
+        the necessary directories, and writes the annotation files in the PaddleOCR format.
+
+        Returns:
+            PaddleOCRDatasetContext: The prepared dataset context, ready for OCR tasks.
+        """
+        if not self.dataset_context.coco_file_path:
+            raise ValueError("No COCO file found in the dataset context.")
+        if not self.dataset_context.images_dir:
+            raise ValueError("No images directory found in the dataset context.")
         coco_data = load_coco_text(self.dataset_context.coco_file_path)
         paddleocr_bbox_annotations = get_bbox_annotations(
-            coco=coco_data, image_directory=self.dataset_context.image_dir
+            coco=coco_data, image_directory=self.dataset_context.images_dir
+        )
+        self.paddle_ocr_dataset_context.text_images_dir = os.path.join(
+            os.path.dirname(self.dataset_context.images_dir), "paddleocr_images"
         )
         paddleocr_text_annotations = get_text_annotations(
             coco=coco_data,
-            image_directory=self.dataset_context.image_dir,
-            new_image_directory=self.paddle_ocr_dataset_context.text_image_dir,
+            image_directory=self.dataset_context.images_dir,
+            new_image_directory=self.paddle_ocr_dataset_context.text_images_dir,
+        )
+
+        self.paddle_ocr_dataset_context.paddle_ocr_bbox_annotations_path = os.path.join(
+            self.destination_path,
+            self.paddle_ocr_dataset_context.dataset_name,
+            "annotations",
+            "bbox",
+            "annotations.txt",
+        )
+        self.paddle_ocr_dataset_context.paddle_ocr_text_annotations_path = os.path.join(
+            self.destination_path,
+            self.paddle_ocr_dataset_context.dataset_name,
+            "annotations",
+            "text",
+            "annotations.txt",
+        )
+        write_annotations_file(
+            data=paddleocr_bbox_annotations,
+            output_path=self.paddle_ocr_dataset_context.paddle_ocr_bbox_annotations_path,
         )
 
         write_annotations_file(
-            paddleocr_bbox_annotations,
-            self.paddle_ocr_dataset_context.paddle_ocr_bbox_annotations_path,
-        )
-        write_annotations_file(
-            paddleocr_text_annotations,
-            self.paddle_ocr_dataset_context.paddle_ocr_text_annotations_path,
+            data=paddleocr_text_annotations,
+            output_path=self.paddle_ocr_dataset_context.paddle_ocr_text_annotations_path,
         )
         return self.paddle_ocr_dataset_context

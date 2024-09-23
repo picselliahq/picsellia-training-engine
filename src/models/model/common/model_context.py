@@ -17,7 +17,6 @@ class ModelContext:
     Attributes:
         model_name (str): The name of the model.
         model_version (ModelVersion): The version of the model from Picsellia.
-        destination_path (str): The base directory where model files will be stored.
         pretrained_weights_name (Optional[str]): The name of the pretrained weights file attached to the model version in Picsellia.
         trained_weights_name (Optional[str]): The name of the trained weights file attached to the model version in Picsellia.
         config_name (Optional[str]): The name of the configuration file attached to the model version in Picsellia.
@@ -29,7 +28,6 @@ class ModelContext:
         self,
         model_name: str,
         model_version: ModelVersion,
-        destination_path: str,
         pretrained_weights_name: Optional[str] = None,
         trained_weights_name: Optional[str] = None,
         config_name: Optional[str] = None,
@@ -42,7 +40,6 @@ class ModelContext:
         Args:
             model_name (str): The name of the model.
             model_version (ModelVersion): The version of the model, which contains the pretrained model and configuration.
-            destination_path (str): The base directory where model files will be stored.
             pretrained_weights_name (Optional[str], optional): The name of the pretrained weights file attached to the model version in Picsellia. Defaults to None.
             trained_weights_name (Optional[str], optional): The name of the trained weights file attached to the model version in Picsellia. Defaults to None.
             config_name (Optional[str], optional): The name of the configuration file attached to the model version in Picsellia. Defaults to None.
@@ -51,7 +48,6 @@ class ModelContext:
         """
         self.model_name = model_name
         self.model_version = model_version
-        self.destination_path = destination_path
 
         self.pretrained_weights_name = pretrained_weights_name
         self.trained_weights_name = trained_weights_name
@@ -60,8 +56,8 @@ class ModelContext:
 
         self.labelmap = labelmap or {}
 
-        self.weights_dir = self._create_directory("weights")
-        self.results_dir = self._create_directory("results")
+        self.weights_dir: Optional[str] = None
+        self.results_dir: Optional[str] = None
 
         self.pretrained_weights_dir: Optional[str] = None
         self.trained_weights_dir: Optional[str] = None
@@ -74,24 +70,6 @@ class ModelContext:
         self.exported_weights_path: Optional[str] = None
 
         self._loaded_model: Optional[Any] = None
-
-    def _create_directory(self, folder_name: str) -> str:
-        """
-        Creates a directory inside the destination path for a specific type of model-related files (e.g., weights, results).
-
-        Args:
-            folder_name (str): The name of the folder to create (e.g., 'weights', 'results').
-
-        Returns:
-            str: The path to the created directory.
-        """
-        path = os.path.join(
-            self.destination_path,
-            self.model_name,
-            folder_name,
-        )
-        os.makedirs(path, exist_ok=True)
-        return path
 
     @property
     def loaded_model(self) -> Any:
@@ -119,31 +97,29 @@ class ModelContext:
         """
         self._loaded_model = model
 
-    def download_weights(self, model_weights_destination_path: str) -> None:
+    def download_weights(self, destination_path: str) -> None:
         """
         Downloads the model's weights and configuration files to the specified destination path.
 
         Args:
-            model_weights_destination_path (str): The destination path where the model weights and related files will be downloaded.
+            destination_path (str): The destination path where the model weights and related files will be downloaded.
         """
         downloader = ModelDownloader()
 
-        # Create directories
-        self.weights_dir = model_weights_destination_path
+        # Set destination directories
+        self.weights_dir = os.path.join(destination_path, "weights")
+        self.results_dir = os.path.join(destination_path, "results")
         self.pretrained_weights_dir = os.path.join(
-            model_weights_destination_path, "pretrained_weights"
+            self.weights_dir, "pretrained_weights"
         )
-        self.trained_weights_dir = os.path.join(
-            model_weights_destination_path, "trained_weights"
-        )
-        self.config_dir = os.path.join(model_weights_destination_path, "config")
-        self.exported_weights_dir = os.path.join(
-            model_weights_destination_path, "exported_weights"
-        )
+        self.trained_weights_dir = os.path.join(self.weights_dir, "trained_weights")
+        self.config_dir = os.path.join(self.weights_dir, "config")
+        self.exported_weights_dir = os.path.join(self.weights_dir, "exported_weights")
 
         # Create directories if they don't exist
         for directory in [
             self.weights_dir,
+            self.results_dir,
             self.pretrained_weights_dir,
             self.trained_weights_dir,
             self.config_dir,
@@ -170,9 +146,7 @@ class ModelContext:
                     model_file, self.exported_weights_dir
                 )
             else:
-                downloader.download_and_process(
-                    model_file, model_weights_destination_path
-                )
+                downloader.download_and_process(model_file, self.weights_dir)
 
 
 TModelContext = TypeVar("TModelContext", bound=ModelContext)

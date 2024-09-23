@@ -1,8 +1,6 @@
 from picsellia import Experiment
 
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
-)
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.model.common.model_context import ModelContext
 from src.models.model.ultralytics.ultralytics_callbacks import UltralyticsCallbacks
 from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
@@ -49,7 +47,7 @@ class UltralyticsModelContextTrainer:
 
     def train_model_context(
         self,
-        dataset_collection: TrainingDatasetCollection,
+        dataset_collection: DatasetCollection,
         hyperparameters: UltralyticsHyperParameters,
         augmentation_parameters: UltralyticsAugmentationParameters,
     ) -> ModelContext:
@@ -57,7 +55,7 @@ class UltralyticsModelContextTrainer:
         Trains the model within the provided context using the given datasets, hyperparameters, and augmentation parameters.
 
         Args:
-            dataset_collection (TrainingDatasetCollection): The collection of datasets used for training.
+            dataset_collection (DatasetCollection): The collection of datasets used for training.
             hyperparameters (UltralyticsHyperParameters): The hyperparameters used for training.
             augmentation_parameters (UltralyticsAugmentationParameters): The augmentation parameters applied during training.
 
