@@ -2,7 +2,7 @@ import json
 import logging
 import math
 import os
-from typing import List, Union, Optional
+from typing import List, Union, Dict
 
 import numpy as np
 import picsellia
@@ -169,14 +169,16 @@ def evaluate_model(
         for j, asset in enumerate(subset_asset_list):
             prediction, img_info = yolox_predictor.inference(inputs[j])
 
-            evaluations = None
+            evaluations = {
+                "rectangles": []
+            }
 
             if prediction[0] is not None:
                 yolov8_style_output = YOLOV8StyleOutput(
                     yolox_output=prediction[0], img_info=img_info
                 )
 
-                evaluations = format_prediction_to_evaluations(
+                evaluations["rectangles"] = format_prediction_to_evaluations(
                     asset=asset,
                     prediction=yolov8_style_output,
                     type_formatter=type_formatter,
@@ -216,12 +218,10 @@ def open_asset_as_array(asset: Asset) -> np.array:
 
 
 def send_evaluations_to_platform(
-        experiment: Experiment, asset: Asset, evaluations: Optional[List]
+        experiment: Experiment, asset: Asset, evaluations: Dict
 ) -> None:
-    shapes = {"rectangles": evaluations} if evaluations else {}
-
     try:
-        experiment.add_evaluation(asset=asset, **shapes)
+        experiment.add_evaluation(asset=asset, **evaluations)
         print(f"Asset: {asset.filename} evaluated.")
         logging.info(f"Asset: {asset.filename} evaluated.")
 
