@@ -16,6 +16,20 @@ from src.models.steps.data_validation.processing.processing_bounding_box_cropper
 def bounding_box_cropper_data_validator(
     dataset_context: DatasetContext,
 ) -> DatasetContext:
+    """
+    Validates the dataset for the bounding box cropping process.
+
+    This function retrieves the active processing context and validates the provided dataset context
+    based on the parameters of the bounding box cropping task. It uses the `ProcessingBoundingBoxCropperDataValidator`
+    to perform the validation, ensuring that the dataset is suitable for processing (e.g., checking for
+    correct labels, annotations, etc.). The validated dataset context is then returned.
+
+    Args:
+        dataset_context (DatasetContext): The dataset context to be validated.
+
+    Returns:
+        DatasetContext: The validated dataset context, ready for further processing.
+    """
     context: PicselliaProcessingContext[
         ProcessingBoundingBoxCropperParameters
     ] = Pipeline.get_active_context()

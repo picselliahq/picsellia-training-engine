@@ -26,6 +26,20 @@ def paddle_ocr_model_collection_evaluator(
     model_collection: PaddleOCRModelCollection,
     dataset_context: TDatasetContext,
 ) -> None:
+    """
+    Evaluates a PaddleOCR model collection on a given dataset.
+
+    This function retrieves the active training context from the pipeline, performs inference using
+    the provided PaddleOCR model collection on the dataset, and evaluates the predictions. It processes
+    the dataset in batches, runs inference, and then logs the evaluation results to the experiment.
+
+    Args:
+        model_collection (PaddleOCRModelCollection): The collection of PaddleOCR models to be evaluated.
+        dataset_context (TDatasetContext): The dataset context containing the data for evaluation.
+
+    Returns:
+        None: The function performs evaluation and logs the results but does not return any value.
+    """
     context: PicselliaTrainingContext[
         PaddleOCRHyperParameters, PaddleOCRAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()

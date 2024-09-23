@@ -22,6 +22,20 @@ def ultralytics_model_context_evaluator(
     model_context: ModelContext,
     dataset_context: TDatasetContext,
 ) -> None:
+    """
+    Evaluates an Ultralytics classification model on a given dataset.
+
+    This function retrieves the active training context from the pipeline, performs inference using
+    the provided Ultralytics classification model on the dataset, and evaluates the predictions. It processes
+    the dataset in batches, runs inference, and then logs the evaluation results to the experiment.
+
+    Args:
+        model_context (ModelContext): The Ultralytics model context to be evaluated.
+        dataset_context (TDatasetContext): The dataset context containing the data for evaluation.
+
+    Returns:
+        None: The function performs evaluation and logs the results to the experiment but does not return any value.
+    """
     context: PicselliaTrainingContext[
         UltralyticsHyperParameters, UltralyticsAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()

@@ -26,12 +26,10 @@ def paddle_ocr_model_collection_extractor() -> PaddleOCRModelCollection:
     ] = Pipeline.get_active_context()
 
     model_version = context.experiment.get_base_model_version()
-    destination_path = os.path.join(os.getcwd(), context.experiment.name, "model")
 
     bbox_model = ModelContext(
         model_name="bbox-model",
         model_version=model_version,
-        destination_path=destination_path,
         pretrained_weights_name="bbox-pretrained-model",
         trained_weights_name=None,
         config_name="bbox-config",
@@ -40,7 +38,6 @@ def paddle_ocr_model_collection_extractor() -> PaddleOCRModelCollection:
     text_model = ModelContext(
         model_name="text-model",
         model_version=model_version,
-        destination_path=destination_path,
         pretrained_weights_name="text-pretrained-model",
         trained_weights_name=None,
         config_name="text-config",
@@ -50,6 +47,8 @@ def paddle_ocr_model_collection_extractor() -> PaddleOCRModelCollection:
     model_collection = PaddleOCRModelCollection(
         bbox_model=bbox_model, text_model=text_model
     )
-    model_collection.download_weights()
+    model_collection.download_weights(
+        destination_path=os.path.join(os.getcwd(), context.experiment.name, "model")
+    )
 
     return model_collection

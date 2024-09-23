@@ -1,8 +1,8 @@
 import os
 
 from src import step
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
+from src.models.dataset.common.dataset_collection import (
+    DatasetCollection,
 )
 from src.models.steps.data_preparation.common.classification_dataset_context_preparator import (
     ClassificationDatasetContextPreparator,
@@ -11,8 +11,8 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 
 @step
 def classification_data_preparator(
-    dataset_collection: TrainingDatasetCollection,
-) -> TrainingDatasetCollection:
+    dataset_collection: DatasetCollection,
+) -> DatasetCollection:
     """
     Example:
         Assume `dataset_collection` comprises unorganized images across training, validation, and testing splits.

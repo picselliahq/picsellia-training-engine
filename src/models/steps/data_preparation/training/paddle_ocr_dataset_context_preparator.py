@@ -17,9 +17,9 @@ def write_annotations_file(data, output_path):
 
     Args:
         data (List[str]): List of annotation strings to be written to the file.
-        output_path (str): Directory path where the annotations file will be written.
+        output_path (str): The path to the output file.
     """
-    os.makedirs(output_path, exist_ok=True)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as file:
         for line in data:
             file.write(line + "\n")

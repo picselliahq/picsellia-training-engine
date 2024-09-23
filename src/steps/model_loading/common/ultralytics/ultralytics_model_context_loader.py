@@ -19,9 +19,27 @@ from src.models.steps.model_loading.common.ultralytics.ultralytics_model_context
 
 @step
 def ultralytics_model_context_loader(model_context: ModelContext) -> ModelContext:
+    """
+    Loads an Ultralytics model from pretrained weights if available.
+
+    This function retrieves the active training context and attempts to load the Ultralytics model from
+    the pretrained weights specified in the model context. If the pretrained weights file exists, the model
+    is loaded onto the specified device. If the pretrained weights are not found, a `FileNotFoundError` is raised.
+
+    Args:
+        model_context (ModelContext): The model context containing the path to the pretrained weights and
+                                      other model-related configurations.
+
+    Returns:
+        ModelContext: The updated model context with the loaded model.
+
+    Raises:
+        FileNotFoundError: If the pretrained weights file is not found at the specified path in the model context.
+    """
     context: PicselliaTrainingContext[
         UltralyticsHyperParameters, UltralyticsAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
+
     if model_context.pretrained_weights_path and os.path.exists(
         model_context.pretrained_weights_path
     ):
@@ -34,4 +52,5 @@ def ultralytics_model_context_loader(model_context: ModelContext) -> ModelContex
         raise FileNotFoundError(
             f"Pretrained model file not found at {model_context.pretrained_weights_path}. Cannot load model."
         )
+
     return model_context

@@ -5,7 +5,7 @@ import pytest
 from picsellia.types.enums import InferenceType
 
 from src.enums import DatasetSplitName
-from src.steps.data_validation.utils.image_utils import get_images_path_list
+from src.models.utils.image_file import get_images_path_list
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 

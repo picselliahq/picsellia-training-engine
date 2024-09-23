@@ -56,6 +56,10 @@ class ObjectDetectionDatasetContextValidator(DatasetContextValidator):
         Raises:
             ValueError: If the dataset context has no images with bounding boxes.
         """
+        if not self.dataset_context.coco_file:
+            raise ValueError(
+                f"Dataset {self.dataset_context.dataset_name} has no COCO file associated with it."
+            )
         if not self.dataset_context.coco_file.annotations:
             raise ValueError(
                 f"Dataset {self.dataset_context.dataset_name} must have at least 1 image with bounding boxes."
@@ -70,6 +74,10 @@ class ObjectDetectionDatasetContextValidator(DatasetContextValidator):
         Raises:
             ValueError: If the bounding box coordinates for any annotation are not valid and fix_annotation is False.
         """
+        if not self.dataset_context.coco_file:
+            raise ValueError(
+                f"Dataset {self.dataset_context.dataset_name} has no COCO file associated with it."
+            )
         for num_annotation, annotation in enumerate(
             self.dataset_context.coco_file.annotations
         ):
@@ -149,6 +157,10 @@ class ObjectDetectionDatasetContextValidator(DatasetContextValidator):
         Returns:
             The image object associated with the given ID.
         """
+        if not self.dataset_context.coco_file:
+            raise ValueError(
+                f"Dataset {self.dataset_context.dataset_name} has no COCO file associated with it."
+            )
         return next(
             image
             for image in self.dataset_context.coco_file.images

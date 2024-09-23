@@ -1,5 +1,4 @@
 import os
-
 import yaml
 
 from src.models.dataset.common.dataset_collection import DatasetCollection
@@ -18,6 +17,20 @@ def generate_bbox_yaml_config(
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
+    """
+    Generates a YAML configuration for the bounding box detection model in PaddleOCR.
+
+    This function updates and modifies the YAML configuration for the bounding box model
+    based on the dataset, model context, and provided hyperparameters.
+
+    Args:
+        dataset_collection (DatasetCollection): The collection of datasets for training and validation.
+        model_context (ModelContext): The context of the model, including paths to pretrained and saved weights.
+        hyperparameters (PaddleOCRHyperParameters): Hyperparameters to customize the training process.
+
+    Returns:
+        dict: The modified configuration dictionary.
+    """
     if model_context.config_path is None:
         raise ValueError("No config file path provided for the model context")
 
@@ -58,8 +71,25 @@ def generate_text_yaml_config(
     model_context: ModelContext,
     hyperparameters: PaddleOCRHyperParameters,
 ):
-    if model_context.config_path is None:
+    """
+    Generates a YAML configuration for the text recognition model in PaddleOCR.
+
+    This function updates and modifies the YAML configuration for the text model
+    based on the dataset, model context, and provided hyperparameters.
+
+    Args:
+        dataset_collection (DatasetCollection): The collection of datasets for training and validation.
+        model_context (ModelContext): The context of the model, including paths to pretrained and saved weights.
+        hyperparameters (PaddleOCRHyperParameters): Hyperparameters to customize the training process.
+
+    Returns:
+        dict: The modified configuration dictionary.
+    """
+    if not model_context.config_path:
         raise ValueError("No config file path provided for the model context")
+
+    if not model_context.weights_dir:
+        raise ValueError("No weights directory provided for the model context")
 
     with open(model_context.config_path, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
@@ -111,22 +141,55 @@ def generate_text_yaml_config(
 
 
 def write_yaml_config(config, config_file_path):
+    """
+    Writes the given YAML configuration to a file.
+
+    Args:
+        config (dict): The configuration dictionary to write.
+        config_file_path (str): The file path where the configuration will be saved.
+    """
     with open(config_file_path, "w") as file:
         yaml.dump(config, file)
 
 
 class PaddleOCRModelCollectionPreparator:
+    """
+    Prepares the PaddleOCR model collection by generating and writing configuration files for each model.
+
+    This class generates YAML configuration files for both the bounding box and text recognition models,
+    and saves them to the appropriate paths.
+
+    Attributes:
+        model_collection (PaddleOCRModelCollection): The collection of PaddleOCR models.
+        dataset_collection (DatasetCollection): The dataset collection containing training and validation datasets.
+        hyperparameters (PaddleOCRHyperParameters): Hyperparameters for training the models.
+    """
+
     def __init__(
         self,
         model_collection: PaddleOCRModelCollection,
         dataset_collection: DatasetCollection,
         hyperparameters: PaddleOCRHyperParameters,
     ):
+        """
+        Initializes the preparator with the model collection, dataset collection, and hyperparameters.
+
+        Args:
+            model_collection (PaddleOCRModelCollection): The collection of models to prepare.
+            dataset_collection (DatasetCollection): The datasets for training and evaluation.
+            hyperparameters (PaddleOCRHyperParameters): Hyperparameters to customize the model training process.
+        """
         self.model_collection = model_collection
         self.dataset_collection = dataset_collection
         self.hyperparameters = hyperparameters
 
     def prepare(self):
+        """
+        Prepares the model collection by generating and writing YAML configurations for both models.
+
+        Returns:
+            PaddleOCRModelCollection: The prepared model collection.
+        """
         bbox_config = generate_bbox_yaml_config(
             self.dataset_collection,
             self.model_collection.bbox_model,

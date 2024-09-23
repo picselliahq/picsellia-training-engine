@@ -23,6 +23,19 @@ from src.models.steps.model_export.training.paddle_ocr_model_collection_exporter
 def paddle_ocr_model_collection_exporter(
     model_collection: PaddleOCRModelCollection,
 ) -> PaddleOCRModelCollection:
+    """
+    Exports a PaddleOCR model collection and saves it to an experiment.
+
+    This function retrieves the active training context from the pipeline, exports the provided
+    PaddleOCR model collection in the specified format, and saves the exported models to the experiment.
+    The `PaddleOCRModelCollectionExporter` is used to handle the export and save operations.
+
+    Args:
+        model_collection (PaddleOCRModelCollection): The PaddleOCR model collection to be exported.
+
+    Returns:
+        PaddleOCRModelCollection: The exported PaddleOCR model collection.
+    """
     context: PicselliaTrainingContext[
         PaddleOCRHyperParameters, PaddleOCRAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()

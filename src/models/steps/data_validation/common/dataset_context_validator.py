@@ -3,7 +3,7 @@ from typing import List
 from PIL import Image
 
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.steps.data_validation.utils.image_utils import get_images_path_list
+from src.models.utils.image_file import get_images_path_list
 
 
 class DatasetContextValidator:

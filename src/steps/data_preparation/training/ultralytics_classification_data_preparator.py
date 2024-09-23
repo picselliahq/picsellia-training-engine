@@ -10,6 +10,19 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 def ultralytics_classification_dataset_collection_preparator(
     dataset_collection: DatasetCollection,
 ) -> DatasetCollection:
+    """
+    Prepares and organizes a dataset collection for Ultralytics classification tasks.
+
+    This function iterates over each dataset context in the provided `DatasetCollection`, organizing them
+    using the `ClassificationDatasetContextPreparator` to structure the dataset for use with Ultralytics classification.
+    Each dataset is moved into a new directory, with the structure suitable for Ultralytics training.
+
+    Args:
+        dataset_collection (DatasetCollection): The original dataset collection to be prepared for classification.
+
+    Returns:
+        DatasetCollection: A dataset collection where each dataset has been organized and prepared for Ultralytics classification tasks.
+    """
     context = Pipeline.get_active_context()
     for dataset_context in dataset_collection:
         destination_path = str(

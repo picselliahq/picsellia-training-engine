@@ -4,9 +4,7 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.training.training_dataset_collection import (
-    TrainingDatasetCollection,
-)
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.paddle_ocr_dataset_context import PaddleOCRDatasetContext
 from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
     PaddleOCRModelCollection,
@@ -26,7 +24,7 @@ from src.models.steps.weights_preparation.training.paddle_ocr_model_collection_p
 @step
 def paddle_ocr_model_collection_preparator(
     model_collection: PaddleOCRModelCollection,
-    dataset_collection: TrainingDatasetCollection[PaddleOCRDatasetContext],
+    dataset_collection: DatasetCollection[PaddleOCRDatasetContext],
 ) -> PaddleOCRModelCollection:
     context: PicselliaTrainingContext[
         PaddleOCRHyperParameters, PaddleOCRAugmentationParameters, ExportParameters

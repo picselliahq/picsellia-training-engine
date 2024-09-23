@@ -9,7 +9,7 @@ from src.models.steps.data_extraction.training.training_dataset_collection_extra
     TrainingDatasetCollectionExtractor,
 )
 
-from src.steps.data_extraction.utils.image_utils import (
+from src.models.utils.dataset_logging import (
     log_labelmap,
     log_objects_distribution,
 )
@@ -18,33 +18,35 @@ from src.steps.data_extraction.utils.image_utils import (
 @step
 def training_dataset_collection_extractor() -> DatasetCollection:
     """
-    Extracts datasets from an experiment and prepares them for training.
+    Extracts datasets from an experiment and prepares them for training, validation, and testing.
 
-    This function retrieves the active training context from the pipeline, uses it to initialize a ExperimentDatasetCollectionExtractor
-    with the current experiment and the proportion of the training split defined in the hyperparameters. It then
-    retrieves a DatasetCollection of datasets ready for use in training, validation, and testing, and downloads
-    all necessary assets and annotations.
+    This function retrieves the active training context from the pipeline and uses it to initialize a
+    `TrainingDatasetCollectionExtractor` with the current experiment and the training split ratio from the
+    hyperparameters. It retrieves a `DatasetCollection` of datasets ready for use in training, validation,
+    and testing, downloading all necessary assets and annotations.
 
-    The function is designed to be used as a step in a Picsellia Pipeline, making it part of the automated
-    data preparation and model training pipeline.
+    The function also logs the labelmap and the objects distribution for each dataset split in the collection,
+    facilitating data analysis and tracking in the experiment.
 
     Returns:
-        - TrainingDatasetCollection: A collection of dataset contexts prepared for the training, including training,
-        validation, and testing splits, with all necessary assets and annotations downloaded.
+        DatasetCollection: A collection of dataset contexts prepared for training, validation, and testing,
+        with all necessary assets and annotations downloaded.
 
     Raises:
-        ResourceNotFoundError: If any of the expected dataset splits are not found in the experiment.
+        ResourceNotFoundError: If any of the expected dataset splits (train, validation, test) are not found in the experiment.
         RuntimeError: If an invalid number of datasets are attached to the experiment.
-
     """
     context: PicselliaTrainingContext = Pipeline.get_active_context()
+
     dataset_collection_extractor = TrainingDatasetCollectionExtractor(
         experiment=context.experiment,
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
+
     dataset_collection = dataset_collection_extractor.get_dataset_collection(
         random_seed=context.hyperparameters.seed,
     )
+
     dataset_collection.download_all(
         destination_path=os.path.join(os.getcwd(), context.experiment.name, "dataset"),
         use_id=True,
@@ -55,6 +57,7 @@ def training_dataset_collection_extractor() -> DatasetCollection:
         experiment=context.experiment,
         log_name="labelmap",
     )
+
     for dataset_context in dataset_collection:
         log_objects_distribution(
             coco_file=dataset_context.coco_file,

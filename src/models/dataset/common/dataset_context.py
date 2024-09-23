@@ -10,7 +10,7 @@ from picsellia.types.enums import AnnotationFileType
 from picsellia_annotations.coco import COCOFile
 from picsellia_annotations.utils import read_coco_file
 
-from src.steps.data_extraction.utils.image_utils import get_labelmap
+from src.models.utils.dataset_logging import get_labelmap
 
 logger = logging.getLogger(__name__)
 

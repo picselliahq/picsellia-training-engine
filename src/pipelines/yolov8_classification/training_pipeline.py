@@ -54,14 +54,14 @@ def get_context() -> (
 )
 def yolov8_classification_training_pipeline():
     dataset_collection = training_dataset_collection_extractor()
-    dataset_collection = ultralytics_classification_dataset_collection_preparator(
+    ultralytics_classification_dataset_collection_preparator(
         dataset_collection=dataset_collection
     )
     classification_dataset_collection_validator(dataset_collection=dataset_collection)
 
     model_context = training_model_context_extractor()
-    model_context = ultralytics_model_context_loader(model_context=model_context)
-    model_context = ultralytics_model_context_trainer(
+    ultralytics_model_context_loader(model_context=model_context)
+    ultralytics_model_context_trainer(
         model_context=model_context, dataset_collection=dataset_collection
     )
 

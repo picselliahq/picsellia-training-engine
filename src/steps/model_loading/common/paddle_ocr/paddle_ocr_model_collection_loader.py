@@ -25,9 +25,28 @@ from src.models.steps.model_loading.common.paddle_ocr.paddle_ocr_model_collectio
 def paddle_ocr_model_collection_loader(
     model_collection: PaddleOCRModelCollection,
 ) -> PaddleOCRModelCollection:
+    """
+    Loads a PaddleOCR model collection from pretrained weights if available.
+
+    This function retrieves the active training context and attempts to load the PaddleOCR model collection
+    (both bounding box and text recognition models) from their respective pretrained weights directories.
+    The function checks for the existence of the required weight files and the character dictionary. If all files
+    are present, the models are loaded onto the specified device. If any required files are missing,
+    a `FileNotFoundError` is raised.
+
+    Args:
+        model_collection (PaddleOCRModelCollection): The PaddleOCR model collection to load pretrained weights into.
+
+    Returns:
+        PaddleOCRModelCollection: The model collection with the loaded models.
+
+    Raises:
+        FileNotFoundError: If any of the required model weight files or the character dictionary file are not found.
+    """
     context: PicselliaTrainingContext[
         PaddleOCRHyperParameters, PaddleOCRAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
+
     if (
         model_collection.bbox_model.exported_weights_dir
         and model_collection.text_model.exported_weights_dir
@@ -50,4 +69,5 @@ def paddle_ocr_model_collection_loader(
         raise FileNotFoundError(
             f"Pretrained model file not found at {model_collection.bbox_model.exported_weights_dir} or {model_collection.text_model.exported_weights_dir}. Cannot load model."
         )
+
     return model_collection

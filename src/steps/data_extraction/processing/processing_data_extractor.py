@@ -15,6 +15,15 @@ from src.models.steps.data_extraction.processing.processing_dataset_collection_e
 
 
 def get_destination_path(job_id: Optional[str]) -> str:
+    """
+    Generates a destination path based on the current working directory and a job ID.
+
+    Args:
+        job_id (Optional[str]): The ID of the current job. If None, defaults to "current_job".
+
+    Returns:
+        str: The generated file path for the job.
+    """
     if not job_id:
         return os.path.join(os.getcwd(), "current_job")
     return os.path.join(os.getcwd(), str(job_id))
@@ -25,21 +34,18 @@ def processing_dataset_context_extractor(
     skip_asset_listing: bool = False,
 ) -> DatasetContext:
     """
-    Extracts a dataset from a processing job and prepares it for processing.
+    Extracts a dataset context from a processing job, preparing it for further processing.
 
-    This function retrieves the active processing context from the pipeline, uses it to initialize a
-    ProcessingDatasetContextExtractor with the current job and dataset version, and retrieves a DatasetContext
-    for the dataset ready for processing. It then downloads all necessary assets and annotations.
-
-    The function is designed to be used as a step in a Picsellia Pipeline, making it part of the automated
-    data preparation and processing pipeline.
+    This function retrieves the active processing context from the pipeline, uses the input dataset version,
+    and creates a `DatasetContext`. The dataset context includes all necessary assets (e.g., images) and
+    annotations (e.g., COCO format) required for processing. It downloads the assets and annotations into a
+    destination folder based on the current job ID.
 
     Args:
-        skip_asset_listing: Whether to skip listing the dataset's assets.
+        skip_asset_listing (bool): Whether to skip listing the dataset's assets during the download process. Defaults to False.
 
     Returns:
-        A dataset context prepared for processing, including all assets and annotations downloaded.
-
+        DatasetContext: The dataset context prepared for processing, including all downloaded assets and annotations.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     dataset_context = DatasetContext(
@@ -73,18 +79,18 @@ def processing_dataset_collection_extractor(
     skip_asset_listing: bool = False,
 ) -> DatasetCollection:
     """
-    Extracts a dataset from a processing job and prepares it for processing.
+    Extracts a dataset collection from a processing job, preparing it for further processing.
 
-    This function retrieves the active processing context from the pipeline, uses it to initialize a
-    ProcessingDatasetContextExtractor with the current job and dataset version, and retrieves a DatasetContext
-    for the dataset ready for processing. It then downloads all necessary assets and annotations.
+    This function retrieves the active processing context from the pipeline, initializes a
+    `ProcessingDatasetCollectionExtractor` with the input and output dataset versions, and downloads
+    the necessary assets and annotations for both input and output datasets. It prepares the dataset collection
+    and stores them in a specified destination folder.
 
-    The function is designed to be used as a step in a Picsellia Pipeline, making it part of the automated
-    data preparation and processing pipeline.
+    Args:
+        skip_asset_listing (bool): Whether to skip listing the dataset's assets during the download process. Defaults to False.
 
     Returns:
-        - DatasetContext: A dataset context prepared for processing, including all assets and annotations downloaded.
-
+        DatasetCollection: The dataset collection prepared for processing, including all downloaded assets and annotations.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     dataset_collection_extractor = ProcessingDatasetCollectionExtractor(
