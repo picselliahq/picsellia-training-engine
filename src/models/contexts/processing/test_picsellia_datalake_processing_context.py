@@ -109,6 +109,8 @@ class TestPicselliaDatalakeProcessingContext(PicselliaContext):
             raise ValueError(f"Datalake with ID {input_datalake_id} not found")
         if output_datalake_id:
             self.output_datalake = self.get_datalake(output_datalake_id)
+        else:
+            self.output_datalake = None
         if model_version_id:
             self.model_version = self.get_model_version(
                 model_version_id=model_version_id
