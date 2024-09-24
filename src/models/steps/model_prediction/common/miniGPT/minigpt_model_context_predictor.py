@@ -13,15 +13,19 @@ from src.models.model.common.model_context import ModelContext
 from src.models.steps.model_prediction.common.model_context_predictor import (
     ModelContextPredictor,
 )
-from src.pipelines.datalake_autotagging.MiniGPT4.minigpt4.conversation.conversation import (
+from minigpt4.conversation.conversation import (
     Conversation,
     SeparatorStyle,
 )
 
+import torch
+import numpy as np
 
 def resize_image(image_path: str, size: int):
     image = Image.open(image_path).convert("RGB")
+    print(f'Image size: {image.size}')
     resized_image = image.resize((size, size))
+    print(f'Resized image size: {resized_image.size}')
     return resized_image
 
 
@@ -86,7 +90,7 @@ class MiniGPTModelContextPredictor(ModelContextPredictor[ModelContext]):
         self.config_path = model_context.config_path
         with open(self.config_path, "r") as file:
             self.config = yaml.safe_load(file)
-        self.model_architecture = self.config["architecture"]
+        self.model_architecture = self.config["model_architecture"]
         self.image_size = self.config["image_size"]
         self.conversation = get_conversation(architecture=self.model_architecture)
         self.tags_list = tags_list
@@ -170,10 +174,12 @@ class MiniGPTModelContextPredictor(ModelContextPredictor[ModelContext]):
     def prepare_img_list(self, image_path: str, chat_state: Conversation):
         img_list = []
         resized_image = resize_image(image_path=image_path, size=self.image_size)
-        _ = self.model_context.loaded_model.chat.upload_img(
+        resized_image = torch.tensor(np.array(resized_image)).permute(2, 0, 1).unsqueeze(0).half()
+        _ = self.model_context.loaded_model.upload_img(
             image=resized_image, conv=chat_state, img_list=img_list
         )
-        self.model_context.loaded_model.chat.encode_img(image=img_list)
+        print(f'img_list: {img_list}')
+        self.model_context.loaded_model.encode_img(img_list=img_list)
         return img_list
 
     def post_process_batches(
@@ -216,8 +222,7 @@ class MiniGPTModelContextPredictor(ModelContextPredictor[ModelContext]):
             )
             processed_prediction = {
                 "data": data,
-                "tag": closest_label,
-                "confidence": 1.0,
+                "tag": closest_label
             }
             processed_predictions.append(processed_prediction)
 
