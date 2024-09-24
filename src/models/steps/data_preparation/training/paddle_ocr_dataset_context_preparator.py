@@ -90,20 +90,6 @@ def get_points_from_bbox(bbox: List[int]) -> List[List[int]]:
     return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
 
 
-def load_coco_text(file_path: str) -> Dict:
-    """
-    Loads a COCO format JSON file from the specified path.
-
-    Args:
-        file_path (str): The path to the COCO format JSON file.
-
-    Returns:
-        Dict: The COCO data loaded from the JSON file.
-    """
-    with open(file_path, "r") as file:
-        return json.load(file)
-
-
 def get_bbox_annotations(coco: Dict, image_directory: str):
     """
     Retrieves and formats bounding box annotations from the COCO data.
@@ -217,6 +203,14 @@ class PaddleOCRDatasetContextPreparator:
             assets=self.dataset_context.assets,
             labelmap=self.dataset_context.labelmap,
         )
+        self.paddle_ocr_dataset_context.images_dir = self.dataset_context.images_dir
+        self.paddle_ocr_dataset_context.annotations_dir = (
+            self.dataset_context.annotations_dir
+        )
+        self.paddle_ocr_dataset_context.coco_file_path = (
+            self.dataset_context.coco_file_path
+        )
+        self.paddle_ocr_dataset_context.coco_file = self.dataset_context.coco_file
 
     def organize(self) -> PaddleOCRDatasetContext:
         """
@@ -228,33 +222,31 @@ class PaddleOCRDatasetContextPreparator:
         Returns:
             PaddleOCRDatasetContext: The prepared dataset context, ready for OCR tasks.
         """
-        if not self.dataset_context.coco_file_path:
+        if not self.paddle_ocr_dataset_context.coco_file_path:
             raise ValueError("No COCO file found in the dataset context.")
-        if not self.dataset_context.images_dir:
+        if not self.paddle_ocr_dataset_context.images_dir:
             raise ValueError("No images directory found in the dataset context.")
-        coco_data = load_coco_text(self.dataset_context.coco_file_path)
+        coco_data = self.paddle_ocr_dataset_context.load_coco_file_data()
         paddleocr_bbox_annotations = get_bbox_annotations(
-            coco=coco_data, image_directory=self.dataset_context.images_dir
+            coco=coco_data, image_directory=self.paddle_ocr_dataset_context.images_dir
         )
         self.paddle_ocr_dataset_context.text_images_dir = os.path.join(
-            os.path.dirname(self.dataset_context.images_dir), "paddleocr_images"
+            self.destination_path, "text_images"
         )
         paddleocr_text_annotations = get_text_annotations(
             coco=coco_data,
-            image_directory=self.dataset_context.images_dir,
+            image_directory=self.paddle_ocr_dataset_context.images_dir,
             new_image_directory=self.paddle_ocr_dataset_context.text_images_dir,
         )
 
         self.paddle_ocr_dataset_context.paddle_ocr_bbox_annotations_path = os.path.join(
             self.destination_path,
-            self.paddle_ocr_dataset_context.dataset_name,
             "annotations",
             "bbox",
             "annotations.txt",
         )
         self.paddle_ocr_dataset_context.paddle_ocr_text_annotations_path = os.path.join(
             self.destination_path,
-            self.paddle_ocr_dataset_context.dataset_name,
             "annotations",
             "text",
             "annotations.txt",

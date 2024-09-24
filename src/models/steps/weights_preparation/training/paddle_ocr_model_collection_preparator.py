@@ -37,7 +37,9 @@ def generate_bbox_yaml_config(
     with open(model_context.config_path, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
-    config["Global"]["use_gpu"] = True
+    config["Global"]["use_gpu"] = (
+        True if hyperparameters.device.startswith("cuda") else False
+    )
     config["Global"]["epoch_num"] = hyperparameters.bbox_epochs
     config["Global"]["pretrained_model"] = model_context.pretrained_weights_path
     config["Global"]["save_model_dir"] = model_context.trained_weights_dir
@@ -94,7 +96,9 @@ def generate_text_yaml_config(
     with open(model_context.config_path, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
-    config["Global"]["use_gpu"] = True
+    config["Global"]["use_gpu"] = (
+        True if hyperparameters.device.startswith("cuda") else False
+    )
     config["Global"]["epoch_num"] = hyperparameters.text_epochs
     if model_context.pretrained_weights_path is not None:
         config["Global"]["pretrained_model"] = os.path.join(

@@ -1,3 +1,4 @@
+import os
 from typing import List, Generic, Optional, Any, TypeVar
 
 from src.models.model.common.model_context import TModelContext
@@ -85,7 +86,11 @@ class ModelCollection(Generic[TModelContext]):
         Downloads weights for all models in the collection.
         """
         for model_context in self:
-            model_context.download_weights(destination_path=destination_path)
+            model_context.download_weights(
+                destination_path=os.path.join(
+                    destination_path, model_context.model_name
+                )
+            )
 
 
 TModelCollection = TypeVar("TModelCollection", bound=ModelCollection)
