@@ -31,30 +31,6 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
         self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.tags_list = tags_list
 
-    def get_prompt(self) -> str:
-        analysis_instruction = "Carefully analyze the image. Based on its content,"
-
-        if self.tags_list:
-            base_prompt = f"{analysis_instruction} list all relevant tags that accurately describe the scene, separated by commas. Only include tags that are directly applicable to the image."
-        else:
-            base_prompt = f"{analysis_instruction} provide the single most relevant tag that best captures the essence of the image."
-
-        options = ", ".join([f'"{tag}"' for tag in self.tags_list])
-        prompt = (
-            f"{base_prompt} Options to consider are: {options}. Choose appropriately."
-        )
-        
-        messages = [{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image"},
-                ],
-            }]
-        text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
-
-        return text
-
     def pre_process_datalake_context(
         self, datalake_context: DatalakeContext, device: str
     ) -> Tuple[List, List[str]]:
