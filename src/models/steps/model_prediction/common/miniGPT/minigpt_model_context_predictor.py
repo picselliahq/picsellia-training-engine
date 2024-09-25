@@ -21,11 +21,10 @@ from minigpt4.conversation.conversation import (
 import torch
 import numpy as np
 
+
 def resize_image(image_path: str, size: int):
     image = Image.open(image_path).convert("RGB")
-    print(f'Image size: {image.size}')
     resized_image = image.resize((size, size))
-    print(f'Resized image size: {resized_image.size}')
     return resized_image
 
 
@@ -174,11 +173,13 @@ class MiniGPTModelContextPredictor(ModelContextPredictor[ModelContext]):
     def prepare_img_list(self, image_path: str, chat_state: Conversation):
         img_list = []
         resized_image = resize_image(image_path=image_path, size=self.image_size)
-        resized_image = torch.tensor(np.array(resized_image)).permute(2, 0, 1).unsqueeze(0).half()
+        resized_image = (
+            torch.tensor(np.array(resized_image)).permute(2, 0, 1).unsqueeze(0).half()
+        )
         _ = self.model_context.loaded_model.upload_img(
             image=resized_image, conv=chat_state, img_list=img_list
         )
-        print(f'img_list: {img_list}')
+        print(f"img_list: {img_list}")
         self.model_context.loaded_model.encode_img(img_list=img_list)
         return img_list
 
@@ -220,10 +221,7 @@ class MiniGPTModelContextPredictor(ModelContextPredictor[ModelContext]):
             closest_label = self.find_most_similar_label(
                 llm_answer=prediction, picsellia_tags_name=picsellia_tags_name
             )
-            processed_prediction = {
-                "data": data,
-                "tag": closest_label
-            }
+            processed_prediction = {"data": data, "tag": closest_label}
             processed_predictions.append(processed_prediction)
 
         return processed_predictions
