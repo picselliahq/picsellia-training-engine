@@ -1,7 +1,5 @@
 import os
-import re
-from difflib import get_close_matches
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from uuid import UUID
 
 from PIL import Image
@@ -14,9 +12,7 @@ from src.models.steps.model_prediction.common.model_context_predictor import (
 )
 
 import torch
-from transformers import AutoProcessor
-from transformers import AutoTokenizer
-
+from transformers import CLIPProcessor
 
 def create_tags(datalake: Datalake, list_tags: list):
     if list_tags:
@@ -25,24 +21,15 @@ def create_tags(datalake: Datalake, list_tags: list):
     return {k.name: k for k in datalake.list_data_tags()}
 
 
-def find_label_in_text(picsellia_tags_name: Dict[str, Tag], text: str):
-    tags_pattern = "|".join(re.escape(tag) for tag in picsellia_tags_name.keys())
-    matches = re.findall(tags_pattern, text)
-    return matches
-
-
 class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
     def __init__(
         self,
         model_context: ModelContext,
-        model_name: str,
         tags_list: List[str],
     ):
         super().__init__(model_context)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.processor = AutoProcessor.from_pretrained(model_name)
+        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.tags_list = tags_list
-        self.prompt = self.get_prompt()
 
     def get_prompt(self) -> str:
         analysis_instruction = "Carefully analyze the image. Based on its content,"
@@ -56,13 +43,23 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
         prompt = (
             f"{base_prompt} Options to consider are: {options}. Choose appropriately."
         )
+        
+        messages = [{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image"},
+                ],
+            }]
+        text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
 
-        return prompt
+        return text
 
     def pre_process_datalake_context(
         self, datalake_context: DatalakeContext, device: str
-    ) -> List[str]:
+    ) -> Tuple[List, List[str]]:
         inputs = []
+        image_paths = []
         if device.startswith("cuda") and torch.cuda.is_available():
             print(f"Using GPU: {torch.cuda.get_device_name(0)}")
             device = torch.device("cuda")
@@ -74,12 +71,11 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
             device = torch.device("cpu")
         for image_name in os.listdir(datalake_context.image_dir):
             image_path = os.path.join(datalake_context.image_dir, image_name)
+            image_paths.append(image_path)
             image = Image.open(image_path)
-            input = self.processor(
-                images=image, text=self.prompt, return_tensors="pt"
-            ).to(device)
+            input = self.processor(images=image, text=[tag.replace("_", " ") for tag in self.tags_list], return_tensors="pt", padding=True).to(device)
             inputs.append(input)
-        return inputs
+        return inputs, image_paths
 
     def prepare_batches(self, image_inputs: List, batch_size: int) -> List[List[str]]:
         """
@@ -110,10 +106,11 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
     def _run_inference(self, batch_inputs: List) -> List[str]:
         answers = []
         for input in batch_inputs:
-            with torch.no_grad():
-                outputs = self.model_context.loaded_model.generate(**input)
-            generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            answers.append(generated_text)
+            outputs = self.model_context.loaded_model(**input)
+            probs = outputs.logits_per_image.softmax(dim=1)
+            predicted_label = self.tags_list[probs.argmax().item()]
+            print(f'predicted_label: {predicted_label}')
+            answers.append(predicted_label)
         return answers
 
     def post_process_batches(
@@ -151,24 +148,15 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
         for image_path, prediction in zip(image_paths, batch_prediction):
             data_id = os.path.basename(image_path).split(".")[0]
             data = datalake_context.datalake.list_data(ids=[UUID(data_id)])[0]
-            closest_label = self.find_most_similar_label(
-                llm_answer=prediction, picsellia_tags_name=picsellia_tags_name
+            picsellia_tag = self.get_picsellia_tag(
+                prediction=prediction, picsellia_tags_name=picsellia_tags_name
             )
-            processed_prediction = {"data": data, "tag": closest_label}
+            processed_prediction = {"data": data, "tag": picsellia_tag}
             processed_predictions.append(processed_prediction)
 
         return processed_predictions
 
-    def find_most_similar_label(
-        self, llm_answer: str, picsellia_tags_name: Dict[str, Tag]
+    def get_picsellia_tag(
+        self, prediction: str, picsellia_tags_name: Dict[str, Tag]
     ) -> Optional[List[Tag]]:
-        closest_labels = []
-        llm_tags = find_label_in_text(picsellia_tags_name, llm_answer)
-        # llm_tags = [tag.strip() for tag in llm_answer.split(",")]
-        for tag in llm_tags:
-            close_match = (
-                get_close_matches(tag, picsellia_tags_name.keys(), n=1) if tag else []
-            )
-            if close_match:
-                closest_labels.append(picsellia_tags_name[close_match[0]])
-        return closest_labels if closest_labels else None
+        return picsellia_tags_name[prediction]

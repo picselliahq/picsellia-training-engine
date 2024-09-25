@@ -9,11 +9,11 @@ from src.models.contexts.processing.test_picsellia_datalake_processing_context i
 from src.steps.data_extraction.processing.processing_data_extractor import (
     processing_datalake_extractor,
 )
-from src.steps.model_loading.common.IDEFICS2.idefics2_model_context_loader import (
-    idefics2_model_context_loader,
+from src.steps.model_loading.common.CLIP.clip_model_context_loader import (
+    clip_model_context_loader,
 )
-from src.steps.processing.autotagging.idefics2_datalake_autotagging import (
-    idefics2_datalake_autotagging_processing,
+from src.steps.processing.autotagging.clip_datalake_autotagging import (
+    clip_datalake_autotagging_processing,
 )
 from src.steps.weights_extraction.processing.processing_weights_extractor import (
     processing_model_context_extractor,
@@ -68,11 +68,14 @@ def get_context() -> TestPicselliaDatalakeProcessingContext:
 def datalake_autotagging_processing_pipeline() -> None:
     datalake = processing_datalake_extractor()
     model_context = processing_model_context_extractor()
-    model_context = idefics2_model_context_loader(model_context=model_context)
-    idefics2_datalake_autotagging_processing(
+    model_context = clip_model_context_loader(model_context=model_context)
+    clip_datalake_autotagging_processing(
         datalake=datalake, model_context=model_context
     )
 
 
 if __name__ == "__main__":
+    import torch
+    import os
+    torch.set_num_threads(os.cpu_count()-1)
     datalake_autotagging_processing_pipeline()
