@@ -1,13 +1,13 @@
 import logging
 
 import torch
-from transformers import AutoModelForVision2Seq
+from transformers import CLIPModel
 
 logger = logging.getLogger(__name__)
 
 
-def idefics2_load_model(model_name: str, device: str):
-    model = AutoModelForVision2Seq.from_pretrained(model_name)
+def clip_load_model(device: str):
+    model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 
     model.eval()
 
@@ -22,3 +22,4 @@ def idefics2_load_model(model_name: str, device: str):
         device = torch.device("cpu")
 
     model.to(device)
+    return model
