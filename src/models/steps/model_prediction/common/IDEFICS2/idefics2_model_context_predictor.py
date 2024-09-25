@@ -2,6 +2,7 @@ import os
 import re
 from difflib import get_close_matches
 from typing import List, Dict, Optional
+from uuid import UUID
 
 from PIL import Image
 from picsellia import Tag, Datalake
@@ -149,7 +150,7 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
 
         for image_path, prediction in zip(image_paths, batch_prediction):
             data_id = os.path.basename(image_path).split(".")[0]
-            data = datalake_context.datalake.list_data(ids=[data_id])[0]
+            data = datalake_context.datalake.list_data(ids=[UUID(data_id)])[0]
             closest_label = self.find_most_similar_label(
                 llm_answer=prediction, picsellia_tags_name=picsellia_tags_name
             )
