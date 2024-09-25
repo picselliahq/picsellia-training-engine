@@ -21,6 +21,18 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters impor
 
 @step
 def paddle_ocr_model_collection_extractor() -> PaddleOCRModelCollection:
+    """
+    Extracts a PaddleOCR model collection from a Picsellia experiment.
+
+    This function retrieves the active training context and extracts the base model version from the experiment.
+    It creates two `ModelContext` objects for the bounding box detection model ("bbox-model") and the text
+    recognition model ("text-model"), specifying their configurations and pretrained weights. The function
+    then downloads the necessary model weights and returns the `PaddleOCRModelCollection` containing both models.
+
+    Returns:
+        PaddleOCRModelCollection: The extracted and initialized PaddleOCR model collection with both the
+        bounding box and text recognition models.
+    """
     context: PicselliaTrainingContext[
         PaddleOCRHyperParameters, PaddleOCRAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
