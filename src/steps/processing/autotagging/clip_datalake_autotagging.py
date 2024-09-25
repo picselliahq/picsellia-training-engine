@@ -8,20 +8,19 @@ from src.models.contexts.processing.picsellia_processing_context import (
 from src.models.dataset.processing.datalake_collection import DatalakeCollection
 from src.models.dataset.processing.datalake_context import DatalakeContext
 from src.models.model.common.model_context import ModelContext
-from src.models.steps.model_prediction.common.IDEFICS2.idefics2_model_context_predictor import (
+from src.models.steps.model_prediction.common.CLIP.clip_model_context_predictor import (
     VLMHuggingFaceModelContextPredictor,
 )
 
 
 @step
-def idefics2_datalake_autotagging_processing(
+def clip_datalake_autotagging_processing(
     datalake: Union[DatalakeContext, DatalakeCollection], model_context: ModelContext
 ):
     context: PicselliaProcessingContext = Pipeline.get_active_context()
 
     model_context_predictor = VLMHuggingFaceModelContextPredictor(
         model_context=model_context,
-        model_name="HuggingFaceM4/idefics2-8b",
         tags_list=context.processing_parameters.tags_list,
     )
     if isinstance(datalake, DatalakeContext):
@@ -33,19 +32,23 @@ def idefics2_datalake_autotagging_processing(
             "Datalake should be either a DatalakeContext or a DatalakeCollection"
         )
 
-    image_inputs = model_context_predictor.pre_process_datalake_context(
+    image_inputs, image_paths = model_context_predictor.pre_process_datalake_context(
         datalake_context=datalake_context, device=context.processing_parameters.device
     )
-    image_batches = model_context_predictor.prepare_batches(
+    image_input_batches = model_context_predictor.prepare_batches(
         image_inputs=image_inputs,
         batch_size=context.processing_parameters.batch_size,
     )
+    image_path_batches = model_context_predictor.prepare_batches(
+        image_inputs=image_paths,
+        batch_size=context.processing_parameters.batch_size,
+    )
     batch_results = model_context_predictor.run_inference_on_batches(
-        image_batches=image_batches
+        image_batches=image_input_batches
     )
     picsellia_datalake_autotagging_predictions = (
         model_context_predictor.post_process_batches(
-            image_batches=image_batches,
+            image_batches=image_path_batches,
             batch_results=batch_results,
             datalake_context=datalake_context,
         )
