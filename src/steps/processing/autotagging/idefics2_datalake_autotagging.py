@@ -59,6 +59,8 @@ def idefics2_datalake_autotagging_processing(
     for (
         picsellia_datalake_autotagging_prediction
     ) in picsellia_datalake_autotagging_predictions:
+        if not picsellia_datalake_autotagging_prediction["tag"]:
+            continue
         picsellia_datalake_autotagging_prediction["data"].add_tags(
             tags=picsellia_datalake_autotagging_prediction["tag"]
         )
