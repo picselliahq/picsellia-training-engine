@@ -11,6 +11,8 @@ from src.models.contexts.processing.picsellia_processing_context import (
 )
 from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.models.dataset.processing.datalake_collection import DatalakeCollection
+from src.models.dataset.processing.datalake_context import DatalakeContext
 
 
 def get_destination_path(job_id: Optional[str]) -> str:
