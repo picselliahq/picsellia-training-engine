@@ -7,19 +7,22 @@ from src.models.contexts.processing.picsellia_processing_context import (
 )
 from src.models.dataset.processing.datalake_collection import DatalakeCollection
 from src.models.dataset.processing.datalake_context import DatalakeContext
-from src.models.model.common.model_context import ModelContext
+from src.models.model.huggingface.hugging_face_model_context import (
+    HuggingFaceModelContext,
+)
 from src.models.steps.model_prediction.common.CLIP.clip_model_context_predictor import (
-    VLMHuggingFaceModelContextPredictor,
+    CLIPModelContextPredictor,
 )
 
 
 @step
 def clip_datalake_autotagging_processing(
-    datalake: Union[DatalakeContext, DatalakeCollection], model_context: ModelContext
+    datalake: Union[DatalakeContext, DatalakeCollection],
+    model_context: HuggingFaceModelContext,
 ):
     context: PicselliaProcessingContext = Pipeline.get_active_context()
 
-    model_context_predictor = VLMHuggingFaceModelContextPredictor(
+    model_context_predictor = CLIPModelContextPredictor(
         model_context=model_context,
         tags_list=context.processing_parameters.tags_list,
     )
@@ -36,11 +39,11 @@ def clip_datalake_autotagging_processing(
         datalake_context=datalake_context, device=context.processing_parameters.device
     )
     image_input_batches = model_context_predictor.prepare_batches(
-        image_inputs=image_inputs,
+        images=image_inputs,
         batch_size=context.processing_parameters.batch_size,
     )
     image_path_batches = model_context_predictor.prepare_batches(
-        image_inputs=image_paths,
+        images=image_paths,
         batch_size=context.processing_parameters.batch_size,
     )
     batch_results = model_context_predictor.run_inference_on_batches(
