@@ -25,6 +25,7 @@ def clip_datalake_autotagging_processing(
     model_context_predictor = CLIPModelContextPredictor(
         model_context=model_context,
         tags_list=context.processing_parameters.tags_list,
+        device=context.processing_parameters.device,
     )
     if isinstance(datalake, DatalakeContext):
         datalake_context = datalake
@@ -36,7 +37,7 @@ def clip_datalake_autotagging_processing(
         )
 
     image_inputs, image_paths = model_context_predictor.pre_process_datalake_context(
-        datalake_context=datalake_context, device=context.processing_parameters.device
+        datalake_context=datalake_context,
     )
     image_input_batches = model_context_predictor.prepare_batches(
         images=image_inputs,
@@ -56,10 +57,6 @@ def clip_datalake_autotagging_processing(
             datalake_context=datalake_context,
         )
     )
-    print(
-        f"picsellia_datalake_autotagging_predictions: {picsellia_datalake_autotagging_predictions}"
-    )
-
     logging.info(f"Predictions for datalake {datalake_context.datalake.id} done.")
 
     for (
