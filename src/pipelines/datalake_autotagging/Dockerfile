@@ -18,6 +18,9 @@ COPY ./src/steps ./src/steps
 COPY ./src/*.py ./src
 COPY ./src/pipelines/datalake_autotagging ./src/pipelines/datalake_autotagging
 
+RUN mkdir -p /workspace
+RUN chmod 777 /workspace
+
 ENV PYTHONPATH=":/experiment/src"
 
 ENTRYPOINT ["run", "python3.11", "src/pipelines/datalake_autotagging/processing_pipeline.py"]
