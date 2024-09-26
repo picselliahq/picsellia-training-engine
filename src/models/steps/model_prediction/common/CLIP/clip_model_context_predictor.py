@@ -41,12 +41,14 @@ class CLIPModelContextPredictor(ModelContextPredictor[HuggingFaceModelContext]):
     Args:
         model_context (HuggingFaceModelContext): The model context containing the HuggingFace model and processor.
         tags_list (List[str]): A list of tags used for image classification.
+        device (str): The device ('cpu' or 'gpu') on which to run the model.
     """
 
     def __init__(
         self,
         model_context: HuggingFaceModelContext,
         tags_list: List[str],
+        device: str = "cuda:0",
     ):
         """
         Initializes the CLIPModelContextPredictor.
@@ -54,14 +56,16 @@ class CLIPModelContextPredictor(ModelContextPredictor[HuggingFaceModelContext]):
         Args:
             model_context (HuggingFaceModelContext): The context of the model to be used.
             tags_list (List[str]): List of tags for inference.
+            device (str): The device ('cpu' or 'gpu') on which to run the model.
         """
         super().__init__(model_context)
-        self.tags_list = tags_list
         if not hasattr(self.model_context, "loaded_processor"):
             raise ValueError("The model context does not have a processor attribute.")
+        self.tags_list = tags_list
+        self.device = get_device(device)
 
     def pre_process_datalake_context(
-        self, datalake_context: DatalakeContext, device: str
+        self, datalake_context: DatalakeContext
     ) -> Tuple[List, List[str]]:
         """
         Pre-processes images from the datalake context by converting them into inputs for the model.
@@ -85,7 +89,7 @@ class CLIPModelContextPredictor(ModelContextPredictor[HuggingFaceModelContext]):
                 text=[tag.replace("_", " ") for tag in self.tags_list],
                 return_tensors="pt",
                 padding=True,
-            ).to(get_device(device=device))
+            ).to(self.device)
             inputs.append(input)
 
         return inputs, image_paths
