@@ -11,6 +11,8 @@ from src.models.contexts.processing.picsellia_processing_context import (
 )
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.processing.datalake_collection import DatalakeCollection
+from src.models.dataset.processing.datalake_context import DatalakeContext
 
 from src.models.steps.data_extraction.processing.processing_dataset_collection_extractor import (
     ProcessingDatasetCollectionExtractor,
