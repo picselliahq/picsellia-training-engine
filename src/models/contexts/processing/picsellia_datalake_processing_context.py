@@ -1,5 +1,6 @@
 import os
 from typing import Type, Optional, Any, Dict, Union, Generic
+from uuid import UUID
 
 import picsellia  # type: ignore
 from picsellia import ModelVersion, Datalake
@@ -7,6 +8,8 @@ from picsellia.types.enums import ProcessingType
 
 from src.models.contexts.common.picsellia_context import PicselliaContext
 from src.models.parameters.common.parameters import TParameters
+
+import requests
 
 
 class PicselliaDatalakeProcessingContext(PicselliaContext, Generic[TParameters]):
@@ -34,16 +37,25 @@ class PicselliaDatalakeProcessingContext(PicselliaContext, Generic[TParameters])
         self.job_context = self._initialize_job_context()
 
         self._model_version_id = self.job_context.get("model_version_id")
-        self._input_datalake_id = self.job_context.get("_input_datalake_id")
+        self._input_datalake_id = self.job_context.get("input_datalake_id")
         self._output_datalake_id = self.job_context.get("output_datalake_id")
-        self.data_ids = self.job_context.get("data_ids")
+        self._payload_presigned_url = self.job_context.get("payload_presigned_url")
 
         if self._input_datalake_id:
             self.input_datalake = self.get_datalake(self._input_datalake_id)
+        else:
+            raise ValueError(
+                "Input datalake ID not found. Please ensure the job is correctly configured."
+            )
         if self._output_datalake_id:
             self.output_datalake = self.get_datalake(self._output_datalake_id)
+        else:
+            self.output_datalake = None
         if self._model_version_id:
             self.model_version = self.get_model_version()
+        else:
+            self.model_version = None
+        self.data_ids = self.get_data_ids()
 
         self.use_id = use_id
         self.download_annotations = download_annotations
@@ -82,7 +94,7 @@ class PicselliaDatalakeProcessingContext(PicselliaContext, Generic[TParameters])
 
     def _initialize_job_context(self) -> Dict[str, Any]:
         """Initializes the context by fetching the necessary information from the job."""
-        job_context = self.job.sync()["dataset_version_processing_job"]
+        job_context = self.job.sync()["datalake_processing_job"]
 
         return job_context
 
@@ -121,3 +133,14 @@ class PicselliaDatalakeProcessingContext(PicselliaContext, Generic[TParameters])
             The model version fetched from Picsellia.
         """
         return self.client.get_model_version_by_id(self.model_version_id)
+
+    def get_data_ids(self) -> list[UUID]:
+        if self._payload_presigned_url:
+            payload = requests.get(self._payload_presigned_url).json()
+            data_ids = payload["data_ids"]
+            uuid_data_ids = [UUID(data_id) for data_id in data_ids]
+            return uuid_data_ids
+        else:
+            raise ValueError(
+                "Payload presigned URL not found. Please ensure the job is correctly configured."
+            )
