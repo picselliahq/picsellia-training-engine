@@ -1,14 +1,18 @@
 import os
 
 from src import step, Pipeline
-from src.models.model.common.model_context import ModelContext
+from src.models.model.huggingface.hugging_face_model_context import (
+    HuggingFaceModelContext,
+)
 from src.models.steps.model_loading.common.CLIP.clip_model_context_loader import (
-    clip_load_model
+    clip_load_model,
 )
 
 
 @step
-def clip_model_context_loader(model_context: ModelContext) -> ModelContext:
+def clip_model_context_loader(
+    model_context: HuggingFaceModelContext,
+) -> HuggingFaceModelContext:
     context = Pipeline.get_active_context()
     if (
         model_context.pretrained_weights_path
@@ -16,10 +20,12 @@ def clip_model_context_loader(model_context: ModelContext) -> ModelContext:
         and model_context.config_path
         and os.path.exists(model_context.config_path)
     ):
-        loaded_model = clip_load_model(
+        loaded_model, processor = clip_load_model(
+            model_name=model_context.hugging_face_model_name,
             device=context.processing_parameters.device,
         )
         model_context.set_loaded_model(loaded_model)
+        model_context.processor = processor
     else:
         raise FileNotFoundError(
             f"Pretrained weights or config file not found at path: {model_context.pretrained_weights_path} or {model_context.config_path}"

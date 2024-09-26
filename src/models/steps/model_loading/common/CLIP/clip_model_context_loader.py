@@ -1,16 +1,12 @@
 import logging
 
 import torch
-from transformers import CLIPModel
+from transformers import CLIPModel, CLIPProcessor
 
 logger = logging.getLogger(__name__)
 
 
-def clip_load_model(device: str):
-    model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-
-    model.eval()
-
+def get_device(device: str):
     if device.startswith("cuda") and torch.cuda.is_available():
         print(f"Using GPU: {torch.cuda.get_device_name(0)}")
         device = torch.device("cuda")
@@ -20,6 +16,12 @@ def clip_load_model(device: str):
     else:
         print("Using CPU")
         device = torch.device("cpu")
+    return device
 
-    model.to(device)
-    return model
+
+def clip_load_model(model_name: str, device: str):
+    model = CLIPModel.from_pretrained(model_name)
+    model.eval()
+    model.to(get_device(device=device))
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    return model, processor
