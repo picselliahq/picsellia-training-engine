@@ -219,41 +219,41 @@ def check_splited_assets(
         nb_dataset=nb_dataset
     )
     assert (
-        len(dataset_collection.train.multi_asset) == nb_train_assets
+        len(dataset_collection["train"].assets) == nb_train_assets
     ), f"Incorrect number of train assets for {nb_dataset} dataset(s)"
     assert (
-        len(dataset_collection.val.multi_asset) == nb_val_assets
+        len(dataset_collection["val"].assets) == nb_val_assets
     ), f"Incorrect number of val assets for {nb_dataset} dataset(s)"
     assert (
-        len(dataset_collection.test.multi_asset) == nb_test_assets
+        len(dataset_collection["test"].assets) == nb_test_assets
     ), f"Incorrect number of test assets for {nb_dataset} dataset(s)"
 
 
 def check_multi_asset_in_dataset(dataset_collection):
     assert all(
-        asset in dataset_collection.train.dataset_version.list_assets()
-        for asset in dataset_collection.train.multi_asset
+        asset in dataset_collection["train"].dataset_version.list_assets()
+        for asset in dataset_collection["train"].assets
     ), "Train assets mismatch"
     assert all(
-        asset in dataset_collection.val.dataset_version.list_assets()
-        for asset in dataset_collection.val.multi_asset
+        asset in dataset_collection["val"].dataset_version.list_assets()
+        for asset in dataset_collection["val"].assets
     ), "Val assets mismatch"
     assert all(
-        asset in dataset_collection.test.dataset_version.list_assets()
-        for asset in dataset_collection.test.multi_asset
+        asset in dataset_collection["test"].dataset_version.list_assets()
+        for asset in dataset_collection["test"].assets
     ), "Test assets mismatch"
 
 
 def check_labelmap(dataset_collection: DatasetCollection, nb_dataset: int) -> None:
     if nb_dataset == 1:
         assert (
-            dataset_collection.train.labelmap
-            == dataset_collection.val.labelmap
-            == dataset_collection.test.labelmap
+            dataset_collection["train"].labelmap
+            == dataset_collection["val"].labelmap
+            == dataset_collection["test"].labelmap
         ), "Inconsistent labelmap across contexts"
     elif nb_dataset == 2:
         assert (
-            dataset_collection.train.labelmap == dataset_collection.val.labelmap
+            dataset_collection["train"].labelmap == dataset_collection["val"].labelmap
         ), "Inconsistent labelmap between train and val"
     elif nb_dataset == 3:
         print("No labelmap check for 3 datasets")
@@ -274,9 +274,9 @@ class TestDatasetHandler:
             experiment_name=experiment_name, datasets=datasets
         )
         dataset_collection = dataset_collection_extractor.get_dataset_collection()
-        assert dataset_collection.train.dataset_name == DatasetSplitName.TRAIN.value
-        assert dataset_collection.val.dataset_name == DatasetSplitName.VAL.value
-        assert dataset_collection.test.dataset_name == DatasetSplitName.TEST.value
+        assert dataset_collection["train"].dataset_name == DatasetSplitName.TRAIN.value
+        assert dataset_collection["val"].dataset_name == DatasetSplitName.VAL.value
+        assert dataset_collection["test"].dataset_name == DatasetSplitName.TEST.value
 
     @pytest.mark.parametrize(
         "experiment_name, datasets, expected_split_ratios, expected_exception",
