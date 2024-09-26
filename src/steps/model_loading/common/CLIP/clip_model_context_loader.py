@@ -20,12 +20,12 @@ def clip_model_context_loader(
         and model_context.config_path
         and os.path.exists(model_context.config_path)
     ):
-        loaded_model, processor = clip_load_model(
+        loaded_model, loaded_processor = clip_load_model(
             model_name=model_context.hugging_face_model_name,
             device=context.processing_parameters.device,
         )
         model_context.set_loaded_model(loaded_model)
-        model_context.processor = processor
+        model_context.set_loaded_processor(loaded_processor)
     else:
         raise FileNotFoundError(
             f"Pretrained weights or config file not found at path: {model_context.pretrained_weights_path} or {model_context.config_path}"
