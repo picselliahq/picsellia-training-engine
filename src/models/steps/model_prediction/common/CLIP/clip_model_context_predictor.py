@@ -1,77 +1,120 @@
 import os
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Tuple, Any
 from uuid import UUID
 
 from PIL import Image
 from picsellia import Tag, Datalake
 
 from src.models.dataset.processing.datalake_context import DatalakeContext
-from src.models.model.common.model_context import ModelContext
+from src.models.model.huggingface.hugging_face_model_context import (
+    HuggingFaceModelContext,
+)
+from src.models.steps.model_loading.common.CLIP.clip_model_context_loader import (
+    get_device,
+)
 from src.models.steps.model_prediction.common.model_context_predictor import (
     ModelContextPredictor,
 )
 
-import torch
-from transformers import CLIPProcessor
 
 def create_tags(datalake: Datalake, list_tags: list):
+    """
+    Creates or retrieves tags from the Datalake.
+
+    Args:
+        datalake (Datalake): The datalake object to interact with.
+        list_tags (list): List of tags to create or retrieve.
+
+    Returns:
+        dict: A dictionary of tag names and Tag objects.
+    """
     if list_tags:
         for tag_name in list_tags:
             datalake.get_or_create_data_tag(name=tag_name)
     return {k.name: k for k in datalake.list_data_tags()}
 
 
-class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
+class CLIPModelContextPredictor(ModelContextPredictor[HuggingFaceModelContext]):
+    """
+    A class to handle the prediction process for CLIP model within a given model context.
+
+    Args:
+        model_context (HuggingFaceModelContext): The model context containing the HuggingFace model and processor.
+        tags_list (List[str]): A list of tags used for image classification.
+    """
+
     def __init__(
         self,
-        model_context: ModelContext,
+        model_context: HuggingFaceModelContext,
         tags_list: List[str],
     ):
+        """
+        Initializes the CLIPModelContextPredictor.
+
+        Args:
+            model_context (HuggingFaceModelContext): The context of the model to be used.
+            tags_list (List[str]): List of tags for inference.
+        """
         super().__init__(model_context)
-        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.tags_list = tags_list
+        if not hasattr(self.model_context, "loaded_processor"):
+            raise ValueError("The model context does not have a processor attribute.")
 
     def pre_process_datalake_context(
         self, datalake_context: DatalakeContext, device: str
     ) -> Tuple[List, List[str]]:
+        """
+        Pre-processes images from the datalake context by converting them into inputs for the model.
+
+        Args:
+            datalake_context (DatalakeContext): The context containing the directory of images.
+            device (str): The device ('cpu' or 'gpu') on which to run the model.
+
+        Returns:
+            Tuple[List, List[str]]: A tuple containing the list of preprocessed inputs and image paths.
+        """
         inputs = []
         image_paths = []
-        if device.startswith("cuda") and torch.cuda.is_available():
-            print(f"Using GPU: {torch.cuda.get_device_name(0)}")
-            device = torch.device("cuda")
-        elif device.startswith("cuda") and not torch.cuda.is_available():
-            print("Using CPU")
-            device = torch.device("cpu")
-        else:
-            print("Using CPU")
-            device = torch.device("cpu")
         for image_name in os.listdir(datalake_context.image_dir):
             image_path = os.path.join(datalake_context.image_dir, image_name)
             image_paths.append(image_path)
             image = Image.open(image_path)
-            input = self.processor(images=image, text=[tag.replace("_", " ") for tag in self.tags_list], return_tensors="pt", padding=True).to(device)
+
+            input = self.model_context.loaded_processor(
+                images=image,
+                text=[tag.replace("_", " ") for tag in self.tags_list],
+                return_tensors="pt",
+                padding=True,
+            ).to(get_device(device=device))
             inputs.append(input)
+
         return inputs, image_paths
 
-    def prepare_batches(self, image_inputs: List, batch_size: int) -> List[List[str]]:
+    def prepare_batches(self, images: List[Any], batch_size: int) -> List[List[str]]:
         """
-        Divides the list of image paths into smaller batches of a specified size.
+        Splits the given images into batches of specified size.
 
         Args:
-            image_paths (List[str]): A list of image file paths to be split into batches.
+            images (List[Any]): A list of images to split into batches.
             batch_size (int): The size of each batch.
 
         Returns:
-            List[List[str]]: A list of batches, each containing a list of image file paths.
+            List[List[str]]: A list of image batches.
         """
-        return [
-            image_inputs[i : i + batch_size]
-            for i in range(0, len(image_inputs), batch_size)
-        ]
+        return [images[i : i + batch_size] for i in range(0, len(images), batch_size)]
 
     def run_inference_on_batches(
         self, image_batches: List[List[str]]
     ) -> List[List[str]]:
+        """
+        Runs inference on each batch of images.
+
+        Args:
+            image_batches (List[List[str]]): List of image batches for inference.
+
+        Returns:
+            List[List[str]]: A list of predicted labels for each batch.
+        """
         all_batch_results = []
 
         for batch_paths in image_batches:
@@ -80,12 +123,20 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
         return all_batch_results
 
     def _run_inference(self, batch_inputs: List) -> List[str]:
+        """
+        Runs the model inference on a batch of inputs.
+
+        Args:
+            batch_inputs (List): A batch of pre-processed image inputs.
+
+        Returns:
+            List[str]: A list of predicted labels for the batch.
+        """
         answers = []
         for input in batch_inputs:
             outputs = self.model_context.loaded_model(**input)
             probs = outputs.logits_per_image.softmax(dim=1)
             predicted_label = self.tags_list[probs.argmax().item()]
-            print(f'predicted_label: {predicted_label}')
             answers.append(predicted_label)
         return answers
 
@@ -95,6 +146,17 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
         batch_results: List[List[str]],
         datalake_context: DatalakeContext,
     ) -> List[Dict]:
+        """
+        Post-processes the batch predictions by mapping them to Picsellia tags and generating a final output.
+
+        Args:
+            image_batches (List[List[str]]): List of image batches.
+            batch_results (List[List[str]]): List of batch prediction results.
+            datalake_context (DatalakeContext): The datalake context for processing.
+
+        Returns:
+            List[Dict]: A list of dictionaries containing processed predictions.
+        """
         all_predictions = []
 
         picsellia_tags_name = create_tags(
@@ -119,6 +181,18 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
         datalake_context: DatalakeContext,
         picsellia_tags_name: Dict[str, Tag],
     ) -> List[Dict]:
+        """
+        Maps the predictions to Picsellia tags and returns processed predictions.
+
+        Args:
+            image_paths (List[str]): List of image paths.
+            batch_prediction (List[str]): List of predictions for each image.
+            datalake_context (DatalakeContext): The datalake context for retrieving data.
+            picsellia_tags_name (Dict[str, Tag]): A dictionary of Picsellia tags.
+
+        Returns:
+            List[Dict]: A list of dictionaries containing data and their corresponding Picsellia tags.
+        """
         processed_predictions = []
 
         for image_path, prediction in zip(image_paths, batch_prediction):
@@ -134,5 +208,20 @@ class VLMHuggingFaceModelContextPredictor(ModelContextPredictor[ModelContext]):
 
     def get_picsellia_tag(
         self, prediction: str, picsellia_tags_name: Dict[str, Tag]
-    ) -> Optional[List[Tag]]:
+    ) -> Tag:
+        """
+        Retrieves the Picsellia tag corresponding to the prediction.
+
+        Args:
+            prediction (str): The predicted tag name.
+            picsellia_tags_name (Dict[str, Tag]): A dictionary mapping tag names to Tag objects.
+
+        Returns:
+            Tag: The corresponding Picsellia Tag object.
+
+        Raises:
+            ValueError: If the predicted tag is not found in Picsellia tags.
+        """
+        if prediction not in picsellia_tags_name:
+            raise ValueError(f"Tag {prediction} not found in Picsellia tags.")
         return picsellia_tags_name[prediction]
