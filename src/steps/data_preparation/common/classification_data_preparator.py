@@ -12,6 +12,7 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 @step
 def classification_data_preparator(
     dataset_collection: DatasetCollection,
+    destination_path: str,
 ) -> DatasetCollection:
     """
     Example:
@@ -61,12 +62,11 @@ def classification_data_preparator(
         ```
     """
     for dataset_context in dataset_collection:
-        destination_image_dir = str(
-            os.path.join(dataset_context.destination_path, dataset_context.dataset_name)
-        )
         organizer = ClassificationDatasetContextPreparator(
             dataset_context=dataset_context,
-            destination_path=destination_image_dir,
+            destination_path=os.path.join(
+                destination_path, dataset_context.dataset_name
+            ),
         )
         dataset_collection[dataset_context.dataset_name] = organizer.organize()
     return dataset_collection
