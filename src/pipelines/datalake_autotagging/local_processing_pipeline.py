@@ -9,13 +9,15 @@ from src.models.contexts.processing.test_picsellia_datalake_processing_context i
 from src.steps.data_extraction.processing.processing_data_extractor import (
     processing_datalake_extractor,
 )
-from src.steps.processing.autotagging.datalake_autotagging import (
-    datalake_autotagging_processing,
+from src.steps.model_loading.common.CLIP.clip_model_context_loader import (
+    clip_model_context_loader,
 )
-from src.steps.weights_extraction.processing.processing_weights_extractor import (
-    processing_model_context_extractor,
+from src.steps.processing.autotagging.clip_datalake_autotagging import (
+    clip_datalake_autotagging_processing,
 )
-from src.steps.model_loading.common.miniGPT.minigpt_model_context_loader import minigpt_model_context_loader
+from src.steps.weights_extraction.common.hugging_face_weights_extractor import (
+    hugging_face_model_context_extractor,
+)
 
 
 @dataclasses.dataclass
@@ -65,10 +67,16 @@ def get_context() -> TestPicselliaDatalakeProcessingContext:
 )
 def datalake_autotagging_processing_pipeline() -> None:
     datalake = processing_datalake_extractor()
-    model_context = processing_model_context_extractor()
-    model_context = minigpt_model_context_loader(model_context=model_context)
-    datalake_autotagging_processing(datalake=datalake, model_context=model_context)
+    model_context = hugging_face_model_context_extractor(
+        hugging_face_model_name="openai/clip-vit-base-patch32"
+    )
+    model_context = clip_model_context_loader(model_context=model_context)
+    clip_datalake_autotagging_processing(datalake=datalake, model_context=model_context)
 
 
 if __name__ == "__main__":
+    import torch
+    import os
+
+    torch.set_num_threads(os.cpu_count() - 1)
     datalake_autotagging_processing_pipeline()
