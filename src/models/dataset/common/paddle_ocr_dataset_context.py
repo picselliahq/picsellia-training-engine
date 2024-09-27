@@ -1,4 +1,3 @@
-import os
 from typing import Optional, Dict
 
 from picsellia import DatasetVersion, Label
@@ -8,44 +7,41 @@ from src.models.dataset.common.dataset_context import DatasetContext
 
 
 class PaddleOCRDatasetContext(DatasetContext):
+    """
+    A specialized dataset context for handling PaddleOCR datasets.
+
+    This class extends the generic DatasetContext to provide functionality specific to PaddleOCR,
+    such as handling bounding box and text annotations as well as organizing the dataset structure
+    for PaddleOCR tasks.
+
+    Attributes:
+        paddle_ocr_bbox_annotations_path (Optional[str]): Path to the bounding box annotations for OCR.
+        paddle_ocr_text_annotations_path (Optional[str]): Path to the text annotations for OCR.
+        text_images_dir (Optional[str]): Directory where the text-related images are stored.
+    """
+
     def __init__(
         self,
         dataset_name: str,
         dataset_version: DatasetVersion,
-        destination_path: str,
-        multi_asset: Optional[MultiAsset] = None,
+        assets: MultiAsset,
         labelmap: Optional[Dict[str, Label]] = None,
-        use_id: Optional[bool] = True,
     ):
+        """
+        Initializes the PaddleOCRDatasetContext with the specified dataset name, version, assets, and labelmap.
+
+        Args:
+            dataset_name (str): The name of the dataset.
+            dataset_version (DatasetVersion): The version of the dataset in Picsellia.
+            assets (MultiAsset): The assets associated with the dataset.
+            labelmap (Optional[Dict[str, Label]]): Optional label map for the dataset.
+        """
         super().__init__(
             dataset_name=dataset_name,
             dataset_version=dataset_version,
-            destination_path=destination_path,
-            multi_asset=multi_asset,
+            assets=assets,
             labelmap=labelmap,
-            use_id=use_id,
         )
-        self.paddle_ocr_bbox_annotations_path = os.path.join(
-            self.destination_path,
-            self.dataset_name,
-            "annotations",
-            "bbox",
-            "annotations.txt",
-        )
-        self.paddle_ocr_text_annotations_path = os.path.join(
-            self.destination_path,
-            self.dataset_name,
-            "annotations",
-            "text",
-            "annotations.txt",
-        )
-        self.text_image_dir = os.path.join(
-            os.path.dirname(self.image_dir), "paddleocr_images"
-        )
-        os.makedirs(
-            os.path.dirname(self.paddle_ocr_bbox_annotations_path), exist_ok=True
-        )
-        os.makedirs(
-            os.path.dirname(self.paddle_ocr_text_annotations_path), exist_ok=True
-        )
-        os.makedirs(self.text_image_dir, exist_ok=True)
+        self.paddle_ocr_bbox_annotations_path: Optional[str] = None
+        self.paddle_ocr_text_annotations_path: Optional[str] = None
+        self.text_images_dir: Optional[str] = None

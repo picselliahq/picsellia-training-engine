@@ -9,7 +9,7 @@ from src.models.parameters.processing.processing_diversified_data_extractor_para
 from src.models.steps.processing.dataset_version_creation.diversified_data_extractor_processing import (
     DiversifiedDataExtractorProcessing,
 )
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
+from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
     EmbeddingModel,
 )
 

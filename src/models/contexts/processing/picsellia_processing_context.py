@@ -18,6 +18,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
         organization_id: Optional[str] = None,
         job_id: Optional[str] = None,
         use_id: Optional[bool] = True,
+        download_annotations: Optional[bool] = True,
     ):
         super().__init__(api_token, host, organization_id)
 
@@ -51,6 +52,7 @@ class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
             self.model_version = self.get_model_version()
 
         self.use_id = use_id
+        self.download_annotations = download_annotations
 
         self.processing_parameters = processing_parameters_cls(
             log_data=self.job_context["parameters"]

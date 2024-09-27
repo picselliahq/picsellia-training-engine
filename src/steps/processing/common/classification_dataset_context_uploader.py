@@ -11,6 +11,17 @@ from src.models.steps.processing.common.classification_dataset_context_uploader 
 
 @step
 def classification_dataset_context_uploader(dataset_context: DatasetContext):
+    """
+    Uploads a classification dataset context to Picsellia.
+
+    This function retrieves the active processing context from the pipeline and initializes a
+    `ClassificationDatasetContextUploader`. It uploads the dataset context (images and annotations)
+    to the specified datalake in Picsellia, attaching relevant data tags.
+
+    Args:
+        dataset_context (DatasetContext): The dataset context containing the images and annotations
+                                          to be uploaded.
+    """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     uploader = ClassificationDatasetContextUploader(
         client=context.client,

@@ -1,50 +1,51 @@
-import os
 from typing import Optional
 
 from picsellia import DatasetVersion
 
 from src.models.dataset.common.dataset_context import DatasetContext
+from tf2.experiment.main import assets
 
 
 class ProcessingDatasetContextExtractor:
+    """
+    A class responsible for extracting and managing a dataset context for a specific dataset version.
+
+    This class takes a Picsellia `DatasetVersion` and prepares a corresponding `DatasetContext`,
+    which includes assets and annotations that are ready for processing or further extraction.
+
+    Attributes:
+        dataset_version (DatasetVersion): The dataset version from Picsellia that will be processed.
+        use_id (Optional[bool]): Whether to use asset IDs when organizing the dataset's assets.
+    """
+
     def __init__(
         self,
         dataset_version: DatasetVersion,
-        job_id: Optional[str] = None,
         use_id: Optional[bool] = True,
     ):
         """
-        Initializes a DatasetHandler with the input dataset version and destination path.
+        Initializes the ProcessingDatasetContextExtractor with a dataset version and an optional use_id flag.
 
         Args:
-            dataset_version (DatasetVersion): The dataset version to be processed.
+            dataset_version (DatasetVersion): The version of the dataset to be processed and extracted.
+            use_id (Optional[bool]): If True, uses asset IDs for organizing file paths. Defaults to True.
         """
         self.dataset_version = dataset_version
-        if not job_id:
-            self.destination_path = os.path.join(os.getcwd(), "current_job")
-        else:
-            self.destination_path = os.path.join(os.getcwd(), str(job_id))
         self.use_id = use_id
 
-    def get_dataset_context(self, skip_asset_listing: bool = False) -> DatasetContext:
+    def get_dataset_context(self) -> DatasetContext:
         """
-        Retrieves the input dataset version and prepares a dataset context for extraction.
+        Retrieves the dataset context by downloading assets and annotations from the specified dataset version.
 
-        This method downloads all necessary assets and annotations from the dataset version
-        and organizes them into a dataset context for extraction.
-
-        Args:
-            skip_asset_listing (bool): Whether to skip listing the dataset's assets.
+        This method prepares a `DatasetContext` for further processing, ensuring that the assets from
+        the dataset version are available.
 
         Returns:
-            A dataset context prepared for extraction, including all assets and annotations downloaded.
+            DatasetContext: A dataset context that contains all assets and metadata required for extraction.
         """
         return DatasetContext(
-            dataset_name="dataset_to_process",
+            dataset_name="input",
             dataset_version=self.dataset_version,
-            destination_path=self.destination_path,
-            multi_asset=None,
+            assets=assets,
             labelmap=None,
-            skip_asset_listing=skip_asset_listing,
-            use_id=self.use_id,
         )
