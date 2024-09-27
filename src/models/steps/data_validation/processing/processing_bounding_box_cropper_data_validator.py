@@ -13,8 +13,9 @@ class ProcessingBoundingBoxCropperDataValidator(ObjectDetectionDatasetContextVal
         client: Client,
         label_name_to_extract: str,
         datalake: str,
+        fix_annotation: bool = True,
     ):
-        super().__init__(dataset_context=dataset_context)
+        super().__init__(dataset_context=dataset_context, fix_annotation=fix_annotation)
         self.client = client
         self.label_name_to_extract = label_name_to_extract
         self.datalake = datalake

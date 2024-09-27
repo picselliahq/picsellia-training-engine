@@ -5,12 +5,15 @@ from picsellia.types.enums import InferenceType
 
 from src import Pipeline
 from src.enums import DatasetSplitName
-from src.models.parameters.common.augmentation_parameters import (
+from src.models.parameters.common.export_parameters import ExportParameters
+from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
     UltralyticsAugmentationParameters,
 )
-from src.models.parameters.common.hyper_parameters import UltralyticsHyperParameters
+from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters import (
+    UltralyticsHyperParameters,
+)
 from src.steps.data_extraction.training.training_data_extractor import (
-    training_data_extractor,
+    training_dataset_collection_extractor,
 )
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
@@ -27,8 +30,9 @@ class TestTrainingDataExtractor:
             ],
             hyperparameters_cls=UltralyticsHyperParameters,
             augmentation_parameters_cls=UltralyticsAugmentationParameters,
+            export_parameters_cls=ExportParameters,
         )
         with patch.object(Pipeline, "get_active_context") as mock_get_active_context:
             mock_get_active_context.return_value = picsellia_training_context
-            dataset_collection = training_data_extractor.entrypoint()
+            dataset_collection = training_dataset_collection_extractor.entrypoint()
             assert dataset_collection is not None

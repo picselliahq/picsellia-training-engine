@@ -52,6 +52,9 @@ class UltralyticsAugmentationParameters(AugmentationParameters):
         self.fliplr = self.extract_parameter(
             keys=["fliplr"], expected_type=float, default=0.5, range_value=(0.0, 1.0)
         )
+        self.bgr = self.extract_parameter(
+            keys=["bgr"], expected_type=float, default=0.0, range_value=(0.0, 1.0)
+        )
         self.mosaic = self.extract_parameter(
             keys=["mosaic"], expected_type=float, default=1.0, range_value=(0.0, 1.0)
         )
@@ -69,4 +72,10 @@ class UltralyticsAugmentationParameters(AugmentationParameters):
         )
         self.erasing = self.extract_parameter(
             keys=["erasing"], expected_type=float, default=0.4, range_value=(0.0, 1.0)
+        )
+        self.crop_fraction = self.extract_parameter(
+            keys=["crop_fraction"],
+            expected_type=float,
+            default=1.0,
+            range_value=(0.1, 1.0),
         )

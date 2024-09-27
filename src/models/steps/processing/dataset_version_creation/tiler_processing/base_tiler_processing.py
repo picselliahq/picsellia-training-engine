@@ -12,10 +12,9 @@ from picsellia import DatasetVersion
 from picsellia.types.enums import InferenceType
 from PIL import Image
 
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.dataset.processing.processing_dataset_collection import (
-    ProcessingDatasetCollection,
-)
+
 
 logger = logging.getLogger("picsellia-engine")
 
@@ -86,8 +85,8 @@ class BaseTilerProcessing(ABC):
         return int(parts[-2]), int(parts[-1])
 
     def process_dataset_collection(
-        self, dataset_collection: ProcessingDatasetCollection
-    ) -> ProcessingDatasetCollection:
+        self, dataset_collection: DatasetCollection
+    ) -> DatasetCollection:
         """
         Process each dataset context of the dataset collection by tiling the images and annotations.
 
@@ -98,8 +97,8 @@ class BaseTilerProcessing(ABC):
             The updated dataset collection.
         """
         self._update_output_dataset_version_description_and_type(
-            input_dataset_version=dataset_collection.input.dataset_version,
-            output_dataset_version=dataset_collection.output.dataset_version,
+            input_dataset_version=dataset_collection["input"].dataset_version,
+            output_dataset_version=dataset_collection["output"].dataset_version,
         )
 
         self._process_dataset_collection(dataset_collection=dataset_collection)
@@ -164,7 +163,7 @@ class BaseTilerProcessing(ABC):
         return tiles_data
 
     def _process_dataset_collection(
-        self, dataset_collection: ProcessingDatasetCollection
+        self, dataset_collection: DatasetCollection
     ) -> None:
         """
         Process all images and annotations from the dataset collection.
@@ -176,9 +175,9 @@ class BaseTilerProcessing(ABC):
             ValueError: If the dataset type is not supported or configured.
         """
         self._process_dataset_context(
-            dataset_context=dataset_collection.input,
-            output_dir=dataset_collection.output.image_dir,
-            output_coco_path=dataset_collection.output.coco_file_path,
+            dataset_context=dataset_collection["input"],
+            output_dir=dataset_collection["output"].images_dir,
+            output_coco_path=dataset_collection["output"].coco_file_path,
         )
 
     def _process_dataset_context(
@@ -200,6 +199,9 @@ class BaseTilerProcessing(ABC):
         if dataset_type == InferenceType.NOT_CONFIGURED:
             raise ValueError("Dataset type is not configured.")
 
+        if not dataset_context.images_dir:
+            raise ValueError("No images directory found in the dataset context.")
+
         coco_data = dataset_context.load_coco_file_data()
         number_of_images = len(coco_data["images"])
 
@@ -213,7 +215,7 @@ class BaseTilerProcessing(ABC):
 
         for idx, image_info in enumerate(coco_data["images"]):
             image_filename = image_info["file_name"]
-            image_path = os.path.join(dataset_context.image_dir, image_filename)
+            image_path = os.path.join(dataset_context.images_dir, image_filename)
             image = Image.open(image_path)
 
             tiles_batch = self.tile_image(image=image)
@@ -249,7 +251,7 @@ class BaseTilerProcessing(ABC):
             )
 
         self._save_coco_data(output_coco_path, output_coco_data)
-        dataset_context.build_coco_file(coco_file_path=output_coco_path)
+        dataset_context._build_coco_file(coco_file_path=output_coco_path)
 
     def _tile_annotation(
         self,
