@@ -1,4 +1,3 @@
-# type: ignore
 from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
@@ -28,6 +27,16 @@ def yolov7_model_context_trainer(
     model_trainer = Yolov7ModelContextTrainer(
         model_context=model_context, experiment=context.experiment
     )
+
+    if (
+        not context.api_token
+        or not context.organization_id
+        or not context.experiment_id
+        or not context.host
+    ):
+        raise ValueError(
+            "API token, organization ID, experiment ID, and host must be set"
+        )
 
     model_trainer.train_model_context(
         dataset_collection=dataset_collection,
