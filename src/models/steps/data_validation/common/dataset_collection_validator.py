@@ -33,7 +33,7 @@ class DatasetCollectionValidator:
         self.dataset_collection = dataset_collection
         self.dataset_context_validator = dataset_context_validator
 
-    def validate(self) -> None:
+    def validate(self, fix_annotation: bool = False) -> None:
         """
         Validates the dataset collection.
 
@@ -41,5 +41,7 @@ class DatasetCollectionValidator:
         for each dataset.
         """
         for dataset_context in self.dataset_collection:
-            validator = self.dataset_context_validator(dataset_context)
+            validator = self.dataset_context_validator(
+                dataset_context=dataset_context, fix_annotation=fix_annotation
+            )
             validator.validate()

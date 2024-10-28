@@ -19,7 +19,7 @@ class DatasetContextValidator:
 
     VALID_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png")
 
-    def __init__(self, dataset_context: DatasetContext):
+    def __init__(self, dataset_context: DatasetContext, fix_annotation: bool = False):
         """
         Initializes the DatasetContextValidator with a dataset context to validate.
 
@@ -27,6 +27,7 @@ class DatasetContextValidator:
             dataset_context (DatasetContext): The dataset context to validate.
         """
         self.dataset_context = dataset_context
+        self.fix_annotation = fix_annotation
 
     def validate(self):
         """
