@@ -21,7 +21,7 @@ class HyperParameters(Parameters):
             default=8,
         )
         self.image_size = self.extract_parameter(
-            keys=["image_size", "imgsz"], expected_type=int
+            keys=["image_size", "imgsz", "img_size"], expected_type=int
         )
         self.seed = self.extract_parameter(keys=["seed"], expected_type=int, default=0)
 
