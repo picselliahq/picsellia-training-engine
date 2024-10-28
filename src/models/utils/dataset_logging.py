@@ -35,7 +35,7 @@ def log_labelmap(labelmap: Dict[str, Label], experiment: Experiment, log_name: s
     """
     labelmap_to_log = {str(i): label for i, label in enumerate(labelmap.keys())}
     experiment.log(
-        name=log_name, data=labelmap_to_log, type=LogType.TABLE, replace=True
+        name=log_name, data=labelmap_to_log, type=LogType.LABELMAP, replace=True
     )
 
 
