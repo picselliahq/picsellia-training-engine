@@ -1,14 +1,15 @@
 from typing import Union
 from picsellia_annotations.coco import Annotation
+
+from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
 
 
 class SegmentationDatasetContextValidator(DatasetContextValidator):
-    def __init__(self, dataset_context, fix_annotation=False):
-        super().__init__(dataset_context)
-        self.fix_annotation = fix_annotation
+    def __init__(self, dataset_context: DatasetContext, fix_annotation=False):
+        super().__init__(dataset_context=dataset_context, fix_annotation=fix_annotation)
         self.error_count = {
             "x_coord": 0,
             "y_coord": 0,
@@ -53,6 +54,10 @@ class SegmentationDatasetContextValidator(DatasetContextValidator):
         Raises:
             ValueError: If the dataset context has no images with polygons.
         """
+        if not self.dataset_context.coco_file:
+            raise ValueError(
+                f"Coco file for dataset {self.dataset_context.dataset_name} is missing."
+            )
         if not self.dataset_context.coco_file.annotations:
             raise ValueError(
                 f"Dataset {self.dataset_context.dataset_name} must have at least 1 image with polygons."
@@ -66,6 +71,10 @@ class SegmentationDatasetContextValidator(DatasetContextValidator):
         Raises:
             ValueError: If the polygon coordinates for any annotation are not valid and fix_annotation is False.
         """
+        if not self.dataset_context.coco_file:
+            raise (ValueError("Coco file is missing."))
+        elif not self.dataset_context.coco_file.annotations:
+            raise (ValueError("No annotations found in the coco file."))
         for num_annotation, annotation in enumerate(
             self.dataset_context.coco_file.annotations
         ):
@@ -137,6 +146,10 @@ class SegmentationDatasetContextValidator(DatasetContextValidator):
         Returns:
             The image object associated with the given ID.
         """
+        if not self.dataset_context.coco_file:
+            raise ValueError("Coco file is missing.")
+        if not self.dataset_context.coco_file.images:
+            raise ValueError("No images found in the coco file.")
         return next(
             image
             for image in self.dataset_context.coco_file.images
