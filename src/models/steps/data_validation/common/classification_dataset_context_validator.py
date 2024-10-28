@@ -1,5 +1,4 @@
 import logging
-import os.path
 from collections import defaultdict
 from typing import Dict, List
 
@@ -14,8 +13,9 @@ class ClassificationDatasetContextValidator(DatasetContextValidator):
     def validate(self):
         """
         Validate the classification dataset context.
-        A classification dataset context must have at least 2 classes and at least 1 image per class
+        A classification dataset context must have at least 2 classes and at least 1 image per class.
 
+        Logs the number of images per class and any errors found.
         Raises:
             ValueError: If the classification dataset context is not valid.
         """
@@ -50,11 +50,6 @@ class ClassificationDatasetContextValidator(DatasetContextValidator):
             FileNotFoundError: If the COCO file is not found.
             json.JSONDecodeError: If the COCO file is not a valid JSON.
         """
-        if not os.path.isfile(self.dataset_context.coco_file_path):
-            raise FileNotFoundError(
-                f"COCO file not found at {self.dataset_context.coco_file_path}"
-            )
-
         coco_data = self.dataset_context.load_coco_file_data()
 
         # Create a mapping of category_id to category_name

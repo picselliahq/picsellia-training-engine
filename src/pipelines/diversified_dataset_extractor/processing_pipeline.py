@@ -6,12 +6,13 @@ from src.models.parameters.processing.processing_diversified_data_extractor_para
     ProcessingDiversifiedDataExtractorParameters,
 )
 from src.steps.data_extraction.processing.processing_data_extractor import (
-    processing_data_extractor,
+    processing_dataset_context_extractor,
 )
+
 from src.steps.data_validation.processing.processing_diversified_data_extractor_data_validator import (
     diversified_data_extractor_data_validator,
 )
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
+from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
     diversified_data_extractor_model_loader,
 )
 from src.steps.processing.dataset_version_creation.diversified_data_extractor_processing import (
@@ -36,7 +37,7 @@ def get_context() -> (
     remove_logs_on_completion=False,
 )
 def diversified_data_extractor_pipeline() -> None:
-    dataset_context = processing_data_extractor(skip_asset_listing=True)
+    dataset_context = processing_dataset_context_extractor(skip_asset_listing=True)
 
     diversified_data_extractor_data_validator(dataset_context=dataset_context)
     pretrained_weights = diversified_data_extractor_weights_validator()

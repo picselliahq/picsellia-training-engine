@@ -1,6 +1,6 @@
 from typing import Type
 
-from src.models.dataset.training.training_dataset_collection import DatasetCollection
+from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
@@ -15,6 +15,7 @@ class DatasetCollectionValidator:
 
     Attributes:
         dataset_collection (DatasetCollection): The dataset collection to validate.
+        dataset_context_validator (Type[DatasetContextValidator]): The validator class for individual dataset contexts.
     """
 
     def __init__(
@@ -27,6 +28,7 @@ class DatasetCollectionValidator:
 
         Parameters:
             dataset_collection (DatasetCollection): The dataset collection to validate.
+            dataset_context_validator (Type[DatasetContextValidator]): The class used to validate individual dataset contexts.
         """
         self.dataset_collection = dataset_collection
         self.dataset_context_validator = dataset_context_validator
@@ -34,6 +36,9 @@ class DatasetCollectionValidator:
     def validate(self) -> None:
         """
         Validates the dataset collection.
+
+        Iterates through the dataset contexts in the collection and applies the context validator
+        for each dataset.
         """
         for dataset_context in self.dataset_collection:
             validator = self.dataset_context_validator(dataset_context)

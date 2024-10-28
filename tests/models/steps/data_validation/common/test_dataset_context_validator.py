@@ -1,11 +1,9 @@
+import tempfile
 from collections.abc import Callable
-from unittest.mock import patch
-
+from unittest.mock import patch, Mock
 import pytest
 from picsellia.types.enums import InferenceType
-
 from src.enums import DatasetSplitName
-from src.steps.data_validation.utils.image_utils import get_images_path_list
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
 
@@ -23,14 +21,20 @@ class TestDatasetContextValidator:
                 dataset_type=dataset_type,
             )
         )
-        dataset_context.download_assets()
-        dataset_context_validator = mock_dataset_context_validator(
-            dataset_context=dataset_context
-        )
-        with pytest.raises(ValueError):
-            dataset_context_validator.validate_images_format(
-                images_path_list=["image1.gif", "image2.mov"],
+
+        # Use a temporary directory as the destination path
+        with tempfile.TemporaryDirectory() as destination_path:
+            dataset_context.download_assets(destination_path=destination_path)
+
+            dataset_context_validator = mock_dataset_context_validator(
+                dataset_context=dataset_context
             )
+
+            # Test with invalid image formats
+            with pytest.raises(ValueError):
+                dataset_context_validator.validate_images_format(
+                    images_path_list=["image1.gif", "image2.mov"],
+                )
 
     @pytest.mark.parametrize("dataset_type", [InferenceType.CLASSIFICATION])
     def test_validate_images_corruption(
@@ -45,21 +49,33 @@ class TestDatasetContextValidator:
                 dataset_type=dataset_type,
             )
         )
-        dataset_context.download_assets()
-        dataset_context_validator = mock_dataset_context_validator(
-            dataset_context=dataset_context
-        )
-        dataset_context_validator.validate_images_corruption(
-            images_path_list=get_images_path_list(
-                dataset_context_validator.dataset_context.image_dir
-            ),
-        )
-        with pytest.raises(ValueError):
-            dataset_context_validator.validate_images_corruption(
-                images_path_list=[
-                    "tests/data/corrupted_images/018e75f7-388d-76e6-b3c6-8072b216be04.jpg"
-                ],
+
+        # Use a temporary directory as the destination path
+        with tempfile.TemporaryDirectory() as destination_path:
+            dataset_context.download_assets(destination_path=destination_path)
+
+            dataset_context_validator = mock_dataset_context_validator(
+                dataset_context=dataset_context
             )
+
+            # Simulate valid images
+            with patch("PIL.Image.open") as mock_open:
+                mock_img = Mock()
+                mock_open.return_value.__enter__.return_value = mock_img
+                dataset_context_validator.validate_images_corruption(
+                    images_path_list=["image1.jpg", "image2.jpg"]
+                )
+                mock_open.assert_called()
+
+            # Test with a corrupted image
+            with pytest.raises(ValueError), patch(
+                "PIL.Image.open", side_effect=Exception
+            ):
+                dataset_context_validator.validate_images_corruption(
+                    images_path_list=[
+                        "tests/data/corrupted_images/image_corrupted.jpg"
+                    ],
+                )
 
     @pytest.mark.parametrize("dataset_type", [InferenceType.CLASSIFICATION])
     def test_validate_images_extraction(
@@ -74,29 +90,31 @@ class TestDatasetContextValidator:
                 dataset_type=dataset_type,
             )
         )
-        dataset_context.download_assets()
-        dataset_context_validator = mock_dataset_context_validator(
-            dataset_context=dataset_context
-        )
-        dataset_context_validator.validate()
-        with pytest.raises(ValueError):
-            dataset_context_validator.validate_images_extraction(
-                images_path_list=["image1.jpg"],
+
+        # Use a temporary directory as the destination path
+        with tempfile.TemporaryDirectory() as destination_path:
+            dataset_context.download_assets(destination_path=destination_path)
+
+            dataset_context_validator = mock_dataset_context_validator(
+                dataset_context=dataset_context
             )
-        with pytest.raises(ValueError):
-            dataset_context_validator.dataset_context.multi_asset = [
-                "image1.jpg",
-                "image2.jpg",
-                "image3.jpg",
-            ]
-            dataset_context_validator.validate_images_extraction(
-                images_path_list=[
-                    "image1.jpg",
-                    "image2.jpg",
-                    "image3.jpg",
-                    "image4.jpg",
-                ],
-            )
+
+            # Test with fewer images than assets
+            with pytest.raises(ValueError):
+                dataset_context_validator.validate_images_extraction(
+                    images_path_list=["image1.jpg"],
+                )
+
+            # Test with more images than assets
+            with pytest.raises(ValueError):
+                dataset_context_validator.validate_images_extraction(
+                    images_path_list=[
+                        "image1.jpg",
+                        "image2.jpg",
+                        "image3.jpg",
+                        "image4.jpg",
+                    ],
+                )
 
     @pytest.mark.parametrize("dataset_type", [InferenceType.CLASSIFICATION])
     def test_validate(
@@ -111,25 +129,30 @@ class TestDatasetContextValidator:
                 dataset_type=dataset_type,
             )
         )
-        dataset_context.download_assets()
-        dataset_context_validator = mock_dataset_context_validator(
-            dataset_context=dataset_context
-        )
 
-        with (
-            patch.object(
-                dataset_context_validator, "validate_images_extraction"
-            ) as mock_validate_images_extraction,
-            patch.object(
-                dataset_context_validator, "validate_images_corruption"
-            ) as mock_validate_images_corruption,
-            patch.object(
-                dataset_context_validator, "validate_images_format"
-            ) as mock_validate_images_format,
-        ):
-            # mock_get_images_path_list.return_value = ["image1.jpg", "image2.jpg"]
-            dataset_context_validator.validate()
+        # Use a temporary directory as the destination path
+        with tempfile.TemporaryDirectory() as destination_path:
+            dataset_context.download_assets(destination_path=destination_path)
 
-            assert mock_validate_images_extraction.called
-            assert mock_validate_images_corruption.called
-            assert mock_validate_images_format.called
+            dataset_context_validator = mock_dataset_context_validator(
+                dataset_context=dataset_context
+            )
+
+            # Mock the internal validation methods to ensure they are called
+            with (
+                patch.object(
+                    dataset_context_validator, "validate_images_extraction"
+                ) as mock_validate_images_extraction,
+                patch.object(
+                    dataset_context_validator, "validate_images_corruption"
+                ) as mock_validate_images_corruption,
+                patch.object(
+                    dataset_context_validator, "validate_images_format"
+                ) as mock_validate_images_format,
+            ):
+                dataset_context_validator.validate()
+
+                # Ensure each validation method is called during the validation process
+                assert mock_validate_images_extraction.called
+                assert mock_validate_images_corruption.called
+                assert mock_validate_images_format.called

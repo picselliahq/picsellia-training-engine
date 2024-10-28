@@ -2,8 +2,11 @@ from typing import Callable, Dict, List, Type
 
 import pytest
 
-from src.models.contexts.picsellia_context import PicselliaTrainingContext
+from src.models.contexts.training.picsellia_training_context import (
+    PicselliaTrainingContext,
+)
 from src.models.parameters.common.augmentation_parameters import AugmentationParameters
+from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.common.hyper_parameters import HyperParameters
 from tests.steps.fixtures.dataset_version_fixtures import DatasetTestMetadata
 
@@ -29,6 +32,7 @@ def mock_picsellia_training_context(
         datasets_metadata: List[DatasetTestMetadata],
         hyperparameters_cls: Type[HyperParameters],
         augmentation_parameters_cls: Type[AugmentationParameters],
+        export_parameters_cls: Type[ExportParameters],
     ) -> PicselliaTrainingContext:
         experiment = mock_experiment(
             experiment_name=experiment_name, datasets_metadata=datasets_metadata
@@ -38,6 +42,7 @@ def mock_picsellia_training_context(
         return PicselliaTrainingContext(
             hyperparameters_cls=hyperparameters_cls,
             augmentation_parameters_cls=augmentation_parameters_cls,
+            export_parameters_cls=export_parameters_cls,
             api_token=api_token,
             host=host,
             experiment_id=experiment.id,

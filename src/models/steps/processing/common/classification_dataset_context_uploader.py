@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from collections import defaultdict
@@ -61,6 +60,8 @@ class ClassificationDatasetContextUploader(DataUploader):
         """
         Process COCO data to group image paths by category name.
         """
+        if not self.dataset_context.images_dir:
+            raise ValueError("No images directory found in the dataset context.")
         category_id_to_name = {
             cat["id"]: cat["name"] for cat in coco_data["categories"]
         }
@@ -71,7 +72,7 @@ class ClassificationDatasetContextUploader(DataUploader):
             image_info = image_id_to_info[annotation["image_id"]]
             category_name = category_id_to_name[annotation["category_id"]]
             image_path = os.path.join(
-                self.dataset_context.image_dir, image_info["file_name"]
+                self.dataset_context.images_dir, image_info["file_name"]
             )
 
             images_by_category[category_name].append(image_path)

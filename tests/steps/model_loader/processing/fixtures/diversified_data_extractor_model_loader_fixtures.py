@@ -2,7 +2,7 @@ import pytest
 import torch
 from torchvision import transforms
 
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
+from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
     OpenClipEmbeddingModel,
 )
 
