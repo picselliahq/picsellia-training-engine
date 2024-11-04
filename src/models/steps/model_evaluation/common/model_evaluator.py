@@ -158,12 +158,16 @@ class ModelEvaluator:
                     evaluation.polygons, evaluation.labels, evaluation.confidences
                 )
             ]
-            logger.info(
-                f"Adding evaluation for asset {asset.filename} with polygons {polygons}"
-            )
-            self.experiment.add_evaluation(
-                asset, add_type=AddEvaluationType.REPLACE, polygons=polygons
-            )
+            if not polygons:
+                logger.info(f"Adding an empty evaluation for asset {asset.filename} (no polygons found).")
+                self.experiment.add_evaluation(
+                    asset, add_type=AddEvaluationType.REPLACE, polygons=[]
+                )
+            else:
+                logger.info(f"Adding evaluation for asset {asset.filename} with polygons {polygons}")
+                self.experiment.add_evaluation(
+                    asset, add_type=AddEvaluationType.REPLACE, polygons=polygons
+                )
 
         else:
             raise TypeError("Unsupported prediction type")
