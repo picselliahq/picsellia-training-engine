@@ -73,16 +73,17 @@ class PicselliaPolygon:
         value (List[int]): A list of integer coordinates that define the polygon.
     """
 
-    value: List[int]
+    value: List[List[int]]
 
-    def __init__(self, points: List[int]):
+    def __init__(self, points: List[List[int]]):
         """
-        Initializes the polygon with a list of points.
+        Initializes the polygon with the given list of points.
 
         Args:
-            points (List[int]): A list of points representing the polygon.
+            points (List[List[int]]): A list of integer coordinates that define the polygon.
         """
-        self.value = [int(point) for point in points]
+        self.value = points
+
 
 
 @dataclass
