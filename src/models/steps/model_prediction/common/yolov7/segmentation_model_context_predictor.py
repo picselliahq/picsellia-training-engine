@@ -30,7 +30,6 @@ class Yolov7SegmentationModelContextPredictor:
             model_context (ModelContext): Context of the model including configuration and weights.
         """
         self.model_context = model_context
-
     def pre_process_dataset_context(
         self, dataset_context: TDatasetContext
     ) -> List[str]:
