@@ -5,6 +5,8 @@ from picsellia.types.enums import AnnotationFileType
 
 from src.models.dataset.common.yolov7_dataset_collection import Yolov7DatasetCollection
 
+BATCH_SIZE = 500
+
 
 @step
 def yolov7_dataset_collection_preparator(
@@ -27,7 +29,6 @@ def yolov7_dataset_collection_preparator(
     )
 
     for dataset_context in yolov7_dataset_collection:
-        # Create directories if they do not exist
         os.makedirs(
             os.path.join(images_destination_path, dataset_context.dataset_name),
             exist_ok=True,
@@ -37,23 +38,25 @@ def yolov7_dataset_collection_preparator(
             exist_ok=True,
         )
 
-        yolo_annotation_path = dataset_context.dataset_version.export_annotation_file(
-            annotation_file_type=AnnotationFileType.YOLO,
-            target_path=dataset_context.annotations_dir,
-            use_id=True,
-        )
-        os.system(
-            f"unzip -o {yolo_annotation_path} -d {os.path.join(annotations_destination_path, dataset_context.dataset_name)} > /dev/null 2>&1"
-        )
-        # Remove the zip file
-        # os.system(f"rm {yolo_annotation_path}")
+        for i in range(0, len(dataset_context.assets), BATCH_SIZE):
+            batch_assets = dataset_context.assets[i:i + BATCH_SIZE]
 
-        # Move images to the destination path
+            yolo_annotation_path = dataset_context.dataset_version.export_annotation_file(
+                annotation_file_type=AnnotationFileType.YOLO,
+                target_path=dataset_context.annotations_dir,
+                use_id=True,
+                assets=batch_assets,
+            )
+            
+            os.system(
+                f"unzip -o {yolo_annotation_path} -d {os.path.join(annotations_destination_path, dataset_context.dataset_name)} > /dev/null 2>&1"
+            )
+            # os.remove(yolo_annotation_path)
+
         os.system(
             f"cp {dataset_context.images_dir}/* {os.path.join(images_destination_path, dataset_context.dataset_name)}"
         )
 
-        # Update paths in dataset context
         dataset_context.images_dir = os.path.join(
             images_destination_path, dataset_context.dataset_name
         )
