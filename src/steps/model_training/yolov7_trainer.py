@@ -19,7 +19,7 @@ from src.models.steps.model_training.common.yolov7_model_context_trainer import 
 @step
 def yolov7_model_context_trainer(
     model_context: Yolov7ModelContext, dataset_collection: Yolov7DatasetCollection
-):
+) -> Yolov7ModelContext:
     context: PicselliaTrainingContext[
         Yolov7HyperParameters, Yolov7AugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
@@ -46,3 +46,7 @@ def yolov7_model_context_trainer(
         host=context.host,
         experiment_id=context.experiment_id,
     )
+    
+    model_context.set_trained_weights_path()
+    
+    return model_context
