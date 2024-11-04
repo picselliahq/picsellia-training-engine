@@ -6,6 +6,28 @@ from picsellia import ModelVersion, Label
 
 import yaml
 
+def find_latest_run_dir(dir):
+    """
+    Finds the latest run directory in the given directory.
+    """
+    run_dirs = os.listdir(dir)
+    processed_run_dirs = {}
+    
+    for run_dir in run_dirs:
+        run_id = -1
+        if "-" in run_dir:
+            try:
+                run_id = int(run_dir.split("-")[1])
+            except ValueError:
+                pass
+        
+        while run_id in processed_run_dirs:
+            run_id -= 1
+            
+        processed_run_dirs[run_id] = run_dir
+
+    return processed_run_dirs[max(processed_run_dirs)]
+
 
 class Yolov7ModelContext(ModelContext):
     def __init__(
@@ -31,7 +53,7 @@ class Yolov7ModelContext(ModelContext):
         self.hyperparameters_name = hyperparameters_name
         self.hyperparameters_path: Optional[str] = None
 
-    def download_hyperparameters(self, destination_path: str):
+    def set_hyperparameters_path(self, destination_path: str):
         """
         Downloads the hyperparameters file from Picsellia to the specified destination path.
 
@@ -41,7 +63,6 @@ class Yolov7ModelContext(ModelContext):
         hyperparameters_file = self.model_version.get_file(
             name=self.hyperparameters_name
         )
-        hyperparameters_file.download(target_path=destination_path)
         self.hyperparameters_path = os.path.join(
             destination_path, hyperparameters_file.filename
         )
@@ -57,3 +78,17 @@ class Yolov7ModelContext(ModelContext):
         """
         with open(hyperparameters_path, "w") as file:
             yaml.dump(hyperparameters, file)
+
+    def set_trained_weights_path(self):
+        """
+        Sets the path to the trained weights file using the latest run directory.
+        """
+        training_dir = os.path.join(self.results_dir, "training")
+        latest_run = find_latest_run_dir(training_dir)
+        
+        print(f'latest_run: {latest_run}')
+        
+        trained_weights_dir = os.path.join(training_dir, latest_run, "weights")
+        self.trained_weights_path = os.path.join(trained_weights_dir, "best.pt")
+        
+        print(f'trained_weights_path: {self.trained_weights_path}')
