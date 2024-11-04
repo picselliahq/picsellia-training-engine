@@ -3,6 +3,7 @@ FROM picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.10
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     unzip \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 ARG REBUILD_ALL
@@ -20,6 +21,9 @@ COPY ./src/*.py ./src
 COPY ./src/pipelines/yolov7_segmentation ./src/pipelines/yolov7_segmentation
 
 RUN cd /experiment/src/pipelines/yolov7_segmentation && git clone https://github.com/WongKinYiu/yolov7 --branch u7
+
+COPY ./src/pipelines/yolov7_segmentation/yolov7_changes/ /experiment/src/pipelines/yolov7_segmentation/yolov7/seg/
+
 
 ENV PYTHONPATH=":/experiment/src"
 
