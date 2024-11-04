@@ -35,7 +35,7 @@ def yolov7_model_context_extractor() -> Yolov7ModelContext:
     model_context.download_weights(
         destination_path=os.path.join(os.getcwd(), context.experiment.name, "model")
     )
-    model_context.download_hyperparameters(
+    model_context.set_hyperparameters_path(
         destination_path=os.path.join(
             os.getcwd(), context.experiment.name, "model", "weights"
         )
