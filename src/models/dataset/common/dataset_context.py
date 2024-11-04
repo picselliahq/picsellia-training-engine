@@ -9,6 +9,7 @@ from picsellia.sdk.asset import MultiAsset
 from picsellia.types.enums import AnnotationFileType
 from picsellia_annotations.coco import COCOFile
 from picsellia_annotations.utils import read_coco_file
+from picsellia.exceptions import NoDataError
 
 from src.models.utils.dataset_logging import get_labelmap
 
@@ -79,11 +80,21 @@ class DatasetContext:
         if self.assets:
             self.assets.download(target_path=str(destination_path), use_id=use_id)
         else:
-            self.dataset_version.download(
-                target_path=str(destination_path), use_id=use_id
-            )
+            try:
+                self.dataset_version.download(
+                    target_path=str(destination_path), use_id=use_id
+                )
+            except NoDataError:
+                logger.warning(
+                    "No assets found in the dataset version, skipping asset download."
+                )
             if not skip_asset_listing:
-                self.assets = self.dataset_version.list_assets()
+                try:
+                    self.assets = self.dataset_version.list_assets()
+                except NoDataError:
+                    logger.warning(
+                        "No assets found in the dataset version, skipping asset listing."
+                    )
         self.images_dir = destination_path
 
     def download_and_build_coco_file(
@@ -156,6 +167,8 @@ class DatasetContext:
         Returns:
             Optional[str]: The file path to the downloaded COCO file, or None if the download fails.
         """
+        coco_file_path = None
+
         if self.assets:
             coco_file_path = self.dataset_version.export_annotation_file(
                 annotation_file_type=AnnotationFileType.COCO,
@@ -164,15 +177,25 @@ class DatasetContext:
                 use_id=use_id,
             )
         else:
-            coco_file_path = self.dataset_version.export_annotation_file(
-                annotation_file_type=AnnotationFileType.COCO,
-                target_path=destination_path,
-                use_id=use_id,
-            )
+            try:
+                coco_file_path = self.dataset_version.export_annotation_file(
+                    annotation_file_type=AnnotationFileType.COCO,
+                    target_path=destination_path,
+                    use_id=use_id,
+                )
+            except NoDataError:
+                logger.warning(
+                    "No assets found in the dataset version, skipping COCO file download."
+                )
             if not skip_asset_listing:
-                self.assets = self.dataset_version.list_assets()
+                try:
+                    self.assets = self.dataset_version.list_assets()
+                except NoDataError:
+                    logger.warning(
+                        "No assets found in the dataset version, skipping asset listing."
+                    )
 
-        if os.path.exists(coco_file_path):
+        if coco_file_path and os.path.exists(coco_file_path):
             return coco_file_path
         else:
             logger.warning("COCO file download failed, no file found.")
