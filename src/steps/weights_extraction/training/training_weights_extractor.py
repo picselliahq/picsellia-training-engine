@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
@@ -8,7 +9,12 @@ from src.models.model.common.model_context import ModelContext
 
 
 @step
-def training_model_context_extractor() -> ModelContext:
+def training_model_context_extractor(
+    pretrained_weights_name: Optional[str] = None,
+    trained_weights_name: Optional[str] = None,
+    config_name: Optional[str] = None,
+    exported_weights_name: Optional[str] = None,
+) -> ModelContext:
     """
     Extracts a model context from the active Picsellia training experiment.
 
@@ -26,10 +32,10 @@ def training_model_context_extractor() -> ModelContext:
     model_context = ModelContext(
         model_name=model_version.name,
         model_version=model_version,
-        pretrained_weights_name="pretrained-weights",
-        trained_weights_name=None,
-        config_name=None,
-        exported_weights_name=None,
+        pretrained_weights_name=pretrained_weights_name,
+        trained_weights_name=trained_weights_name,
+        config_name=config_name,
+        exported_weights_name=exported_weights_name,
     )
     model_context.download_weights(
         destination_path=os.path.join(os.getcwd(), context.experiment.name, "model")
