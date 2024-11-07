@@ -34,8 +34,8 @@ def get_context() -> PicselliaProcessingContext[ProcessingTilerParameters]:
 )
 def tiler_processing_pipeline() -> None:
     dataset_collection = processing_dataset_collection_extractor()
-    dataset_collection.input = tiler_data_validator(
-        dataset_context=dataset_collection.input
+    dataset_collection["input"] = tiler_data_validator(
+        dataset_context=dataset_collection["input"]
     )
     output_dataset_context = tiler_processing(dataset_collection=dataset_collection)
     dataset_context_uploader(dataset_context=output_dataset_context)
