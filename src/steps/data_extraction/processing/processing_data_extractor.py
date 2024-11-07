@@ -9,10 +9,6 @@ from src.models.contexts.processing.picsellia_processing_context import (
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
 
-from src.models.steps.data_extraction.processing.processing_dataset_collection_extractor import (
-    ProcessingDatasetCollectionExtractor,
-)
-
 
 def get_destination_path(job_id: Optional[str]) -> str:
     """
@@ -93,14 +89,23 @@ def processing_dataset_collection_extractor(
         DatasetCollection: The dataset collection prepared for processing, including all downloaded assets and annotations.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
-    dataset_collection_extractor = ProcessingDatasetCollectionExtractor(
-        input_dataset_version=context.input_dataset_version,
-        output_dataset_version=context.output_dataset_version,
+    input_dataset_context = DatasetContext(
+        dataset_name="input",
+        dataset_version=context.input_dataset_version,
+        assets=context.input_dataset_version.list_assets(),
+        labelmap=None,
     )
-    destination_path = get_destination_path(context.job_id)
-    dataset_collection = dataset_collection_extractor.get_dataset_collection()
+    output_dataset_context = DatasetContext(
+        dataset_name="output",
+        dataset_version=context.output_dataset_version,
+        assets=None,
+        labelmap=None,
+    )
+    dataset_collection = DatasetCollection(
+        [input_dataset_context, output_dataset_context]
+    )
     dataset_collection.download_all(
-        destination_path=destination_path,
+        destination_path=get_destination_path(context.job_id),
         use_id=True,
         skip_asset_listing=skip_asset_listing,
     )
