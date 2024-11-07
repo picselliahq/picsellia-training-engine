@@ -6,13 +6,14 @@ from picsellia import ModelVersion, Label
 
 import yaml
 
+
 def find_latest_run_dir(dir):
     """
     Finds the latest run directory in the given directory.
     """
     run_dirs = os.listdir(dir)
     processed_run_dirs = {}
-    
+
     for run_dir in run_dirs:
         run_id = -1
         if "-" in run_dir:
@@ -20,10 +21,10 @@ def find_latest_run_dir(dir):
                 run_id = int(run_dir.split("-")[1])
             except ValueError:
                 pass
-        
+
         while run_id in processed_run_dirs:
             run_id -= 1
-            
+
         processed_run_dirs[run_id] = run_dir
 
     return processed_run_dirs[max(processed_run_dirs)]
@@ -83,12 +84,15 @@ class Yolov7ModelContext(ModelContext):
         """
         Sets the path to the trained weights file using the latest run directory.
         """
+        if not self.results_dir or not os.path.exists(self.results_dir):
+            raise ValueError("The results directory is not set.")
+
         training_dir = os.path.join(self.results_dir, "training")
         latest_run = find_latest_run_dir(training_dir)
-        
-        print(f'latest_run: {latest_run}')
-        
+
+        print(f"latest_run: {latest_run}")
+
         trained_weights_dir = os.path.join(training_dir, latest_run, "weights")
         self.trained_weights_path = os.path.join(trained_weights_dir, "best.pt")
-        
-        print(f'trained_weights_path: {self.trained_weights_path}')
+
+        print(f"trained_weights_path: {self.trained_weights_path}")

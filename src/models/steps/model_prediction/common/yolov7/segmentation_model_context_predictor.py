@@ -4,11 +4,22 @@ import subprocess
 from typing import Dict, List
 
 import cv2
-from src.models.model.common.picsellia_prediction import PicselliaConfidence, PicselliaLabel, PicselliaPolygon, PicselliaPolygonPrediction
-from src.models.model.yolov7_model_context import Yolov7ModelContext, find_latest_run_dir
+from src.models.model.common.picsellia_prediction import (
+    PicselliaConfidence,
+    PicselliaLabel,
+    PicselliaPolygon,
+    PicselliaPolygonPrediction,
+)
+from src.models.model.yolov7_model_context import (
+    Yolov7ModelContext,
+    find_latest_run_dir,
+)
 
 from src.models.dataset.common.dataset_context import TDatasetContext
-from src.models.parameters.training.yolov7.yolov7_hyper_parameters import Yolov7HyperParameters
+from src.models.parameters.training.yolov7.yolov7_hyper_parameters import (
+    Yolov7HyperParameters,
+)
+
 
 class Yolov7SegmentationModelContextPredictor:
     def __init__(self, model_context: Yolov7ModelContext):
@@ -19,8 +30,7 @@ class Yolov7SegmentationModelContextPredictor:
             model_context (ModelContext): Context of the model including configuration and weights.
         """
         self.model_context = model_context
-        
-    
+
     def pre_process_dataset_context(
         self, dataset_context: TDatasetContext
     ) -> List[str]:
@@ -47,10 +57,17 @@ class Yolov7SegmentationModelContextPredictor:
         hyperparameters: Yolov7HyperParameters,
         confidence_threshold: float,
         iou_threshold: float,
-    ) -> List[str]:
-        if not self.model_context.trained_weights_path or not os.path.exists(self.model_context.trained_weights_path):
+    ) -> Dict[str, List[str]]:
+        if not self.model_context.trained_weights_path or not os.path.exists(
+            self.model_context.trained_weights_path
+        ):
             raise ValueError("Trained weights path is not set.")
-        
+
+        if not self.model_context.results_dir or not os.path.exists(
+            self.model_context.results_dir
+        ):
+            raise ValueError("Results directory is not set.")
+
         image_batches = self._prepare_batches(image_paths, hyperparameters.batch_size)
 
         for batch in image_batches:
@@ -60,54 +77,41 @@ class Yolov7SegmentationModelContextPredictor:
             for image_path in batch:
                 shutil.copy(image_path, tmp_dir)
 
-            detect_file_path = os.path.abspath("src/pipelines/yolov7_segmentation/yolov7/seg/segment/predict.py")
+            detect_file_path = os.path.abspath(
+                "src/pipelines/yolov7_segmentation/yolov7/seg/segment/predict.py"
+            )
 
-            print(f'Running inference with weights: {self.model_context.trained_weights_path}')
+            print(
+                f"Running inference with weights: {self.model_context.trained_weights_path}"
+            )
 
             command = [
                 "python3.10",
-            
                 detect_file_path,
-                
-                "--weights", 
+                "--weights",
                 self.model_context.trained_weights_path,
-                
-                "--source", 
+                "--source",
                 tmp_dir,
-                
-                "--img-size", 
+                "--img-size",
                 str(hyperparameters.image_size),
-                
-                "--conf-thres", 
+                "--conf-thres",
                 str(confidence_threshold),
-                
                 "--iou-thres",
                 str(iou_threshold),
-                
                 "--device",
                 str(hyperparameters.device),
-                
                 "--save-txt",
-                
                 "--save-conf",
-                
                 "--project",
                 os.path.join(self.model_context.results_dir, "inference"),
-                
-                "--name", 
+                "--name",
                 self.model_context.model_name,
-                
                 "--exist-ok",
             ]
-            
+
             print(f'Running command: {" ".join(command)}')
 
-            process = subprocess.Popen(
-                command,
-                stdout=None,
-                stderr=None, 
-                text=True
-            )
+            process = subprocess.Popen(command, stdout=None, stderr=None, text=True)
 
             return_code = process.wait()
             if return_code != 0:
@@ -116,26 +120,40 @@ class Yolov7SegmentationModelContextPredictor:
                 print("Inference completed successfully.")
 
             shutil.rmtree(tmp_dir)
-        
-        latest_run = find_latest_run_dir(os.path.join(self.model_context.results_dir, "inference"))
-        
-        labels_dir = os.path.join(self.model_context.results_dir, "inference", latest_run, "labels")
-        mask_dir = os.path.join(self.model_context.results_dir, "inference", latest_run, "masks")
-        
-        labels_paths = [os.path.join(labels_dir, label_name) for label_name in os.listdir(labels_dir)]
-        mask_paths = [os.path.join(mask_dir, mask_name) for mask_name in os.listdir(mask_dir)]
-        
-        label_path_to_mask_paths = {label_filepath: [] for label_filepath in labels_paths}
+
+        latest_run = find_latest_run_dir(
+            os.path.join(self.model_context.results_dir, "inference")
+        )
+
+        labels_dir = os.path.join(
+            self.model_context.results_dir, "inference", latest_run, "labels"
+        )
+        mask_dir = os.path.join(
+            self.model_context.results_dir, "inference", latest_run, "masks"
+        )
+
+        labels_paths = [
+            os.path.join(labels_dir, label_name)
+            for label_name in os.listdir(labels_dir)
+        ]
+        mask_paths = [
+            os.path.join(mask_dir, mask_name) for mask_name in os.listdir(mask_dir)
+        ]
+
+        label_path_to_mask_paths: Dict[str, List[str]] = {
+            label_filepath: [] for label_filepath in labels_paths
+        }
 
         for mask_path in mask_paths:
             label_name = os.path.basename(mask_path).split("_")[0] + ".txt"
             label_filepath = os.path.join(labels_dir, label_name)
             label_path_to_mask_paths[label_filepath].append(mask_path)
-        
-        return label_path_to_mask_paths
-        
 
-    def _prepare_batches(self, image_paths: List[str], batch_size: int) -> List[List[str]]:
+        return label_path_to_mask_paths
+
+    def _prepare_batches(
+        self, image_paths: List[str], batch_size: int
+    ) -> List[List[str]]:
         """
         Divides the list of image paths into smaller batches of a specified size.
 
@@ -146,12 +164,15 @@ class Yolov7SegmentationModelContextPredictor:
         Returns:
             List[List[str]]: A list of batches, each containing a list of image file paths.
         """
-        return [image_paths[i : i + batch_size] for i in range(0, len(image_paths), batch_size)]
+        return [
+            image_paths[i : i + batch_size]
+            for i in range(0, len(image_paths), batch_size)
+        ]
 
     def post_process(
         self,
         label_path_to_mask_paths: Dict[str, List[str]],
-        dataset_context: TDatasetContext
+        dataset_context: TDatasetContext,
     ) -> List[PicselliaPolygonPrediction]:
         """
         Post-processes the predictions for a segmentation model, mapping polygons and confidence scores
@@ -176,32 +197,34 @@ class Yolov7SegmentationModelContextPredictor:
             labels = []
             confidences = []
 
-            for mask_index, (class_id, x1, y1, x2, y2, confidence) in enumerate(label_info):
+            for mask_index, (class_id, x1, y1, x2, y2, confidence) in enumerate(
+                label_info
+            ):
                 if mask_index >= len(mask_paths):
                     continue
 
-                polygon = self._extract_largest_contour(mask_paths[mask_index], epsilon=5.0)
+                polygon = self._extract_largest_contour(
+                    mask_paths[mask_index], epsilon=5.0
+                )
 
                 if polygon:
                     picsellia_polygon = PicselliaPolygon(points=polygon)
                     polygons.append(picsellia_polygon)
 
-                    picsellia_label = self.get_picsellia_label(class_id, dataset_context)
+                    picsellia_label = self.get_picsellia_label(
+                        class_id, dataset_context
+                    )
                     picsellia_confidence = self.get_picsellia_confidence(confidence)
 
                     labels.append(picsellia_label)
                     confidences.append(picsellia_confidence)
 
             prediction = PicselliaPolygonPrediction(
-                asset=asset,
-                polygons=polygons,
-                labels=labels,
-                confidences=confidences
+                asset=asset, polygons=polygons, labels=labels, confidences=confidences
             )
             predictions.append(prediction)
 
         return predictions
-
 
     def _parse_label_file(self, label_path: str) -> List[tuple]:
         """
@@ -214,7 +237,7 @@ class Yolov7SegmentationModelContextPredictor:
             List[tuple]: List of tuples (class_id, x1, y1, x2, y2, confidence).
         """
         label_info = []
-        with open(label_path, 'r') as file:
+        with open(label_path, "r") as file:
             for line in file:
                 parts = line.strip().split()
                 class_id = int(parts[0])
@@ -223,7 +246,9 @@ class Yolov7SegmentationModelContextPredictor:
                 label_info.append((class_id, *coordinates, confidence))
         return label_info
 
-    def _extract_largest_contour(self, mask_path: str, epsilon: float = 3.0) -> List[List[int]]:
+    def _extract_largest_contour(
+        self, mask_path: str, epsilon: float = 3.0
+    ) -> List[List[int]]:
         """
         Extract the largest contour from a binary mask image and simplify it if possible.
 
@@ -244,23 +269,30 @@ class Yolov7SegmentationModelContextPredictor:
             largest_contour = max(contours, key=cv2.contourArea)
 
             if len(largest_contour) < 4:
-                print("Warning: Largest contour has fewer than 4 points, it will be ignored.")
+                print(
+                    "Warning: Largest contour has fewer than 4 points, it will be ignored."
+                )
                 return []
 
             simplified_contour = cv2.approxPolyDP(largest_contour, epsilon, True)
 
             if len(simplified_contour) >= 4:
-                return [[int(point[0][0]), int(point[0][1])] for point in simplified_contour]
+                return [
+                    [int(point[0][0]), int(point[0][1])] for point in simplified_contour
+                ]
             else:
-                print("Warning: Simplified contour has fewer than 4 points, using the original contour.")
-                return [[int(point[0][0]), int(point[0][1])] for point in largest_contour]
+                print(
+                    "Warning: Simplified contour has fewer than 4 points, using the original contour."
+                )
+                return [
+                    [int(point[0][0]), int(point[0][1])] for point in largest_contour
+                ]
         else:
             return []
 
-
-
-
-    def get_picsellia_label(self, class_id: int, dataset_context: TDatasetContext) -> PicselliaLabel:
+    def get_picsellia_label(
+        self, class_id: int, dataset_context: TDatasetContext
+    ) -> PicselliaLabel:
         """
         Map the class ID to a PicselliaLabel object using the dataset context.
 
