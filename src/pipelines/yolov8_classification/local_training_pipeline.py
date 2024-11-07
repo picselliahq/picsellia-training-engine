@@ -67,8 +67,13 @@ def yolov8_classification_training_pipeline():
     )
     classification_dataset_collection_validator(dataset_collection=dataset_collection)
 
-    model_context = training_model_context_extractor()
-    model_context = ultralytics_model_context_loader(model_context=model_context)
+    model_context = training_model_context_extractor(
+        pretrained_weights_name="pretrained-weights"
+    )
+    model_context = ultralytics_model_context_loader(
+        model_context=model_context,
+        weights_path_to_load=model_context.pretrained_weights_path,
+    )
     model_context = ultralytics_model_context_trainer(
         model_context=model_context, dataset_collection=dataset_collection
     )
