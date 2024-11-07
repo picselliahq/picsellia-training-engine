@@ -66,5 +66,8 @@ def paddle_ocr_model_collection_evaluator(
         dataset_context=dataset_context,
     )
 
-    model_evaluator = ModelEvaluator(experiment=context.experiment)
+    model_evaluator = ModelEvaluator(
+        experiment=context.experiment,
+        inference_type=model_collection.bbox_model.model_version.type,
+    )
     model_evaluator.evaluate(picsellia_predictions=picsellia_ocr_predictions)

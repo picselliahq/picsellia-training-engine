@@ -60,7 +60,9 @@ def ultralytics_model_context_evaluator(
         )
     )
 
-    model_evaluator = ModelEvaluator(experiment=context.experiment)
+    model_evaluator = ModelEvaluator(
+        experiment=context.experiment, inference_type=model_context.model_version.type
+    )
     model_evaluator.evaluate(
         picsellia_predictions=picsellia_classifications_predictions
     )
