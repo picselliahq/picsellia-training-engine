@@ -55,8 +55,6 @@ class Yolov7SegmentationModelContextPredictor:
         self,
         image_paths: List[str],
         hyperparameters: Yolov7HyperParameters,
-        confidence_threshold: float,
-        iou_threshold: float,
     ) -> Dict[str, List[str]]:
         if not self.model_context.trained_weights_path or not os.path.exists(
             self.model_context.trained_weights_path
@@ -95,9 +93,9 @@ class Yolov7SegmentationModelContextPredictor:
                 "--img-size",
                 str(hyperparameters.image_size),
                 "--conf-thres",
-                str(confidence_threshold),
+                str(hyperparameters.confidence_threshold),
                 "--iou-thres",
-                str(iou_threshold),
+                str(hyperparameters.iou_threshold),
                 "--device",
                 str(hyperparameters.device),
                 "--save-txt",

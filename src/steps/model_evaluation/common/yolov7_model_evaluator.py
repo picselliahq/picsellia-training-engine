@@ -35,10 +35,8 @@ def yolov7_model_context_evaluator(
     label_path_to_mask_paths = model_context_predictor.run_inference(
         image_paths=image_paths,
         hyperparameters=context.hyperparameters,
-        confidence_threshold=0.1,
-        iou_threshold=0.45,
     )
-    picsellia_classifications_predictions = model_context_predictor.post_process(
+    picsellia_polygons_predictions = model_context_predictor.post_process(
         label_path_to_mask_paths=label_path_to_mask_paths,
         dataset_context=dataset_context,
     )
@@ -46,6 +44,4 @@ def yolov7_model_context_evaluator(
     model_evaluator = ModelEvaluator(
         experiment=context.experiment, inference_type=model_context.model_version.type
     )
-    model_evaluator.evaluate(
-        picsellia_predictions=picsellia_classifications_predictions
-    )
+    model_evaluator.evaluate(picsellia_predictions=picsellia_polygons_predictions)
