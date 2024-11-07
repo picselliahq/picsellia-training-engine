@@ -1,12 +1,9 @@
 import os
 import subprocess
-import sys
-import time
 
 from picsellia import Experiment
 
 from src.models.dataset.common.yolov7_dataset_collection import Yolov7DatasetCollection
-from src.models.model.common.model_context import ModelContext
 from src.models.model.yolov7_model_context import Yolov7ModelContext
 from src.models.parameters.training.yolov7.yolov7_hyper_parameters import (
     Yolov7HyperParameters,
@@ -47,62 +44,69 @@ class Yolov7ModelContextTrainer:
         host: str,
         experiment_id: str,
     ):
-        train_file_path = os.path.abspath("src/pipelines/yolov7_segmentation/yolov7/seg/segment/train.py")
-        
+        if not self.model_context.pretrained_weights_path or not os.path.exists(
+            self.model_context.pretrained_weights_path
+        ):
+            raise ValueError("Pretrained weights file not found.")
+
+        if not self.model_context.config_path or not os.path.exists(
+            self.model_context.config_path
+        ):
+            raise ValueError("Configuration file not found.")
+
+        if not self.model_context.hyperparameters_path or not os.path.exists(
+            self.model_context.hyperparameters_path
+        ):
+            raise ValueError("Hyperparameters file not found.")
+
+        if not dataset_collection.config_path or not os.path.exists(
+            dataset_collection.config_path
+        ):
+            raise ValueError("Dataset configuration file not found.")
+
+        if not self.model_context.results_dir or not os.path.exists(
+            self.model_context.results_dir
+        ):
+            raise ValueError("Results directory not found.")
+
+        train_file_path = os.path.abspath(
+            "src/pipelines/yolov7_segmentation/yolov7/seg/segment/train.py"
+        )
+
         command = [
             "python3.10",
-        
             train_file_path,
-        
             "--weights",
             self.model_context.pretrained_weights_path,
-        
             "--cfg",
             self.model_context.config_path,
-        
             "--data",
             dataset_collection.config_path,
-        
             "--hyp",
             self.model_context.hyperparameters_path,
-        
             "--epochs",
             str(hyperparameters.epochs),
-        
             "--batch-size",
             str(hyperparameters.batch_size),
-        
             "--img-size",
             str(hyperparameters.image_size),
-        
             "--device",
             str(hyperparameters.device),
-        
             "--project",
             os.path.join(self.model_context.results_dir, "training"),
-        
             "--name",
             self.model_context.model_name,
-            
             "--api_token",
             api_token,
-            
             "--organization_id",
             organization_id,
-            
             "--host",
             host,
-            
             "--experiment_id",
             experiment_id,
         ]
 
-        process = subprocess.Popen(
-            command,
-            stdout=None,
-            stderr=None,
-            text=True
-        )
+        process = subprocess.Popen(command, stdout=None, stderr=None, text=True)
 
         return_code = process.wait()
         if return_code != 0:
