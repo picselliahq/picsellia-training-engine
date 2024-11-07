@@ -6,13 +6,14 @@ from picsellia import ModelVersion, Label
 
 import yaml
 
+
 def find_latest_run_dir(dir):
     """
     Finds the latest run directory in the given directory.
     """
     run_dirs = os.listdir(dir)
     processed_run_dirs = {}
-    
+
     for run_dir in run_dirs:
         run_id = -1
         if "-" in run_dir:
@@ -20,10 +21,10 @@ def find_latest_run_dir(dir):
                 run_id = int(run_dir.split("-")[1])
             except ValueError:
                 pass
-        
+
         while run_id in processed_run_dirs:
             run_id -= 1
-            
+
         processed_run_dirs[run_id] = run_dir
 
     return processed_run_dirs[max(processed_run_dirs)]
