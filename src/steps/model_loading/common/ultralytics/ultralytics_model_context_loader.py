@@ -18,7 +18,9 @@ from src.models.steps.model_loading.common.ultralytics.ultralytics_model_context
 
 
 @step
-def ultralytics_model_context_loader(model_context: ModelContext) -> ModelContext:
+def ultralytics_model_context_loader(
+    model_context: ModelContext, weights_path_to_load: str
+) -> ModelContext:
     """
     Loads an Ultralytics model from pretrained weights if available.
 
@@ -40,17 +42,15 @@ def ultralytics_model_context_loader(model_context: ModelContext) -> ModelContex
         UltralyticsHyperParameters, UltralyticsAugmentationParameters, ExportParameters
     ] = Pipeline.get_active_context()
 
-    if model_context.pretrained_weights_path and os.path.exists(
-        model_context.pretrained_weights_path
-    ):
+    if os.path.exists(weights_path_to_load):
         loaded_model = ultralytics_load_model(
-            weights_path_to_load=model_context.pretrained_weights_path,
+            weights_path_to_load=weights_path_to_load,
             device=context.hyperparameters.device,
         )
         model_context.set_loaded_model(loaded_model)
     else:
         raise FileNotFoundError(
-            f"Pretrained model file not found at {model_context.pretrained_weights_path}. Cannot load model."
+            f"Pretrained model file not found at {weights_path_to_load}. Cannot load model."
         )
 
     return model_context
