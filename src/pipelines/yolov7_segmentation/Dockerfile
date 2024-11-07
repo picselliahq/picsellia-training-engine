@@ -24,7 +24,6 @@ RUN cd /experiment/src/pipelines/yolov7_segmentation && git clone https://github
 
 COPY ./src/pipelines/yolov7_segmentation/yolov7_changes/ /experiment/src/pipelines/yolov7_segmentation/yolov7/seg/
 
-
-ENV PYTHONPATH=":/experiment/src"
+ENV PYTHONPATH=".:/experiment/src/pipelines/yolov7_segmentation/yolov7/seg:/experiment/src"
 
 ENTRYPOINT ["run", "python3.10", "src/pipelines/yolov7_segmentation/training_pipeline.py"]
