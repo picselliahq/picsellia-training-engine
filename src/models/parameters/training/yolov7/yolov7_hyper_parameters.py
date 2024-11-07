@@ -57,3 +57,9 @@ class Yolov7HyperParameters(HyperParameters):
         self.loss_ota = self.extract_parameter(
             keys=["loss_ota"], expected_type=int, default=1
         )
+        self.confidence_threshold = self.extract_parameter(
+            keys=["confidence_threshold"], expected_type=float, default=0.1
+        )
+        self.iou_threshold = self.extract_parameter(
+            keys=["iou_threshold"], expected_type=float, default=0.45
+        )
