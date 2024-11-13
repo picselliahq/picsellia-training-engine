@@ -61,10 +61,7 @@ class LogTailer:
                 wait_for_done = False
             if not self.progress_bar:
                 is_first_line = True
-            else:
-                self.progress_bar[-1] += "\r"
-            self.progress_bar.append(line)
-            line = "".join(self.progress_bar)
+            self.progress_bar = [line]
 
             if "100%" in line:
                 wait_for_done = True
