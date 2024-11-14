@@ -58,7 +58,7 @@ class ModelEvaluator:
         """
         for prediction in picsellia_predictions:
             self.add_evaluation(prediction)
-        self.experiment.compute_evaluations_metrics()
+        self.experiment.compute_evaluations_metrics(inference_type=self.inference_type)
 
     def add_evaluation(
         self,
