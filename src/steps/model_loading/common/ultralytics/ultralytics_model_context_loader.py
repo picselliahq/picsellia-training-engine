@@ -4,7 +4,9 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.model.common.model_context import ModelContext
+from src.models.model.ultralytics.ultralytics_model_context import (
+    UltralyticsModelContext,
+)
 from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
     UltralyticsAugmentationParameters,
@@ -19,8 +21,8 @@ from src.models.steps.model_loading.common.ultralytics.ultralytics_model_context
 
 @step
 def ultralytics_model_context_loader(
-    model_context: ModelContext, weights_path_to_load: str
-) -> ModelContext:
+    model_context: UltralyticsModelContext, weights_path_to_load: str
+) -> UltralyticsModelContext:
     """
     Loads an Ultralytics model from pretrained weights if available.
 

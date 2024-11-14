@@ -3,7 +3,9 @@ from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
 from src.models.dataset.common.dataset_context import TDatasetContext
-from src.models.model.common.model_context import ModelContext
+from src.models.model.ultralytics.ultralytics_model_context import (
+    UltralyticsModelContext,
+)
 from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
     UltralyticsAugmentationParameters,
@@ -19,7 +21,7 @@ from src.models.steps.model_prediction.common.ultralytics.classification_model_c
 
 @step
 def ultralytics_model_context_evaluator(
-    model_context: ModelContext,
+    model_context: UltralyticsModelContext,
     dataset_context: TDatasetContext,
 ) -> None:
     """
