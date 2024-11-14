@@ -88,6 +88,7 @@ class DatasetCollection(Generic[TDatasetContext]):
         """
         for dataset_context in self:
             # Download dataset assets (images) into 'images' directory
+            print(f"Downloading assets for {dataset_context.dataset_name}")
             dataset_context.download_assets(
                 destination_path=os.path.join(
                     destination_path, dataset_context.dataset_name, "images"
@@ -97,6 +98,9 @@ class DatasetCollection(Generic[TDatasetContext]):
             )
 
             # Download annotations (COCO format) into 'annotations' directory
+            print(
+                f"Downloading and building COCO file for {dataset_context.dataset_name}"
+            )
             dataset_context.download_and_build_coco_file(
                 destination_path=os.path.join(
                     destination_path, dataset_context.dataset_name, "annotations"
