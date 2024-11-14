@@ -5,6 +5,8 @@ from picsellia import ModelVersion, Label
 
 from src.models.model.common.model_downloader import ModelDownloader
 
+from picsellia import Experiment
+
 
 class ModelContext:
     """
@@ -147,6 +149,16 @@ class ModelContext:
                 )
             else:
                 downloader.download_and_process(model_file, self.weights_dir)
+
+    def save_artifact_to_experiment(
+        self, experiment: Experiment, artifact_name: str, artifact_path: str
+    ) -> None:
+        if not os.path.exists(artifact_path):
+            raise ValueError(f"Artifact path {artifact_path} does not exist.")
+        experiment.store(
+            name=artifact_name,
+            path=artifact_path,
+        )
 
 
 TModelContext = TypeVar("TModelContext", bound=ModelContext)
