@@ -4,9 +4,11 @@ from typing import List
 from ultralytics.engine.results import Results
 
 from src.models.dataset.common.dataset_context import TDatasetContext
-from src.models.model.common.model_context import ModelContext
 from src.models.model.common.picsellia_prediction import (
     PicselliaClassificationPrediction,
+)
+from src.models.model.ultralytics.ultralytics_model_context import (
+    UltralyticsModelContext,
 )
 from src.models.steps.model_prediction.common.model_context_predictor import (
     ModelContextPredictor,
@@ -14,7 +16,7 @@ from src.models.steps.model_prediction.common.model_context_predictor import (
 
 
 class UltralyticsClassificationModelContextPredictor(
-    ModelContextPredictor[ModelContext]
+    ModelContextPredictor[UltralyticsModelContext]
 ):
     """
     A predictor class that handles model inference and result post-processing for classification tasks
@@ -24,7 +26,7 @@ class UltralyticsClassificationModelContextPredictor(
     the predictions to generate PicselliaClassificationPrediction objects for classification tasks.
     """
 
-    def __init__(self, model_context: ModelContext):
+    def __init__(self, model_context: UltralyticsModelContext):
         """
         Initializes the UltralyticsClassificationModelContextPredictor with a provided model context.
 
