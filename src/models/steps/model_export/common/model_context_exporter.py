@@ -1,8 +1,9 @@
 import os
 from abc import abstractmethod
+from typing import Any
 
 from picsellia import Experiment
-from src.models.model.common.model_context import ModelContext
+from src.models.model.common.model_context import TModelContext
 
 
 class ModelContextExporter:
@@ -19,7 +20,7 @@ class ModelContextExporter:
         experiment (Experiment): The experiment to which the model is related.
     """
 
-    def __init__(self, model_context: ModelContext, experiment: Experiment):
+    def __init__(self, model_context: TModelContext, experiment: Experiment):
         """
         Initializes the ModelContextExporter with the given model context and experiment.
 
@@ -32,7 +33,10 @@ class ModelContextExporter:
 
     @abstractmethod
     def export_model_context(
-        self, exported_model_destination_path: str, export_format: str
+        self,
+        exported_model_destination_path: str,
+        export_format: str,
+        hyperparameters: Any,
     ):
         """
         Abstract method to export the model context.
