@@ -2,6 +2,7 @@ from typing import Dict
 from picsellia import DatasetVersion, Label, Experiment
 
 from picsellia.types.enums import LogType
+from picsellia.exceptions import ResourceNotFoundError
 
 from picsellia_annotations.coco import COCOFile
 
@@ -34,9 +35,13 @@ def log_labelmap(labelmap: Dict[str, Label], experiment: Experiment, log_name: s
         log_name (str): The name under which the label map will be logged.
     """
     labelmap_to_log = {str(i): label for i, label in enumerate(labelmap.keys())}
-    experiment.log(
-        name=log_name, data=labelmap_to_log, type=LogType.LABELMAP, replace=True
-    )
+    try:
+        picsellia_labelmap = experiment.get_log(name=log_name)
+        picsellia_labelmap.update(data=labelmap_to_log)
+    except ResourceNotFoundError:
+        experiment.log(
+            name=log_name, data=labelmap_to_log, type=LogType.LABELMAP, replace=True
+        )
 
 
 def get_objects_distribution(coco_file: COCOFile) -> Dict:
