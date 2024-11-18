@@ -12,3 +12,6 @@ class ProcessingBoundingBoxCropperParameters(Parameters):
             keys=["label_name_to_extract"], expected_type=str
         )
         self.data_tag = self.extract_parameter(keys=["data_tag"], expected_type=str)
+        self.fix_annotation = self.extract_parameter(
+            keys=["fix_annotation"], expected_type=bool, default=True
+        )

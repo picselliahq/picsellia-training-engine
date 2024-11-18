@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional
 from src.models.contexts.common.picsellia_context import PicselliaContext
 from picsellia.types.enums import ProcessingType
 from picsellia import DatasetVersion, ModelVersion
-from picsellia.types.enums import ProcessingType
 
 
 class TestPicselliaProcessingContext(PicselliaContext):
@@ -20,6 +19,7 @@ class TestPicselliaProcessingContext(PicselliaContext):
         input_dataset_version_id: Optional[str] = None,
         output_dataset_version_id: Optional[str] = None,
         use_id: Optional[bool] = True,
+        download_annotations: Optional[bool] = True,
         model_version_id: Optional[str] = None,
         processing_parameters=None,
     ):
@@ -42,6 +42,7 @@ class TestPicselliaProcessingContext(PicselliaContext):
             self.model_version = self.get_model_version()
         self.processing_parameters = processing_parameters
         self.use_id = use_id
+        self.download_annotations = download_annotations
 
     def get_dataset_version(self, dataset_version_id) -> DatasetVersion:
         """

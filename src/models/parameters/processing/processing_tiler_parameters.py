@@ -1,4 +1,9 @@
+from typing import Union
+
 from src.models.parameters.common.parameters import Parameters
+from src.models.steps.processing.dataset_version_creation.tiler_processing.base_tiler_processing import (
+    TileMode,
+)
 
 
 class ProcessingTilerParameters(Parameters):
@@ -27,11 +32,34 @@ class ProcessingTilerParameters(Parameters):
             default=0.1,
             range_value=(0, 0.99),
         )
-        self.min_area_ratio = self.extract_parameter(
-            keys=["min_area_ratio"],
-            expected_type=float,
-            default=0.1,
+        self.min_annotation_area_ratio = self.extract_parameter(
+            keys=["min_annotation_area_ratio", "min_area_ratio"],
+            expected_type=Union[float, None],
+            default=None,
             range_value=(0, 0.99),
+        )
+        self.min_annotation_width = self.extract_parameter(
+            keys=["min_annotation_width"],
+            expected_type=Union[int, None],
+            default=None,
+            range_value=(0, float("inf")),
+        )
+        self.min_annotation_height = self.extract_parameter(
+            keys=["min_annotation_height"],
+            expected_type=Union[int, None],
+            default=None,
+            range_value=(0, float("inf")),
+        )
+        self.tiling_mode = self.extract_parameter(
+            keys=["tiling_mode", "mode"],
+            expected_type=TileMode,
+            default=TileMode.CONSTANT,
+        )
+        self.padding_color_value = self.extract_parameter(
+            keys=["padding_color_value"],
+            expected_type=int,
+            default=114,
+            range_value=(0, 255),
         )
         self.fix_annotation = self.extract_parameter(
             keys=["fix_annotation"], expected_type=bool, default=True

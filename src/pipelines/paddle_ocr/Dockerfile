@@ -40,6 +40,6 @@ COPY ./src/pipelines/paddle_ocr ./src/pipelines/paddle_ocr
 
 RUN cd /experiment/src/pipelines/paddle_ocr && git clone https://github.com/PaddlePaddle/PaddleOCR.git --branch release/2.8
 
-ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
+ENV PYTHONPATH=":/experiment/src"
 
 ENTRYPOINT ["run", "python3.10", "src/pipelines/paddle_ocr/training_pipeline.py"]

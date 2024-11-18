@@ -18,6 +18,6 @@ COPY ./src/steps ./src/steps
 COPY ./src/*.py ./src
 COPY ./src/pipelines/bounding_box_cropper ./src/pipelines/bounding_box_cropper
 
-ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
+ENV PYTHONPATH=":/experiment/src"
 
 ENTRYPOINT ["run", "python3.10", "src/pipelines/bounding_box_cropper/processing_pipeline.py"]

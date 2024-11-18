@@ -7,7 +7,7 @@ from picsellia.sdk.asset import MultiAsset
 from picsellia.services.error_manager import ErrorManager
 from picsellia.types.enums import InferenceType
 
-from src.models.contexts.picsellia_context import PicselliaContext
+from src.models.contexts.common.picsellia_context import PicselliaContext
 
 
 def get_multi_asset(dataset_version: DatasetVersion) -> MultiAsset:

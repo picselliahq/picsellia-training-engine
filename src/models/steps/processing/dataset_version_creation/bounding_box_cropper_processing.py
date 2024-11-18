@@ -4,38 +4,50 @@ from PIL import Image
 from picsellia.types.enums import InferenceType
 from picsellia_annotations.coco import Annotation
 
-from src.models.dataset.processing.processing_dataset_collection import (
-    ProcessingDatasetCollection,
-)
+from src.models.dataset.common.dataset_collection import DatasetCollection
 
 
 class BoundingBoxCropperProcessing:
     """
     This class is used to extract bounding boxes from images in a dataset version for a specific label.
+
+    It processes the images in the input dataset version to extract the bounding boxes for the specified label.
+    The extracted images are saved to the output dataset version.
+
+    Attributes:
+        dataset_collection (DatasetCollection): The dataset collection containing the input and output dataset versions.
+        label_name_to_extract (str): The name of the label to extract the bounding boxes for.
     """
 
     def __init__(
         self,
-        dataset_collection: ProcessingDatasetCollection,
+        dataset_collection: DatasetCollection,
         label_name_to_extract: str,
     ):
         self.dataset_collection = dataset_collection
         self.label_name_to_extract = label_name_to_extract
 
     def _update_output_dataset_version(self):
+        """
+        Updates the output dataset version with the description and type.
+        """
         output_dataset_type = InferenceType.CLASSIFICATION
+        input_dataset_context = self.dataset_collection["input"]
         output_dataset_description = (
             f"Dataset extracted from dataset version "
-            f"'{self.dataset_collection.input.dataset_version.version}' "
-            f"(id: {self.dataset_collection.input.dataset_version.id}) in dataset "
-            f"'{self.dataset_collection.input.dataset_version.name}' with label '{self.label_name_to_extract}'."
+            f"'{input_dataset_context.dataset_version.version}' "
+            f"(id: {input_dataset_context.dataset_version.id}) in dataset "
+            f"'{input_dataset_context.dataset_version.name}' with label '{self.label_name_to_extract}'."
         )
-        self.dataset_collection.output.dataset_version.update(
+        self.dataset_collection["output"].dataset_version.update(
             description=output_dataset_description, type=output_dataset_type
         )
 
     def _process_dataset_collection(self):
-        for image_filename in os.listdir(self.dataset_collection.input.image_dir):
+        """
+        Processes the images in the input dataset version to extract the bounding boxes for the specified label.
+        """
+        for image_filename in os.listdir(self.dataset_collection["input"].images_dir):
             self._process_image(image_filename)
 
     def _process_image(self, image_filename: str) -> None:
@@ -46,25 +58,29 @@ class BoundingBoxCropperProcessing:
             image_filename (str): The filename of the image to process.
         """
         image_filepath = os.path.join(
-            self.dataset_collection.input.image_dir, image_filename
+            self.dataset_collection["input"].images_dir, image_filename
         )
         image = Image.open(image_filepath)
         coco_files_image_ids = [
             coco_file_image.id
-            for coco_file_image in self.dataset_collection.input.coco_file.images
+            for coco_file_image in self.dataset_collection["input"].coco_file.images
             if coco_file_image.file_name == image_filename
         ]
         if coco_files_image_ids:
             image_id_coco_file = coco_files_image_ids[0]
             coco_file_annotations = [
                 coco_file_annotation
-                for coco_file_annotation in self.dataset_collection.input.coco_file.annotations
+                for coco_file_annotation in self.dataset_collection[
+                    "input"
+                ].coco_file.annotations
                 if coco_file_annotation.image_id == image_id_coco_file
             ]
             for coco_file_annotation in coco_file_annotations:
                 label = [
                     category.name
-                    for category in self.dataset_collection.input.coco_file.categories
+                    for category in self.dataset_collection[
+                        "input"
+                    ].coco_file.categories
                     if category.id == coco_file_annotation.category_id
                 ][0]
                 if label == self.label_name_to_extract:
@@ -93,7 +109,7 @@ class BoundingBoxCropperProcessing:
         extracted_image = image.crop((x, y, x + width, y + height))
 
         label_folder = os.path.join(
-            self.dataset_collection.output.image_dir, self.label_name_to_extract
+            self.dataset_collection["output"].images_dir, self.label_name_to_extract
         )
         os.makedirs(label_folder, exist_ok=True)
 
@@ -102,7 +118,7 @@ class BoundingBoxCropperProcessing:
 
         extracted_image.save(processed_image_filepath)
 
-    def process(self) -> ProcessingDatasetCollection:
+    def process(self) -> DatasetCollection:
         """
         Processes the images in the dataset version to extract the bounding boxes for the specified label and adds them to the output dataset version.
         """

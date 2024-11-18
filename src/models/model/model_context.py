@@ -1,10 +1,9 @@
 import os
 import tarfile
 import zipfile
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from picsellia import ModelFile
-from picsellia import ModelVersion, Label
+from picsellia import Label, ModelFile, ModelVersion
 
 
 class ModelDownloader:

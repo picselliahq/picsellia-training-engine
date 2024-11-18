@@ -7,7 +7,7 @@ from src.models.contexts.processing.picsellia_processing_context import (
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,
 )
-from src.steps.model_loader.processing.processing_diversified_data_extractor_model_loader import (
+from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
     SupportedEmbeddingModels,
     is_embedding_model_name_valid,
 )

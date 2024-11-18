@@ -36,6 +36,9 @@ class HyperParameters(Parameters):
             expected_type=float,
             default=0.8,
         )
+        self.device = self.extract_parameter(
+            keys=["device"], expected_type=str, default="cuda:0"
+        )
 
 
 THyperParameters = TypeVar("THyperParameters", bound=HyperParameters)

@@ -6,10 +6,6 @@ import os
 import time
 
 import torch
-from loguru import logger
-from picsellia.types.enums import LogType
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.tensorboard import SummaryWriter
 from YOLOX.yolox.data import DataPrefetcher
 from YOLOX.yolox.exp import Exp
 from YOLOX.yolox.utils import (
@@ -31,6 +27,10 @@ from YOLOX.yolox.utils import (
     setup_logger,
     synchronize,
 )
+from loguru import logger
+from picsellia.types.enums import LogType
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Trainer:
@@ -226,19 +226,19 @@ class Trainer:
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
 
+        for k, v in self.metrics_dict.items():
+            try:
+                self.picsellia_experiment.log(
+                    name="train/" + k, type=LogType.LINE, data=float(v[0])
+                )
+            except Exception as e:
+                logger.info(
+                    f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}"
+                )
+
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
-
-            for k, v in self.metrics_dict.items():
-                try:
-                    self.picsellia_experiment.log(
-                        name="train/" + k, type=LogType.LINE, data=float(v[0])
-                    )
-                except Exception as e:
-                    logger.info(
-                        f"Couldn't log metric {'train/' + k} to Picsellia because: {str(e)}"
-                    )
 
         self.metrics_dict = {}
 

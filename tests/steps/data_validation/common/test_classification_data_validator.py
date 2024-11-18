@@ -4,7 +4,7 @@ from unittest.mock import patch
 from picsellia.types.enums import InferenceType
 
 from src.steps.data_validation.common.classification_data_validator import (
-    classification_data_validator,
+    classification_dataset_collection_validator,
 )
 
 
@@ -18,7 +18,7 @@ class TestDataValidator:
             dataset_collection = mock_dataset_collection(
                 dataset_type=InferenceType.CLASSIFICATION
             )
-            classification_data_validator.entrypoint(
+            classification_dataset_collection_validator.entrypoint(
                 dataset_collection=dataset_collection
             )
             assert mocked_validate.call_count == 3
