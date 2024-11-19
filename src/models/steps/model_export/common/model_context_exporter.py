@@ -1,12 +1,12 @@
 import os
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Generic
 
 from picsellia import Experiment
 from src.models.model.common.model_context import TModelContext
 
 
-class ModelContextExporter:
+class ModelContextExporter(Generic[TModelContext]):
     """
     Base class for exporting and saving a model context.
 
