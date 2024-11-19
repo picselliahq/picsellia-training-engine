@@ -1,10 +1,14 @@
 import os
 from typing import Generic, List, Optional, Iterator
 
-from src.models.dataset.common.dataset_context import TDatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-class DatasetCollection(Generic[TDatasetContext]):
+class DatasetCollection(Generic[TBaseDatasetContext]):
     """
     A collection of dataset contexts for different splits of a dataset.
 
@@ -19,7 +23,7 @@ class DatasetCollection(Generic[TDatasetContext]):
         dataset_path (Optional[str]): The common file path for all dataset splits. Initialized after calling `download_all`.
     """
 
-    def __init__(self, datasets: List[TDatasetContext]):
+    def __init__(self, datasets: List[TBaseDatasetContext]):
         """
         Initializes the collection with a list of dataset contexts.
 
@@ -29,7 +33,7 @@ class DatasetCollection(Generic[TDatasetContext]):
         self.datasets = {dataset.dataset_name: dataset for dataset in datasets}
         self.dataset_path: Optional[str] = None
 
-    def __getitem__(self, key: str) -> TDatasetContext:
+    def __getitem__(self, key: str) -> TBaseDatasetContext:
         """
         Retrieves a dataset context by its name.
 
@@ -44,7 +48,7 @@ class DatasetCollection(Generic[TDatasetContext]):
         """
         return self.datasets[key]
 
-    def __setitem__(self, key: str, value: TDatasetContext):
+    def __setitem__(self, key: str, value: TBaseDatasetContext):
         """
         Sets or updates a dataset context in the collection.
 
@@ -54,7 +58,7 @@ class DatasetCollection(Generic[TDatasetContext]):
         """
         self.datasets[key] = value
 
-    def __iter__(self) -> Iterator[TDatasetContext]:
+    def __iter__(self) -> Iterator[TBaseDatasetContext]:
         """
         Iterates over all dataset contexts in the collection.
 
@@ -65,9 +69,10 @@ class DatasetCollection(Generic[TDatasetContext]):
 
     def download_all(
         self,
-        destination_path: str,
-        use_id: Optional[bool] = None,
-        skip_asset_listing: bool = False,
+        images_destination_path: str,
+        annotations_destination_path: str,
+        use_id: Optional[bool] = True,
+        skip_asset_listing: Optional[bool] = False,
     ) -> None:
         """
         Downloads all assets and annotations for every dataset context in the collection.
@@ -87,27 +92,19 @@ class DatasetCollection(Generic[TDatasetContext]):
             `val/images`, `val/annotations`) under the specified `destination_path`.
         """
         for dataset_context in self:
-            # Download dataset assets (images) into 'images' directory
-            print(f"Downloading assets for {dataset_context.dataset_name}")
+            logger.info(f"Downloading assets for {dataset_context.dataset_name}")
             dataset_context.download_assets(
                 destination_path=os.path.join(
-                    destination_path, dataset_context.dataset_name, "images"
+                    images_destination_path, dataset_context.dataset_name
                 ),
                 use_id=use_id,
                 skip_asset_listing=skip_asset_listing,
             )
 
-            # Download annotations (COCO format) into 'annotations' directory
-            print(
-                f"Downloading and building COCO file for {dataset_context.dataset_name}"
-            )
-            dataset_context.download_and_build_coco_file(
+            logger.info(f"Downloading annotations for {dataset_context.dataset_name}")
+            dataset_context.download_annotations(
                 destination_path=os.path.join(
-                    destination_path, dataset_context.dataset_name, "annotations"
+                    annotations_destination_path, dataset_context.dataset_name
                 ),
                 use_id=use_id,
-                skip_asset_listing=skip_asset_listing,
             )
-
-        # Set the common dataset path for all splits
-        self.dataset_path = destination_path
