@@ -85,7 +85,6 @@ class PicselliaPolygon:
         self.value = points
 
 
-
 @dataclass
 class PicselliaClassificationPrediction:
     """
