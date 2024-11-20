@@ -1,8 +1,8 @@
 import os
 
 from src import step, Pipeline
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.dataset.common.paddle_ocr_dataset_context import PaddleOCRDatasetContext
 from src.models.steps.data_preparation.training.paddle_ocr_dataset_context_preparator import (
     PaddleOCRDatasetContextPreparator,
@@ -11,7 +11,7 @@ from src.models.steps.data_preparation.training.paddle_ocr_dataset_context_prepa
 
 @step
 def paddle_ocr_dataset_collection_preparator(
-    dataset_collection: DatasetCollection[DatasetContext],
+    dataset_collection: DatasetCollection[CocoDatasetContext],
 ) -> DatasetCollection[PaddleOCRDatasetContext]:
     """
     Prepares and organizes a dataset collection for PaddleOCR training.
@@ -22,7 +22,7 @@ def paddle_ocr_dataset_collection_preparator(
     The organized datasets are then stored in a new `DatasetCollection` with `PaddleOCRDatasetContext` types.
 
     Args:
-        dataset_collection (DatasetCollection[DatasetContext]): The original dataset collection containing 'train', 'val', and 'test' splits.
+        dataset_collection (DatasetCollection[CocoDatasetContext]): The original dataset collection containing 'train', 'val', and 'test' splits.
 
     Returns:
         DatasetCollection[PaddleOCRDatasetContext]: A new dataset collection where each dataset is organized for PaddleOCR,
