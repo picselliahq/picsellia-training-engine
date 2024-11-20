@@ -1,14 +1,12 @@
 import os
 from typing import Optional
 
-from src import Pipeline
-from src import step
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src import Pipeline, step
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
-
 from src.models.steps.data_extraction.processing.processing_dataset_collection_extractor import (
     ProcessingDatasetCollectionExtractor,
 )
@@ -47,7 +45,7 @@ def processing_dataset_context_extractor(
     Returns:
         DatasetContext: The dataset context prepared for processing, including all downloaded assets and annotations.
     """
-    context: PicselliaProcessingContext = Pipeline.get_active_context()
+    context: PicselliaDatasetProcessingContext = Pipeline.get_active_context()
     dataset_context = DatasetContext(
         dataset_name="input",
         dataset_version=context.input_dataset_version,
@@ -92,7 +90,7 @@ def processing_dataset_collection_extractor(
     Returns:
         DatasetCollection: The dataset collection prepared for processing, including all downloaded assets and annotations.
     """
-    context: PicselliaProcessingContext = Pipeline.get_active_context()
+    context: PicselliaDatasetProcessingContext = Pipeline.get_active_context()
     dataset_collection_extractor = ProcessingDatasetCollectionExtractor(
         input_dataset_version=context.input_dataset_version,
         output_dataset_version=context.output_dataset_version,

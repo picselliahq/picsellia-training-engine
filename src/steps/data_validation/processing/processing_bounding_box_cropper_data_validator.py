@@ -1,7 +1,6 @@
-from src import Pipeline
-from src import step
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src import Pipeline, step
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
@@ -30,7 +29,7 @@ def bounding_box_cropper_data_validator(
     Returns:
         DatasetContext: The validated dataset context, ready for further processing.
     """
-    context: PicselliaProcessingContext[
+    context: PicselliaDatasetProcessingContext[
         ProcessingBoundingBoxCropperParameters
     ] = Pipeline.get_active_context()
 

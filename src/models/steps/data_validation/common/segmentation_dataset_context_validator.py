@@ -1,5 +1,7 @@
 from typing import Union
+
 from picsellia_annotations.coco import Annotation
+
 from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
@@ -53,7 +55,10 @@ class SegmentationDatasetContextValidator(DatasetContextValidator):
         Raises:
             ValueError: If the dataset context has no images with polygons.
         """
-        if not self.dataset_context.coco_file.annotations:
+        if (
+            self.dataset_context.coco_file
+            and not self.dataset_context.coco_file.annotations
+        ):
             raise ValueError(
                 f"Dataset {self.dataset_context.dataset_name} must have at least 1 image with polygons."
             )

@@ -1,8 +1,8 @@
 # type: ignore
 
 from src import pipeline
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingTilerParameters,
@@ -21,8 +21,8 @@ from src.steps.processing.dataset_version_creation.tiler_processing import (
 )
 
 
-def get_context() -> PicselliaProcessingContext[ProcessingTilerParameters]:
-    return PicselliaProcessingContext(
+def get_context() -> PicselliaDatasetProcessingContext[ProcessingTilerParameters]:
+    return PicselliaDatasetProcessingContext(
         processing_parameters_cls=ProcessingTilerParameters,
     )
 

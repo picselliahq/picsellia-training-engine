@@ -11,8 +11,8 @@ from torch._C._te import Tensor
 from torchvision.transforms import transforms
 
 from src import Pipeline, step
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,
@@ -73,7 +73,7 @@ def is_embedding_model_name_valid(
 
 @step
 def diversified_data_extractor_model_loader(pretrained_weights: str) -> EmbeddingModel:
-    context: PicselliaProcessingContext[
+    context: PicselliaDatasetProcessingContext[
         ProcessingDiversifiedDataExtractorParameters
     ] = Pipeline.get_active_context()
 

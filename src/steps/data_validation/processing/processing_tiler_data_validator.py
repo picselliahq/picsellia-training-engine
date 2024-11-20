@@ -1,8 +1,8 @@
 from picsellia.types.enums import InferenceType
 
 from src import Pipeline, step
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_tiler_parameters import (
@@ -29,7 +29,7 @@ from src.models.steps.data_validation.processing.processing_tiler_data_validator
 def tiler_data_validator(
     dataset_context: DatasetContext,
 ) -> DatasetContext:
-    context: PicselliaProcessingContext[
+    context: PicselliaDatasetProcessingContext[
         ProcessingTilerParameters
     ] = Pipeline.get_active_context()
 

@@ -25,7 +25,6 @@ def load_yolox_weights(
     ckpt = torch.load(model_path, map_location=device)
     model.load_state_dict(ckpt["model"])
 
-    model.to(device)
     model.eval()
 
     return model
