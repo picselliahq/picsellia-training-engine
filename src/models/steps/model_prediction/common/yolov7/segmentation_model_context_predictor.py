@@ -75,6 +75,9 @@ class Yolov7SegmentationModelContextPredictor:
             for image_path in batch:
                 shutil.copy(image_path, tmp_dir)
 
+            project_dir = os.path.join(self.model_context.results_dir, "inference")
+            os.makedirs(project_dir, exist_ok=True)
+
             detect_file_path = os.path.abspath(
                 "src/pipelines/yolov7_segmentation/yolov7/seg/segment/predict.py"
             )
@@ -101,7 +104,7 @@ class Yolov7SegmentationModelContextPredictor:
                 "--save-txt",
                 "--save-conf",
                 "--project",
-                os.path.join(self.model_context.results_dir, "inference"),
+                project_dir,
                 "--name",
                 self.model_context.model_name,
                 "--exist-ok",
