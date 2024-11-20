@@ -1,12 +1,12 @@
-from typing import List
+from typing import List, Generic
 
 from PIL import Image
 
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.utils.image_file import get_images_path_list
 
 
-class DatasetContextValidator:
+class DatasetContextValidator(Generic[TBaseDatasetContext]):
     """
     Validates various aspects of a dataset context.
 
@@ -19,7 +19,9 @@ class DatasetContextValidator:
 
     VALID_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png")
 
-    def __init__(self, dataset_context: DatasetContext, fix_annotation: bool = False):
+    def __init__(
+        self, dataset_context: TBaseDatasetContext, fix_annotation: bool = False
+    ):
         """
         Initializes the DatasetContextValidator with a dataset context to validate.
 
