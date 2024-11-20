@@ -3,7 +3,7 @@ from typing import List
 
 from ultralytics.engine.results import Results
 
-from src.models.dataset.common.dataset_context import TDatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.model.common.picsellia_prediction import (
     PicselliaClassificationPrediction,
 )
@@ -36,13 +36,13 @@ class UltralyticsClassificationModelContextPredictor(
         super().__init__(model_context)
 
     def pre_process_dataset_context(
-        self, dataset_context: TDatasetContext
+        self, dataset_context: TBaseDatasetContext
     ) -> List[str]:
         """
         Prepares the dataset by extracting and returning a list of image file paths from the dataset context.
 
         Args:
-            dataset_context (TDatasetContext): The context containing the dataset information.
+            dataset_context (TBaseDatasetContext): The context containing the dataset information.
 
         Returns:
             List[str]: A list of image file paths from the dataset.
@@ -111,7 +111,7 @@ class UltralyticsClassificationModelContextPredictor(
         self,
         image_batches: List[List[str]],
         batch_results: List[Results],
-        dataset_context: TDatasetContext,
+        dataset_context: TBaseDatasetContext,
     ) -> List[PicselliaClassificationPrediction]:
         """
         Post-processes the inference results for each batch and returns a list of classification predictions.
@@ -119,7 +119,7 @@ class UltralyticsClassificationModelContextPredictor(
         Args:
             image_batches (List[List[str]]): A list of batches of image paths.
             batch_results (List[Results]): The list of inference results for each batch.
-            dataset_context (TDatasetContext): The context of the dataset used for label mapping.
+            dataset_context (TBaseDatasetContext): The context of the dataset used for label mapping.
 
         Returns:
             List[PicselliaClassificationPrediction]: A list of processed classification predictions for each image.
@@ -140,7 +140,7 @@ class UltralyticsClassificationModelContextPredictor(
         self,
         image_paths: List[str],
         batch_prediction: Results,
-        dataset_context: TDatasetContext,
+        dataset_context: TBaseDatasetContext,
     ) -> List[PicselliaClassificationPrediction]:
         """
         Post-processes the predictions for a single batch of images, mapping predicted classes and confidence scores
@@ -149,7 +149,7 @@ class UltralyticsClassificationModelContextPredictor(
         Args:
             image_paths (List[str]): The list of image paths for the batch.
             batch_prediction (Results): The inference results for the batch.
-            dataset_context (TDatasetContext): The dataset context used for label mapping.
+            dataset_context (TBaseDatasetContext): The dataset context used for label mapping.
 
         Returns:
             List[PicselliaClassificationPrediction]: A list of processed predictions, including image paths,

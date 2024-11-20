@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Generic
 
-from src.models.dataset.common.dataset_context import TDatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.model.common.model_context import TModelContext
 from src.models.model.common.picsellia_prediction import (
     PicselliaLabel,
@@ -26,14 +26,14 @@ class ModelContextPredictor(ABC, Generic[TModelContext]):
             )
 
     def get_picsellia_label(
-        self, category_name: str, dataset_context: TDatasetContext
+        self, category_name: str, dataset_context: TBaseDatasetContext
     ) -> PicselliaLabel:
         """
         Retrieves or creates a label for a given category name within the dataset context.
 
         Args:
             category_name (str): The name of the category to retrieve the label for.
-            dataset_context (TDatasetContext): The dataset context containing the label information.
+            dataset_context (TBaseDatasetContext): The dataset context containing the label information.
 
         Returns:
             PicselliaLabel: The corresponding Picsellia label for the given category.
