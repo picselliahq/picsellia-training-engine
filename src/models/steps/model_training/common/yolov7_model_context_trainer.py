@@ -69,6 +69,9 @@ class Yolov7ModelContextTrainer:
         ):
             raise ValueError("Results directory not found.")
 
+        project_dir = os.path.join(self.model_context.results_dir, "training")
+        os.makedirs(project_dir, exist_ok=True)
+
         train_file_path = os.path.abspath(
             "src/pipelines/yolov7_segmentation/yolov7/seg/segment/train.py"
         )
@@ -93,7 +96,7 @@ class Yolov7ModelContextTrainer:
             "--device",
             str(hyperparameters.device),
             "--project",
-            os.path.join(self.model_context.results_dir, "training"),
+            project_dir,
             "--name",
             self.model_context.model_name,
             "--api_token",
