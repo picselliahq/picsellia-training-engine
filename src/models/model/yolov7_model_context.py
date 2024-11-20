@@ -27,6 +27,9 @@ def find_latest_run_dir(dir):
 
         processed_run_dirs[run_id] = run_dir
 
+    if not processed_run_dirs:
+        return None
+
     return processed_run_dirs[max(processed_run_dirs)]
 
 
@@ -61,6 +64,8 @@ class Yolov7ModelContext(ModelContext):
         Args:
             destination_path (str): The directory path where the hyperparameters file will be saved.
         """
+        if not self.hyperparameters_name:
+            raise ValueError("The hyperparameters name is not set.")
         hyperparameters_file = self.model_version.get_file(
             name=self.hyperparameters_name
         )
@@ -90,9 +95,8 @@ class Yolov7ModelContext(ModelContext):
         training_dir = os.path.join(self.results_dir, "training")
         latest_run = find_latest_run_dir(training_dir)
 
-        print(f"latest_run: {latest_run}")
+        if not latest_run:
+            raise ValueError("No runs found in the training directory.")
 
         trained_weights_dir = os.path.join(training_dir, latest_run, "weights")
         self.trained_weights_path = os.path.join(trained_weights_dir, "best.pt")
-
-        print(f"trained_weights_path: {self.trained_weights_path}")
