@@ -3,10 +3,10 @@ import shutil
 from typing import Dict
 
 from picsellia_annotations.coco import Image
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 
 
-class ClassificationDatasetContextPreparator:
+class ClassificationBaseDatasetContextPreparator:
     """
     Prepares and organizes dataset images into directories based on their classification categories.
 
@@ -15,16 +15,16 @@ class ClassificationDatasetContextPreparator:
     respective category directories, which is often required for classification tasks in deep learning frameworks.
 
     Attributes:
-        dataset_context (DatasetContext): The context of the dataset including paths and COCO file.
+        dataset_context (BaseDatasetContext): The context of the dataset including paths and COCO file.
         destination_path (str): The target directory where the images will be moved and organized.
     """
 
-    def __init__(self, dataset_context: DatasetContext, destination_path: str):
+    def __init__(self, dataset_context: CocoDatasetContext, destination_path: str):
         """
         Initializes the preparator with a given dataset context and a destination directory for images.
 
         Args:
-            dataset_context (DatasetContext): The context of the dataset to organize.
+            dataset_context (BaseDatasetContext): The context of the dataset to organize.
             destination_path (str): The directory where the organized images will be stored.
 
         Raises:
@@ -38,8 +38,10 @@ class ClassificationDatasetContextPreparator:
             )
         if not self.dataset_context.images_dir:
             raise ValueError("No images directory found in the dataset context.")
+        if not self.dataset_context.coco_data:
+            raise ValueError("No COCO data loaded in the dataset context.")
 
-    def organize(self) -> DatasetContext:
+    def organize(self) -> CocoDatasetContext:
         """
         Organizes the dataset by creating category directories and moving images.
 
@@ -48,7 +50,7 @@ class ClassificationDatasetContextPreparator:
         image directory and annotations directory after moving the images.
 
         Returns:
-            DatasetContext: The updated dataset context with the new image directory.
+            CocoDatasetContext: The updated dataset context with the new image directory.
         """
         categories = self._extract_categories()
         image_categories = self._map_image_to_category()
@@ -64,30 +66,30 @@ class ClassificationDatasetContextPreparator:
 
     def _extract_categories(self) -> Dict[int, str]:
         """
-        Extracts the categories from the dataset's COCO file.
+        Extracts the categories from the dataset's COCO data.
 
         Returns:
             Dict[int, str]: A dictionary mapping category IDs to category names.
         """
-        if not self.dataset_context.coco_file:
-            raise ValueError("No COCO file found in the dataset context.")
+        if not self.dataset_context.coco_data:
+            raise ValueError("No COCO data loaded in the dataset context.")
         return {
-            category.id: category.name
-            for category in self.dataset_context.coco_file.categories
+            category["id"]: category["name"]
+            for category in self.dataset_context.coco_data.get("categories", [])
         }
 
     def _map_image_to_category(self) -> Dict[int, int]:
         """
-        Maps each image to its category based on the annotations in the COCO file.
+        Maps each image to its category based on the annotations in the COCO data.
 
         Returns:
             Dict[int, int]: A dictionary mapping image IDs to category IDs.
         """
-        if not self.dataset_context.coco_file:
-            raise ValueError("No COCO file found in the dataset context.")
+        if not self.dataset_context.coco_data:
+            raise ValueError("No COCO data loaded in the dataset context.")
         return {
-            annotation.image_id: annotation.category_id
-            for annotation in self.dataset_context.coco_file.annotations
+            annotation["image_id"]: annotation["category_id"]
+            for annotation in self.dataset_context.coco_data.get("annotations", [])
         }
 
     def _organize_images(
@@ -100,10 +102,10 @@ class ClassificationDatasetContextPreparator:
             categories (Dict[int, str]): A mapping from category IDs to category names.
             image_categories (Dict[int, int]): A mapping from image IDs to category IDs.
         """
-        if not self.dataset_context.coco_file:
-            raise ValueError("No COCO file found in the dataset context.")
-        for image in self.dataset_context.coco_file.images:
-            image_id = image.id
+        if not self.dataset_context.coco_data:
+            raise ValueError("No COCO data loaded in the dataset context.")
+        for image in self.dataset_context.coco_data.get("images", []):
+            image_id = image["id"]
             if image_id in image_categories:
                 category_id = image_categories[image_id]
                 category_name = categories[category_id]
@@ -117,17 +119,19 @@ class ClassificationDatasetContextPreparator:
 
         Args:
             category_name (str): The name of the category.
-            image (Image): The image object containing file name and metadata.
+            image (Dict[str, Any]): The image object containing file name and metadata.
 
         Raises:
             PermissionError: If there is a permission issue when creating the directory or moving the file.
             FileNotFoundError: If the source image file is not found.
             shutil.SameFileError: If the source and destination paths are the same.
         """
-        category_dir = os.path.join(self.destination_path, category_name)
-        os.makedirs(category_dir, exist_ok=True)
         if not self.dataset_context.images_dir:
             raise ValueError("No images directory found in the dataset context.")
-        src_image_path = os.path.join(self.dataset_context.images_dir, image.file_name)
-        dest_image_path = os.path.join(category_dir, image.file_name)
+        category_dir = os.path.join(self.destination_path, category_name)
+        os.makedirs(category_dir, exist_ok=True)
+        src_image_path = os.path.join(
+            self.dataset_context.images_dir, image["file_name"]
+        )
+        dest_image_path = os.path.join(category_dir, image["file_name"])
         shutil.move(src_image_path, dest_image_path)
