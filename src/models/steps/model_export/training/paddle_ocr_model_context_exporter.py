@@ -23,12 +23,11 @@ class PaddleOCRModelContextExporter(ModelContextExporter):
 
     Attributes:
         model_context (ModelContext): The context containing model configuration and paths.
-        experiment (Experiment): The Picsellia experiment associated with the model.
         config (dict): The configuration loaded from the model context's config file.
         current_pythonpath (str): The current PYTHONPATH environment variable before modifications.
     """
 
-    def __init__(self, model_context: ModelContext, experiment: Experiment):
+    def __init__(self, model_context: ModelContext):
         """
         Initializes the PaddleOCRModelContextExporter with the provided model context and experiment.
 
@@ -36,7 +35,7 @@ class PaddleOCRModelContextExporter(ModelContextExporter):
             model_context (ModelContext): The context containing the PaddleOCR model information.
             experiment (Experiment): The Picsellia experiment associated with the model export.
         """
-        super().__init__(model_context=model_context, experiment=experiment)
+        super().__init__(model_context=model_context)
         self.config = self.get_config()
         self.current_pythonpath = os.environ.get("PYTHONPATH", "")
         os.environ["PYTHONPATH"] = f".:{self.current_pythonpath}"
@@ -151,9 +150,9 @@ class PaddleOCRModelContextExporter(ModelContextExporter):
         else:
             # Update the config with model paths and save inference directory
             self.config["Global"]["pretrained_model"] = found_model_path
-            self.config["Global"][
-                "save_inference_dir"
-            ] = exported_model_destination_path
+            self.config["Global"]["save_inference_dir"] = (
+                exported_model_destination_path
+            )
             self.write_config()
 
             # Run the export process
