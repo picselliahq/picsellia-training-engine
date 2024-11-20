@@ -27,6 +27,9 @@ def find_latest_run_dir(dir):
 
         processed_run_dirs[run_id] = run_dir
 
+    if not processed_run_dirs:
+        return None
+
     return processed_run_dirs[max(processed_run_dirs)]
 
 
