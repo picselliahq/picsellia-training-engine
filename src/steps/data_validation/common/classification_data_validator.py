@@ -1,4 +1,5 @@
 from src import step
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.steps.data_validation.common.classification_dataset_context_validator import (
     ClassificationDatasetContextValidator,
@@ -10,7 +11,7 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 
 @step
 def classification_dataset_collection_validator(
-    dataset_collection: DatasetCollection,
+    dataset_collection: DatasetCollection[CocoDatasetContext],
 ) -> None:
     """
     Validates a dataset collection for classification tasks.
