@@ -1,12 +1,17 @@
-from typing import List
+from typing import List, Dict, Type
 from picsellia import DatasetVersion, Experiment
 from picsellia.exceptions import ResourceNotFoundError
+from picsellia.types.enums import LogType
 
 from src.enums import DatasetSplitName
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.dataset.common.dataset_collection import (
     DatasetCollection,
 )
-from src.models.dataset.common.dataset_context import DatasetContext
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TrainingDatasetCollectionExtractor:
@@ -33,7 +38,9 @@ class TrainingDatasetCollectionExtractor:
         self.experiment = experiment
         self.train_set_split_ratio = train_set_split_ratio
 
-    def get_dataset_collection(self, random_seed=None) -> DatasetCollection:
+    def get_dataset_collection(
+        self, context_class: Type[TBaseDatasetContext], random_seed=None
+    ) -> DatasetCollection[TBaseDatasetContext]:
         """
         Retrieves dataset versions attached to the experiment and organizes them into a DatasetCollection.
 
@@ -78,6 +85,7 @@ class TrainingDatasetCollectionExtractor:
                     f"Please attach a dataset with the alias '{DatasetSplitName.TEST.value}'."
                 ) from e
             return self._handle_three_datasets(
+                context_class=context_class,
                 train_dataset_version=train_dataset_version,
                 val_dataset_version=val_dataset_version,
                 test_dataset_version=test_dataset_version,
@@ -93,12 +101,14 @@ class TrainingDatasetCollectionExtractor:
                     f"Please attach a dataset with the alias '{DatasetSplitName.TEST.value}'."
                 ) from e
             return self._handle_two_datasets(
+                context_class=context_class,
                 train_dataset_version=train_dataset_version,
                 test_dataset_version=test_dataset_version,
                 random_seed=random_seed,
             )
         elif nb_attached_datasets == 1:
             return self._handle_one_dataset(
+                context_class=context_class,
                 train_dataset_version=train_dataset_version,
                 random_seed=random_seed,
             )
@@ -110,10 +120,11 @@ class TrainingDatasetCollectionExtractor:
 
     def _handle_three_datasets(
         self,
+        context_class: Type[TBaseDatasetContext],
         train_dataset_version: DatasetVersion,
         val_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
-    ) -> DatasetCollection:
+    ) -> DatasetCollection[TBaseDatasetContext]:
         """
         Handles the scenario where three distinct datasets (train, validation, and test) are attached to the experiment.
 
@@ -125,21 +136,34 @@ class TrainingDatasetCollectionExtractor:
         Returns:
             DatasetCollection: A collection with distinct contexts for training, validation, and testing splits.
         """
+        self.log_distribution(
+            train_dataset_version.retrieve_stats().label_repartition,
+            "train/objects_distribution",
+        )
+        self.log_distribution(
+            val_dataset_version.retrieve_stats().label_repartition,
+            "val/objects_distribution",
+        )
+        self.log_distribution(
+            test_dataset_version.retrieve_stats().label_repartition,
+            "test/objects_distribution",
+        )
+
         return DatasetCollection(
             [
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.TRAIN.value,
                     dataset_version=train_dataset_version,
                     assets=train_dataset_version.list_assets(),
                     labelmap=None,
                 ),
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.VAL.value,
                     dataset_version=val_dataset_version,
                     assets=val_dataset_version.list_assets(),
                     labelmap=None,
                 ),
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.TEST.value,
                     dataset_version=test_dataset_version,
                     assets=test_dataset_version.list_assets(),
@@ -150,10 +174,11 @@ class TrainingDatasetCollectionExtractor:
 
     def _handle_two_datasets(
         self,
+        context_class: Type[TBaseDatasetContext],
         train_dataset_version: DatasetVersion,
         test_dataset_version: DatasetVersion,
         random_seed=None,
-    ) -> DatasetCollection:
+    ) -> DatasetCollection[TBaseDatasetContext]:
         """
         Handles the scenario where two datasets are attached to the experiment, requiring a split of the first for training and validation.
 
@@ -165,25 +190,38 @@ class TrainingDatasetCollectionExtractor:
             DatasetCollection: A collection with contexts for training, validation, and testing splits, with the first dataset split for the first two.
         """
         split_ratios = self._get_split_ratios(nb_attached_datasets=2)
-        split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
+        (
+            split_assets,
+            distributions,
+            labels,
+        ) = train_dataset_version.split_into_multi_assets(
             ratios=split_ratios, random_seed=random_seed
         )
         train_assets, val_assets = split_assets
+
+        train_distribution, val_distribution = distributions
+        self.log_distribution(train_distribution, "train/objects_distribution")
+        self.log_distribution(val_distribution, "val/objects_distribution")
+        self.log_distribution(
+            test_dataset_version.retrieve_stats().label_repartition,
+            "test/objects_distribution",
+        )
+
         return DatasetCollection(
             [
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.TRAIN.value,
                     dataset_version=train_dataset_version,
                     assets=train_assets,
                     labelmap=None,
                 ),
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.VAL.value,
                     dataset_version=train_dataset_version,
                     assets=val_assets,
                     labelmap=None,
                 ),
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.TEST.value,
                     dataset_version=test_dataset_version,
                     assets=test_dataset_version.list_assets(),
@@ -194,9 +232,10 @@ class TrainingDatasetCollectionExtractor:
 
     def _handle_one_dataset(
         self,
+        context_class: Type[TBaseDatasetContext],
         train_dataset_version: DatasetVersion,
         random_seed=None,
-    ) -> DatasetCollection:
+    ) -> DatasetCollection[TBaseDatasetContext]:
         """
         Handles the scenario where a single dataset is attached to the experiment, requiring splitting into training, validation, and test splits.
 
@@ -207,25 +246,35 @@ class TrainingDatasetCollectionExtractor:
             DatasetCollection: A collection with contexts for training, validation, and testing splits, all derived from the single dataset version.
         """
         split_ratios = self._get_split_ratios(nb_attached_datasets=1)
-        split_assets, counts, labels = train_dataset_version.split_into_multi_assets(
+        (
+            split_assets,
+            distributions,
+            labels,
+        ) = train_dataset_version.split_into_multi_assets(
             ratios=split_ratios, random_seed=random_seed
         )
         train_assets, val_assets, test_assets = split_assets
+
+        train_distribution, val_distribution, test_distribution = distributions
+        self.log_distribution(train_distribution, "train/objects_distribution")
+        self.log_distribution(val_distribution, "val/objects_distribution")
+        self.log_distribution(test_distribution, "test/objects_distribution")
+
         return DatasetCollection(
             [
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.TRAIN.value,
                     dataset_version=train_dataset_version,
                     assets=train_assets,
                     labelmap=None,
                 ),
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.VAL.value,
                     dataset_version=train_dataset_version,
                     assets=val_assets,
                     labelmap=None,
                 ),
-                DatasetContext(
+                context_class(
                     dataset_name=DatasetSplitName.TEST.value,
                     dataset_version=train_dataset_version,
                     assets=test_assets,
@@ -265,3 +314,32 @@ class TrainingDatasetCollectionExtractor:
                 "Invalid number of datasets attached to the experiment: "
                 "1, 2 or 3 datasets are expected."
             )
+
+    def log_distribution(self, distribution: Dict[str, int], log_name: str) -> None:
+        """
+        Logs the label distribution into the experiment, updating it if it already exists.
+
+        Args:
+            distribution (dict): The distribution to log.
+            log_name (str): The name of the log.
+        """
+        distribution_to_log = {
+            "x": list(distribution.keys()),
+            "y": list(distribution.values()),
+        }
+
+        try:
+            picsellia_distribution = self.experiment.get_log(name=log_name)
+            picsellia_distribution.update(data=distribution_to_log)
+            logger.info(f"Updated existing log for {log_name}.")
+        except ResourceNotFoundError:
+            try:
+                self.experiment.log(
+                    name=log_name,
+                    data=distribution_to_log,
+                    type=LogType.BAR,
+                    replace=True,
+                )
+                logger.info(f"Logged new distribution for {log_name}: {distribution}")
+            except Exception as e:
+                logger.error(f"Failed to create log for {log_name}: {e}")
