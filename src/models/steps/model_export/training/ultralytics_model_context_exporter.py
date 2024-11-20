@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 
-from picsellia import Experiment
 
 from src.models.model.ultralytics.ultralytics_model_context import (
     UltralyticsModelContext,
@@ -29,15 +28,14 @@ class UltralyticsModelContextExporter(ModelContextExporter[UltralyticsModelConte
         experiment (Experiment): The experiment to which the model is associated.
     """
 
-    def __init__(self, model_context: UltralyticsModelContext, experiment: Experiment):
+    def __init__(self, model_context: UltralyticsModelContext):
         """
         Initializes an instance of UltralyticsModelContextExporter.
 
         Args:
             model_context (UltralyticsModelContext): The model context containing details about the model and paths.
-            experiment (Experiment): The experiment linked to the model context.
         """
-        super().__init__(model_context=model_context, experiment=experiment)
+        super().__init__(model_context=model_context)
         self.model_context: UltralyticsModelContext = model_context
 
     def export_model_context(

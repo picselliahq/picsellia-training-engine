@@ -20,7 +20,7 @@ class ModelContextExporter(Generic[TModelContext]):
         experiment (Experiment): The experiment to which the model is related.
     """
 
-    def __init__(self, model_context: TModelContext, experiment: Experiment):
+    def __init__(self, model_context: TModelContext):
         """
         Initializes the ModelContextExporter with the given model context and experiment.
 
@@ -29,7 +29,6 @@ class ModelContextExporter(Generic[TModelContext]):
             experiment (Experiment): The experiment object where the model will be exported.
         """
         self.model_context = model_context
-        self.experiment = experiment
 
     @abstractmethod
     def export_model_context(
@@ -51,7 +50,10 @@ class ModelContextExporter(Generic[TModelContext]):
         pass
 
     def save_model_to_experiment(
-        self, exported_weights_dir: str, exported_weights_name: str
+        self,
+        experiment: Experiment,
+        exported_weights_dir: str,
+        exported_weights_name: str,
     ):
         """
         Saves the exported model to the experiment.
@@ -74,13 +76,13 @@ class ModelContextExporter(Generic[TModelContext]):
             raise ValueError("No model files found in the exported model directory")
 
         if len(exported_files) > 1:
-            self.experiment.store(
+            experiment.store(
                 name=exported_weights_name,
                 path=exported_weights_dir,
                 do_zip=True,
             )
         else:
-            self.experiment.store(
+            experiment.store(
                 name=exported_weights_name,
                 path=os.path.join(
                     exported_weights_dir,
