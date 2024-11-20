@@ -1,5 +1,6 @@
 from picsellia import Experiment
 
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.model.ultralytics.ultralytics_callbacks import UltralyticsCallbacks
 from src.models.model.ultralytics.ultralytics_model_context import (
@@ -49,7 +50,7 @@ class UltralyticsModelContextTrainer:
 
     def train_model_context(
         self,
-        dataset_collection: DatasetCollection,
+        dataset_collection: DatasetCollection[TBaseDatasetContext],
         hyperparameters: UltralyticsHyperParameters,
         augmentation_parameters: UltralyticsAugmentationParameters,
     ) -> UltralyticsModelContext:
