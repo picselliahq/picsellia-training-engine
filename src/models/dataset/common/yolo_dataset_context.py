@@ -1,7 +1,7 @@
 import logging
 import os
 import zipfile
-from typing import Dict, Optional, Union, List
+from typing import Dict, Optional
 
 from picsellia import DatasetVersion, Label
 from picsellia.exceptions import NoDataError
@@ -32,6 +32,13 @@ def remove_empty_directories(directory: str) -> None:
 
 
 class YoloDatasetContext(BaseDatasetContext):
+    """
+    A specialized dataset context for handling YOLO-formatted annotations.
+
+    This class provides methods to download, process, and unzip YOLO annotations in batches,
+    making it easier to handle large datasets for object detection tasks.
+    """
+
     def __init__(
         self,
         dataset_name: str,
@@ -39,6 +46,15 @@ class YoloDatasetContext(BaseDatasetContext):
         assets: Optional[MultiAsset] = None,
         labelmap: Optional[Dict[str, Label]] = None,
     ):
+        """
+        Initialize the YOLO dataset context.
+
+        Args:
+            dataset_name (str): The name of the dataset.
+            dataset_version (DatasetVersion): The version of the dataset to work with.
+            assets (Optional[MultiAsset]): Preloaded assets, if available.
+            labelmap (Optional[Dict[str, Label]]): Mapping of labels for the dataset.
+        """
         super().__init__(
             dataset_name=dataset_name,
             dataset_version=dataset_version,
@@ -52,9 +68,16 @@ class YoloDatasetContext(BaseDatasetContext):
         """
         Downloads YOLO annotations for the dataset in batches.
 
+        This method retrieves YOLO annotation files in batches, unzips them, and saves the contents
+        to the specified directory.
+
         Args:
             destination_path (str): The directory where annotations will be saved.
-            use_id (bool): Whether to use asset IDs in file paths.
+            use_id (Optional[bool]): Whether to use asset IDs in file paths (default: True).
+
+        Raises:
+            FileNotFoundError: If the destination path does not exist or is invalid.
+            Exception: If an error occurs during batch processing.
         """
         os.makedirs(destination_path, exist_ok=True)
         assets_to_download = self._determine_assets_source()
@@ -63,19 +86,19 @@ class YoloDatasetContext(BaseDatasetContext):
             self._process_batches(
                 destination_path=destination_path,
                 assets_to_download=assets_to_download,
-                use_id=use_id,
                 pbar=pbar,
+                use_id=use_id,
             )
 
         self.annotations_dir = destination_path
         logger.info(f"YOLO annotations downloaded to {destination_path}")
 
-    def _determine_assets_source(self) -> Union[MultiAsset, None]:
+    def _determine_assets_source(self) -> Optional[MultiAsset]:
         """
         Determine the source of assets (preloaded or fetched dynamically).
 
         Returns:
-            list or None: Preloaded assets or None to indicate dynamic fetching.
+            Optional[MultiAsset]: Preloaded assets if available, otherwise None for dynamic fetching.
         """
         if self.assets:
             logger.info("Using preloaded assets for batch download.")
@@ -89,7 +112,7 @@ class YoloDatasetContext(BaseDatasetContext):
     def _process_batches(
         self,
         destination_path: str,
-        assets_to_download: Union[List, None],
+        assets_to_download: Optional[MultiAsset],
         pbar: tqdm,
         use_id: Optional[bool] = True,
     ) -> None:
@@ -99,7 +122,7 @@ class YoloDatasetContext(BaseDatasetContext):
         Args:
             destination_path (str): The directory where annotations will be saved.
             use_id (bool): Whether to use asset IDs in file paths.
-            assets_to_download: Preloaded assets or None for dynamic fetching.
+            assets_to_download (Optional[MultiAsset]): Preloaded assets or None for dynamic fetching.
             pbar (tqdm.tqdm): Progress bar instance.
         """
         offset = 0
@@ -136,17 +159,17 @@ class YoloDatasetContext(BaseDatasetContext):
                 break
 
     def _get_next_batch(
-        self, assets_to_download: Union[MultiAsset, None], offset: int
+        self, assets_to_download: Optional[MultiAsset], offset: int
     ) -> MultiAsset:
         """
         Fetch the next batch of assets.
 
         Args:
-            assets_to_download: Preloaded assets or None for dynamic fetching.
+            assets_to_download (Optional[MultiAsset]): Preloaded assets or None for dynamic fetching.
             offset (int): Offset for the current batch.
 
         Returns:
-            list: The next batch of assets.
+            MultiAsset: The next batch of assets to process.
         """
         if assets_to_download:
             return assets_to_download[offset : offset + BATCH_SIZE]
@@ -166,6 +189,9 @@ class YoloDatasetContext(BaseDatasetContext):
             batch_assets (list): The assets for the current batch.
             destination_path (str): Path to save the exported ZIP file.
             use_id (bool): Whether to use asset IDs in file paths.
+
+        Returns:
+            str: The path to the exported YOLO annotation ZIP file.
         """
         yolo_annotation_path = self.dataset_version.export_annotation_file(
             annotation_file_type=AnnotationFileType.YOLO,
@@ -178,6 +204,8 @@ class YoloDatasetContext(BaseDatasetContext):
     def unzip(self, zip_path: str, destination_path: str) -> None:
         """
         Extracts the contents of a ZIP file into the specified destination directory.
+
+        This method removes the original ZIP file after extraction and cleans up any empty directories.
 
         Args:
             zip_path (str): The full path to the ZIP file.

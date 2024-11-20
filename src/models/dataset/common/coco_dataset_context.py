@@ -77,9 +77,6 @@ class CocoDatasetContext(BaseDatasetContext):
         Args:
             destination_path (str): Path where the final COCO file will be saved.
             use_id (Optional[bool]): Whether to use asset IDs in file paths (default: True).
-
-        Returns:
-            Optional[str]: The path to the merged COCO file, or None if the download fails.
         """
         os.makedirs(destination_path, exist_ok=True)
         assets_to_download = self._determine_assets_source()
