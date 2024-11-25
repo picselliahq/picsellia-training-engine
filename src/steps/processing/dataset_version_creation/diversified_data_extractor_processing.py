@@ -2,7 +2,8 @@ from src import Pipeline, step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.common.dataset_context import DatasetContext
+
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,
 )
@@ -16,7 +17,7 @@ from src.steps.model_loading.processing.processing_diversified_data_extractor_mo
 
 @step
 def diversified_data_extractor_processing(
-    dataset_context: DatasetContext, embedding_model: EmbeddingModel
+    dataset_context: TBaseDatasetContext, embedding_model: EmbeddingModel
 ):
     context: PicselliaProcessingContext[
         ProcessingDiversifiedDataExtractorParameters

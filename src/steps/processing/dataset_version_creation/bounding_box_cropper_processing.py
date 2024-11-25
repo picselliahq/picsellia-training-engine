@@ -3,8 +3,8 @@ from src import step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
     ProcessingBoundingBoxCropperParameters,
 )
@@ -15,8 +15,8 @@ from src.models.steps.processing.dataset_version_creation.bounding_box_cropper_p
 
 @step
 def bounding_box_cropper_processing(
-    dataset_collection: DatasetCollection,
-) -> DatasetContext:
+    dataset_collection: DatasetCollection[CocoDatasetContext],
+) -> CocoDatasetContext:
     context: PicselliaProcessingContext[
         ProcessingBoundingBoxCropperParameters
     ] = Pipeline.get_active_context()

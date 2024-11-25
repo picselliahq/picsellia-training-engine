@@ -2,8 +2,8 @@ from src import Pipeline, step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingTilerParameters,
 )
@@ -14,8 +14,8 @@ from src.models.steps.processing.dataset_version_creation.tiler_processing.tiler
 
 @step
 def tiler_processing(
-    dataset_collection: DatasetCollection,
-) -> DatasetContext:
+    dataset_collection: DatasetCollection[CocoDatasetContext],
+) -> CocoDatasetContext:
     context: PicselliaProcessingContext[
         ProcessingTilerParameters
     ] = Pipeline.get_active_context()
