@@ -2,7 +2,7 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.common.dataset_context import TDatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.model.ultralytics.ultralytics_model_context import (
     UltralyticsModelContext,
 )
@@ -22,7 +22,7 @@ from src.models.steps.model_prediction.common.ultralytics.classification_model_c
 @step
 def ultralytics_model_context_evaluator(
     model_context: UltralyticsModelContext,
-    dataset_context: TDatasetContext,
+    dataset_context: TBaseDatasetContext,
 ) -> None:
     """
     Evaluates an Ultralytics classification model on a given dataset.
