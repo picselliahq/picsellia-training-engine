@@ -1,9 +1,12 @@
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.steps.data_validation.common.dataset_context_validator import (
     DatasetContextValidator,
 )
 
 
-class NotConfiguredDatasetContextValidator(DatasetContextValidator):
+class NotConfiguredDatasetContextValidator(
+    DatasetContextValidator[TBaseDatasetContext]
+):
     def validate(self):
         """
         Validate the dataset context.
