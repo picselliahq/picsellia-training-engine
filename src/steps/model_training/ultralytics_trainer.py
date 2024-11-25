@@ -4,6 +4,7 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.model.ultralytics.ultralytics_model_context import (
     UltralyticsModelContext,
@@ -22,7 +23,8 @@ from src.models.steps.model_training.common.ultralytics_model_context_trainer im
 
 @step
 def ultralytics_model_context_trainer(
-    model_context: UltralyticsModelContext, dataset_collection: DatasetCollection
+    model_context: UltralyticsModelContext,
+    dataset_collection: DatasetCollection[TBaseDatasetContext],
 ) -> UltralyticsModelContext:
     """
     Trains an Ultralytics model on the provided dataset collection.
