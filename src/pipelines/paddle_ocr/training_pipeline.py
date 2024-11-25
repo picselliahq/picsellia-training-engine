@@ -11,8 +11,8 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters impor
 from src.models.parameters.training.paddle_ocr.paddle_ocr_augmentation_parameters import (
     PaddleOCRAugmentationParameters,
 )
-from src.steps.data_extraction.training.training_data_extractor import (
-    training_dataset_collection_extractor,
+from src.steps.data_extraction.training.coco_data_extractor import (
+    coco_dataset_collection_extractor,
 )
 from src.steps.data_preparation.training.paddle_ocr_data_preparator import (
     paddle_ocr_dataset_collection_preparator,
@@ -55,7 +55,7 @@ def get_context() -> (
     remove_logs_on_completion=False,
 )
 def paddle_ocr_training_pipeline():
-    dataset_collection = training_dataset_collection_extractor()
+    dataset_collection = coco_dataset_collection_extractor()
     dataset_collection = paddle_ocr_dataset_collection_preparator(
         dataset_collection=dataset_collection
     )

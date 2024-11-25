@@ -11,12 +11,15 @@ from src.models.parameters.training.ultralytics.ultralytics_augmentation_paramet
 from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters import (
     UltralyticsHyperParameters,
 )
-from src.steps.data_extraction.training.coco_data_extractor import coco_dataset_collection_extractor
+from src.steps.data_extraction.training.coco_data_extractor import (
+    coco_dataset_collection_extractor,
+)
 from src.steps.data_preparation.training.ultralytics_classification_data_preparator import (
     ultralytics_classification_dataset_collection_preparator,
 )
-from src.steps.data_validation.common.coco_classification_dataset_collection_validator import \
-    coco_classification_dataset_collection_validator
+from src.steps.data_validation.common.coco_classification_dataset_collection_validator import (
+    coco_classification_dataset_collection_validator,
+)
 from src.steps.model_evaluation.common.ultralytics_model_evaluator import (
     ultralytics_model_context_evaluator,
 )
@@ -56,7 +59,9 @@ def yolov8_classification_training_pipeline():
     dataset_collection = ultralytics_classification_dataset_collection_preparator(
         dataset_collection=dataset_collection
     )
-    coco_classification_dataset_collection_validator(dataset_collection=dataset_collection)
+    coco_classification_dataset_collection_validator(
+        dataset_collection=dataset_collection
+    )
 
     model_context = training_model_context_extractor(
         pretrained_weights_name="pretrained-weights"
