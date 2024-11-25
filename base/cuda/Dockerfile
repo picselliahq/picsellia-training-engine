@@ -1,5 +1,5 @@
 ARG CUDA_VERSION=11.7.1
-FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu20.04 as base
+FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu20.04 AS base
 
 ARG PYTHON_VERSION=3.10
 ENV PYTHONDONTWRITEBYTECODE=1 \
