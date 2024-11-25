@@ -15,6 +15,9 @@ from src.steps.data_extraction.training.yolov7_data_extractor import (
 from src.steps.data_preparation.training.yolov7_data_preparator import (
     yolov7_dataset_collection_preparator,
 )
+from src.steps.data_validation.common.yolo_segmentation_dataset_collection_validator import (
+    yolo_segmentation_dataset_collection_validator,
+)
 from src.steps.model_evaluation.common.yolov7_model_evaluator import (
     yolov7_model_context_evaluator,
 )
@@ -49,11 +52,15 @@ def yolov7_segmentation_training_pipeline():
     dataset_collection = yolov7_dataset_collection_preparator(
         dataset_collection=dataset_collection
     )
-    # segmentation_dataset_collection_validator(
-    #     dataset_collection=dataset_collection, fix_annotation=True
-    # )
+    yolo_segmentation_dataset_collection_validator(
+        dataset_collection=dataset_collection, fix_annotation=True
+    )
 
-    model_context = yolov7_model_context_extractor()
+    model_context = yolov7_model_context_extractor(
+        pretrained_weights_name="pretrained-weights",
+        config_name="config",
+        hyperparameters_name="hyperparameters",
+    )
     model_context = yolov7_model_context_preparator(model_context=model_context)
     model_context = yolov7_model_context_trainer(
         model_context=model_context, dataset_collection=dataset_collection
