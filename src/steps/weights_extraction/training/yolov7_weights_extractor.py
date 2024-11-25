@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
@@ -8,7 +9,13 @@ from src.models.model.yolov7_model_context import Yolov7ModelContext
 
 
 @step
-def yolov7_model_context_extractor() -> Yolov7ModelContext:
+def yolov7_model_context_extractor(
+    pretrained_weights_name: Optional[str] = None,
+    trained_weights_name: Optional[str] = None,
+    config_name: Optional[str] = None,
+    hyperparameters_name: Optional[str] = None,
+    exported_weights_name: Optional[str] = None,
+) -> Yolov7ModelContext:
     """
     Extracts a model context from the active Picsellia training experiment.
 
@@ -26,11 +33,11 @@ def yolov7_model_context_extractor() -> Yolov7ModelContext:
     model_context = Yolov7ModelContext(
         model_name=model_version.name,
         model_version=model_version,
-        pretrained_weights_name="pretrained-weights",
-        trained_weights_name=None,
-        config_name="config",
-        hyperparameters_name="hyperparameters",
-        exported_weights_name=None,
+        pretrained_weights_name=pretrained_weights_name,
+        trained_weights_name=trained_weights_name,
+        config_name=config_name,
+        hyperparameters_name=hyperparameters_name,
+        exported_weights_name=exported_weights_name,
     )
     model_context.download_weights(
         destination_path=os.path.join(os.getcwd(), context.experiment.name, "model")
