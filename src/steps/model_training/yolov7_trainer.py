@@ -46,7 +46,7 @@ def yolov7_model_context_trainer(
         host=context.host,
         experiment_id=context.experiment_id,
     )
-    
+
     model_context.set_trained_weights_path()
-    
+
     return model_context
