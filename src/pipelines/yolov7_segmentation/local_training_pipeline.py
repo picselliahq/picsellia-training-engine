@@ -23,7 +23,6 @@ from src.steps.data_validation.common.yolo_segmentation_dataset_collection_valid
 from src.steps.model_evaluation.common.yolov7_model_evaluator import (
     yolov7_model_context_evaluator,
 )
-from src.steps.model_evaluation.common.yolov7_model_evaluator import yolov7_model_context_evaluator
 from src.steps.model_training.yolov7_trainer import yolov7_model_context_trainer
 from src.steps.weights_extraction.training.yolov7_weights_extractor import (
     yolov7_model_context_extractor,
