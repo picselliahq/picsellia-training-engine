@@ -10,7 +10,7 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 logger = logging.getLogger("picsellia-engine")
 
 
-class ClassificationDatasetContextValidator(
+class CocoClassificationDatasetContextValidator(
     DatasetContextValidator[CocoDatasetContext]
 ):
     def validate(self):
