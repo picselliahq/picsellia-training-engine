@@ -13,7 +13,7 @@ from scipy.spatial import KDTree
 from tqdm import tqdm
 
 from src import Colors
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.steps.processing.dataset_version_creation.dataset_version_creation_processing import (
     DatasetVersionCreationProcessing,
 )
@@ -33,7 +33,7 @@ class DiversifiedDataExtractorProcessing(DatasetVersionCreationProcessing):
         self,
         client: Client,
         datalake: Datalake,
-        input_dataset_context: DatasetContext,
+        input_dataset_context: TBaseDatasetContext,
         output_dataset_version: DatasetVersion,
         embedding_model: EmbeddingModel,
         distance_threshold: float,

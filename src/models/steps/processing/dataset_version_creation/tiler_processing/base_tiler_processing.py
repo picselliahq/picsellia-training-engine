@@ -12,8 +12,8 @@ from picsellia import DatasetVersion
 from picsellia.types.enums import InferenceType
 from PIL import Image
 
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.dataset.common.dataset_context import DatasetContext
 
 
 logger = logging.getLogger("picsellia-engine")
@@ -85,8 +85,8 @@ class BaseTilerProcessing(ABC):
         return int(parts[-2]), int(parts[-1])
 
     def process_dataset_collection(
-        self, dataset_collection: DatasetCollection
-    ) -> DatasetCollection:
+        self, dataset_collection: DatasetCollection[CocoDatasetContext]
+    ) -> DatasetCollection[CocoDatasetContext]:
         """
         Process each dataset context of the dataset collection by tiling the images and annotations.
 
@@ -163,7 +163,7 @@ class BaseTilerProcessing(ABC):
         return tiles_data
 
     def _process_dataset_collection(
-        self, dataset_collection: DatasetCollection
+        self, dataset_collection: DatasetCollection[CocoDatasetContext]
     ) -> None:
         """
         Process all images and annotations from the dataset collection.
@@ -174,6 +174,15 @@ class BaseTilerProcessing(ABC):
         Raises:
             ValueError: If the dataset type is not supported or configured.
         """
+        if not dataset_collection["input"].images_dir:
+            raise ValueError("No images directory found in the dataset context.")
+
+        if not dataset_collection["output"].images_dir:
+            raise ValueError("No images directory found in the dataset context.")
+
+        if not dataset_collection["output"].coco_file_path:
+            raise ValueError("No COCO file found in the dataset context.")
+
         self._process_dataset_context(
             dataset_context=dataset_collection["input"],
             output_dir=dataset_collection["output"].images_dir,
@@ -181,7 +190,10 @@ class BaseTilerProcessing(ABC):
         )
 
     def _process_dataset_context(
-        self, dataset_context: DatasetContext, output_dir: str, output_coco_path: str
+        self,
+        dataset_context: CocoDatasetContext,
+        output_dir: str,
+        output_coco_path: str,
     ) -> None:
         """
         Process the dataset context by tiling the images and annotations.
@@ -202,18 +214,20 @@ class BaseTilerProcessing(ABC):
         if not dataset_context.images_dir:
             raise ValueError("No images directory found in the dataset context.")
 
-        coco_data = dataset_context.load_coco_file_data()
-        number_of_images = len(coco_data["images"])
+        if not dataset_context.coco_data:
+            raise ValueError("No COCO data found in the dataset context.")
+
+        number_of_images = len(dataset_context.coco_data["images"])
 
         output_coco_data = {
             "images": [],
             "annotations": [],
-            "categories": coco_data.get("categories", []),
+            "categories": dataset_context.coco_data.get("categories", []),
         }
 
         current_tile_id = 0
 
-        for idx, image_info in enumerate(coco_data["images"]):
+        for idx, image_info in enumerate(dataset_context.coco_data["images"]):
             image_filename = image_info["file_name"]
             image_path = os.path.join(dataset_context.images_dir, image_filename)
             image = Image.open(image_path)
@@ -232,7 +246,7 @@ class BaseTilerProcessing(ABC):
             )
 
             self._tile_annotation(
-                coco_data=coco_data,
+                coco_data=dataset_context.coco_data,
                 coco_image_info=image_info,
                 output_coco_data=output_coco_data,
                 tiles_batch_info=tiles_batch_info,
@@ -251,7 +265,6 @@ class BaseTilerProcessing(ABC):
             )
 
         self._save_coco_data(output_coco_path, output_coco_data)
-        dataset_context._build_coco_file(coco_file_path=output_coco_path)
 
     def _tile_annotation(
         self,
