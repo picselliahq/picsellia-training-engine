@@ -1,15 +1,17 @@
 from picsellia import Client
 
-from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.steps.data_validation.common.object_detection_dataset_context_validator import (
-    ObjectDetectionDatasetContextValidator,
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
+from src.models.steps.data_validation.common.coco_object_detection_dataset_context_validator import (
+    CocoObjectDetectionDatasetContextValidator,
 )
 
 
-class ProcessingBoundingBoxCropperDataValidator(ObjectDetectionDatasetContextValidator):
+class ProcessingBoundingBoxCropperDataValidator(
+    CocoObjectDetectionDatasetContextValidator
+):
     def __init__(
         self,
-        dataset_context: DatasetContext,
+        dataset_context: CocoDatasetContext,
         client: Client,
         label_name_to_extract: str,
         datalake: str,
@@ -45,7 +47,7 @@ class ProcessingBoundingBoxCropperDataValidator(ObjectDetectionDatasetContextVal
                 f"Datalake {self.datalake} is not valid, available datalakes are {datalakes_name}"
             )
 
-    def validate(self) -> DatasetContext:
+    def validate(self) -> CocoDatasetContext:
         self.dataset_context = super().validate()
         self._validate_label_name_to_extract()
         self._validate_datalake()
