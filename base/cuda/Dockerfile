@@ -1,5 +1,6 @@
 ARG CUDA_VERSION=11.7.1
-FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu20.04 AS base
+ARG UBUNTU_VERSION=20.04
+FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu${UBUNTU_VERSION} AS base
 
 ARG PYTHON_VERSION=3.10
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -12,17 +13,15 @@ RUN apt-get update && apt-get upgrade -y && \
     add-apt-repository ppa:deadsnakes/ppa &&  \
     apt-get update && \
     apt-get install --no-install-recommends -y \
-        python3-pip libpq-dev libgtk2.0-dev libgl1-mesa-dev gcc \
+    python3-pip libpq-dev libgtk2.0-dev libgl1-mesa-dev gcc \
         python${PYTHON_VERSION}-full python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-distutils && \
     rm -rf /var/lib/apt/lists/*
 
-RUN if [ "$PYTHON_VERSION" = "3.8" ]; then \
-        python${PYTHON_VERSION} -m pip install --upgrade pip && python${PYTHON_VERSION} -m pip install -U setuptools; \
-    else \
-        python${PYTHON_VERSION} -m ensurepip --upgrade && python${PYTHON_VERSION} -m pip install --upgrade pip && python${PYTHON_VERSION} -m pip install -U setuptools; \
-    fi
-
-RUN python${PYTHON_VERSION} -m pip install uv
+RUN if [ "$PYTHON_VERSION" != "3.8" ] && [ "$PYTHON_VERSION" != "3.10" ]; then \
+    python${PYTHON_VERSION} -m ensurepip --upgrade; \
+fi && \
+    python${PYTHON_VERSION} -m pip install --upgrade pip setuptools && \
+    python${PYTHON_VERSION} -m pip install uv
 
 ENV PATH="/usr/local/cuda/bin:${PATH}" \
     LD_LIBRARY_PATH="/usr/local/cuda/lib:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
