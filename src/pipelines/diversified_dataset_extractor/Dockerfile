@@ -21,6 +21,6 @@ COPY ./src/pipelines/diversified_dataset_extractor ./src/pipelines/diversified_d
 RUN mkdir -p /workspace
 RUN chmod 777 /workspace
 
-ENV PYTHONPATH "${PYTHONPATH}:/experiment/src"
+ENV PYTHONPATH=":/experiment/src"
 
 ENTRYPOINT ["run", "python3.11", "src/pipelines/diversified_dataset_extractor/processing_pipeline.py"]
