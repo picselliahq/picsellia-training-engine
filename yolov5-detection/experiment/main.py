@@ -3,10 +3,10 @@ import logging
 import os
 
 from picsellia.exceptions import ResourceNotFoundError
-from picsellia_yolov5 import picsellia_utils
-from picsellia_yolov5.yolov5.train import train
-from picsellia_yolov5.yolov5.utils.callbacks import Callbacks
-from picsellia_yolov5.yolov5.utils.torch_utils import select_device
+import picsellia_utils
+from yolov5.train import train
+from yolov5.utils.callbacks import Callbacks
+from yolov5.utils.torch_utils import select_device
 from pycocotools.coco import COCO
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
@@ -136,6 +136,13 @@ picsellia_utils.check_files(opt)
 callbacks = Callbacks()
 device = select_device(opt.device, batch_size=opt.batch_size)
 
-train(opt.hyp, opt, device, callbacks, pxl=experiment)
+train(
+    opt.hyp,
+    opt,
+    device,
+    callbacks,
+    pxl=experiment,
+    send_run_to_picsellia=picsellia_utils.send_run_to_picsellia,
+)
 
 picsellia_utils.send_run_to_picsellia(experiment, cwd)
