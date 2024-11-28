@@ -1,12 +1,15 @@
+import logging
 import os
 import re
 from abc import abstractmethod
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
-from picsellia import Experiment, ModelVersion
+from picsellia import Experiment, ModelFile, ModelVersion
 
 from src.models.model.common.model_context import ModelContext
+
+logger = logging.getLogger("picsellia-engine")
 
 
 class ModelContextExporter:
@@ -93,6 +96,35 @@ class ModelContextExporter:
             exported_weights_name=exported_weights_name,
         )
 
+    def _get_unique_file_name(
+        self, exported_weights_name: str, target_files: List[ModelFile]
+    ) -> str:
+        """
+        Get a unique filename for the exported model by looking if a file with the same name already exists in the
+        target. If so, append a number to the filename to make it unique.
+        Args:
+            exported_weights_name:
+            target_files:
+
+        Returns:
+
+        """
+        unique_name = self._sanitize_filename(filename=exported_weights_name)
+        existing_files = [file.name for file in target_files]
+
+        if unique_name in existing_files:
+            i = 2
+
+            while f"{unique_name}_{i}" in existing_files:
+                i += 1
+
+            unique_name = f"{unique_name}_{i}"
+            logger.warning(
+                f"⚠️ Model with name {exported_weights_name} already exists in the target. Renaming to {unique_name}"
+            )
+
+        return unique_name
+
     def _sanitize_filename(self, filename: str) -> str:
         """Sanitize filename to comply with Picsellia naming requirements.
 
@@ -141,7 +173,9 @@ class ModelContextExporter:
         if not exported_files:
             raise ValueError(f"No model files found in: {weights_dir}")
 
-        exported_weights_name = self._sanitize_filename(filename=exported_weights_name)
+        exported_weights_name = self._get_unique_file_name(
+            exported_weights_name, target.list_files()
+        )
 
         if len(exported_files) > 1 or weights_dir.is_dir():
             target.store(
