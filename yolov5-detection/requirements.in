@@ -1,0 +1,8 @@
+gitpython
+numpy<2.0
+opencv-python
+pandas
+picsellia
+pycocotools
+torch
+torchvision

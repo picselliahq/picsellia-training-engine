@@ -5,12 +5,13 @@ import shutil
 from picsellia import Client
 from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import InferenceType
-from picsellia_tf2 import pxl_tf, pxl_utils
 
 from evaluator.tf_evaluator import (
     DetectionTensorflowEvaluator,
     SegmentationTensorflowEvaluator,
 )
+import pxl_utils
+import pxl_tf
 
 os.environ["PICSELLIA_SDK_CUSTOM_LOGGING"] = "True"
 os.environ["PICSELLIA_SDK_DOWNLOAD_BAR_MODE"] = "2"
@@ -269,7 +270,7 @@ print("\n")
 experiment.start_logging_chapter("Start training")
 
 pxl_utils.train(
-    ckpt_dir=experiment.checkpoint_dir,
+    model_dir=experiment.results_dir,
     config_dir=experiment.config_dir,
     log_real_time=experiment,
     evaluate_fn=pxl_utils.evaluate,

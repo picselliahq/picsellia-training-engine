@@ -3,14 +3,11 @@ from typing import Callable
 import pytest
 
 from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.steps.data_validation.common.classification_dataset_context_validator import (
-    ClassificationDatasetContextValidator,
+from src.models.steps.data_validation.common.coco_classification_dataset_context_validator import (
+    CocoClassificationDatasetContextValidator,
 )
 from src.models.steps.data_validation.common.dataset_collection_validator import (
     DatasetCollectionValidator,
-)
-from src.models.steps.data_validation.common.dataset_context_validator import (
-    DatasetContextValidator,
 )
 
 
@@ -28,7 +25,7 @@ def mock_dataset_collection_validator() -> Callable:
     ) -> DatasetCollectionValidator:
         return DatasetCollectionValidator(
             dataset_collection=dataset_collection,
-            dataset_context_validator=DatasetContextValidator,
+            dataset_context_validator=CocoClassificationDatasetContextValidator,
         )
 
     return _dataset_collection_validator
@@ -48,7 +45,7 @@ def mock_classification_dataset_collection_validator() -> Callable:
     ) -> DatasetCollectionValidator:
         return DatasetCollectionValidator(
             dataset_collection=classification_dataset_collection,
-            dataset_context_validator=ClassificationDatasetContextValidator,
+            dataset_context_validator=CocoClassificationDatasetContextValidator,
         )
 
     return _classification_dataset_collection_validator

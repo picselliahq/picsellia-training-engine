@@ -93,9 +93,11 @@ def main():
         args.output_name,
         input_names=[args.input],
         output_names=[args.output],
-        dynamic_axes={args.input: {0: "batch"}, args.output: {0: "batch"}}
-        if args.dynamic
-        else None,
+        dynamic_axes=(
+            {args.input: {0: "batch"}, args.output: {0: "batch"}}
+            if args.dynamic
+            else None
+        ),
         opset_version=args.opset,
     )
     logger.info("generated onnx model named {}".format(args.output_name))

@@ -4,6 +4,5 @@
 
 from .coco import COCODataset  # noqa
 from .coco_classes import COCO_CLASSES  # noqa
-from .datasets_wrapper import CacheDataset, ConcatDataset, Dataset, MixConcatDataset  # noqa
 from .mosaicdetection import MosaicDetection  # noqa
 from .voc import VOCDetection  # noqa
