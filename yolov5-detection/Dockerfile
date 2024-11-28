@@ -1,16 +1,25 @@
-FROM picsellia/cuda:11.4.3-cudnn8-ubuntu20.04-python3.8
+FROM picsellia/cuda:11.8.0-cudnn8-ubuntu20.04-python3.10
+
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY ./yolov5-detection/requirements.txt .
 
 ARG REBUILD_ALL
-RUN python3.8 -m pip install -r ./requirements.txt --no-cache-dir
 ARG REBUILD_PICSELLIA
 
-RUN python3.8 -m pip install picsellia-yolov5==0.2.8
-RUN python3.8 -m pip install picsellia --upgrade
+RUN export UV_HTTP_TIMEOUT=900 && uv pip install --python=$(which python3.10) -r ./requirements.txt --no-cache-dir
 
 WORKDIR /experiment
 
+RUN git clone https://github.com/ultralytics/yolov5
+
+COPY ./yolov5-detection/experiment/yolov5_utils/train.py /experiment/yolov5/train.py
+
 COPY ./yolov5-detection/experiment ./
 
-ENTRYPOINT ["run", "python3.8", "main.py"]
+ENV PYTHONPATH="/experiment/yolov5/:/experiment/yolov5/utils:${PYTHONPATH}"
+
+ENTRYPOINT ["run", "python3.10", "main.py"]
