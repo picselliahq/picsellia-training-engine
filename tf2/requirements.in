@@ -1,0 +1,7 @@
+lvis>=0.5.3
+picsellia>=6.14
+scipy
+tensorflow-io>=0.37.1
+tensorflow==2.13.1
+tf-models-official>=2.13
+tf-slim>=1.1.0
