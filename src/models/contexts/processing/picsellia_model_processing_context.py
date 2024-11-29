@@ -36,8 +36,7 @@ class PicselliaModelProcessingContext(
 
         self.job_context = self._initialize_job_context()
 
-        # TODO here
-        self._model_version_id = "0193438e-8521-7f34-b646-e72423ee581a"  # = self.job_context.get("input_model_version_id")
+        self._model_version_id = self.job_context.get("input_model_version_id")
 
         if self._model_version_id:
             self.model_version = self.get_model_version()
@@ -81,7 +80,6 @@ class PicselliaModelProcessingContext(
 
     def _initialize_job_context(self) -> Dict[str, Any]:
         """Initializes the context by fetching the necessary information from the job."""
-        # TODO replace here
         job_context = self.job.sync()["dataset_version_processing_job"]
 
         return job_context
