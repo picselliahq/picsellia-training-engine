@@ -5,7 +5,7 @@ from math import isnan
 from picsellia import Experiment
 from picsellia.types.enums import LogType
 from ultralytics import YOLO
-from ultralytics.yolo.v8.detect.train import DetectionTrainer
+from ultralytics.models.yolo.detect.train import DetectionTrainer
 
 from core_utils.yolov8 import store_model_files
 
