@@ -4,7 +4,7 @@ import os
 from picsellia import Experiment
 from picsellia.types.enums import LogType
 from ultralytics import YOLO
-from ultralytics.yolo.v8.segment.train import SegmentationTrainer
+from ultralytics.models.yolo.segment.train import SegmentationTrainer
 
 from core_utils.yolov8 import store_model_files
 
