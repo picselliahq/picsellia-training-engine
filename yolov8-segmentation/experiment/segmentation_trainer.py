@@ -1,5 +1,6 @@
 import logging
 import os
+from math import isnan
 
 from picsellia import Experiment
 from picsellia.types.enums import LogType
@@ -39,6 +40,8 @@ class PicselliaSegmentationTrainer(SegmentationTrainer):
         model = None
         for name, value in metrics.items():
             log_name = str(name).replace("/", "_")
+            if not isinstance(value, (int, float)) or isnan(value):
+                continue
             self._log_metric(log_name, float(value), retry=1)
         if self.epoch == self.epochs - 1:
             store_model_files(
