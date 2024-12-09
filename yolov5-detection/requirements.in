@@ -1,8 +1,15 @@
 gitpython
 numpy<2.0
+onnx
 opencv-python
 pandas
 picsellia
+psutil
+py-cpuinfo
 pycocotools
+scipy
+seaborn
 torch
 torchvision
+ultralytics-thop==2.0.12
+ultralytics==8.3.38
