@@ -1,3 +1,4 @@
+# type: ignore
 import collections
 import os
 
@@ -310,7 +311,7 @@ def ResNet(
     model = models.Model(inputs, x)
 
     if weights:
-        if type(weights) == str and os.path.exists(weights):
+        if isinstance(weights, str) and os.path.exists(weights):
             model.load_weights(weights)
         else:
             load_model_weights(

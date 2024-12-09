@@ -1,3 +1,4 @@
+# type: ignore
 import logging
 import os
 import random
@@ -269,7 +270,7 @@ predictions = model.predict(eval_generator)
 
 eval_accuracy = accuracy_score(eval_generator.classes, predictions.argmax(axis=1))
 
-experiment.log(name="eval_accuracy", data=eval_accuracy.item(), type=LogType.VALUE)
+experiment.log(name="eval_accuracy", data=eval_accuracy, type=LogType.VALUE)
 
 cm = confusion_matrix(eval_generator.classes, predictions.argmax(axis=1))
 

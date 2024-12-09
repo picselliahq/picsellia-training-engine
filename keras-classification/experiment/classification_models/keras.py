@@ -1,3 +1,4 @@
+# type: ignore
 import keras
 
 from .models_factory import ModelsFactory

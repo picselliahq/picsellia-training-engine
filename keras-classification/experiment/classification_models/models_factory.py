@@ -1,3 +1,4 @@
+# type: ignore
 import functools
 
 import keras_applications as ka

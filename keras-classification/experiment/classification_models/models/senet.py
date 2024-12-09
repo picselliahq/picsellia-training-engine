@@ -1,3 +1,4 @@
+# type: ignore
 import collections
 import os
 
@@ -177,9 +178,9 @@ def SEResNeXtBottleneck(
 
 def SEBottleneck(filters, reduction=16, strides=1, groups=64, is_first=False, **kwargs):
     bn_params = get_bn_params()
-    modules_kwargs = {
-        k: v for k, v in kwargs.items() if k in ("backend", "layers", "models", "utils")
-    }
+    # modules_kwargs = {
+    #     k: v for k, v in kwargs.items() if k in ("backend", "layers", "models", "utils")
+    # }
 
     if is_first:
         downsample_kernel_size = (1, 1)
@@ -402,7 +403,7 @@ def SENet(
     model = models.Model(inputs, x)
 
     if weights:
-        if type(weights) == str and os.path.exists(weights):
+        if isinstance(weights, str) and os.path.exists(weights):
             model.load_weights(weights)
         else:
             load_model_weights(

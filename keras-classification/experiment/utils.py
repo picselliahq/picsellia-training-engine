@@ -1,7 +1,6 @@
 import os
 import shutil
-import sys
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 import picsellia
@@ -75,21 +74,21 @@ def get_experiment() -> Experiment:
 
 def get_train_test_eval_datasets_from_experiment(
     experiment: Experiment,
-) -> Tuple[DatasetVersion]:
+) -> Tuple[bool, DatasetVersion, DatasetVersion, DatasetVersion]:
     is_split = _is_train_test_eval_dataset(experiment)
     if is_split:
         print("We found 3 datasets:")
-        train: DatasetVersion = experiment.get_dataset("train")
+        train = experiment.get_dataset("train")
         print(f"{train.name}/{train.version} for training")
-        test: DatasetVersion = experiment.get_dataset("test")
+        test = experiment.get_dataset("test")
         print(f"{test.name}/{test.version} for testing")
-        eval_dataset: DatasetVersion = experiment.get_dataset("eval")
+        eval_dataset = experiment.get_dataset("eval")
         print(f"{eval_dataset.name}/{eval_dataset.version} for evaluation")
     else:
         print(
             "We only found one dataset inside your experiment, the train/test/split will be performed automatically."
         )
-        train: DatasetVersion = experiment.list_attached_dataset_versions()[0]
+        train = experiment.list_attached_dataset_versions()[0]
         test = None
         eval_dataset = None
     return is_split, train, test, eval_dataset
@@ -110,7 +109,11 @@ def _is_train_test_eval_dataset(experiment: Experiment) -> bool:
     return ok_counter == 3
 
 
-def _move_files_in_class_directories(coco: COCO, base_imdir: str = None) -> None:
+def _move_files_in_class_directories(
+    coco: COCO, base_imdir: Optional[str] = None
+) -> str:
+    if base_imdir is None:
+        raise ValueError("base_imdir must be provided")
     fnames = os.listdir(base_imdir)
     for i in coco.cats:
         cat = coco.cats[i]
@@ -211,15 +214,15 @@ class Metrics(tf.keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         batches = len(self.validation_data)
-        total = batches * self.batch_size
+        # total = batches * self.batch_size
 
         val_pred = []
         val_true = []
         for batch in range(batches):
             xVal, yVal = next(self.validation_data)
 
-            val_pred_batch = np.zeros((len(xVal)))
-            val_true_batch = np.zeros((len(xVal)))
+            # val_pred_batch = np.zeros((len(xVal)))
+            # val_true_batch = np.zeros((len(xVal)))
 
             val_pred_batch = np.argmax(np.asarray(self.model.predict(xVal)), axis=1)
             val_true_batch = np.argmax(yVal, axis=1)
@@ -253,11 +256,11 @@ class Metrics(tf.keras.callbacks.Callback):
                 name="val_precision", data=[float(_val_precision)], type=LogType.LINE
             )
 
-        predIdxs = self.model.predict(self.validation_data)
-        predIdxs = np.argmax(predIdxs, axis=1)
+        # predIdxs = self.model.predict(self.validation_data)
+        # predIdxs = np.argmax(predIdxs, axis=1)
         # cr = classification_report(self.validation_data.classes, predIdxs, target_names=np.unique(self.validation_data.classes))
 
-        original_stdout = sys.stdout  # Save a reference to the original standard output
+        # original_stdout = sys.stdout  # Save a reference to the original standard output
         # with open('cm_by_epoch.txt', 'a') as f:
         #     sys.stdout = f # Change the standard output to the file we created.
         #     print("Confusion matrix on validation data on epoch "+str(epoch+1)+"\n"+"--------------------------------------------------------"+"\n")
