@@ -31,6 +31,5 @@ ARG REBUILD_PICSELLIA
 RUN export UV_HTTP_TIMEOUT=900 && uv pip install --python=$(which python3.10) --no-cache -r requirements.txt
 
 ENV PYTHONPATH="/experiment/models/research:${PYTHONPATH}"
-# ENV XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
 
 ENTRYPOINT ["run", "python3.10", "main.py"]
