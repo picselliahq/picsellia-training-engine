@@ -1,3 +1,4 @@
+# typing: ignore
 # Ultralytics YOLOv5 🚀, AGPL-3.0 license
 """
 Train a YOLOv5 model on a custom dataset. Models and datasets download automatically from the latest YOLOv5 release.
@@ -26,7 +27,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 try:
-    import comet_ml  # must be imported before torch (if installed)
+    import comet_ml  # noqa: E402
 except ImportError:
     comet_ml = None
 
@@ -411,10 +412,10 @@ def train(hyp, opt, device, callbacks, pxl=None, send_run_to_picsellia=None):
     compute_loss = ComputeLoss(model)  # init loss class
     callbacks.run("on_train_start")
     LOGGER.info(
-        f'Image sizes {imgsz} train, {imgsz} val\n'
-        f'Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n'
+        f"Image sizes {imgsz} train, {imgsz} val\n"
+        f"Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n"
         f"Logging results to {colorstr('bold', save_dir)}\n"
-        f'Starting training for {epochs} epochs...'
+        f"Starting training for {epochs} epochs..."
     )
     for epoch in range(
         start_epoch, epochs
@@ -672,9 +673,9 @@ def train(hyp, opt, device, callbacks, pxl=None, send_run_to_picsellia=None):
                         batch_size=batch_size // WORLD_SIZE * 2,
                         imgsz=imgsz,
                         model=attempt_load(f, device).half(),
-                        iou_thres=0.65
-                        if is_coco
-                        else 0.60,  # best pycocotools at iou 0.65
+                        iou_thres=(
+                            0.65 if is_coco else 0.60
+                        ),  # best pycocotools at iou 0.65
                         single_cls=single_cls,
                         dataloader=val_loader,
                         save_dir=save_dir,
@@ -1227,9 +1228,9 @@ def main(opt, callbacks=Callbacks()):
         # Plot results
         plot_evolve(evolve_csv)
         LOGGER.info(
-            f'Hyperparameter evolution finished {opt.evolve} generations\n'
+            f"Hyperparameter evolution finished {opt.evolve} generations\n"
             f"Results saved to {colorstr('bold', save_dir)}\n"
-            f'Usage example: $ python train.py --hyp {evolve_yaml}'
+            f"Usage example: $ python train.py --hyp {evolve_yaml}"
         )
 
 
