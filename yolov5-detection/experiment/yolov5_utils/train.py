@@ -59,8 +59,6 @@ from utils.general import (
     check_amp,
     check_dataset,
     check_file,
-    check_git_info,
-    check_git_status,
     check_img_size,
     check_suffix,
     check_yaml,
@@ -101,7 +99,6 @@ LOCAL_RANK = int(
 )  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv("RANK", -1))
 WORLD_SIZE = int(os.getenv("WORLD_SIZE", 1))
-GIT_INFO = check_git_info()
 
 
 def train(hyp, opt, device, callbacks, pxl=None, send_run_to_picsellia=None):
@@ -171,6 +168,7 @@ def train(hyp, opt, device, callbacks, pxl=None, send_run_to_picsellia=None):
 
     # Directories
     w = save_dir / "weights"  # weights dir
+    os.makedirs(w)
     (w.parent if evolve else w).mkdir(parents=True, exist_ok=True)  # make dir
     last, best = w / "last.pt", w / "best.pt"
 
@@ -628,7 +626,6 @@ def train(hyp, opt, device, callbacks, pxl=None, send_run_to_picsellia=None):
                     "updates": ema.updates,
                     "optimizer": optimizer.state_dict(),
                     "opt": vars(opt),
-                    "git": GIT_INFO,  # {remote, branch, commit} if a git repo
                     "date": datetime.now().isoformat(),
                 }
 
@@ -914,9 +911,6 @@ def main(opt, callbacks=Callbacks()):
         For detailed usage, refer to:
         https://github.com/ultralytics/yolov5/tree/master/models
     """
-    if RANK in {-1, 0}:
-        print_args(vars(opt))
-        check_git_status()
 
     # Resume (from specified or most recent last.pt)
     if opt.resume and not check_comet_resume(opt) and not opt.evolve:
