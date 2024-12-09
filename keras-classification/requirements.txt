@@ -30,7 +30,7 @@ google-auth==2.36.0
     # via
     #   google-auth-oauthlib
     #   tensorboard
-google-auth-oauthlib==1.0.0
+google-auth-oauthlib==0.4.6
     # via tensorboard
 google-pasta==0.2.0
     # via tensorflow
@@ -46,10 +46,12 @@ idna==3.10
     # via requests
 joblib==1.4.2
     # via scikit-learn
-keras==2.13.1
+keras==2.10.0
     # via tensorflow
 keras-applications==1.0.8
     # via -r requirements.in
+keras-preprocessing==1.1.2
+    # via tensorflow
 kiwisolver==1.4.7
     # via matplotlib
 libclang==18.1.1
@@ -65,12 +67,35 @@ numpy==1.24.3
     #   contourpy
     #   h5py
     #   keras-applications
+    #   keras-preprocessing
     #   matplotlib
     #   pycocotools
     #   scikit-learn
     #   scipy
     #   tensorboard
     #   tensorflow
+nvidia-cublas-cu11==11.11.3.6
+    # via
+    #   nvidia-cudnn-cu11
+    #   nvidia-cusolver-cu11
+nvidia-cuda-cupti-cu11==11.8.87
+    # via -r requirements.in
+nvidia-cuda-nvcc-cu11==11.8.89
+    # via -r requirements.in
+nvidia-cuda-nvrtc-cu11==11.8.89
+    # via -r requirements.in
+nvidia-cuda-runtime-cu11==11.8.89
+    # via -r requirements.in
+nvidia-cudnn-cu11==9.5.1.17
+    # via -r requirements.in
+nvidia-cufft-cu11==10.9.0.58
+    # via -r requirements.in
+nvidia-curand-cu11==10.3.0.86
+    # via -r requirements.in
+nvidia-cusolver-cu11==11.4.1.48
+    # via -r requirements.in
+nvidia-nvtx-cu11==11.8.86
+    # via -r requirements.in
 oauthlib==3.2.2
     # via requests-oauthlib
 opt-einsum==3.4.0
@@ -92,7 +117,7 @@ pillow==9.5.0
     # via
     #   matplotlib
     #   picsellia
-protobuf==4.25.5
+protobuf==3.19.6
     # via
     #   tensorboard
     #   tensorflow
@@ -136,17 +161,20 @@ six==1.16.0
     # via
     #   astunparse
     #   google-pasta
+    #   keras-preprocessing
     #   python-dateutil
     #   tensorflow
 tdqm==0.0.1
     # via picsellia
-tensorboard==2.13.0
+tensorboard==2.10.1
     # via tensorflow
-tensorboard-data-server==0.7.2
+tensorboard-data-server==0.6.1
     # via tensorboard
-tensorflow==2.13.1
+tensorboard-plugin-wit==1.8.1
+    # via tensorboard
+tensorflow==2.10.0
     # via -r requirements.in
-tensorflow-estimator==2.13.0
+tensorflow-estimator==2.10.0
     # via tensorflow
 tensorflow-io-gcs-filesystem==0.37.1
     # via tensorflow

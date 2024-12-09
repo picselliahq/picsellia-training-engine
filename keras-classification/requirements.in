@@ -2,4 +2,13 @@ Keras-Applications==1.0.8
 picsellia
 pycocotools
 scikit-learn
-tensorflow==2.13.1
+tensorflow==2.10.0
+nvidia-cudnn-cu11
+nvidia-nvtx-cu11
+nvidia-cusolver-cu11
+nvidia-curand-cu11
+nvidia-cufft-cu11
+nvidia-cuda-runtime-cu11
+nvidia-cuda-nvrtc-cu11
+nvidia-cuda-cupti-cu11
+nvidia-cuda-nvcc-cu11

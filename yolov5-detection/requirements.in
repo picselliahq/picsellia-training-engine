@@ -11,5 +11,9 @@ scipy
 seaborn
 torch
 torchvision
-ultralytics-thop==2.0.12
+seaborn
+psutil
+py-cpuinfo
+scipy
 ultralytics==8.3.38
+ultralytics-thop==2.0.12
