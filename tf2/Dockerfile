@@ -5,7 +5,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     wget \
     git \
-    nvidia-cuda-toolkit \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /experiment
@@ -32,6 +31,6 @@ ARG REBUILD_PICSELLIA
 RUN export UV_HTTP_TIMEOUT=900 && uv pip install --python=$(which python3.10) --no-cache -r requirements.txt
 
 ENV PYTHONPATH="/experiment/models/research:${PYTHONPATH}"
-ENV XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
+# ENV XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
 
 ENTRYPOINT ["run", "python3.10", "main.py"]
