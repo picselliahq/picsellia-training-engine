@@ -22,4 +22,6 @@ COPY ./yolov5-detection/experiment ./
 
 ENV PYTHONPATH="/experiment/yolov5/:/experiment/yolov5/utils:${PYTHONPATH}"
 
+RUN chown -R 42420:42420 /experiment
+
 ENTRYPOINT ["run", "python3.10", "main.py"]
