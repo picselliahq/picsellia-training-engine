@@ -735,7 +735,7 @@ def train_loop(
                     if log_metrics is not None:
                         log_metrics(
                             experiment=picsellia_experiment,
-                            tf_metrics_dir=picsellia_experiment.checkpoint_dir,
+                            tf_metrics_dir=os.path.join(picsellia_experiment.results_dir, "train"),
                             global_step=global_step.value(),
                             metrics_type="train",
                         )
@@ -776,9 +776,9 @@ def train_loop(
                         checkpointed_step = int(global_step.value())
                         if evaluate_fn is not None and log_metrics is not None:
                             evaluate_fn(
-                                picsellia_experiment.metrics_dir,
-                                picsellia_experiment.config_dir,
-                                picsellia_experiment.checkpoint_dir,
+                                metrics_dir=picsellia_experiment.metrics_dir,
+                                config=picsellia_experiment.config_dir,
+                                ckpt_dir=picsellia_experiment.checkpoint_dir,
                                 train_steps=1,
                             )
 
