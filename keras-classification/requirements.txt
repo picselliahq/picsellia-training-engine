@@ -74,28 +74,6 @@ numpy==1.24.3
     #   scipy
     #   tensorboard
     #   tensorflow
-nvidia-cublas-cu11==11.11.3.6
-    # via
-    #   nvidia-cudnn-cu11
-    #   nvidia-cusolver-cu11
-nvidia-cuda-cupti-cu11==11.8.87
-    # via -r requirements.in
-nvidia-cuda-nvcc-cu11==11.8.89
-    # via -r requirements.in
-nvidia-cuda-nvrtc-cu11==11.8.89
-    # via -r requirements.in
-nvidia-cuda-runtime-cu11==11.8.89
-    # via -r requirements.in
-nvidia-cudnn-cu11==9.5.1.17
-    # via -r requirements.in
-nvidia-cufft-cu11==10.9.0.58
-    # via -r requirements.in
-nvidia-curand-cu11==10.3.0.86
-    # via -r requirements.in
-nvidia-cusolver-cu11==11.4.1.48
-    # via -r requirements.in
-nvidia-nvtx-cu11==11.8.86
-    # via -r requirements.in
 oauthlib==3.2.2
     # via requests-oauthlib
 opt-einsum==3.4.0
