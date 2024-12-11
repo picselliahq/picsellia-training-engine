@@ -50,6 +50,7 @@ if __name__ == "__main__":
     parser = ArgumentParser("Launch a processing")
     parser.add_argument("--api_token", type=str)
     parser.add_argument("--organization_id", type=str)
+    parser.add_argument("--host", type=str)
     parser.add_argument("--processing_name", type=str)
     parser.add_argument("--datalake_id", type=str)
     parser.add_argument("--target_datalake_name", type=str, default=None)
@@ -62,7 +63,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=8)
     args = parser.parse_args()
 
-    client = Client(api_token=args.api_token, organization_id=args.organization_id)
+    client = Client(
+        api_token=args.api_token, organization_id=args.organization_id, host=args.host
+    )
 
     data_ids = [UUID(data_id) for data_id in args.data_ids]
 

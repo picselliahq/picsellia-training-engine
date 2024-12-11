@@ -37,6 +37,7 @@ if __name__ == "__main__":
     parser = ArgumentParser("Create a processing")
     parser.add_argument("--api_token", type=str)
     parser.add_argument("--organization_id", type=str)
+    parser.add_argument("--host", type=str)
     parser.add_argument("--processing_name", type=str)
     parser.add_argument("--processing_type", type=str)
     parser.add_argument("--default_cpu", type=int)
@@ -46,7 +47,9 @@ if __name__ == "__main__":
     parser.add_argument("--docker_flags", nargs="+", type=str, default=None)
     args = parser.parse_args()
 
-    client = Client(api_token=args.api_token, organization_id=args.organization_id)
+    client = Client(
+        api_token=args.api_token, organization_id=args.organization_id, host=args.host
+    )
 
     default_parameters = {
         "tags_list": ["is_woman", "is_man"],
