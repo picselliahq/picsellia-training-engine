@@ -23,5 +23,5 @@ def clip_load_model(model_name: str, device: str):
     model = CLIPModel.from_pretrained(model_name)
     model.eval()
     model.to(get_device(device=device))
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    processor = CLIPProcessor.from_pretrained(model_name)
     return model, processor
