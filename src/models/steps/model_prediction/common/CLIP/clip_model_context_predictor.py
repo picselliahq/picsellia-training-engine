@@ -72,7 +72,6 @@ class CLIPModelContextPredictor(ModelContextPredictor[HuggingFaceModelContext]):
 
         Args:
             datalake_context (DatalakeContext): The context containing the directory of images.
-            device (str): The device ('cpu' or 'gpu') on which to run the model.
 
         Returns:
             Tuple[List, List[str]]: A tuple containing the list of preprocessed inputs and image paths.
@@ -86,7 +85,7 @@ class CLIPModelContextPredictor(ModelContextPredictor[HuggingFaceModelContext]):
 
             input = self.model_context.loaded_processor(
                 images=image,
-                text=[tag.replace("_", " ") for tag in self.tags_list],
+                text=self.tags_list,
                 return_tensors="pt",
                 padding=True,
             ).to(self.device)
