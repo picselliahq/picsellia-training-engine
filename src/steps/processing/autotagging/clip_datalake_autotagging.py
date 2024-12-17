@@ -19,13 +19,14 @@ from src.models.steps.model_prediction.common.CLIP.clip_model_context_predictor 
 def clip_datalake_autotagging_processing(
     datalake: Union[DatalakeContext, DatalakeCollection],
     model_context: HuggingFaceModelContext,
+    device: str = "cuda:0",
 ):
     context: PicselliaProcessingContext = Pipeline.get_active_context()
 
     model_context_predictor = CLIPModelContextPredictor(
         model_context=model_context,
         tags_list=context.processing_parameters.tags_list,
-        device=context.processing_parameters.device,
+        device=device,
     )
     if isinstance(datalake, DatalakeContext):
         datalake_context = datalake
