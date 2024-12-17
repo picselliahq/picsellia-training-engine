@@ -36,11 +36,13 @@ def get_context() -> (
 )
 def datalake_autotagging_processing_pipeline() -> None:
     datalake = processing_datalake_extractor()
-    model_context = hugging_face_model_context_extractor(
-        hugging_face_model_name="openai/clip-vit-base-patch32"
+    model_context = hugging_face_model_context_extractor()
+    model_context = clip_model_context_loader(
+        model_context=model_context, device="cuda:0"
     )
-    model_context = clip_model_context_loader(model_context=model_context)
-    clip_datalake_autotagging_processing(datalake=datalake, model_context=model_context)
+    clip_datalake_autotagging_processing(
+        datalake=datalake, model_context=model_context, device="cuda:0"
+    )
 
 
 if __name__ == "__main__":
