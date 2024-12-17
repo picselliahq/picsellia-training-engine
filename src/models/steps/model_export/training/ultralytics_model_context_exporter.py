@@ -13,6 +13,8 @@ from src.models.steps.model_export.common.model_context_exporter import (
     ModelContextExporter,
 )
 
+from ultralytics import YOLO
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,11 +77,13 @@ class UltralyticsModelContextExporter(ModelContextExporter[UltralyticsModelConte
             export_format (str): The format to export the model in (e.g., ONNX).
             hyperparameters (UltralyticsHyperParameters): Hyperparameters specifying the image size, batch size, etc.
         """
-        self.model_context.loaded_model.export(
+        loaded_model: YOLO = self.model_context.loaded_model
+        loaded_model.export(
             format=export_format,
             imgsz=hyperparameters.image_size,
-            dynamic=True,
-            batch=hyperparameters.batch_size,
+            dynamic=False,
+            batch=1,
+            opset=18,  # ONNX opset version compatible with IR 8
         )
 
     def _find_exported_onnx_file(self) -> str:
