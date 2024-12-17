@@ -13,15 +13,15 @@ class PicselliaModelProcessingContext(
     PicselliaContext, Generic[TParameters, TExportParameters]
 ):
     def __init__(
-        self,
-        processing_parameters_cls: Type[TParameters],
-        export_parameters_cls: Type[TExportParameters],
-        api_token: Optional[str] = None,
-        host: Optional[str] = None,
-        organization_id: Optional[str] = None,
-        job_id: Optional[str] = None,
-        use_id: Optional[bool] = True,
-        download_annotations: Optional[bool] = True,
+            self,
+            processing_parameters_cls: Type[TParameters],
+            export_parameters_cls: Type[TExportParameters],
+            api_token: Optional[str] = None,
+            host: Optional[str] = None,
+            organization_id: Optional[str] = None,
+            job_id: Optional[str] = None,
+            use_id: Optional[bool] = True,
+            download_annotations: Optional[bool] = True,
     ):
         super().__init__(api_token, host, organization_id)
 
@@ -80,7 +80,7 @@ class PicselliaModelProcessingContext(
 
     def _initialize_job_context(self) -> Dict[str, Any]:
         """Initializes the context by fetching the necessary information from the job."""
-        job_context = self.job.sync()["dataset_version_processing_job"]
+        job_context = self.job.sync()["model_version_processing_job"]
 
         return job_context
 

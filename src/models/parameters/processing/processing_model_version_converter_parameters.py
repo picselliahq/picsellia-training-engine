@@ -13,11 +13,10 @@ class ProcessingYoloXModelVersionConverterParameters(Parameters):
             keys=["device"], expected_type=str, default="cpu"
         )
 
-        self.input_model_file_name = "best-ckpt-60"  # TODO replace
-        # self.extract_parameter(
-        #    keys=["input_model_file_name"],
-        #    expected_type=str,
-        # )
+        self.input_model_file_name = self.extract_parameter(
+            keys=["input_model_file_name"],
+            expected_type=str,
+        )
 
 
 class ProcessingYoloXModelVersionConverterExportParameters(ExportParameters):
