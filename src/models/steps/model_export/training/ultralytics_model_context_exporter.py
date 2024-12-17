@@ -1,13 +1,12 @@
 import logging
 import os
 import shutil
-from picsellia import Experiment
+
 
 from src.models.model.common.model_context import ModelContext
 from src.models.steps.model_export.common.model_context_exporter import (
     ModelContextExporter,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +20,16 @@ class UltralyticsModelContextExporter(ModelContextExporter):
 
     Attributes:
         model_context (ModelContext): The Ultralytics model context to be exported.
-        experiment (Experiment): The experiment to which the model is related.
     """
 
-    def __init__(self, model_context: ModelContext, experiment: Experiment):
+    def __init__(self, model_context: ModelContext):
         """
         Initializes the UltralyticsModelContextExporter.
 
         Args:
             model_context (ModelContext): The model context containing information about the model and its paths.
-            experiment (Experiment): The experiment associated with the model context.
         """
-        super().__init__(model_context=model_context, experiment=experiment)
+        super().__init__(model_context=model_context)
 
     def export_model_context(
         self, exported_weights_destination_path: str, export_format: str

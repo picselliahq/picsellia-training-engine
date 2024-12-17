@@ -1,7 +1,6 @@
-from src import Pipeline
-from src import step
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src import Pipeline, step
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.dataset.common.dataset_context import DatasetContext
@@ -17,7 +16,7 @@ from src.models.steps.processing.dataset_version_creation.bounding_box_cropper_p
 def bounding_box_cropper_processing(
     dataset_collection: DatasetCollection,
 ) -> DatasetContext:
-    context: PicselliaProcessingContext[
+    context: PicselliaDatasetProcessingContext[
         ProcessingBoundingBoxCropperParameters
     ] = Pipeline.get_active_context()
 

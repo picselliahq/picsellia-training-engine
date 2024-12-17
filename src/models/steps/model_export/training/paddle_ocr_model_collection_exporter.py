@@ -1,13 +1,13 @@
 import logging
 
+from picsellia import Experiment
+
 from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
     PaddleOCRModelCollection,
 )
 from src.models.steps.model_export.training.paddle_ocr_model_context_exporter import (
     PaddleOCRModelContextExporter,
 )
-
-from picsellia import Experiment
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +39,10 @@ class PaddleOCRModelCollectionExporter:
         self.model_collection = model_collection
         self.experiment = experiment
         self.bbox_model_context_exporter = PaddleOCRModelContextExporter(
-            model_context=self.model_collection.bbox_model, experiment=self.experiment
+            model_context=self.model_collection.bbox_model
         )
         self.text_model_context_exporter = PaddleOCRModelContextExporter(
-            model_context=self.model_collection.text_model, experiment=self.experiment
+            model_context=self.model_collection.text_model
         )
 
     def export_model_collection(self, export_format: str) -> PaddleOCRModelCollection:
@@ -99,12 +99,14 @@ class PaddleOCRModelCollectionExporter:
 
         logger.info("Saving bounding box model to experiment...")
         self.bbox_model_context_exporter.save_model_to_experiment(
-            exported_weights_dir=self.model_collection.bbox_model.exported_weights_dir,
+            exported_weights_path=self.model_collection.bbox_model.exported_weights_dir,
             exported_weights_name="bbox-model-latest",
+            experiment=self.experiment,
         )
 
         logger.info("Saving text recognition model to experiment...")
         self.text_model_context_exporter.save_model_to_experiment(
-            exported_weights_dir=self.model_collection.text_model.exported_weights_dir,
+            exported_weights_path=self.model_collection.text_model.exported_weights_dir,
             exported_weights_name="text-model-latest",
+            experiment=self.experiment,
         )

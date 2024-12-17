@@ -8,6 +8,12 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 
+from src.models.steps.model_loading.architecture.yolox import (
+    YOLOPAFPN,
+    YOLOX,
+    YOLOXHead,
+)
+
 from .base_exp import BaseExp
 
 __all__ = ["Exp", "check_exp_value"]
@@ -111,8 +117,6 @@ class Exp(BaseExp):
         self.nmsthre = 0.65
 
     def get_model(self):
-        from YOLOX.yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
-
         def init_yolo(M):
             for m in M.modules():
                 if isinstance(m, nn.BatchNorm2d):
@@ -169,12 +173,12 @@ class Exp(BaseExp):
                 None: Do not use cache, in this case cache_data is also None.
         """
         from YOLOX.yolox.data import (
-            YoloBatchSampler,
+            COCODataset,
             DataLoader,
             InfiniteSampler,
-            COCODataset,
-            worker_init_reset_seed,
             TrainTransformV3,
+            YoloBatchSampler,
+            worker_init_reset_seed,
         )
         from YOLOX.yolox.utils import wait_for_the_master
 

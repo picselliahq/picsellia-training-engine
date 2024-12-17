@@ -1,5 +1,5 @@
 import os
-from typing import Type, Optional, Any, Dict, Union, Generic
+from typing import Any, Dict, Generic, Optional, Type, Union
 
 import picsellia  # type: ignore
 from picsellia import DatasetVersion, ModelVersion
@@ -9,7 +9,7 @@ from src.models.contexts.common.picsellia_context import PicselliaContext
 from src.models.parameters.common.parameters import TParameters
 
 
-class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):
+class PicselliaDatasetProcessingContext(PicselliaContext, Generic[TParameters]):
     def __init__(
         self,
         processing_parameters_cls: Type[TParameters],

@@ -1,6 +1,6 @@
 from src import pipeline
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,
@@ -8,7 +8,6 @@ from src.models.parameters.processing.processing_diversified_data_extractor_para
 from src.steps.data_extraction.processing.processing_data_extractor import (
     processing_dataset_context_extractor,
 )
-
 from src.steps.data_validation.processing.processing_diversified_data_extractor_data_validator import (
     diversified_data_extractor_data_validator,
 )
@@ -24,9 +23,9 @@ from src.steps.weights_validation.processing.processing_diversified_data_extract
 
 
 def get_context() -> (
-    PicselliaProcessingContext[ProcessingDiversifiedDataExtractorParameters]
+    PicselliaDatasetProcessingContext[ProcessingDiversifiedDataExtractorParameters]
 ):
-    return PicselliaProcessingContext(
+    return PicselliaDatasetProcessingContext(
         processing_parameters_cls=ProcessingDiversifiedDataExtractorParameters,
     )
 

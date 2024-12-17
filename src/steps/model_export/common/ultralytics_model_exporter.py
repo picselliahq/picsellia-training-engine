@@ -1,4 +1,6 @@
-from src import step, Pipeline
+import logging
+
+from src import Pipeline, step
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
@@ -13,7 +15,6 @@ from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters imp
 from src.models.steps.model_export.training.ultralytics_model_context_exporter import (
     UltralyticsModelContextExporter,
 )
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ def ultralytics_model_context_exporter(model_context: ModelContext):
     ] = Pipeline.get_active_context()
 
     model_context_exporter = UltralyticsModelContextExporter(
-        model_context=model_context, experiment=context.experiment
+        model_context=model_context
     )
 
     if model_context.exported_weights_dir:
@@ -48,7 +49,8 @@ def ultralytics_model_context_exporter(model_context: ModelContext):
             export_format=context.export_parameters.export_format,
         )
         model_context_exporter.save_model_to_experiment(
-            exported_weights_dir=model_context.exported_weights_dir,
+            experiment=context.experiment,
+            exported_weights_path=model_context.exported_weights_dir,
             exported_weights_name="model-latest",
         )
     else:

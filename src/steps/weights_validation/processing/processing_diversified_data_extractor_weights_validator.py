@@ -1,8 +1,8 @@
 import open_clip
 
 from src import Pipeline, step
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.parameters.processing.processing_diversified_data_extractor_parameters import (
     ProcessingDiversifiedDataExtractorParameters,
@@ -62,7 +62,7 @@ def validate_model_architecture(
 
 @step
 def diversified_data_extractor_weights_validator() -> str:
-    context: PicselliaProcessingContext[
+    context: PicselliaDatasetProcessingContext[
         ProcessingDiversifiedDataExtractorParameters
     ] = Pipeline.get_active_context()
 

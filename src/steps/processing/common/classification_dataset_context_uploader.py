@@ -1,7 +1,6 @@
-from src import Pipeline
-from src import step
-from src.models.contexts.processing.picsellia_processing_context import (
-    PicselliaProcessingContext,
+from src import Pipeline, step
+from src.models.contexts.processing.picsellia_dataset_processing_context import (
+    PicselliaDatasetProcessingContext,
 )
 from src.models.dataset.common.dataset_context import DatasetContext
 from src.models.steps.processing.common.classification_dataset_context_uploader import (
@@ -22,7 +21,7 @@ def classification_dataset_context_uploader(dataset_context: DatasetContext):
         dataset_context (DatasetContext): The dataset context containing the images and annotations
                                           to be uploaded.
     """
-    context: PicselliaProcessingContext = Pipeline.get_active_context()
+    context: PicselliaDatasetProcessingContext = Pipeline.get_active_context()
     uploader = ClassificationDatasetContextUploader(
         client=context.client,
         dataset_context=dataset_context,
