@@ -41,7 +41,7 @@ def processing_dataset_context_extractor(
         skip_asset_listing (bool): Whether to skip listing the dataset's assets during the download process. Defaults to False.
 
     Returns:
-        DatasetContext: The dataset context prepared for processing, including all downloaded assets and annotations.
+        CocoDatasetContext: The dataset context prepared for processing, including all downloaded assets and annotations.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     dataset_context = CocoDatasetContext(
@@ -72,7 +72,7 @@ def processing_dataset_context_extractor(
 @step
 def processing_dataset_collection_extractor(
     skip_asset_listing: bool = False,
-) -> DatasetCollection:
+) -> DatasetCollection[CocoDatasetContext]:
     """
     Extracts a dataset collection from a processing job, preparing it for further processing.
 

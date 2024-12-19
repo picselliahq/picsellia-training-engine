@@ -20,7 +20,7 @@ def classification_dataset_context_uploader(dataset_context: CocoDatasetContext)
     to the specified datalake in Picsellia, attaching relevant data tags.
 
     Args:
-        dataset_context (DatasetContext): The dataset context containing the images and annotations
+        dataset_context (CocoDatasetContext): The dataset context containing the images and annotations
                                           to be uploaded.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
