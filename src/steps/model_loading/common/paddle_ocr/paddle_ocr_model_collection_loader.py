@@ -22,7 +22,7 @@ from src.models.steps.model_loading.common.paddle_ocr.paddle_ocr_model_collectio
 
 
 @step
-def paddle_ocr_model_collection_loader(
+def load_paddle_ocr_model_collection(
     model_collection: PaddleOCRModelCollection,
 ) -> PaddleOCRModelCollection:
     """

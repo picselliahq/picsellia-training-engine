@@ -26,7 +26,7 @@ def get_destination_path(job_id: Optional[str]) -> str:
 
 
 @step
-def processing_dataset_context_extractor(
+def get_processing_dataset_context(
     skip_asset_listing: bool = False,
 ) -> CocoDatasetContext:
     """
@@ -70,7 +70,7 @@ def processing_dataset_context_extractor(
 
 
 @step
-def processing_dataset_collection_extractor(
+def get_processing_dataset_collection(
     skip_asset_listing: bool = False,
 ) -> DatasetCollection[CocoDatasetContext]:
     """

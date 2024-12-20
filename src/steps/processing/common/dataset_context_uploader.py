@@ -19,7 +19,7 @@ from src.models.steps.processing.common.segmentation_dataset_context_uploader im
 
 
 @step
-def dataset_context_uploader(
+def upload_dataset_context(
     dataset_context: CocoDatasetContext,
     use_id: bool = True,
     fail_on_asset_not_found: bool = True,

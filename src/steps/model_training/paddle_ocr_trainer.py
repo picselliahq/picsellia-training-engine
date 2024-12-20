@@ -3,6 +3,9 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
+from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
+    PaddleOCRModelCollection,
+)
 from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.paddle_ocr.paddle_ocr_augmentation_parameters import (
     PaddleOCRAugmentationParameters,
@@ -16,7 +19,9 @@ from src.models.steps.model_training.common.paddle_ocr_model_collection_trainer 
 
 
 @step
-def paddle_ocr_model_collection_trainer(model_collection):
+def train_paddle_ocr_model_collection(
+    model_collection: PaddleOCRModelCollection,
+) -> PaddleOCRModelCollection:
     """
     Trains a PaddleOCR model collection based on the provided hyperparameters.
 

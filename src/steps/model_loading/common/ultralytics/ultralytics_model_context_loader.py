@@ -20,9 +20,7 @@ from src.models.steps.model_loading.common.ultralytics.ultralytics_model_context
 
 
 @step
-def ultralytics_model_context_loader(
-    model_context: UltralyticsModelContext, weights_path_to_load: str
-) -> UltralyticsModelContext:
+def load_ultralytics_model_context(model_context: UltralyticsModelContext, weights_path_to_load: str) -> UltralyticsModelContext:
     """
     Loads an Ultralytics model from pretrained weights if available.
 

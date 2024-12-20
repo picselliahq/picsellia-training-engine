@@ -20,7 +20,7 @@ from src.models.steps.model_prediction.common.ultralytics.classification_model_c
 
 
 @step
-def ultralytics_model_context_evaluator(
+def evaluate_ultralytics_model_context(
     model_context: UltralyticsModelContext,
     dataset_context: TBaseDatasetContext,
 ) -> None:

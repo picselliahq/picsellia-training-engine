@@ -10,7 +10,7 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 
 
 @step
-def coco_classification_dataset_collection_validator(
+def validate_coco_classification_dataset_collection(
     dataset_collection: DatasetCollection[CocoDatasetContext],
 ) -> None:
     """

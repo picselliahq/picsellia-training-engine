@@ -10,7 +10,7 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 
 
 @step
-def classification_data_preparator(
+def prepare_classification_data(
     dataset_collection: DatasetCollection,
     destination_path: str,
 ) -> DatasetCollection:

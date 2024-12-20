@@ -16,9 +16,7 @@ from src.steps.model_loading.processing.processing_diversified_data_extractor_mo
 
 
 @step
-def diversified_data_extractor_processing(
-    dataset_context: TBaseDatasetContext, embedding_model: EmbeddingModel
-):
+def process(dataset_context: TBaseDatasetContext, embedding_model: EmbeddingModel):
     context: PicselliaProcessingContext[
         ProcessingDiversifiedDataExtractorParameters
     ] = Pipeline.get_active_context()

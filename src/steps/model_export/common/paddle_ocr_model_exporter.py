@@ -20,7 +20,7 @@ from src.models.steps.model_export.training.paddle_ocr_model_collection_exporter
 
 
 @step
-def paddle_ocr_model_collection_exporter(
+def export_paddle_ocr_model_collection(
     model_collection: PaddleOCRModelCollection,
 ) -> PaddleOCRModelCollection:
     """

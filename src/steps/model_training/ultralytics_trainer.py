@@ -22,7 +22,7 @@ from src.models.steps.model_training.common.ultralytics_model_context_trainer im
 
 
 @step
-def ultralytics_model_context_trainer(
+def train_ultralytics_model_context(
     model_context: UltralyticsModelContext,
     dataset_collection: DatasetCollection[TBaseDatasetContext],
 ) -> UltralyticsModelContext:

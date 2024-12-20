@@ -8,7 +8,7 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 
 
 @step
-def training_data_validator(dataset_collection: DatasetCollection):
+def validate_training_data(dataset_collection: DatasetCollection):
     """
     Performs common validations on a dataset collection.
 
@@ -30,7 +30,7 @@ def training_data_validator(dataset_collection: DatasetCollection):
 
 
 @step
-def processing_data_validator(dataset_context: TBaseDatasetContext):
+def validate_processing_data(dataset_context: TBaseDatasetContext):
     """
     Performs common validations on a dataset context.
 

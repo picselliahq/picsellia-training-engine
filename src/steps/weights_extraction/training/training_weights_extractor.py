@@ -9,7 +9,7 @@ from src.models.model.common.model_context import ModelContext
 
 
 @step
-def training_model_context_extractor(
+def get_training_model_context(
     pretrained_weights_name: Optional[str] = None,
     trained_weights_name: Optional[str] = None,
     config_name: Optional[str] = None,

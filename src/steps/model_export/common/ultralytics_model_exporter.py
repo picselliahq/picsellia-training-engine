@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 @step
-def ultralytics_model_context_exporter(model_context: UltralyticsModelContext):
+def export_ultralytics_model_context(model_context: UltralyticsModelContext):
     """
     Exports and saves the Ultralytics model context to the experiment.
 

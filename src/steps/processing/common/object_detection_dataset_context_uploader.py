@@ -10,7 +10,7 @@ from src.models.steps.processing.common.object_detection_dataset_context_uploade
 
 
 @step
-def object_detection_dataset_context_uploader(dataset_context: DatasetContext):
+def upload_object_detection_dataset_context(dataset_context: DatasetContext):
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     uploader = ObjectDetectionDatasetContextUploader(
         client=context.client,

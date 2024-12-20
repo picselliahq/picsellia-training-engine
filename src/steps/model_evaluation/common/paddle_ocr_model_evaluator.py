@@ -22,7 +22,7 @@ from src.models.steps.model_prediction.common.paddle_ocr.paddle_ocr_model_collec
 
 
 @step
-def paddle_ocr_model_collection_evaluator(
+def evaluate_paddle_ocr_model_collection(
     model_collection: PaddleOCRModelCollection,
     dataset_context: TBaseDatasetContext,
 ) -> None:

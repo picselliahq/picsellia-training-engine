@@ -6,7 +6,7 @@ from src.models.steps.data_validation.processing.processing_diversified_data_ext
 
 
 @step
-def diversified_data_extractor_data_validator(
+def validate_diversified_data_extractor_data(
     dataset_context: TBaseDatasetContext,
 ) -> None:
     validator = ProcessingDiversifiedDataExtractorDataValidator(

@@ -26,7 +26,7 @@ from src.models.steps.data_validation.processing.processing_tiler_data_validator
 
 
 @step
-def tiler_data_validator(
+def validate_tiler_data(
     dataset_context: CocoDatasetContext,
 ) -> CocoDatasetContext:
     context: PicselliaProcessingContext[

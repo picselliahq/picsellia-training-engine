@@ -20,7 +20,7 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters impor
 
 
 @step
-def paddle_ocr_model_collection_extractor() -> PaddleOCRModelCollection:
+def get_paddle_ocr_model_collection() -> PaddleOCRModelCollection:
     """
     Extracts a PaddleOCR model collection from a Picsellia experiment.
 

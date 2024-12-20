@@ -8,7 +8,7 @@ from src.models.steps.data_preparation.common.classification_dataset_context_pre
 
 
 @step
-def ultralytics_classification_dataset_collection_preparator(
+def prepare_ultralytics_classification_dataset_collection(
     dataset_collection: DatasetCollection[CocoDatasetContext],
 ) -> DatasetCollection[CocoDatasetContext]:
     """

@@ -72,7 +72,7 @@ def is_embedding_model_name_valid(
 
 
 @step
-def diversified_data_extractor_model_loader(pretrained_weights: str) -> EmbeddingModel:
+def load_diversified_data_extractor_model(pretrained_weights: str) -> EmbeddingModel:
     context: PicselliaProcessingContext[
         ProcessingDiversifiedDataExtractorParameters
     ] = Pipeline.get_active_context()

@@ -22,7 +22,7 @@ from src.models.steps.weights_preparation.training.paddle_ocr_model_collection_p
 
 
 @step
-def paddle_ocr_model_collection_preparator(
+def prepare_paddle_ocr_model_collection(
     model_collection: PaddleOCRModelCollection,
     dataset_collection: DatasetCollection[PaddleOCRDatasetContext],
 ) -> PaddleOCRModelCollection:

@@ -13,7 +13,7 @@ from src.models.steps.processing.dataset_version_creation.tiler_processing.tiler
 
 
 @step
-def tiler_processing(
+def process(
     dataset_collection: DatasetCollection[CocoDatasetContext],
 ) -> CocoDatasetContext:
     context: PicselliaProcessingContext[

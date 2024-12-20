@@ -10,7 +10,7 @@ from src.models.steps.data_preparation.training.paddle_ocr_dataset_context_prepa
 
 
 @step
-def paddle_ocr_dataset_collection_preparator(
+def prepare_paddle_ocr_dataset_collection(
     dataset_collection: DatasetCollection[CocoDatasetContext],
 ) -> DatasetCollection[PaddleOCRDatasetContext]:
     """

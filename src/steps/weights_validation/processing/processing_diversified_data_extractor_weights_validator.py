@@ -61,7 +61,7 @@ def validate_model_architecture(
 
 
 @step
-def diversified_data_extractor_weights_validator() -> str:
+def validate_diversified_data_extractor_weights() -> str:
     context: PicselliaProcessingContext[
         ProcessingDiversifiedDataExtractorParameters
     ] = Pipeline.get_active_context()
