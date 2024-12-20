@@ -16,7 +16,7 @@ from src.models.utils.dataset_logging import (
 
 
 @step
-def coco_dataset_collection_extractor() -> DatasetCollection[CocoDatasetContext]:
+def get_coco_dataset_collection() -> DatasetCollection[CocoDatasetContext]:
     """
     Extracts datasets from an experiment and prepares them for training, validation, and testing.
 

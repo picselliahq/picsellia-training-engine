@@ -12,31 +12,28 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters impor
 from src.models.parameters.training.paddle_ocr.paddle_ocr_augmentation_parameters import (
     PaddleOCRAugmentationParameters,
 )
-from src.steps.data_extraction.training.coco_data_extractor import (
-    coco_dataset_collection_extractor,
-)
+from src.steps.data_extraction.training.coco_data_extractor import get_coco_dataset_collection
 from src.steps.data_preparation.training.paddle_ocr_data_preparator import (
-    paddle_ocr_dataset_collection_preparator,
+    prepare_paddle_ocr_dataset_collection,
 )
 from src.steps.model_evaluation.common.paddle_ocr_model_evaluator import (
-    paddle_ocr_model_collection_evaluator,
+    evaluate_paddle_ocr_model_collection,
 )
 from src.steps.model_export.common.paddle_ocr_model_exporter import (
-    paddle_ocr_model_collection_exporter,
+    export_paddle_ocr_model_collection,
 )
 from src.steps.model_loading.common.paddle_ocr.paddle_ocr_model_collection_loader import (
-    paddle_ocr_model_collection_loader,
+    load_paddle_ocr_model_collection,
 )
 from src.steps.model_training.paddle_ocr_trainer import (
-    paddle_ocr_model_collection_trainer,
+    train_paddle_ocr_model_collection,
 )
 from src.steps.weights_extraction.training.paddle_ocr_weights_extractor import (
-    paddle_ocr_model_collection_extractor,
+    get_paddle_ocr_model_collection,
 )
 from src.steps.weights_preparation.training.paddle_ocr_weights_preparator import (
-    paddle_ocr_model_collection_preparator,
+    prepare_paddle_ocr_model_collection,
 )
-
 
 parser = ArgumentParser()
 parser.add_argument("--api_token", type=str)
@@ -63,24 +60,24 @@ def get_context() -> TestPicselliaTrainingContext:
     remove_logs_on_completion=False,
 )
 def paddle_ocr_training_pipeline():
-    dataset_collection = coco_dataset_collection_extractor()
-    dataset_collection = paddle_ocr_dataset_collection_preparator(
+    dataset_collection = get_coco_dataset_collection()
+    dataset_collection = prepare_paddle_ocr_dataset_collection(
         dataset_collection=dataset_collection
     )
-    model_collection = paddle_ocr_model_collection_extractor()
-    model_collection = paddle_ocr_model_collection_preparator(
+    model_collection = get_paddle_ocr_model_collection()
+    model_collection = prepare_paddle_ocr_model_collection(
         model_collection=model_collection, dataset_collection=dataset_collection
     )
-    model_collection = paddle_ocr_model_collection_trainer(
+    model_collection = train_paddle_ocr_model_collection(
         model_collection=model_collection
     )
-    model_collection = paddle_ocr_model_collection_exporter(
+    model_collection = export_paddle_ocr_model_collection(
         model_collection=model_collection
     )
-    model_collection = paddle_ocr_model_collection_loader(
+    model_collection = load_paddle_ocr_model_collection(
         model_collection=model_collection
     )
-    paddle_ocr_model_collection_evaluator(
+    evaluate_paddle_ocr_model_collection(
         model_collection=model_collection, dataset_context=dataset_collection["test"]
     )
 

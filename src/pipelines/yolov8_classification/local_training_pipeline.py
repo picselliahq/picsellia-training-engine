@@ -11,30 +11,24 @@ from src.models.parameters.training.ultralytics.ultralytics_augmentation_paramet
 from src.models.parameters.training.ultralytics.ultralytics_hyper_parameters import (
     UltralyticsHyperParameters,
 )
-from src.steps.data_extraction.training.coco_data_extractor import (
-    coco_dataset_collection_extractor,
-)
+from src.steps.data_extraction.training.coco_data_extractor import get_coco_dataset_collection
 from src.steps.data_preparation.training.ultralytics_classification_data_preparator import (
-    ultralytics_classification_dataset_collection_preparator,
+    prepare_ultralytics_classification_dataset_collection,
 )
-from src.steps.data_validation.common.coco_classification_dataset_collection_validator import (
-    coco_classification_dataset_collection_validator,
-)
+from src.steps.data_validation.common.coco_classification_dataset_collection_validator import validate_coco_classification_dataset_collection
 from src.steps.model_evaluation.common.ultralytics_model_evaluator import (
-    ultralytics_model_context_evaluator,
+    evaluate_ultralytics_model_context,
 )
 from src.steps.model_export.common.ultralytics_model_exporter import (
-    ultralytics_model_context_exporter,
+    export_ultralytics_model_context,
 )
 from src.steps.model_loading.common.ultralytics.ultralytics_model_context_loader import (
-    ultralytics_model_context_loader,
+    load_ultralytics_model_context,
 )
 from src.steps.model_training.ultralytics_trainer import (
-    ultralytics_model_context_trainer,
+    train_ultralytics_model_context,
 )
-from src.steps.weights_extraction.training.ultralytics_weights_extractor import (
-    ultralytics_model_context_extractor,
-)
+from src.steps.weights_extraction.training.ultralytics_weights_extractor import get_ultralytics_model_context
 
 parser = ArgumentParser()
 parser.add_argument("--api_token", type=str)
@@ -61,27 +55,21 @@ def get_context() -> TestPicselliaTrainingContext:
     remove_logs_on_completion=False,
 )
 def yolov8_classification_training_pipeline():
-    dataset_collection = coco_dataset_collection_extractor()
-    dataset_collection = ultralytics_classification_dataset_collection_preparator(
+    dataset_collection = get_coco_dataset_collection()
+    prepare_ultralytics_classification_dataset_collection(
         dataset_collection=dataset_collection
     )
-    coco_classification_dataset_collection_validator(
-        dataset_collection=dataset_collection
-    )
+    validate_coco_classification_dataset_collection(dataset_collection=dataset_collection)
 
-    model_context = ultralytics_model_context_extractor(
-        pretrained_weights_name="pretrained-weights"
-    )
-    ultralytics_model_context_loader(
-        model_context=model_context,
-        weights_path_to_load=model_context.pretrained_weights_path,
-    )
-    ultralytics_model_context_trainer(
+    model_context = get_ultralytics_model_context(pretrained_weights_name="pretrained-weights")
+    load_ultralytics_model_context(        model_context=model_context,
+        weights_path_to_load=model_context.pretrained_weights_path,)
+    train_ultralytics_model_context(
         model_context=model_context, dataset_collection=dataset_collection
     )
 
-    ultralytics_model_context_exporter(model_context=model_context)
-    ultralytics_model_context_evaluator(
+    export_ultralytics_model_context(model_context=model_context)
+    evaluate_ultralytics_model_context(
         model_context=model_context, dataset_context=dataset_collection["test"]
     )
 

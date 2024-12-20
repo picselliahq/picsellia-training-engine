@@ -9,16 +9,16 @@ from src.models.contexts.processing.test_picsellia_processing_context import (
     TestPicselliaProcessingContext,
 )
 from src.steps.data_extraction.processing.processing_data_extractor import (
-    processing_dataset_collection_extractor,
+    get_processing_dataset_collection,
 )
 from src.steps.data_validation.processing.processing_tiler_data_validator import (
-    tiler_data_validator,
+    validate_tiler_data,
 )
 from src.steps.processing.common.dataset_context_uploader import (
-    dataset_context_uploader,
+    upload_dataset_context,
 )
 from src.steps.processing.dataset_version_creation.tiler_processing import (
-    tiler_processing,
+    process,
 )
 
 from src.models.steps.processing.dataset_version_creation.tiler_processing.base_tiler_processing import (
@@ -94,16 +94,12 @@ def get_context() -> TestPicselliaProcessingContext:
     remove_logs_on_completion=False,
 )
 def tiler_processing_pipeline() -> None:
-    dataset_collection = processing_dataset_collection_extractor()
-    dataset_collection["input"] = tiler_data_validator(
+    dataset_collection = get_processing_dataset_collection()
+    dataset_collection["input"] = validate_tiler_data(
         dataset_context=dataset_collection["input"]
     )
-    output_dataset_context = tiler_processing(dataset_collection=dataset_collection)
-    dataset_context_uploader(
-        dataset_context=output_dataset_context,
-        use_id=False,
-        fail_on_asset_not_found=False,
-    )
+    output_dataset_context = process(dataset_collection=dataset_collection)
+    upload_dataset_context(dataset_context=output_dataset_context, use_id=False, fail_on_asset_not_found=False,)
 
 
 if __name__ == "__main__":

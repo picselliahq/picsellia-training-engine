@@ -6,20 +6,20 @@ from src.models.parameters.processing.processing_diversified_data_extractor_para
     ProcessingDiversifiedDataExtractorParameters,
 )
 from src.steps.data_extraction.processing.processing_data_extractor import (
-    processing_dataset_context_extractor,
+    get_processing_dataset_context,
 )
 
 from src.steps.data_validation.processing.processing_diversified_data_extractor_data_validator import (
-    diversified_data_extractor_data_validator,
+    validate_diversified_data_extractor_data,
 )
 from src.steps.model_loading.processing.processing_diversified_data_extractor_model_loader import (
-    diversified_data_extractor_model_loader,
+    load_diversified_data_extractor_model,
 )
 from src.steps.processing.dataset_version_creation.diversified_data_extractor_processing import (
-    diversified_data_extractor_processing,
+    process,
 )
 from src.steps.weights_validation.processing.processing_diversified_data_extractor_weights_validator import (
-    diversified_data_extractor_weights_validator,
+    validate_diversified_data_extractor_weights,
 )
 
 
@@ -37,17 +37,15 @@ def get_context() -> (
     remove_logs_on_completion=False,
 )
 def diversified_data_extractor_pipeline() -> None:
-    dataset_context = processing_dataset_context_extractor(skip_asset_listing=True)
+    dataset_context = get_processing_dataset_context(skip_asset_listing=True)
 
-    diversified_data_extractor_data_validator(dataset_context=dataset_context)
-    pretrained_weights = diversified_data_extractor_weights_validator()
-    embedding_model = diversified_data_extractor_model_loader(
+    validate_diversified_data_extractor_data(dataset_context=dataset_context)
+    pretrained_weights = validate_diversified_data_extractor_weights()
+    embedding_model = load_diversified_data_extractor_model(
         pretrained_weights=pretrained_weights
     )
 
-    diversified_data_extractor_processing(
-        dataset_context=dataset_context, embedding_model=embedding_model
-    )
+    process(dataset_context=dataset_context, embedding_model=embedding_model)
 
 
 if __name__ == "__main__":

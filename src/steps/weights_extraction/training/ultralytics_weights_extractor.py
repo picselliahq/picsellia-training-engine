@@ -11,7 +11,7 @@ from src.models.model.ultralytics.ultralytics_model_context import (
 
 
 @step
-def ultralytics_model_context_extractor(
+def get_ultralytics_model_context(
     pretrained_weights_name: Optional[str] = None,
     trained_weights_name: Optional[str] = None,
     config_name: Optional[str] = None,
