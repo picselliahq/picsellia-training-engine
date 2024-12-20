@@ -1,23 +1,23 @@
 # type: ignore
 
+from pipeline_utils.parameters.processing_bounding_box_cropper_parameters import (
+    ProcessingBoundingBoxCropperParameters,
+)
+from pipeline_utils.steps.data_validation.processing_bounding_box_cropper_data_validator import (
+    validate_bounding_box_cropper_data,
+)
+from pipeline_utils.steps.processing.bounding_box_cropper_processing import (
+    process,
+)
 from src import pipeline
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
-    ProcessingBoundingBoxCropperParameters,
-)
 from src.steps.data_extraction.processing.processing_data_extractor import (
-    processing_dataset_collection_extractor,
-)
-from src.steps.data_validation.processing.processing_bounding_box_cropper_data_validator import (
-    bounding_box_cropper_data_validator,
-)
-from src.steps.processing.dataset_version_creation.bounding_box_cropper_processing import (
-    bounding_box_cropper_processing,
+    get_processing_dataset_collection,
 )
 from src.steps.processing.common.classification_dataset_context_uploader import (
-    classification_dataset_context_uploader,
+    upload_classification_dataset_context,
 )
 
 
@@ -33,12 +33,10 @@ def get_context() -> PicselliaProcessingContext[ProcessingBoundingBoxCropperPara
     remove_logs_on_completion=False,
 )
 def bounding_box_cropper_processing_pipeline() -> None:
-    dataset_collection = processing_dataset_collection_extractor()
-    bounding_box_cropper_data_validator(dataset_context=dataset_collection.input)
-    output_dataset_context = bounding_box_cropper_processing(
-        dataset_collection=dataset_collection
-    )
-    classification_dataset_context_uploader(dataset_context=output_dataset_context)
+    dataset_collection = get_processing_dataset_collection()
+    validate_bounding_box_cropper_data(dataset_context=dataset_collection.input)
+    output_dataset_context = process(dataset_collection=dataset_collection)
+    upload_classification_dataset_context(dataset_context=output_dataset_context)
 
 
 if __name__ == "__main__":
