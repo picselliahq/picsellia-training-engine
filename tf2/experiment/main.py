@@ -271,7 +271,7 @@ experiment.start_logging_chapter("Start training")
 
 pxl_utils.train(
     model_dir=experiment.results_dir,
-    config_dir=experiment.config_dir,
+    config_dir=training_config_dir,
     log_real_time=experiment,
     evaluate_fn=pxl_utils.evaluate,
     log_metrics=pxl_utils.log_metrics,
@@ -282,7 +282,7 @@ print("\n")
 experiment.start_logging_chapter("Store artifacts")
 
 pxl_utils.export_graph(
-    ckpt_dir=experiment.checkpoint_dir,
+    ckpt_dir=experiment.results_dir,
     exported_model_dir=experiment.exported_model_dir,
     config_dir=training_config_dir,
 )
@@ -297,12 +297,11 @@ experiment.start_logging_chapter("Computing metrics on test dataset")
 experiment.start_logging_buffer(9)
 
 eval_metrics_dir = os.path.join(experiment.base_dir, "eval_metrics")
-if not os.path.exists(eval_metrics_dir):
-    os.makedirs(eval_metrics_dir)
+os.makedirs(eval_metrics_dir, exist_ok=True)
 
-pxl_utils.evaluate(eval_metrics_dir, eval_config, experiment.checkpoint_dir)
+pxl_utils.evaluate(metrics_dir=eval_metrics_dir, config=eval_config, ckpt_dir=experiment.results_dir)
 
-metrics = pxl_utils.tf_events_to_dict("{}/eval_metrics".format(experiment.name), "eval")
+metrics = pxl_utils.tf_events_to_dict(os.path.join(eval_metrics_dir, "eval"), "eval")
 experiment.log("Evaluation/Metrics", metrics, "table", replace=True)
 
 conf, eval = pxl_utils.get_confusion_matrix(

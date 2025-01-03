@@ -735,7 +735,7 @@ def train_loop(
                     if log_metrics is not None:
                         log_metrics(
                             experiment=picsellia_experiment,
-                            tf_metrics_dir=os.path.join(picsellia_experiment.results_dir, "train"),
+                            tf_metrics_dir=picsellia_experiment.results_dir,
                             global_step=global_step.value(),
                             metrics_type="train",
                         )
@@ -778,7 +778,7 @@ def train_loop(
                             evaluate_fn(
                                 metrics_dir=picsellia_experiment.metrics_dir,
                                 config=picsellia_experiment.config_dir,
-                                ckpt_dir=picsellia_experiment.checkpoint_dir,
+                                ckpt_dir=picsellia_experiment.results_dir,
                                 train_steps=1,
                             )
 
@@ -1114,6 +1114,7 @@ def eager_eval_loop(
     for k in eval_metrics:
         tf.compat.v2.summary.scalar(k, eval_metrics[k], step=global_step)
         tf.logging.info("\t+ %s: %f", k, eval_metrics[k])
+        
     return eval_metrics
 
 
@@ -1226,7 +1227,7 @@ def eval_continuously(
         detection_model = MODEL_BUILD_UTIL_MAP["detection_model_fn_base"](
             model_config=model_config, is_training=True
         )
-
+        
     eval_input = strategy.experimental_distribute_dataset(
         inputs.eval_input(
             eval_config=eval_config,
@@ -1266,6 +1267,8 @@ def eval_continuously(
 
         if eval_config.use_moving_averages:
             optimizer.swap_weights()
+            
+        os.makedirs(os.path.join(model_dir, "eval"), exist_ok=True)
 
         summary_writer = tf.compat.v2.summary.create_file_writer(
             os.path.join(model_dir, "eval", eval_input_config.name)

@@ -719,6 +719,7 @@ def tf_events_to_dict(dir_path, type=""):
     Returns:
         A dictionnary of scalars logs.
     """
+    file_found = False
     log_dict = {}
     if dir_path.startswith("events.out"):
         if not os.path.isfile(dir_path):
@@ -769,8 +770,8 @@ def tf_events_to_dict(dir_path, type=""):
 
 
 def log_metrics(experiment, tf_metrics_dir, global_step, metrics_type):
-    metrics = tf_events_to_dict(dir_path=tf_metrics_dir, type=metrics_type)
     if metrics_type == "train":
+        metrics = tf_events_to_dict(dir_path=os.path.join(tf_metrics_dir, 'train'), type=metrics_type)
         log_type = "Train"
         for metric_name, value in metrics.items():
             data = {
@@ -779,6 +780,7 @@ def log_metrics(experiment, tf_metrics_dir, global_step, metrics_type):
             }
             experiment.log(log_type + "/" + metric_name, data, "line")
     elif metrics_type == "eval":
+        metrics = tf_events_to_dict(dir_path=os.path.join(tf_metrics_dir, 'eval'), type=metrics_type)
         log_type = "Validation"
         for metric_name, value in metrics.items():
             data = {"steps": [float(global_step)], "values": [float(value)]}
@@ -809,15 +811,16 @@ def export_graph(
     with tf.io.gfile.GFile(pipeline_config_path, "r") as f:
         text_format.Merge(f.read(), pipeline_config)
     text_format.Merge(config_override, pipeline_config)
+    
     exporter_lib_v2.export_inference_graph(
-        input_type,
-        pipeline_config,
-        ckpt_dir,
-        exported_model_dir,
-        use_side_inputs,
-        side_input_shapes,
-        side_input_types,
-        side_input_names,
+        input_type=input_type,
+        pipeline_config=pipeline_config,
+        trained_checkpoint_dir=ckpt_dir,
+        output_directory=exported_model_dir,
+        use_side_inputs=use_side_inputs,
+        side_input_shapes=side_input_shapes,
+        side_input_types=side_input_types,
+        side_input_names=side_input_names,
     )
 
 
