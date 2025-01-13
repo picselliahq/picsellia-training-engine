@@ -1,11 +1,12 @@
 import os
 from abc import abstractmethod
+from typing import Any, Generic
 
 from picsellia import Experiment
-from src.models.model.common.model_context import ModelContext
+from src.models.model.common.model_context import TModelContext
 
 
-class ModelContextExporter:
+class ModelContextExporter(Generic[TModelContext]):
     """
     Base class for exporting and saving a model context.
 
@@ -19,7 +20,7 @@ class ModelContextExporter:
         experiment (Experiment): The experiment to which the model is related.
     """
 
-    def __init__(self, model_context: ModelContext, experiment: Experiment):
+    def __init__(self, model_context: TModelContext):
         """
         Initializes the ModelContextExporter with the given model context and experiment.
 
@@ -28,11 +29,13 @@ class ModelContextExporter:
             experiment (Experiment): The experiment object where the model will be exported.
         """
         self.model_context = model_context
-        self.experiment = experiment
 
     @abstractmethod
     def export_model_context(
-        self, exported_model_destination_path: str, export_format: str
+        self,
+        exported_model_destination_path: str,
+        export_format: str,
+        hyperparameters: Any,
     ):
         """
         Abstract method to export the model context.
@@ -47,7 +50,10 @@ class ModelContextExporter:
         pass
 
     def save_model_to_experiment(
-        self, exported_weights_dir: str, exported_weights_name: str
+        self,
+        experiment: Experiment,
+        exported_weights_dir: str,
+        exported_weights_name: str,
     ):
         """
         Saves the exported model to the experiment.
@@ -70,13 +76,13 @@ class ModelContextExporter:
             raise ValueError("No model files found in the exported model directory")
 
         if len(exported_files) > 1:
-            self.experiment.store(
+            experiment.store(
                 name=exported_weights_name,
                 path=exported_weights_dir,
                 do_zip=True,
             )
         else:
-            self.experiment.store(
+            experiment.store(
                 name=exported_weights_name,
                 path=os.path.join(
                     exported_weights_dir,

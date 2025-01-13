@@ -3,14 +3,15 @@ from src import step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.common.dataset_context import DatasetContext
+
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.steps.processing.common.classification_dataset_context_uploader import (
     ClassificationDatasetContextUploader,
 )
 
 
 @step
-def classification_dataset_context_uploader(dataset_context: DatasetContext):
+def classification_dataset_context_uploader(dataset_context: CocoDatasetContext):
     """
     Uploads a classification dataset context to Picsellia.
 
@@ -19,7 +20,7 @@ def classification_dataset_context_uploader(dataset_context: DatasetContext):
     to the specified datalake in Picsellia, attaching relevant data tags.
 
     Args:
-        dataset_context (DatasetContext): The dataset context containing the images and annotations
+        dataset_context (CocoDatasetContext): The dataset context containing the images and annotations
                                           to be uploaded.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()

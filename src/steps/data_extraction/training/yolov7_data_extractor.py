@@ -4,19 +4,21 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.models.dataset.common.yolo_dataset_context import YoloDatasetContext
+from src.models.dataset.common.yolov7_dataset_collection import Yolov7DatasetCollection
 from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
     TrainingDatasetCollectionExtractor,
 )
 
 from src.models.utils.dataset_logging import (
     log_labelmap,
-    log_objects_distribution,
 )
 
 
 @step
-def training_dataset_collection_extractor() -> DatasetCollection:
+def yolov7_dataset_collection_extractor() -> (
+    Yolov7DatasetCollection[YoloDatasetContext]
+):
     """
     Extracts datasets from an experiment and prepares them for training, validation, and testing.
 
@@ -43,26 +45,34 @@ def training_dataset_collection_extractor() -> DatasetCollection:
         train_set_split_ratio=context.hyperparameters.train_set_split_ratio,
     )
 
-    dataset_collection = dataset_collection_extractor.get_dataset_collection(
+    yolo_dataset_collection = dataset_collection_extractor.get_dataset_collection(
+        context_class=YoloDatasetContext,
         random_seed=context.hyperparameters.seed,
     )
 
-    dataset_collection.download_all(
-        destination_path=os.path.join(os.getcwd(), context.experiment.name, "dataset"),
-        use_id=True,
-    )
-
     log_labelmap(
-        labelmap=dataset_collection["train"].labelmap,
+        labelmap=yolo_dataset_collection["train"].labelmap,
         experiment=context.experiment,
         log_name="labelmap",
     )
 
-    for dataset_context in dataset_collection:
-        log_objects_distribution(
-            coco_file=dataset_context.coco_file,
-            experiment=context.experiment,
-            log_name=f"{dataset_context.dataset_name}/objects_distribution",
-        )
+    yolov7_dataset_collection = Yolov7DatasetCollection(
+        datasets=list(yolo_dataset_collection.datasets.values())
+    )
 
-    return dataset_collection
+    yolov7_dataset_collection.dataset_path = os.path.join(
+        os.getcwd(), context.experiment.name, "dataset"
+    )
+
+    yolov7_dataset_collection.download_all(
+        images_destination_path=os.path.join(
+            yolov7_dataset_collection.dataset_path, "images"
+        ),
+        annotations_destination_path=os.path.join(
+            yolov7_dataset_collection.dataset_path, "labels"
+        ),
+        use_id=True,
+        skip_asset_listing=True,
+    )
+
+    return yolov7_dataset_collection

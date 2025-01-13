@@ -1,4 +1,4 @@
-FROM picsellia/cpu:ubuntu20.04-python3.10
+FROM picsellia/cpu:python3.10
 
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \

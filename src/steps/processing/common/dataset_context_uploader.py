@@ -3,7 +3,7 @@ from src import step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.steps.processing.common.classification_dataset_context_uploader import (
     ClassificationDatasetContextUploader,
 )
@@ -19,7 +19,11 @@ from src.models.steps.processing.common.segmentation_dataset_context_uploader im
 
 
 @step
-def dataset_context_uploader(dataset_context: DatasetContext):
+def dataset_context_uploader(
+    dataset_context: CocoDatasetContext,
+    use_id: bool = True,
+    fail_on_asset_not_found: bool = True,
+) -> None:
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     if dataset_context.dataset_version.type == InferenceType.OBJECT_DETECTION:
         object_detection_uploader = ObjectDetectionDatasetContextUploader(
@@ -30,6 +34,8 @@ def dataset_context_uploader(dataset_context: DatasetContext):
                 context.processing_parameters.data_tag,
                 dataset_context.dataset_version.version,
             ],
+            use_id=use_id,
+            fail_on_asset_not_found=fail_on_asset_not_found,
         )
         object_detection_uploader.upload_dataset_context()
     elif dataset_context.dataset_version.type == InferenceType.CLASSIFICATION:
@@ -52,6 +58,8 @@ def dataset_context_uploader(dataset_context: DatasetContext):
                 context.processing_parameters.data_tag,
                 dataset_context.dataset_version.version,
             ],
+            use_id=use_id,
+            fail_on_asset_not_found=fail_on_asset_not_found,
         )
         segmentation_uploader.upload_dataset_context()
     else:

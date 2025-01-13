@@ -4,21 +4,21 @@ from src import Pipeline, step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.parameters.processing.processing_tiler_parameters import (
     ProcessingTilerParameters,
 )
-from src.models.steps.data_validation.common.classification_dataset_context_validator import (
-    ClassificationDatasetContextValidator,
+from src.models.steps.data_validation.common.coco_classification_dataset_context_validator import (
+    CocoClassificationDatasetContextValidator,
 )
 from src.models.steps.data_validation.common.not_configured_dataset_context_validator import (
     NotConfiguredDatasetContextValidator,
 )
-from src.models.steps.data_validation.common.object_detection_dataset_context_validator import (
-    ObjectDetectionDatasetContextValidator,
+from src.models.steps.data_validation.common.coco_object_detection_dataset_context_validator import (
+    CocoObjectDetectionDatasetContextValidator,
 )
-from src.models.steps.data_validation.common.segmentation_dataset_context_validator import (
-    SegmentationDatasetContextValidator,
+from src.models.steps.data_validation.common.coco_segmentation_dataset_context_validator import (
+    CocoSegmentationDatasetContextValidator,
 )
 from src.models.steps.data_validation.processing.processing_tiler_data_validator import (
     ProcessingTilerDataValidator,
@@ -27,8 +27,8 @@ from src.models.steps.data_validation.processing.processing_tiler_data_validator
 
 @step
 def tiler_data_validator(
-    dataset_context: DatasetContext,
-) -> DatasetContext:
+    dataset_context: CocoDatasetContext,
+) -> CocoDatasetContext:
     context: PicselliaProcessingContext[
         ProcessingTilerParameters
     ] = Pipeline.get_active_context()
@@ -44,28 +44,34 @@ def tiler_data_validator(
         case InferenceType.SEGMENTATION:
             # Both object detection and segmentation dataset validators are used for segmentation datasets because,
             # within a COCO segmentation dataset, both the properties of bounding boxes and polygons are used.
-            object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
-                dataset_context=dataset_context,
-                fix_annotation=context.processing_parameters.fix_annotation,
+            object_detection_dataset_validator = (
+                CocoObjectDetectionDatasetContextValidator(
+                    dataset_context=dataset_context,
+                    fix_annotation=context.processing_parameters.fix_annotation,
+                )
             )
             dataset_context = object_detection_dataset_validator.validate()
 
-            segmentation_dataset_validator = SegmentationDatasetContextValidator(
+            segmentation_dataset_validator = CocoSegmentationDatasetContextValidator(
                 dataset_context=dataset_context,
                 fix_annotation=context.processing_parameters.fix_annotation,
             )
             dataset_context = segmentation_dataset_validator.validate()
 
         case InferenceType.OBJECT_DETECTION:
-            object_detection_dataset_validator = ObjectDetectionDatasetContextValidator(
-                dataset_context=dataset_context,
-                fix_annotation=context.processing_parameters.fix_annotation,
+            object_detection_dataset_validator = (
+                CocoObjectDetectionDatasetContextValidator(
+                    dataset_context=dataset_context,
+                    fix_annotation=context.processing_parameters.fix_annotation,
+                )
             )
             dataset_context = object_detection_dataset_validator.validate()
 
         case InferenceType.CLASSIFICATION:
-            classification_dataset_validator = ClassificationDatasetContextValidator(
-                dataset_context=dataset_context,
+            classification_dataset_validator = (
+                CocoClassificationDatasetContextValidator(
+                    dataset_context=dataset_context,
+                )
             )
             dataset_context = classification_dataset_validator.validate()
 

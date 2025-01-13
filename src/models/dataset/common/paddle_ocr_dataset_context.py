@@ -3,10 +3,10 @@ from typing import Optional, Dict
 from picsellia import DatasetVersion, Label
 from picsellia.sdk.asset import MultiAsset
 
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 
 
-class PaddleOCRDatasetContext(DatasetContext):
+class PaddleOCRDatasetContext(CocoDatasetContext):
     """
     A specialized dataset context for handling PaddleOCR datasets.
 

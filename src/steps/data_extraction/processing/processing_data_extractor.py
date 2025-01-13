@@ -6,12 +6,8 @@ from src import step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.dataset.common.dataset_context import DatasetContext
-
-from src.models.steps.data_extraction.processing.processing_dataset_collection_extractor import (
-    ProcessingDatasetCollectionExtractor,
-)
 
 
 def get_destination_path(job_id: Optional[str]) -> str:
@@ -32,7 +28,7 @@ def get_destination_path(job_id: Optional[str]) -> str:
 @step
 def processing_dataset_context_extractor(
     skip_asset_listing: bool = False,
-) -> DatasetContext:
+) -> CocoDatasetContext:
     """
     Extracts a dataset context from a processing job, preparing it for further processing.
 
@@ -45,10 +41,10 @@ def processing_dataset_context_extractor(
         skip_asset_listing (bool): Whether to skip listing the dataset's assets during the download process. Defaults to False.
 
     Returns:
-        DatasetContext: The dataset context prepared for processing, including all downloaded assets and annotations.
+        CocoDatasetContext: The dataset context prepared for processing, including all downloaded assets and annotations.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
-    dataset_context = DatasetContext(
+    dataset_context = CocoDatasetContext(
         dataset_name="input",
         dataset_version=context.input_dataset_version,
         assets=context.input_dataset_version.list_assets(),
@@ -58,17 +54,16 @@ def processing_dataset_context_extractor(
 
     dataset_context.download_assets(
         destination_path=os.path.join(
-            destination_path, dataset_context.dataset_name, "images"
+            destination_path, "images", dataset_context.dataset_name
         ),
         use_id=True,
         skip_asset_listing=skip_asset_listing,
     )
-    dataset_context.download_and_build_coco_file(
+    dataset_context.download_annotations(
         destination_path=os.path.join(
-            destination_path, dataset_context.dataset_name, "annotations"
+            destination_path, "annotations", dataset_context.dataset_name
         ),
         use_id=True,
-        skip_asset_listing=skip_asset_listing,
     )
 
     return dataset_context
@@ -77,7 +72,7 @@ def processing_dataset_context_extractor(
 @step
 def processing_dataset_collection_extractor(
     skip_asset_listing: bool = False,
-) -> DatasetCollection:
+) -> DatasetCollection[CocoDatasetContext]:
     """
     Extracts a dataset collection from a processing job, preparing it for further processing.
 
@@ -93,14 +88,25 @@ def processing_dataset_collection_extractor(
         DatasetCollection: The dataset collection prepared for processing, including all downloaded assets and annotations.
     """
     context: PicselliaProcessingContext = Pipeline.get_active_context()
-    dataset_collection_extractor = ProcessingDatasetCollectionExtractor(
-        input_dataset_version=context.input_dataset_version,
-        output_dataset_version=context.output_dataset_version,
+    input_dataset_context = CocoDatasetContext(
+        dataset_name="input",
+        dataset_version=context.input_dataset_version,
+        assets=context.input_dataset_version.list_assets(),
+        labelmap=None,
+    )
+    output_dataset_context = CocoDatasetContext(
+        dataset_name="output",
+        dataset_version=context.output_dataset_version,
+        assets=None,
+        labelmap=None,
+    )
+    dataset_collection = DatasetCollection(
+        [input_dataset_context, output_dataset_context]
     )
     destination_path = get_destination_path(context.job_id)
-    dataset_collection = dataset_collection_extractor.get_dataset_collection()
     dataset_collection.download_all(
-        destination_path=destination_path,
+        images_destination_path=os.path.join(destination_path, "images"),
+        annotations_destination_path=os.path.join(destination_path, "annotations"),
         use_id=True,
         skip_asset_listing=skip_asset_listing,
     )

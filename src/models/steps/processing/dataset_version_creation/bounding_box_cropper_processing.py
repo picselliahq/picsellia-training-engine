@@ -1,9 +1,10 @@
 import os
+from typing import Dict
 
 from PIL import Image
 from picsellia.types.enums import InferenceType
-from picsellia_annotations.coco import Annotation
 
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
 
 
@@ -21,7 +22,7 @@ class BoundingBoxCropperProcessing:
 
     def __init__(
         self,
-        dataset_collection: DatasetCollection,
+        dataset_collection: DatasetCollection[CocoDatasetContext],
         label_name_to_extract: str,
     ):
         self.dataset_collection = dataset_collection
@@ -47,42 +48,49 @@ class BoundingBoxCropperProcessing:
         """
         Processes the images in the input dataset version to extract the bounding boxes for the specified label.
         """
+        coco_data = self.dataset_collection["input"].coco_data
+        if not coco_data:
+            raise ValueError("No COCO data found in the dataset context.")
         for image_filename in os.listdir(self.dataset_collection["input"].images_dir):
-            self._process_image(image_filename)
+            self._process_image(image_filename=image_filename, coco_data=coco_data)
 
-    def _process_image(self, image_filename: str) -> None:
+    def _process_image(self, image_filename: str, coco_data: Dict) -> None:
         """
         Processes an image to extract the bounding box for the specified label.
         If the label is found in the image's annotations, the bounding box is extracted and saved to the processed dataset directory.
         Args:
             image_filename (str): The filename of the image to process.
         """
+        if not self.dataset_collection["input"].images_dir:
+            raise ValueError("No images directory found in the dataset context.")
         image_filepath = os.path.join(
             self.dataset_collection["input"].images_dir, image_filename
         )
         image = Image.open(image_filepath)
-        coco_files_image_ids = [
-            coco_file_image.id
-            for coco_file_image in self.dataset_collection["input"].coco_file.images
-            if coco_file_image.file_name == image_filename
-        ]
-        if coco_files_image_ids:
-            image_id_coco_file = coco_files_image_ids[0]
+        image_id_coco_data = next(
+            (
+                image_data["id"]
+                for image_data in coco_data["images"]
+                if image_data["file_name"] == image_filename
+            ),
+            None,
+        )
+        if image_id_coco_data:
             coco_file_annotations = [
-                coco_file_annotation
-                for coco_file_annotation in self.dataset_collection[
-                    "input"
-                ].coco_file.annotations
-                if coco_file_annotation.image_id == image_id_coco_file
+                annotation
+                for annotation in coco_data["annotations"]
+                if annotation["image_id"] == image_id_coco_data
             ]
             for coco_file_annotation in coco_file_annotations:
-                label = [
-                    category.name
-                    for category in self.dataset_collection[
-                        "input"
-                    ].coco_file.categories
-                    if category.id == coco_file_annotation.category_id
-                ][0]
+                category_id = coco_file_annotation["category_id"]
+                label = next(
+                    (
+                        category["name"]
+                        for category in coco_data["categories"]
+                        if category["id"] == category_id
+                    ),
+                    None,
+                )
                 if label == self.label_name_to_extract:
                     self._extract(
                         image=image,
@@ -91,7 +99,7 @@ class BoundingBoxCropperProcessing:
                     )
 
     def _extract(
-        self, image: Image, image_filename: str, coco_file_annotation: Annotation
+        self, image: Image, image_filename: str, coco_file_annotation: Dict
     ) -> None:
         """
         Extracts the bounding box from the image and saves it to the processed dataset directory.
@@ -101,10 +109,13 @@ class BoundingBoxCropperProcessing:
             image_filename (str): The filename of the image.
             coco_file_annotation (Annotation): The annotation containing the bounding box.
         """
-        x = int(coco_file_annotation.bbox[0])
-        y = int(coco_file_annotation.bbox[1])
-        width = int(coco_file_annotation.bbox[2])
-        height = int(coco_file_annotation.bbox[3])
+        if not self.dataset_collection["output"].images_dir:
+            raise ValueError("No images directory found in the dataset context.")
+
+        x = int(coco_file_annotation["bbox"][0])
+        y = int(coco_file_annotation["bbox"][1])
+        width = int(coco_file_annotation["bbox"][2])
+        height = int(coco_file_annotation["bbox"][3])
 
         extracted_image = image.crop((x, y, x + width, y + height))
 
@@ -113,7 +124,7 @@ class BoundingBoxCropperProcessing:
         )
         os.makedirs(label_folder, exist_ok=True)
 
-        processed_image_filename = f"{os.path.splitext(image_filename)[0]}_{self.label_name_to_extract}_{coco_file_annotation.id}.{image_filename.split('.')[-1]}"
+        processed_image_filename = f"{os.path.splitext(image_filename)[0]}_{self.label_name_to_extract}_{coco_file_annotation['id']}.{image_filename.split('.')[-1]}"
         processed_image_filepath = os.path.join(label_folder, processed_image_filename)
 
         extracted_image.save(processed_image_filepath)

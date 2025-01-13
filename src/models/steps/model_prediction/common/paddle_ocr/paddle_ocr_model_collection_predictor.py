@@ -1,7 +1,7 @@
 import os
 from typing import List, Tuple
 
-from src.models.dataset.common.dataset_context import TDatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
     PaddleOCRModelCollection,
 )
@@ -38,7 +38,7 @@ class PaddleOCRModelCollectionPredictor(
         super().__init__(model_collection)
 
     def pre_process_dataset_context(
-        self, dataset_context: TDatasetContext
+        self, dataset_context: TBaseDatasetContext
     ) -> List[str]:
         """
         Prepares the dataset by extracting and returning a list of image file paths from the dataset context.
@@ -111,7 +111,7 @@ class PaddleOCRModelCollectionPredictor(
         self,
         image_batches: List[List[str]],
         batch_results: List[List],
-        dataset_context: TDatasetContext,
+        dataset_context: TBaseDatasetContext,
     ) -> List[PicselliaOCRPrediction]:
         """
         Post-processes the inference results for each batch and returns a list of OCR predictions.
@@ -139,7 +139,7 @@ class PaddleOCRModelCollectionPredictor(
         self,
         batch_paths: List[str],
         batch_prediction: List,
-        dataset_context: TDatasetContext,
+        dataset_context: TBaseDatasetContext,
     ) -> List[PicselliaOCRPrediction]:
         """
         Post-processes the predictions for a single batch of images, mapping predicted bounding boxes, texts,

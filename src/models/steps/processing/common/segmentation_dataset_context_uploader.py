@@ -32,6 +32,9 @@ class SegmentationDatasetContextUploader(DataUploader):
         dataset_context: DatasetContext,
         datalake: str = "default",
         data_tags: Optional[List[str]] = None,
+        batch_size: int = 10000,
+        use_id: bool = True,
+        fail_on_asset_not_found: bool = False,
     ):
         """
         Initializes the SegmentationDatasetContextUploader with a client, dataset context, and optional datalake.
@@ -47,6 +50,9 @@ class SegmentationDatasetContextUploader(DataUploader):
         self.dataset_context = dataset_context
         self.datalake = self.client.get_datalake(name=datalake)
         self.data_tags = data_tags
+        self.batch_size = batch_size
+        self.use_id = use_id
+        self.fail_on_asset_not_found = fail_on_asset_not_found
 
     def upload_dataset_context(self) -> None:
         """
@@ -58,12 +64,13 @@ class SegmentationDatasetContextUploader(DataUploader):
         """
         # Upload images to the datalake
         if self.dataset_context.images_dir:
-            self._add_images_to_dataset_version(
+            self._add_images_to_dataset_version_in_batches(
                 images_to_upload=[
                     os.path.join(self.dataset_context.images_dir, image_filename)
                     for image_filename in os.listdir(self.dataset_context.images_dir)
                 ],
                 data_tags=self.data_tags,
+                batch_size=self.batch_size,
             )
 
         # Check the dataset type and conditionally upload annotations
@@ -71,8 +78,11 @@ class SegmentationDatasetContextUploader(DataUploader):
             self.dataset_context.dataset_version.type != InferenceType.NOT_CONFIGURED
             and self.dataset_context.coco_file_path
         ):
-            self._add_coco_annotations_to_dataset_version(
-                annotation_path=self.dataset_context.coco_file_path
+            self._add_coco_annotations_to_dataset_version_in_batches(
+                annotation_path=self.dataset_context.coco_file_path,
+                batch_size=self.batch_size,
+                use_id=self.use_id,
+                fail_on_asset_not_found=self.fail_on_asset_not_found,
             )
         else:
             logger.info(

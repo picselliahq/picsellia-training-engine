@@ -2,8 +2,10 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.common.dataset_context import TDatasetContext
-from src.models.model.common.model_context import ModelContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
+from src.models.model.ultralytics.ultralytics_model_context import (
+    UltralyticsModelContext,
+)
 from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.ultralytics.ultralytics_augmentation_parameters import (
     UltralyticsAugmentationParameters,
@@ -19,8 +21,8 @@ from src.models.steps.model_prediction.common.ultralytics.classification_model_c
 
 @step
 def ultralytics_model_context_evaluator(
-    model_context: ModelContext,
-    dataset_context: TDatasetContext,
+    model_context: UltralyticsModelContext,
+    dataset_context: TBaseDatasetContext,
 ) -> None:
     """
     Evaluates an Ultralytics classification model on a given dataset.
@@ -60,7 +62,9 @@ def ultralytics_model_context_evaluator(
         )
     )
 
-    model_evaluator = ModelEvaluator(experiment=context.experiment)
+    model_evaluator = ModelEvaluator(
+        experiment=context.experiment, inference_type=model_context.model_version.type
+    )
     model_evaluator.evaluate(
         picsellia_predictions=picsellia_classifications_predictions
     )

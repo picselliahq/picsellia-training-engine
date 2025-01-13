@@ -1,15 +1,16 @@
 import os
 from src import step, Pipeline
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.dataset.common.dataset_collection import DatasetCollection
 from src.models.steps.data_preparation.common.classification_dataset_context_preparator import (
-    ClassificationDatasetContextPreparator,
+    ClassificationBaseDatasetContextPreparator,
 )
 
 
 @step
 def ultralytics_classification_dataset_collection_preparator(
-    dataset_collection: DatasetCollection,
-) -> DatasetCollection:
+    dataset_collection: DatasetCollection[CocoDatasetContext],
+) -> DatasetCollection[CocoDatasetContext]:
     """
     Prepares and organizes a dataset collection for Ultralytics classification tasks.
 
@@ -33,7 +34,7 @@ def ultralytics_classification_dataset_collection_preparator(
                 dataset_context.dataset_name,
             )
         )
-        preparator = ClassificationDatasetContextPreparator(
+        preparator = ClassificationBaseDatasetContextPreparator(
             dataset_context=dataset_context,
             destination_path=destination_path,
         )

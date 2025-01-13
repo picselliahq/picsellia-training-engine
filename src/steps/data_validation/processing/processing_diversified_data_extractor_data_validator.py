@@ -1,5 +1,5 @@
 from src import step
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.steps.data_validation.processing.processing_diversified_data_extractor_data_validator import (
     ProcessingDiversifiedDataExtractorDataValidator,
 )
@@ -7,7 +7,7 @@ from src.models.steps.data_validation.processing.processing_diversified_data_ext
 
 @step
 def diversified_data_extractor_data_validator(
-    dataset_context: DatasetContext,
+    dataset_context: TBaseDatasetContext,
 ) -> None:
     validator = ProcessingDiversifiedDataExtractorDataValidator(
         dataset_context=dataset_context,

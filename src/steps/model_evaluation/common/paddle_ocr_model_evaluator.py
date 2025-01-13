@@ -4,7 +4,7 @@ from src import step, Pipeline
 from src.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.common.dataset_context import TDatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.model.paddle_ocr.paddle_ocr_model_collection import (
     PaddleOCRModelCollection,
 )
@@ -24,7 +24,7 @@ from src.models.steps.model_prediction.common.paddle_ocr.paddle_ocr_model_collec
 @step
 def paddle_ocr_model_collection_evaluator(
     model_collection: PaddleOCRModelCollection,
-    dataset_context: TDatasetContext,
+    dataset_context: TBaseDatasetContext,
 ) -> None:
     """
     Evaluates a PaddleOCR model collection on a given dataset.
@@ -66,5 +66,8 @@ def paddle_ocr_model_collection_evaluator(
         dataset_context=dataset_context,
     )
 
-    model_evaluator = ModelEvaluator(experiment=context.experiment)
+    model_evaluator = ModelEvaluator(
+        experiment=context.experiment,
+        inference_type=model_collection.bbox_model.model_version.type,
+    )
     model_evaluator.evaluate(picsellia_predictions=picsellia_ocr_predictions)

@@ -3,7 +3,7 @@ from src import step
 from src.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.parameters.processing.processing_bounding_box_cropper_parameters import (
     ProcessingBoundingBoxCropperParameters,
 )
@@ -14,8 +14,8 @@ from src.models.steps.data_validation.processing.processing_bounding_box_cropper
 
 @step
 def bounding_box_cropper_data_validator(
-    dataset_context: DatasetContext,
-) -> DatasetContext:
+    dataset_context: CocoDatasetContext,
+) -> CocoDatasetContext:
     """
     Validates the dataset for the bounding box cropping process.
 

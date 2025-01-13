@@ -2,7 +2,7 @@ import logging
 from typing import Union, List
 
 from picsellia import Experiment
-from picsellia.types.enums import AddEvaluationType
+from picsellia.types.enums import AddEvaluationType, InferenceType
 
 from src.models.model.common.picsellia_prediction import (
     PicselliaOCRPrediction,
@@ -26,7 +26,7 @@ class ModelEvaluator:
         experiment (Experiment): The Picsellia experiment to which evaluations will be added.
     """
 
-    def __init__(self, experiment: Experiment):
+    def __init__(self, experiment: Experiment, inference_type: InferenceType) -> None:
         """
         Initializes the ModelEvaluator with the given experiment.
 
@@ -34,6 +34,7 @@ class ModelEvaluator:
             experiment (Experiment): The Picsellia experiment object where the evaluations will be logged.
         """
         self.experiment = experiment
+        self.inference_type = inference_type
 
     def evaluate(
         self,
@@ -57,6 +58,7 @@ class ModelEvaluator:
         """
         for prediction in picsellia_predictions:
             self.add_evaluation(prediction)
+        self.experiment.compute_evaluations_metrics(inference_type=self.inference_type)
 
     def add_evaluation(
         self,
@@ -158,12 +160,20 @@ class ModelEvaluator:
                     evaluation.polygons, evaluation.labels, evaluation.confidences
                 )
             ]
-            logger.info(
-                f"Adding evaluation for asset {asset.filename} with polygons {polygons}"
-            )
-            self.experiment.add_evaluation(
-                asset, add_type=AddEvaluationType.REPLACE, polygons=polygons
-            )
+            if not polygons:
+                logger.info(
+                    f"Adding an empty evaluation for asset {asset.filename} (no polygons found)."
+                )
+                self.experiment.add_evaluation(
+                    asset, add_type=AddEvaluationType.REPLACE, polygons=[]
+                )
+            else:
+                logger.info(
+                    f"Adding evaluation for asset {asset.filename} with polygons {polygons}"
+                )
+                self.experiment.add_evaluation(
+                    asset, add_type=AddEvaluationType.REPLACE, polygons=polygons
+                )
 
         else:
             raise TypeError("Unsupported prediction type")

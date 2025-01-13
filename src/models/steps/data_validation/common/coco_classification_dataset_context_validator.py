@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from typing import Dict, List
 
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 from src.models.steps.data_validation.common.dataset_collection_validator import (
     DatasetContextValidator,
 )
@@ -9,7 +10,9 @@ from src.models.steps.data_validation.common.dataset_collection_validator import
 logger = logging.getLogger("picsellia-engine")
 
 
-class ClassificationDatasetContextValidator(DatasetContextValidator):
+class CocoClassificationDatasetContextValidator(
+    DatasetContextValidator[CocoDatasetContext]
+):
     def validate(self):
         """
         Validate the classification dataset context.
@@ -50,16 +53,21 @@ class ClassificationDatasetContextValidator(DatasetContextValidator):
             FileNotFoundError: If the COCO file is not found.
             json.JSONDecodeError: If the COCO file is not a valid JSON.
         """
-        coco_data = self.dataset_context.load_coco_file_data()
-
         # Create a mapping of category_id to category_name
-        category_map = {cat["id"]: cat["name"] for cat in coco_data["categories"]}
+        if not self.dataset_context.coco_data:
+            raise FileNotFoundError(
+                f"COCO file not found for dataset {self.dataset_context.dataset_name}"
+            )
+        category_map = {
+            cat["id"]: cat["name"]
+            for cat in self.dataset_context.coco_data["categories"]
+        }
 
         # Count images per category
         images_per_category: Dict[str, int] = defaultdict(int)
         empty_classes_list: List[str] = []
 
-        for annotation in coco_data["annotations"]:
+        for annotation in self.dataset_context.coco_data["annotations"]:
             category_name = category_map[annotation["category_id"]]
             images_per_category[category_name] += 1
 

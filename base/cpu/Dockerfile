@@ -1,16 +1,15 @@
 ARG PYTHON_VERSION=3.8
-FROM python:${PYTHON_VERSION}-bookworm as base
+FROM python:${PYTHON_VERSION}-bookworm AS base
+
+ARG PYTHON_VERSION=3.8
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_HTTP_TIMEOUT=600 \
     DEBIAN_FRONTEND=noninteractive
 
-RUN if [ "$PYTHON_VERSION" = "3.10" ]; then \
-        python${PYTHON_VERSION} -m ensurepip --upgrade && python${PYTHON_VERSION} -m pip install -U setuptools; \
-    fi
-
-RUN python${PYTHON_VERSION} -m pip install uv
+RUN python${PYTHON_VERSION} -m pip install --upgrade pip setuptools && \
+    python${PYTHON_VERSION} -m pip install uv
 
 COPY ./base /experiment
 

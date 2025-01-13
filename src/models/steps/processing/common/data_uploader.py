@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional, Tuple
 
 from picsellia import Client, DatasetVersion, Data
@@ -10,24 +11,11 @@ class DataUploader:
 
     This class provides methods to upload images to a datalake, add them to a dataset version, and
     update the dataset version with the necessary information, including COCO annotations.
-
-    Attributes:
-        client (Client): The Picsellia client to interact with the API.
-        dataset_version (DatasetVersion): The dataset version that will be updated with images and annotations.
-        datalake (str): The datalake to which images will be uploaded (default is 'default').
     """
 
     def __init__(
         self, client: Client, dataset_version: DatasetVersion, datalake: str = "default"
     ):
-        """
-        Initializes the DataUploader with a Picsellia client, dataset version, and optional datalake.
-
-        Args:
-            client (Client): The Picsellia client used for communication with the API.
-            dataset_version (DatasetVersion): The dataset version that will be updated.
-            datalake (str): The name of the datalake where images will be uploaded (default is 'default').
-        """
         self.client = client
         self.dataset_version = dataset_version
         self.datalake = self.client.get_datalake(name=datalake)
@@ -35,32 +23,16 @@ class DataUploader:
     def _upload_data_with_error_manager(
         self, images_to_upload: List[str], data_tags: Optional[List[str]] = None
     ) -> Tuple[List[Data], List[str]]:
-        """
-        Uploads images to the datalake using an error manager to handle failed uploads.
-
-        This method attempts to upload images to the datalake. If any uploads fail, they are retried
-        using the error manager. It returns the successfully uploaded data and a list of paths
-        that failed to upload.
-
-        Args:
-            images_to_upload (List[str]): The list of image file paths to upload.
-            data_tags (Optional[List[str]]): The list of tags to associate with the uploaded images (default is None).
-
-        Returns:
-            Tuple[List[Data], List[str]]: A tuple containing:
-                - List[Data]: A list of successfully uploaded data.
-                - List[str]: A list of file paths that failed to upload.
-        """
         error_manager = ErrorManager()
         data = self.datalake.upload_data(
             filepaths=images_to_upload, tags=data_tags, error_manager=error_manager
         )
 
-        if isinstance(data, Data):
-            uploaded_data = [data]
-        else:
-            uploaded_data = [one_uploaded_data for one_uploaded_data in data]
-
+        uploaded_data = (
+            [data]
+            if isinstance(data, Data)
+            else [d for d in data if isinstance(d, Data)]
+        )
         error_paths = [error.path for error in error_manager.errors]
         return uploaded_data, error_paths
 
@@ -70,26 +42,13 @@ class DataUploader:
         data_tags: Optional[List[str]] = None,
         max_retries: int = 5,
     ) -> List[Data]:
-        """
-        Uploads images to the datalake and retries failed uploads up to a maximum number of retries.
-
-        Args:
-            images_to_upload (List[str]): The list of image file paths to upload.
-            data_tags (Optional[List[str]]): The list of tags to associate with the images (default is None).
-            max_retries (int): The maximum number of retry attempts for failed uploads (default is 5).
-
-        Returns:
-            List[Data]: A list of successfully uploaded data.
-
-        Raises:
-            Exception: If the maximum number of retries is exceeded and there are still failed uploads.
-        """
         all_uploaded_data = []
         uploaded_data, error_paths = self._upload_data_with_error_manager(
             images_to_upload=images_to_upload, data_tags=data_tags
         )
         all_uploaded_data.extend(uploaded_data)
         retry_count = 0
+
         while error_paths and retry_count < max_retries:
             uploaded_data, error_paths = self._upload_data_with_error_manager(
                 images_to_upload=error_paths, data_tags=data_tags
@@ -102,41 +61,128 @@ class DataUploader:
             )
         return all_uploaded_data
 
+    def _add_data_to_dataset_version_and_wait(
+        self, data: List[Data], asset_tags: Optional[List[str]] = None
+    ):
+        """
+        Utility function to add data to dataset version and wait for job completion.
+        """
+        adding_job = self.dataset_version.add_data(data=data, tags=asset_tags)
+        adding_job.wait_for_done()
+
     def _add_images_to_dataset_version(
         self,
         images_to_upload: List[str],
         data_tags: Optional[List[str]] = None,
         asset_tags: Optional[List[str]] = None,
         max_retries: int = 5,
-        attempts: int = 150,
-        blocking_time_increment: float = 50.0,
     ) -> None:
-        """
-        Adds uploaded images to the dataset version and waits for the process to complete.
-
-        Args:
-            images_to_upload (List[str]): The list of image file paths to upload.
-            data_tags (Optional[List[str]]): The list of tags to associate with the images (default is None).
-            asset_tags (Optional[List[str]]): The list of tags to associate with the dataset version assets (default is None).
-            max_retries (int): The maximum number of retry attempts for failed uploads (default is 5).
-            attempts (int): The number of attempts to wait for the adding job to complete (default is 150).
-            blocking_time_increment (float): The amount of time to wait between job status checks (default is 50.0 seconds).
-        """
         data = self._upload_images_to_datalake(
             images_to_upload=images_to_upload,
             data_tags=data_tags,
             max_retries=max_retries,
         )
-        adding_job = self.dataset_version.add_data(data=data, tags=asset_tags)
-        adding_job.wait_for_done(
-            blocking_time_increment=blocking_time_increment, attempts=attempts
-        )
+        self._add_data_to_dataset_version_and_wait(data, asset_tags)
 
-    def _add_coco_annotations_to_dataset_version(self, annotation_path: str):
+    def _add_images_to_dataset_version_in_batches(
+        self,
+        images_to_upload: List[str],
+        data_tags: Optional[List[str]] = None,
+        asset_tags: Optional[List[str]] = None,
+        batch_size: int = 10000,
+        max_retries: int = 5,
+    ) -> None:
         """
-        Adds COCO annotations to the dataset version.
+        Uploads all images to the datalake first, then adds them to the dataset version in batches.
 
         Args:
-            annotation_path (str): The path to the COCO annotations file.
+            images_to_upload (List[str]): List of image file paths to upload.
+            data_tags (Optional[List[str]]): Tags to associate with images (default is None).
+            asset_tags (Optional[List[str]]): Tags to associate with dataset version assets (default is None).
+            batch_size (int): Number of images per batch for adding to dataset version.
+            max_retries (int): Maximum retries for failed uploads (default is 5).
         """
-        self.dataset_version.import_annotations_coco_file(file_path=annotation_path)
+        # Step 1: Upload all images to the datalake
+        uploaded_data = self._upload_images_to_datalake(
+            images_to_upload=images_to_upload,
+            data_tags=data_tags,
+            max_retries=max_retries,
+        )
+
+        # Step 2: Divide uploaded data into batches for adding to dataset version
+        batches = [
+            uploaded_data[i : i + batch_size]
+            for i in range(0, len(uploaded_data), batch_size)
+        ]
+
+        # Step 3: Add data in batches to the dataset version and wait for each job to complete
+        jobs = []
+        for batch in batches:
+            job = self.dataset_version.add_data(data=batch, tags=asset_tags)
+            jobs.append(job)
+
+        for job in jobs:
+            job.wait_for_done()
+
+    def _add_coco_annotations_to_dataset_version(
+        self,
+        annotation_path: str,
+        use_id: bool = True,
+        fail_on_asset_not_found: bool = True,
+    ):
+        self.dataset_version.import_annotations_coco_file(
+            file_path=annotation_path,
+            use_id=use_id,
+            fail_on_asset_not_found=fail_on_asset_not_found,
+        )
+
+    def _split_coco_annotations(
+        self, coco_data: dict, batch_image_ids: List[str]
+    ) -> dict:
+        batch_images = [
+            img for img in coco_data["images"] if img["id"] in batch_image_ids
+        ]
+        batch_annotations = [
+            ann
+            for ann in coco_data["annotations"]
+            if ann["image_id"] in batch_image_ids
+        ]
+
+        return {
+            "images": batch_images,
+            "annotations": batch_annotations,
+            "categories": coco_data["categories"],
+        }
+
+    def _add_coco_annotations_to_dataset_version_in_batches(
+        self,
+        annotation_path: str,
+        batch_size: int = 10000,
+        use_id: bool = True,
+        fail_on_asset_not_found: bool = True,
+    ):
+        with open(annotation_path, "r") as f:
+            coco_data = json.load(f)
+
+        # Extract unique image IDs
+        image_ids = [image["id"] for image in coco_data["images"]]
+
+        # Split image IDs into batches
+        batches_images_ids = [
+            image_ids[i : i + batch_size] for i in range(0, len(image_ids), batch_size)
+        ]
+
+        for batch_image_ids in batches_images_ids:
+            batch_coco_data = self._split_coco_annotations(coco_data, batch_image_ids)
+            if len(batch_coco_data["images"]) == 0:
+                continue
+
+            batch_annotation_path = "temp_batch_annotations.json"
+            with open(batch_annotation_path, "w") as batch_file:
+                json.dump(batch_coco_data, batch_file)
+
+            self._add_coco_annotations_to_dataset_version(
+                annotation_path=batch_annotation_path,
+                use_id=use_id,
+                fail_on_asset_not_found=fail_on_asset_not_found,
+            )
