@@ -79,6 +79,8 @@ class CocoDatasetContext(BaseDatasetContext):
             use_id (Optional[bool]): Whether to use asset IDs in file paths (default: True).
         """
         os.makedirs(destination_path, exist_ok=True)
+        self.annotations_dir = destination_path
+
         assets_to_download = self._determine_assets_source()
 
         with tqdm(desc="Downloading COCO annotation batches", unit="assets") as pbar:
@@ -104,7 +106,6 @@ class CocoDatasetContext(BaseDatasetContext):
             self._merge_batches(batch_files, final_coco_file_path)
         remove_empty_directories(destination_path)
 
-        self.annotations_dir = destination_path
         self.coco_file_path = final_coco_file_path
         self.coco_data = self.load_coco_file_data()
         logger.info("COCO annotations downloaded and loaded into memory.")
