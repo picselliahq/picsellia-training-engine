@@ -1,9 +1,8 @@
 import os
 import subprocess
 
-from cli.helpers.prompt import fetch_processing_name
-from cli.helpers.session import ensure_session_initialized
-from cli.helpers.validation import validate_and_update_processing
+from cli.utils.prompt import fetch_processing_name
+from cli.utils.validation import validate_and_update_processing
 from cli.utils.collect_params import update_processing_parameters
 from cli.utils.session_manager import session_manager
 import click
@@ -16,7 +15,7 @@ def test_processing():
     """
     Test the local processing pipeline script with specified arguments.
     """
-    ensure_session_initialized()
+    session_manager.ensure_session_initialized()
 
     processing_name = fetch_processing_name()
     if not processing_name:

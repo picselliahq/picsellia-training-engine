@@ -1,8 +1,7 @@
 import click
 
-from cli.helpers.prompt import fetch_processing_name
-from cli.helpers.session import ensure_session_initialized
-from cli.helpers.validation import validate_and_update_processing
+from cli.utils.prompt import fetch_processing_name
+from cli.utils.validation import validate_and_update_processing
 from cli.utils.session_manager import session_manager
 
 from picsellia import Client
@@ -14,7 +13,7 @@ def push_processing_on_picsellia():
     """
     Push a processing pipeline to Picsellia.
     """
-    ensure_session_initialized()
+    session_manager.ensure_session_initialized()
 
     processing_name = fetch_processing_name()
     if not processing_name:

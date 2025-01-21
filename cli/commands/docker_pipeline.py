@@ -1,7 +1,7 @@
 import os
 import click
-from cli.helpers.prompt import fetch_processing_name
-from cli.helpers.validation import validate_and_update_processing
+from cli.utils.prompt import fetch_processing_name
+from cli.utils.validation import validate_and_update_processing
 from cli.utils.collect_params import update_processing_parameters
 from cli.utils.dockerfile_generation import (
     generate_dockerfile,
