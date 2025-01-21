@@ -1,4 +1,4 @@
-from examples.processing.augmentation.utils.augmentations import process_dataset
+from examples.processing.augmentation.utils.common import process_dataset
 from src import pipeline
 from src.models.utils.picsellia_context import create_picsellia_processing_context
 from src.steps.data_extraction.processing.processing_data_extractor import (
@@ -7,14 +7,16 @@ from src.steps.data_extraction.processing.processing_data_extractor import (
 from src.steps.processing.common.dataset_context_uploader import upload_dataset_context
 
 
+processing_context = create_picsellia_processing_context(
+    processing_parameters={
+        "datalake": "default",
+        "data_tag": "augmented_data",
+    }
+)
+
+
 @pipeline(
-    context=create_picsellia_processing_context(
-        processing_parameters={
-            "augmentation_probability": 0.5,
-            "datalake": "default",
-            "data_tag": "augmented_data",
-        }
-    ),
+    context=processing_context,
     log_folder_path="logs/",
     remove_logs_on_completion=False,
 )
