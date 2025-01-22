@@ -35,7 +35,7 @@ def setup_dockerized_pipeline():
         os.makedirs(pipeline_dir, exist_ok=True)
 
         update_processing_parameters(
-            os.path.join(repo_root, processing["local_pipeline_script_path"]),
+            os.path.join(repo_root, processing["picsellia_pipeline_script_path"]),
             processing["parameters"],
         )
 
