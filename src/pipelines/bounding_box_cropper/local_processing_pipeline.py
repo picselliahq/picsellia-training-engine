@@ -5,20 +5,22 @@ from argparse import ArgumentParser
 from picsellia.types.enums import ProcessingType
 
 from src import pipeline
-from src.models.contexts.processing.test_picsellia_processing_context import (
-    TestPicselliaProcessingContext,
+
+from src.models.contexts.processing.local_picsellia_processing_context import (
+    LocalPicselliaProcessingContext,
+)
+from src.pipelines.bounding_box_cropper.pipeline_utils.steps.processing.bounding_box_cropper_processing import (
+    process,
 )
 from src.steps.data_extraction.processing.processing_data_extractor import (
-    processing_dataset_collection_extractor,
+    get_processing_dataset_collection,
 )
-from src.steps.data_validation.processing.processing_bounding_box_cropper_data_validator import (
-    bounding_box_cropper_data_validator,
+
+from src.pipelines.bounding_box_cropper.pipeline_utils.steps.data_validation.processing_bounding_box_cropper_data_validator import (
+    validate_bounding_box_cropper_data,
 )
 from src.steps.processing.common.classification_dataset_context_uploader import (
-    classification_dataset_context_uploader,
-)
-from src.steps.processing.dataset_version_creation.bounding_box_cropper_processing import (
-    bounding_box_cropper_processing,
+    upload_classification_dataset_context,
 )
 
 
@@ -44,8 +46,8 @@ parser.add_argument("--fix_annotation", action="store_true", default=False)
 args = parser.parse_args()
 
 
-def get_context() -> TestPicselliaProcessingContext:
-    return TestPicselliaProcessingContext(
+def get_context() -> LocalPicselliaProcessingContext:
+    return LocalPicselliaProcessingContext(
         api_token=args.api_token,
         organization_id=args.organization_id,
         job_id=args.job_id,
@@ -68,12 +70,10 @@ def get_context() -> TestPicselliaProcessingContext:
     remove_logs_on_completion=False,
 )
 def bounding_box_cropper_processing_pipeline() -> None:
-    dataset_collection = processing_dataset_collection_extractor()
-    bounding_box_cropper_data_validator(dataset_context=dataset_collection["input"])
-    output_dataset_context = bounding_box_cropper_processing(
-        dataset_collection=dataset_collection
-    )
-    classification_dataset_context_uploader(dataset_context=output_dataset_context)
+    dataset_collection = get_processing_dataset_collection()
+    validate_bounding_box_cropper_data(dataset_context=dataset_collection["input"])
+    output_dataset_context = process(dataset_collection=dataset_collection)
+    upload_classification_dataset_context(dataset_context=output_dataset_context)
 
 
 if __name__ == "__main__":

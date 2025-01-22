@@ -14,7 +14,7 @@ from src.pipelines.bounding_box_cropper.pipeline_utils.steps_utils.processing.bo
 
 
 @step
-def bounding_box_cropper_processing(
+def process(
     dataset_collection: DatasetCollection[CocoDatasetContext],
 ) -> CocoDatasetContext:
     context: PicselliaProcessingContext[

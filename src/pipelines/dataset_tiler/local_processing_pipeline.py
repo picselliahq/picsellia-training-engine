@@ -5,8 +5,8 @@ from typing import Optional
 from picsellia.types.enums import ProcessingType
 
 from src import pipeline
-from src.models.contexts.processing.test_picsellia_processing_context import (
-    TestPicselliaProcessingContext,
+from src.models.contexts.processing.local_picsellia_processing_context import (
+    LocalPicselliaProcessingContext,
 )
 from src.steps.data_extraction.processing.processing_data_extractor import (
     get_processing_dataset_collection,
@@ -63,8 +63,8 @@ parser.add_argument("--fix_annotation", action="store_true", default=False)
 args = parser.parse_args()
 
 
-def get_context() -> TestPicselliaProcessingContext:
-    return TestPicselliaProcessingContext(
+def get_context() -> LocalPicselliaProcessingContext:
+    return LocalPicselliaProcessingContext(
         api_token=args.api_token,
         organization_id=args.organization_id,
         job_id=args.job_id,
@@ -99,7 +99,11 @@ def tiler_processing_pipeline() -> None:
         dataset_context=dataset_collection["input"]
     )
     output_dataset_context = process(dataset_collection=dataset_collection)
-    upload_dataset_context(dataset_context=output_dataset_context, use_id=False, fail_on_asset_not_found=False,)
+    upload_dataset_context(
+        dataset_context=output_dataset_context,
+        use_id=False,
+        fail_on_asset_not_found=False,
+    )
 
 
 if __name__ == "__main__":

@@ -11,8 +11,9 @@ from src.pipelines.bounding_box_cropper.pipeline_utils.steps_utils.data_validati
     ProcessingBoundingBoxCropperDataValidator,
 )
 
+
 @step
-def bounding_box_cropper_data_validator(
+def validate_bounding_box_cropper_data(
     dataset_context: CocoDatasetContext,
 ) -> CocoDatasetContext:
     """

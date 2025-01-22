@@ -11,7 +11,9 @@ from src.models.parameters.training.paddle_ocr.paddle_ocr_hyper_parameters impor
 from src.models.parameters.training.paddle_ocr.paddle_ocr_augmentation_parameters import (
     PaddleOCRAugmentationParameters,
 )
-from src.steps.data_extraction.training.coco_data_extractor import get_coco_dataset_collection
+from src.steps.data_extraction.training.coco_data_extractor import (
+    get_coco_dataset_collection,
+)
 from src.steps.data_preparation.training.paddle_ocr_data_preparator import (
     prepare_paddle_ocr_dataset_collection,
 )

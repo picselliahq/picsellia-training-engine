@@ -36,7 +36,11 @@ def tiler_processing_pipeline() -> None:
         dataset_context=dataset_collection["input"]
     )
     output_dataset_context = process(dataset_collection=dataset_collection)
-    upload_dataset_context(dataset_context=output_dataset_context, use_id=False, fail_on_asset_not_found=False)
+    upload_dataset_context(
+        dataset_context=output_dataset_context,
+        use_id=False,
+        fail_on_asset_not_found=False,
+    )
 
 
 if __name__ == "__main__":

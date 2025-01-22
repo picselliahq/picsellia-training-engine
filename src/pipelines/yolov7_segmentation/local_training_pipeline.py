@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 
 from src import pipeline
-from src.models.contexts.training.test_picsellia_training_context import (
-    TestPicselliaTrainingContext,
+
+from src.models.contexts.training.local_picsellia_training_context import (
+    LocalPicselliaTrainingContext,
 )
 from src.models.parameters.common.export_parameters import ExportParameters
 from src.models.parameters.training.yolov7.yolov7_augmentation_parameters import (
@@ -39,8 +40,8 @@ parser.add_argument("--experiment_id", type=str)
 args = parser.parse_args()
 
 
-def get_context() -> TestPicselliaTrainingContext:
-    return TestPicselliaTrainingContext(
+def get_context() -> LocalPicselliaTrainingContext:
+    return LocalPicselliaTrainingContext(
         api_token=args.api_token,
         organization_id=args.organization_id,
         experiment_id=args.experiment_id,
