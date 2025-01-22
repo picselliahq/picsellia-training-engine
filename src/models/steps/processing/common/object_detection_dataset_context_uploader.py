@@ -18,12 +18,6 @@ class ObjectDetectionDatasetContextUploader(DataUploader):
     This class extends `DataUploader` and specifically focuses on object detection datasets.
     It uploads images to a specified datalake and, if the dataset version is correctly configured,
     uploads COCO annotations as well.
-
-    Attributes:
-        client (Client): The Picsellia client used for API interactions.
-        dataset_context (DatasetContext): The context containing the dataset's images and annotations.
-        datalake (str): The datalake to which the images will be uploaded.
-        data_tags (Optional[List[str]]): Optional tags to associate with the uploaded data.
     """
 
     def __init__(
@@ -45,6 +39,8 @@ class ObjectDetectionDatasetContextUploader(DataUploader):
             datalake (str): The name of the datalake where the images will be uploaded (default is 'default').
             data_tags (Optional[List[str]]): Optional tags to associate with the uploaded images.
             batch_size (int): The number of images per batch for uploading (default is 10).
+            use_id (bool): Whether to use the Asset ID for annotations upload (default is True).
+            fail_on_asset_not_found (bool): Whether to fail if an asset is not found in annotations upload (default is True).
         """
         super().__init__(client, dataset_context.dataset_version, datalake)
         self.client = client
