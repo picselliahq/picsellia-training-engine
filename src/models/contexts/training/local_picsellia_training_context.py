@@ -10,7 +10,7 @@ from src.models.parameters.common.augmentation_parameters import (
 )
 
 
-class TestPicselliaTrainingContext(
+class LocalPicselliaTrainingContext(
     PicselliaContext, Generic[THyperParameters, TAugmentationParameters]
 ):
     """
