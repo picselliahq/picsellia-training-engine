@@ -27,7 +27,11 @@ processing_context = create_local_processing_context(
     job_type=ProcessingType(args.job_type),
     input_dataset_version_id=args.input_dataset_version_id,
     output_dataset_version_name=args.output_dataset_version_name,
-    processing_parameters={"datalake": "default", "data_tag": "augmented_data"},
+    processing_parameters={
+        "datalake": "default",
+        "data_tag": "augmented_data",
+        "num_augmentations": "4",
+    },
 )
 
 

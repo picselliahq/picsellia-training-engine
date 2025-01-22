@@ -11,6 +11,7 @@ processing_context = create_picsellia_processing_context(
     processing_parameters={
         "datalake": "default",
         "data_tag": "augmented_data",
+        "num_augmentations": "4",
     }
 )
 
