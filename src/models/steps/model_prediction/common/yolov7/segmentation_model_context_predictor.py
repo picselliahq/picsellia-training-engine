@@ -15,7 +15,7 @@ from src.models.model.yolov7_model_context import (
     find_latest_run_dir,
 )
 
-from src.models.dataset.common.dataset_context import TDatasetContext
+from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
 from src.models.parameters.training.yolov7.yolov7_hyper_parameters import (
     Yolov7HyperParameters,
 )
@@ -30,8 +30,9 @@ class Yolov7SegmentationModelContextPredictor:
             model_context (ModelContext): Context of the model including configuration and weights.
         """
         self.model_context = model_context
+
     def pre_process_dataset_context(
-        self, dataset_context: TDatasetContext
+        self, dataset_context: TBaseDatasetContext
     ) -> List[str]:
         """
         Prepares the dataset by extracting and returning a list of image file paths from the dataset context.
@@ -172,7 +173,7 @@ class Yolov7SegmentationModelContextPredictor:
     def post_process(
         self,
         label_path_to_mask_paths: Dict[str, List[str]],
-        dataset_context: TDatasetContext,
+        dataset_context: TBaseDatasetContext,
     ) -> List[PicselliaPolygonPrediction]:
         """
         Post-processes the predictions for a segmentation model, mapping polygons and confidence scores
@@ -291,7 +292,7 @@ class Yolov7SegmentationModelContextPredictor:
             return []
 
     def get_picsellia_label(
-        self, class_id: int, dataset_context: TDatasetContext
+        self, class_id: int, dataset_context: TBaseDatasetContext
     ) -> PicselliaLabel:
         """
         Map the class ID to a PicselliaLabel object using the dataset context.

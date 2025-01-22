@@ -6,7 +6,7 @@ from picsellia import Client
 from picsellia.types.enums import InferenceType
 
 from src.models.steps.processing.common.data_uploader import DataUploader
-from src.models.dataset.common.dataset_context import DatasetContext
+from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 
 logger = logging.getLogger("picsellia")
 
@@ -29,7 +29,7 @@ class SegmentationDatasetContextUploader(DataUploader):
     def __init__(
         self,
         client: Client,
-        dataset_context: DatasetContext,
+        dataset_context: CocoDatasetContext,
         datalake: str = "default",
         data_tags: Optional[List[str]] = None,
         batch_size: int = 10000,

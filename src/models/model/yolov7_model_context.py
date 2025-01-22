@@ -33,32 +33,6 @@ def find_latest_run_dir(dir):
     return processed_run_dirs[max(processed_run_dirs)]
 
 
-def find_latest_run_dir(dir):
-    """
-    Finds the latest run directory in the given directory.
-    """
-    run_dirs = os.listdir(dir)
-    processed_run_dirs = {}
-
-    for run_dir in run_dirs:
-        run_id = -1
-        if "-" in run_dir:
-            try:
-                run_id = int(run_dir.split("-")[1])
-            except ValueError:
-                pass
-
-        while run_id in processed_run_dirs:
-            run_id -= 1
-
-        processed_run_dirs[run_id] = run_dir
-
-    if not processed_run_dirs:
-        return None
-
-    return processed_run_dirs[max(processed_run_dirs)]
-
-
 class Yolov7ModelContext(ModelContext):
     def __init__(
         self,
