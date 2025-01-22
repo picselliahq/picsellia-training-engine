@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from PIL import Image
 import numpy as np
 from albumentations import (
@@ -67,15 +67,14 @@ def build_annotation(annotation: Dict, bbox: List[float], area: float) -> Dict:
     }
 
 
-def apply_augmentations(
-    img: Image.Image, annotations: List[Dict]
-) -> Tuple[List[Image.Image], List[List[Dict]]]:
+def apply_augmentations(img: Image.Image, annotations: List[Dict], parameters):
     """
     Generate multiple augmented versions of the input image, updating annotations accordingly.
 
     Args:
         img (PIL.Image.Image): Input image.
         annotations (List[Dict]): List of COCO annotations for the image.
+        parameters: Additional parameters for the augmentation pipeline.
 
     Returns:
         Tuple[List[Image.Image], List[List[Dict]]]: List of augmented images and their corresponding annotations.
@@ -89,11 +88,14 @@ def apply_augmentations(
     # Fetch the augmentation pipeline
     augmentation_pipeline = get_augmentation_pipeline()
 
+    # Get the number of augmentations from parameters, defaulting to 3
+    num_augmentations = parameters.num_augmentations
+
     # Generate multiple augmented images and annotations
     augmented_images = []
     augmented_annotations = []
 
-    for _ in range(3):  # Generate 3 augmentations
+    for _ in range(num_augmentations):  # Generate 3 augmentations
         augmented = augmentation_pipeline(
             image=img_array,
             bboxes=[ann["bbox"] for ann in annotations],
