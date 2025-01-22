@@ -4,7 +4,7 @@ from picsellia.types.enums import ProcessingType
 from picsellia import DatasetVersion, ModelVersion
 
 
-class TestPicselliaProcessingContext(PicselliaContext):
+class LocalPicselliaProcessingContext(PicselliaContext):
     """
     This class is used to test a processing pipeline without a real job execution on Picsellia (without giving a real job ID).
     """
@@ -18,6 +18,7 @@ class TestPicselliaProcessingContext(PicselliaContext):
         job_type: Optional[ProcessingType] = None,
         input_dataset_version_id: Optional[str] = None,
         output_dataset_version_id: Optional[str] = None,
+        output_dataset_version_name: Optional[str] = None,
         use_id: Optional[bool] = True,
         download_annotations: Optional[bool] = True,
         model_version_id: Optional[str] = None,
@@ -38,6 +39,11 @@ class TestPicselliaProcessingContext(PicselliaContext):
             self.output_dataset_version = self.get_dataset_version(
                 self.output_dataset_version_id
             )
+        elif output_dataset_version_name:
+            self.output_dataset_version = self.client.get_dataset_by_id(
+                self.input_dataset_version.origin_id
+            ).create_version(version=output_dataset_version_name)
+            self.output_dataset_version_id = self.output_dataset_version.id
         if self.model_version_id:
             self.model_version = self.get_model_version()
         self.processing_parameters = processing_parameters
@@ -79,5 +85,8 @@ class TestPicselliaProcessingContext(PicselliaContext):
                 "model_version_id": self.model_version_id,
                 "use_id": self.use_id,
             },
-            "processing_parameters": self.processing_parameters,
+            "processing_parameters": self._process_parameters(
+                parameters_dict=self.processing_parameters.to_dict(),
+                defaulted_keys=self.processing_parameters.defaulted_keys,
+            ),
         }
