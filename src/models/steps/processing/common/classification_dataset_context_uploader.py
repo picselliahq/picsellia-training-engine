@@ -19,12 +19,14 @@ class ClassificationDatasetContextUploader(DataUploader):
         dataset_context: CocoDatasetContext,
         datalake: str = "default",
         data_tags: Optional[List[str]] = None,
+        batch_size: int = 10000,
     ):
         super().__init__(client, dataset_context.dataset_version, datalake)
         self.client = client
         self.dataset_context = dataset_context
         self.datalake = self.client.get_datalake(name=datalake)
         self.data_tags = data_tags
+        self.batch_size = batch_size
 
     def upload_dataset_context(self) -> None:
         """
@@ -36,10 +38,11 @@ class ClassificationDatasetContextUploader(DataUploader):
         for category_name, image_paths in images_by_category.items():
             existing_paths = [path for path in image_paths if os.path.exists(path)]
             if existing_paths:
-                self._add_images_to_dataset_version(
+                self._add_images_to_dataset_version_in_batches(
                     images_to_upload=existing_paths,
                     data_tags=self.data_tags,
                     asset_tags=[category_name],
+                    batch_size=self.batch_size,
                 )
 
             missing_paths = set(image_paths) - set(existing_paths)
