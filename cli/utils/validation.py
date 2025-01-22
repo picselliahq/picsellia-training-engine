@@ -47,6 +47,8 @@ def validate_and_update_processing(processing_name):
         session_manager.add_processing(processing_name, updated_processing)
         click.echo(f"Processing '{processing_name}' updated successfully!")
 
+        return updated_processing
+
     return processing
 
 
