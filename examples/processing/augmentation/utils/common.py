@@ -6,7 +6,10 @@ from typing import Dict, List, Optional, Any
 
 from PIL import Image
 
-from src import step
+from src import step, Pipeline
+from src.models.contexts.processing.picsellia_processing_context import (
+    PicselliaProcessingContext,
+)
 from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
 
 
@@ -166,6 +169,8 @@ def process_dataset(
         input_dataset (object): Input dataset object with attributes like `images_dir` and `coco_data`.
         output_dataset (object): Output dataset object where augmented images and annotations are stored.
     """
+    context: PicselliaProcessingContext = Pipeline.get_active_context()
+
     if not input_dataset.images_dir:
         raise ValueError("Input dataset does not have images downloaded.")
     if not input_dataset.coco_data:
@@ -196,7 +201,7 @@ def process_dataset(
 
         # Apply augmentations
         augmented_images, augmented_annotations = apply_augmentations(
-            img=img, annotations=annotations
+            img=img, annotations=annotations, parameters=context.processing_parameters
         )
 
         # Save augmented images and update COCO metadata
