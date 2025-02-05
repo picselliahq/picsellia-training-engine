@@ -4,10 +4,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, o
 
 from tabulate import tabulate  # type: ignore
 
-from src import Colors
-from src.enums import PipelineState, StepState
-from src.logger import LoggerManager
-from src.models.steps.step_metadata import StepMetadata
+from src.picsellia_cv_engine import Colors
+from src.picsellia_cv_engine.enums import PipelineState, StepState
+from src.picsellia_cv_engine.logger import LoggerManager
+from src.picsellia_cv_engine.models.steps.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -369,10 +369,12 @@ class Pipeline:
             RuntimeError: If no context has been set for the current pipeline.
         """
         if Pipeline.ACTIVE_PIPELINE is None:
-            raise RuntimeError(
-                "No current pipeline running."
-                "A step must be run within a function decorated with @pipeline."
-            )
+            print("⚠ Warning: No active pipeline found. Using fallback context.")
+            return {}
+            # raise RuntimeError(
+            #     "No current pipeline running."
+            #     "A step must be run within a function decorated with @pipeline."
+            # )
 
         if Pipeline.ACTIVE_PIPELINE._context is None:
             raise RuntimeError(

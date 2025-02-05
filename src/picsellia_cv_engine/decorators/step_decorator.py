@@ -3,9 +3,9 @@ import time
 import uuid
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 
-from src import Pipeline
-from src.enums import PipelineState, StepState
-from src.models.steps.step_metadata import StepMetadata
+from src.picsellia_cv_engine import Pipeline
+from src.picsellia_cv_engine.enums import PipelineState, StepState
+from src.picsellia_cv_engine.models.steps.step_metadata import StepMetadata
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -51,10 +51,12 @@ class Step:
         current_pipeline = Pipeline.ACTIVE_PIPELINE
 
         if not current_pipeline:
-            raise RuntimeError(
-                "No current pipeline running."
-                "A step must be run within a function decorated with @pipeline."
-            )
+            print(f"⚠ Warning: Running step '{self.step_name}' outside of a pipeline.")
+            return self.entrypoint(*args, **kwargs)
+            # raise RuntimeError(
+            #     "No current pipeline running."
+            #     "A step must be run within a function decorated with @pipeline."
+            # )
 
         self._metadata.state = StepState.RUNNING
         step_logger = self._prepare_step_logger(pipeline=current_pipeline)
