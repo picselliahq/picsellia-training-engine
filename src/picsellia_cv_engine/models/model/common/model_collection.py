@@ -1,7 +1,7 @@
 import os
 from typing import List, Generic, Optional, Any, TypeVar
 
-from src.models.model.common.model_context import TModelContext
+from src.picsellia_cv_engine.models.model.common.model_context import TModelContext
 
 
 class ModelCollection(Generic[TModelContext]):

@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, TypeVar
 
 from picsellia import ModelVersion, Label
 
-from src.models.model.common.model_downloader import ModelDownloader
+from src.picsellia_cv_engine.models.model.common.model_downloader import ModelDownloader
 
 from picsellia import Experiment
 
