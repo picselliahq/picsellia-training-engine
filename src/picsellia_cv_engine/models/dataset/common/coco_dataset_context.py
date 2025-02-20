@@ -11,7 +11,9 @@ from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.types.enums import AnnotationFileType
 
-from src.models.dataset.common.base_dataset_context import BaseDatasetContext
+from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+    BaseDatasetContext,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -78,14 +80,14 @@ class CocoDatasetContext(BaseDatasetContext):
             destination_path (str): Path where the final COCO file will be saved.
             use_id (Optional[bool]): Whether to use asset IDs in file paths (default: True).
         """
-        os.makedirs(destination_path, exist_ok=True)
-        self.annotations_dir = destination_path
+        os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+        self.annotations_dir = os.path.dirname(destination_path)
 
         assets_to_download = self._determine_assets_source()
 
         with tqdm(desc="Downloading COCO annotation batches", unit="assets") as pbar:
             batch_files = self._process_batches(
-                destination_path=destination_path,
+                destination_dir=self.annotations_dir,
                 assets_to_download=assets_to_download,
                 pbar=pbar,
                 use_id=use_id,
@@ -95,18 +97,14 @@ class CocoDatasetContext(BaseDatasetContext):
             logger.warning("No batches were successfully downloaded.")
             return None
 
-        final_coco_file_path = os.path.join(
-            destination_path, "merged_coco_annotations.json"
-        )
-
         if len(batch_files) == 1:
-            shutil.move(batch_files[0], final_coco_file_path)
-            logger.info(f"Single batch file saved directly to {final_coco_file_path}")
+            shutil.move(batch_files[0], destination_path)
+            logger.info(f"Single batch file saved directly to {destination_path}")
         else:
-            self._merge_batches(batch_files, final_coco_file_path)
-        remove_empty_directories(destination_path)
+            self._merge_batches(batch_files, destination_path)
+        remove_empty_directories(self.annotations_dir)
 
-        self.coco_file_path = final_coco_file_path
+        self.coco_file_path = destination_path
         self.coco_data = self.load_coco_file_data()
         logger.info("COCO annotations downloaded and loaded into memory.")
 
@@ -128,7 +126,7 @@ class CocoDatasetContext(BaseDatasetContext):
 
     def _process_batches(
         self,
-        destination_path: str,
+        destination_dir: str,
         assets_to_download: Optional[MultiAsset],
         pbar: tqdm,
         use_id: Optional[bool] = True,
@@ -137,7 +135,7 @@ class CocoDatasetContext(BaseDatasetContext):
         Process assets in batches and export their COCO annotations.
 
         Args:
-            destination_path (str): Directory to save batch files.
+            destination_dir (str): Directory to save batch files.
             assets_to_download (Optional[MultiAsset]): Preloaded assets or None for dynamic fetching.
             pbar (tqdm): Progress bar to display batch processing progress.
             use_id (Optional[bool]): Whether to use asset IDs in file paths (default: True).
@@ -157,7 +155,7 @@ class CocoDatasetContext(BaseDatasetContext):
                     break
 
                 batch_file_path = os.path.join(
-                    destination_path, f"coco_batch_{batch_index}.json"
+                    destination_dir, f"coco_batch_{batch_index}.json"
                 )
                 coco_annotation_path = self._export_batch(
                     batch_assets=batch_assets,

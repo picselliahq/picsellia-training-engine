@@ -1,7 +1,11 @@
 from typing import Optional, List
 
-from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
-from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+    TBaseDatasetContext,
+)
+from src.picsellia_cv_engine.models.dataset.common.dataset_collection import (
+    DatasetCollection,
+)
 
 import os
 import yaml

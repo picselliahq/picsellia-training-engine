@@ -7,7 +7,7 @@ from picsellia import DatasetVersion, Label
 from picsellia.sdk.asset import MultiAsset
 from picsellia.exceptions import NoDataError
 
-from src.models.utils.dataset_logging import get_labelmap
+from src.picsellia_cv_engine.models.utils.dataset_logging import get_labelmap
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class BaseDatasetContext:
 
     def download_assets(
         self,
-        destination_path: str,
+        destination_dir: str,
         use_id: Optional[bool] = True,
         skip_asset_listing: Optional[bool] = False,
     ) -> None:
@@ -105,13 +105,13 @@ class BaseDatasetContext:
         Raises:
             NoDataError: If no assets are available for the dataset version.
         """
-        os.makedirs(destination_path, exist_ok=True)
+        os.makedirs(destination_dir, exist_ok=True)
         if self.assets:
-            self.assets.download(target_path=str(destination_path), use_id=use_id)
+            self.assets.download(target_path=str(destination_dir), use_id=use_id)
         else:
             try:
                 self.dataset_version.download(
-                    target_path=str(destination_path), use_id=use_id
+                    target_path=str(destination_dir), use_id=use_id
                 )
             except NoDataError:
                 logger.warning(
@@ -124,7 +124,7 @@ class BaseDatasetContext:
                     logger.warning(
                         "No assets found in the dataset version, skipping asset listing."
                     )
-        self.images_dir = destination_path
+        self.images_dir = destination_dir
 
     def get_assets_batch(self, limit: int, offset: int) -> MultiAsset:
         """

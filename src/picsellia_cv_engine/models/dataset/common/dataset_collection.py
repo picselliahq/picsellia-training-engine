@@ -1,7 +1,9 @@
 import os
 from typing import Generic, List, Optional, Iterator
 
-from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
+from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+    TBaseDatasetContext,
+)
 
 import logging
 
@@ -94,7 +96,7 @@ class DatasetCollection(Generic[TBaseDatasetContext]):
         for dataset_context in self:
             logger.info(f"Downloading assets for {dataset_context.dataset_name}")
             dataset_context.download_assets(
-                destination_path=os.path.join(
+                destination_dir=os.path.join(
                     images_destination_path, dataset_context.dataset_name
                 ),
                 use_id=use_id,
