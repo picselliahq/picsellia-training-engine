@@ -2,10 +2,18 @@ import os
 from typing import Type, Optional, Any, Dict, Generic, Union
 
 from picsellia import Experiment  # type: ignore
-from src.models.contexts.common.picsellia_context import PicselliaContext
-from src.models.parameters.common.augmentation_parameters import TAugmentationParameters
-from src.models.parameters.common.export_parameters import TExportParameters
-from src.models.parameters.common.hyper_parameters import THyperParameters
+from src.picsellia_cv_engine.models.contexts.common.picsellia_context import (
+    PicselliaContext,
+)
+from src.picsellia_cv_engine.models.parameters.common.augmentation_parameters import (
+    TAugmentationParameters,
+)
+from src.picsellia_cv_engine.models.parameters.common.export_parameters import (
+    TExportParameters,
+)
+from src.picsellia_cv_engine.models.parameters.common.hyper_parameters import (
+    THyperParameters,
+)
 
 
 class PicselliaTrainingContext(
