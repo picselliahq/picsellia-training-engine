@@ -1,9 +1,11 @@
 from picsellia import DatasetVersion
 
-from src.picsellia_cv_engine.models.dataset.common.dataset_collection import (
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
     DatasetCollection,
 )
-from src.picsellia_cv_engine.models.dataset.common.dataset_context import DatasetContext
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
+    CocoDatasetContext,
+)
 
 
 class ProcessingDatasetCollectionExtractor:
@@ -33,7 +35,7 @@ class ProcessingDatasetCollectionExtractor:
         self.input_dataset_version = input_dataset_version
         self.output_dataset_version = output_dataset_version
 
-    def get_dataset_collection(self) -> DatasetCollection:
+    def get_dataset_collection(self) -> DatasetCollection[CocoDatasetContext]:
         """
         Creates and returns a DatasetCollection with input and output dataset contexts.
 
@@ -43,13 +45,13 @@ class ProcessingDatasetCollectionExtractor:
         Returns:
             DatasetCollection: A collection of input and output datasets as DatasetContext objects.
         """
-        input_dataset_context = DatasetContext(
+        input_dataset_context = CocoDatasetContext(
             dataset_name="input",
             dataset_version=self.input_dataset_version,
             assets=self.input_dataset_version.list_assets(),
             labelmap=None,
         )
-        output_dataset_context = DatasetContext(
+        output_dataset_context = CocoDatasetContext(
             dataset_name="output",
             dataset_version=self.output_dataset_version,
             assets=self.output_dataset_version.list_assets(),

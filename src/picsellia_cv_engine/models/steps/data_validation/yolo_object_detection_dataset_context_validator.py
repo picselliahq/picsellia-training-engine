@@ -1,10 +1,10 @@
 from typing import List
 import os
 
-from src.picsellia_cv_engine.models.dataset.common.yolo_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.yolo_dataset_context import (
     YoloDatasetContext,
 )
-from src.picsellia_cv_engine.models.steps.data_validation.common.dataset_context_validator import (
+from src.picsellia_cv_engine.models.steps.data_validation.dataset_context_validator import (
     DatasetContextValidator,
 )
 

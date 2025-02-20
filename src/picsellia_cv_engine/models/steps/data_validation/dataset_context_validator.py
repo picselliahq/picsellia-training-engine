@@ -2,7 +2,7 @@ from typing import List, Generic
 
 from PIL import Image
 
-from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.base_dataset_context import (
     TBaseDatasetContext,
 )
 from src.picsellia_cv_engine.models.utils.image_file import get_images_path_list

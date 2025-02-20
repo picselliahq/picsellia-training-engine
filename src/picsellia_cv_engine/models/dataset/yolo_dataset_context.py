@@ -9,7 +9,7 @@ from picsellia.sdk.asset import MultiAsset
 from picsellia.types.enums import AnnotationFileType
 from tqdm import tqdm
 
-from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.base_dataset_context import (
     BaseDatasetContext,
 )
 

@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Generic
 
-from src.picsellia_cv_engine.models.model.common.model_collection import (
+from src.picsellia_cv_engine.models.model.model_collection import (
     TModelCollection,
 )
 

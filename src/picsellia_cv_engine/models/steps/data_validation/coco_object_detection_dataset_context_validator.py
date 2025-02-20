@@ -1,10 +1,10 @@
 import json
 from typing import List, Optional, Tuple, Dict
 
-from src.picsellia_cv_engine.models.dataset.common.coco_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
     CocoDatasetContext,
 )
-from src.picsellia_cv_engine.models.steps.data_validation.common.dataset_context_validator import (
+from src.picsellia_cv_engine.models.steps.data_validation.dataset_context_validator import (
     DatasetContextValidator,
 )
 

@@ -2,7 +2,7 @@ import logging
 from typing import TypeVar
 
 from picsellia.types.schemas import LogDataType  # type: ignore
-from src.picsellia_cv_engine.models.parameters.common.parameters import Parameters
+from src.picsellia_cv_engine.models.parameters.parameters import Parameters
 
 logger = logging.getLogger("picsellia-engine")
 

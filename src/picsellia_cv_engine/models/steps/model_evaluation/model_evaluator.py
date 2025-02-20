@@ -4,7 +4,7 @@ from typing import Union, List
 from picsellia import Experiment
 from picsellia.types.enums import AddEvaluationType, InferenceType
 
-from src.picsellia_cv_engine.models.model.common.picsellia_prediction import (
+from src.picsellia_cv_engine.models.model.picsellia_prediction import (
     PicselliaOCRPrediction,
     PicselliaRectanglePrediction,
     PicselliaClassificationPrediction,

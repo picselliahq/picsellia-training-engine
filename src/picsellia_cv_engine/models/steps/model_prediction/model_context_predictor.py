@@ -1,11 +1,11 @@
 from abc import ABC
 from typing import Generic
 
-from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.base_dataset_context import (
     TBaseDatasetContext,
 )
-from src.picsellia_cv_engine.models.model.common.model_context import TModelContext
-from src.picsellia_cv_engine.models.model.common.picsellia_prediction import (
+from src.picsellia_cv_engine.models.model.model_context import TModelContext
+from src.picsellia_cv_engine.models.model.picsellia_prediction import (
     PicselliaLabel,
     PicselliaConfidence,
     PicselliaRectangle,

@@ -8,7 +8,7 @@ from picsellia.types.enums import ProcessingType
 from src.picsellia_cv_engine.models.contexts.common.picsellia_context import (
     PicselliaContext,
 )
-from src.picsellia_cv_engine.models.parameters.common.parameters import TParameters
+from src.picsellia_cv_engine.models.parameters.parameters import TParameters
 
 
 class PicselliaProcessingContext(PicselliaContext, Generic[TParameters]):

@@ -3,7 +3,7 @@ import shutil
 from typing import Dict
 
 from picsellia_annotations.coco import Image
-from src.picsellia_cv_engine.models.dataset.common.coco_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
     CocoDatasetContext,
 )
 

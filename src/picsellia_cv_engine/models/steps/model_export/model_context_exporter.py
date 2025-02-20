@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Any, Generic
 
 from picsellia import Experiment
-from src.picsellia_cv_engine.models.model.common.model_context import TModelContext
+from src.picsellia_cv_engine.models.model.model_context import TModelContext
 
 
 class ModelContextExporter(Generic[TModelContext]):

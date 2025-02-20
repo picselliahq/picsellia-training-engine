@@ -4,10 +4,10 @@ from picsellia.exceptions import ResourceNotFoundError
 from picsellia.types.enums import LogType
 
 from src.picsellia_cv_engine.enums import DatasetSplitName
-from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.base_dataset_context import (
     TBaseDatasetContext,
 )
-from src.picsellia_cv_engine.models.dataset.common.dataset_collection import (
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
     DatasetCollection,
 )
 

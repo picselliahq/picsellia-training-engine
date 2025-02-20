@@ -5,13 +5,13 @@ from picsellia import Experiment  # type: ignore
 from src.picsellia_cv_engine.models.contexts.common.picsellia_context import (
     PicselliaContext,
 )
-from src.picsellia_cv_engine.models.parameters.common.augmentation_parameters import (
+from src.picsellia_cv_engine.models.parameters.augmentation_parameters import (
     TAugmentationParameters,
 )
-from src.picsellia_cv_engine.models.parameters.common.export_parameters import (
+from src.picsellia_cv_engine.models.parameters.export_parameters import (
     TExportParameters,
 )
-from src.picsellia_cv_engine.models.parameters.common.hyper_parameters import (
+from src.picsellia_cv_engine.models.parameters.hyper_parameters import (
     THyperParameters,
 )
 

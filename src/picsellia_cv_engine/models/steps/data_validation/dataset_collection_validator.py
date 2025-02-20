@@ -1,9 +1,9 @@
 from typing import Type
 
-from src.picsellia_cv_engine.models.dataset.common.dataset_collection import (
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
     DatasetCollection,
 )
-from src.picsellia_cv_engine.models.steps.data_validation.common.dataset_context_validator import (
+from src.picsellia_cv_engine.models.steps.data_validation.dataset_context_validator import (
     DatasetContextValidator,
 )
 

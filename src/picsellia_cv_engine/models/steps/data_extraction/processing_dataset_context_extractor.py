@@ -1,9 +1,10 @@
 from typing import Optional
 
-from picsellia import DatasetVersion
+from picsellia import DatasetVersion, Asset
 
-from src.picsellia_cv_engine.models.dataset.common.dataset_context import DatasetContext
-from tf2.experiment.main import assets
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
+    CocoDatasetContext,
+)
 
 
 class ProcessingDatasetContextExtractor:
@@ -21,6 +22,7 @@ class ProcessingDatasetContextExtractor:
     def __init__(
         self,
         dataset_version: DatasetVersion,
+        assets: Optional[Asset],
         use_id: Optional[bool] = True,
     ):
         """
@@ -31,9 +33,10 @@ class ProcessingDatasetContextExtractor:
             use_id (Optional[bool]): If True, uses asset IDs for organizing file paths. Defaults to True.
         """
         self.dataset_version = dataset_version
+        self.assets = assets
         self.use_id = use_id
 
-    def get_dataset_context(self) -> DatasetContext:
+    def get_dataset_context(self) -> CocoDatasetContext:
         """
         Retrieves the dataset context by downloading assets and annotations from the specified dataset version.
 
@@ -43,9 +46,9 @@ class ProcessingDatasetContextExtractor:
         Returns:
             DatasetContext: A dataset context that contains all assets and metadata required for extraction.
         """
-        return DatasetContext(
+        return CocoDatasetContext(
             dataset_name="input",
             dataset_version=self.dataset_version,
-            assets=assets,
+            assets=self.assets,
             labelmap=None,
         )

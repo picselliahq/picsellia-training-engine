@@ -11,7 +11,7 @@ from picsellia.exceptions import NoDataError
 from picsellia.sdk.asset import MultiAsset
 from picsellia.types.enums import AnnotationFileType
 
-from src.picsellia_cv_engine.models.dataset.common.base_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.base_dataset_context import (
     BaseDatasetContext,
 )
 

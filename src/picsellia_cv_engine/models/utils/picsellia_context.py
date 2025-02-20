@@ -3,7 +3,7 @@ from typing import Dict, Any
 from src.picsellia_cv_engine.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.picsellia_cv_engine.models.parameters.common.parameters import Parameters
+from src.picsellia_cv_engine.models.parameters.parameters import Parameters
 
 
 def retrieve_picsellia_processing_parameters(processing_parameters: Dict[str, Any]):

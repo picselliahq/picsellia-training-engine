@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional
 from picsellia import Client
 from picsellia.types.enums import TagTarget
 
-from src.picsellia_cv_engine.models.dataset.common.coco_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
     CocoDatasetContext,
 )
-from src.picsellia_cv_engine.models.steps.processing.common.data_uploader import (
+from src.picsellia_cv_engine.models.steps.data_upload.data_uploader import (
     DataUploader,
 )
 
