@@ -1,6 +1,6 @@
 from picsellia.types.schemas import LogDataType
 
-from src.models.parameters.common.parameters import Parameters
+from src.picsellia_cv_engine.models.parameters.common.parameters import Parameters
 
 
 class PaddleOCRHyperParameters(Parameters):

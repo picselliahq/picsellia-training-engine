@@ -1,4 +1,6 @@
-from src.models.parameters.common.hyper_parameters import HyperParameters
+from src.picsellia_cv_engine.models.parameters.common.hyper_parameters import (
+    HyperParameters,
+)
 
 from picsellia.types.schemas import LogDataType
 
