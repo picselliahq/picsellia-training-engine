@@ -1,11 +1,11 @@
 import os
 from typing import Optional
 
-from src import step, Pipeline
-from src.models.contexts.training.picsellia_training_context import (
+from src.picsellia_cv_engine import step, Pipeline
+from src.picsellia_cv_engine.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.model.common.model_context import ModelContext
+from src.picsellia_cv_engine.models.model.model_context import ModelContext
 
 
 @step

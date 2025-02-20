@@ -1,16 +1,18 @@
-from src import Pipeline
-from src import step
-from src.models.contexts.processing.picsellia_processing_context import (
+from src.picsellia_cv_engine import Pipeline
+from src.picsellia_cv_engine import step
+from src.picsellia_cv_engine.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.common.dataset_context import DatasetContext
-from src.models.steps.processing.common.object_detection_dataset_context_uploader import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
+    CocoDatasetContext,
+)
+from src.picsellia_cv_engine.models.steps.data_upload.object_detection_dataset_context_uploader import (
     ObjectDetectionDatasetContextUploader,
 )
 
 
 @step
-def upload_object_detection_dataset_context(dataset_context: DatasetContext):
+def upload_object_detection_dataset_context(dataset_context: CocoDatasetContext):
     context: PicselliaProcessingContext = Pipeline.get_active_context()
     uploader = ObjectDetectionDatasetContextUploader(
         client=context.client,

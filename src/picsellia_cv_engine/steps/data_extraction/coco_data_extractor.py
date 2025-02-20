@@ -1,16 +1,20 @@
 import os
 
-from src import step, Pipeline
-from src.models.contexts.training.picsellia_training_context import (
+from src.picsellia_cv_engine import step, Pipeline
+from src.picsellia_cv_engine.models.contexts.training.picsellia_training_context import (
     PicselliaTrainingContext,
 )
-from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
-from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.steps.data_extraction.training.training_dataset_collection_extractor import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
+    CocoDatasetContext,
+)
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
+    DatasetCollection,
+)
+from src.picsellia_cv_engine.models.steps.data_extraction.training_dataset_collection_extractor import (
     TrainingDatasetCollectionExtractor,
 )
 
-from src.models.utils.dataset_logging import (
+from src.picsellia_cv_engine.models.utils.dataset_logging import (
     log_labelmap,
 )
 

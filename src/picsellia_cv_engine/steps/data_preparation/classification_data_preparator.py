@@ -1,11 +1,11 @@
 import os
 
-from src import step
-from src.models.dataset.common.dataset_collection import (
+from src.picsellia_cv_engine import step
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
     DatasetCollection,
 )
-from src.models.steps.data_preparation.common.classification_dataset_context_preparator import (
-    ClassificationDatasetContextPreparator,
+from src.picsellia_cv_engine.models.steps.data_preparation.classification_dataset_context_preparator import (
+    ClassificationBaseDatasetContextPreparator,
 )
 
 
@@ -62,7 +62,7 @@ def prepare_classification_data(
         ```
     """
     for dataset_context in dataset_collection:
-        organizer = ClassificationDatasetContextPreparator(
+        organizer = ClassificationBaseDatasetContextPreparator(
             dataset_context=dataset_context,
             destination_path=os.path.join(
                 destination_path, dataset_context.dataset_name

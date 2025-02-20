@@ -1,13 +1,17 @@
 import os
 from typing import Optional
 
-from src import Pipeline
-from src import step
-from src.models.contexts.processing.picsellia_processing_context import (
+from src.picsellia_cv_engine import Pipeline
+from src.picsellia_cv_engine import step
+from src.picsellia_cv_engine.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
-from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
-from src.models.dataset.common.dataset_collection import DatasetCollection
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
+    CocoDatasetContext,
+)
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
+    DatasetCollection,
+)
 
 
 def get_destination_path(job_id: Optional[str]) -> str:
@@ -53,7 +57,7 @@ def get_processing_dataset_context(
     destination_path = get_destination_path(context.job_id)
 
     dataset_context.download_assets(
-        destination_path=os.path.join(
+        destination_dir=os.path.join(
             destination_path, "images", dataset_context.dataset_name
         ),
         use_id=True,

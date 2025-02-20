@@ -1,7 +1,11 @@
-from src import step
-from src.models.dataset.common.base_dataset_context import TBaseDatasetContext
-from src.models.dataset.common.dataset_collection import DatasetCollection
-from src.models.steps.data_validation.common.dataset_collection_validator import (
+from src.picsellia_cv_engine import step
+from src.picsellia_cv_engine.models.dataset.base_dataset_context import (
+    TBaseDatasetContext,
+)
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
+    DatasetCollection,
+)
+from src.picsellia_cv_engine.models.steps.data_validation.dataset_collection_validator import (
     DatasetCollectionValidator,
     DatasetContextValidator,
 )

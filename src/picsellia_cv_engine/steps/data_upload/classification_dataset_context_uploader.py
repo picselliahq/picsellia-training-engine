@@ -1,11 +1,13 @@
-from src import Pipeline
-from src import step
-from src.models.contexts.processing.picsellia_processing_context import (
+from src.picsellia_cv_engine import Pipeline
+from src.picsellia_cv_engine import step
+from src.picsellia_cv_engine.models.contexts.processing.picsellia_processing_context import (
     PicselliaProcessingContext,
 )
 
-from src.models.dataset.common.coco_dataset_context import CocoDatasetContext
-from src.models.steps.processing.common.classification_dataset_context_uploader import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
+    CocoDatasetContext,
+)
+from src.picsellia_cv_engine.models.steps.data_upload.classification_dataset_context_uploader import (
     ClassificationDatasetContextUploader,
 )
 
