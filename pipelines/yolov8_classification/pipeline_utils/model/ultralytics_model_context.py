@@ -1,4 +1,4 @@
-from src.picsellia_cv_engine.models.model.common.model_context import ModelContext
+from src.picsellia_cv_engine.models.model.model_context import ModelContext
 
 import os
 from typing import Optional, Dict

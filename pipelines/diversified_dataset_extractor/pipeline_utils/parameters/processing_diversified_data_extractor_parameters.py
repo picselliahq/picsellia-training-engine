@@ -1,4 +1,4 @@
-from src.picsellia_cv_engine.models.parameters.common.parameters import Parameters
+from src.picsellia_cv_engine.models.parameters.parameters import Parameters
 
 
 class ProcessingDiversifiedDataExtractorParameters(Parameters):

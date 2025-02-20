@@ -1,4 +1,4 @@
-from src.picsellia_cv_engine.models.parameters.common.augmentation_parameters import (
+from src.picsellia_cv_engine.models.parameters.augmentation_parameters import (
     AugmentationParameters,
 )
 from picsellia.types.schemas import LogDataType

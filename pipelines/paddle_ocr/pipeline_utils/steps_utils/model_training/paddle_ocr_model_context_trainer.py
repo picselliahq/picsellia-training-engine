@@ -5,7 +5,7 @@ from typing import Dict, Union
 from picsellia import Experiment
 from picsellia.sdk.log import LogType
 
-from src.picsellia_cv_engine.models.model.common.model_context import ModelContext
+from src.picsellia_cv_engine.models.model.model_context import ModelContext
 
 
 def extract_and_log_metrics(log_line: str) -> Dict[str, Union[str, int, float]]:

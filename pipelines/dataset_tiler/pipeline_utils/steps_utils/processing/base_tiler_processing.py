@@ -12,10 +12,10 @@ from picsellia import DatasetVersion
 from picsellia.types.enums import InferenceType
 from PIL import Image
 
-from src.picsellia_cv_engine.models.dataset.common.coco_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
     CocoDatasetContext,
 )
-from src.picsellia_cv_engine.models.dataset.common.dataset_collection import (
+from src.picsellia_cv_engine.models.dataset.dataset_collection import (
     DatasetCollection,
 )
 

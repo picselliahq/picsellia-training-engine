@@ -1,6 +1,6 @@
 from typing import Union
 
-from src.picsellia_cv_engine.models.parameters.common.hyper_parameters import (
+from src.picsellia_cv_engine.models.parameters.hyper_parameters import (
     HyperParameters,
 )
 

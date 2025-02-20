@@ -3,7 +3,7 @@ from typing import Optional, Dict
 from picsellia import DatasetVersion, Label
 from picsellia.sdk.asset import MultiAsset
 
-from src.picsellia_cv_engine.models.dataset.common.coco_dataset_context import (
+from src.picsellia_cv_engine.models.dataset.coco_dataset_context import (
     CocoDatasetContext,
 )
 

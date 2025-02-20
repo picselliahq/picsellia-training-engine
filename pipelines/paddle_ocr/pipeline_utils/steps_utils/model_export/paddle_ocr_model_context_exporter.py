@@ -5,8 +5,8 @@ from typing import Union, Any
 
 import yaml
 
-from src.picsellia_cv_engine.models.model.common.model_context import ModelContext
-from src.picsellia_cv_engine.models.steps.model_export.common.model_context_exporter import (
+from src.picsellia_cv_engine.models.model.model_context import ModelContext
+from src.picsellia_cv_engine.models.steps.model_export.model_context_exporter import (
     ModelContextExporter,
 )
 
