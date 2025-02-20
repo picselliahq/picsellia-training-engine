@@ -9,7 +9,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive
 
 RUN python${PYTHON_VERSION} -m pip install --upgrade pip setuptools && \
-    python${PYTHON_VERSION} -m pip install uv
+    python${PYTHON_VERSION} -m pip install uv && \
+    uv pip install --python=$(which python${PYTHON_VERSION}) --no-cache-dir tabulate
 
 COPY ./base /experiment
 

@@ -68,8 +68,9 @@ class TestDatasetContextValidator:
                 mock_open.assert_called()
 
             # Test with a corrupted image
-            with pytest.raises(ValueError), patch(
-                "PIL.Image.open", side_effect=Exception
+            with (
+                pytest.raises(ValueError),
+                patch("PIL.Image.open", side_effect=Exception),
             ):
                 dataset_context_validator.validate_images_corruption(
                     images_path_list=[
