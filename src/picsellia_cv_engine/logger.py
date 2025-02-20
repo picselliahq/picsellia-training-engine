@@ -7,8 +7,8 @@ import tempfile
 from datetime import datetime
 from typing import List, Optional, TextIO, cast
 
-from src.models.logging.stream_to_logger import StreamToLogger
-from src.models.steps.step_metadata import StepMetadata
+from src.picsellia_cv_engine.models.logging.stream_to_logger import StreamToLogger
+from src.picsellia_cv_engine.models.steps.step_metadata import StepMetadata
 
 
 class LoggerManager:
